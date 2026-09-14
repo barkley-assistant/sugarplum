@@ -11,12 +11,19 @@ export interface TestResponse {
   text: () => Promise<string>;
 }
 
+/** A cookie-jar fetch wrapper bound to one session identity. */
+export interface Jar {
+  request: (method: string, path: string, body?: unknown) => Promise<TestResponse>;
+  clearCookie: () => void;
+}
+
 export interface TestAppHandle {
   app: App;
   baseUrl: string;
-  /** fetch wrapper with a per-instance cookie jar. */
+  /** Default jar (convenience for single-user tests). */
   request: (method: string, path: string, body?: unknown) => Promise<TestResponse>;
-  /** Clears the jar's cookie (simulates a fresh browser). */
+  /** A fresh jar sharing the same server (for multi-user flows). */
+  newJar: () => Jar;
   clearCookie: () => void;
   cleanup: () => Promise<void>;
 }
@@ -43,41 +50,49 @@ export function createTestApp(overrides: Partial<Config> = {}): TestAppHandle {
   const app = createApp(config);
   const baseUrl = `http://127.0.0.1:${app.server.port}`;
 
-  let cookie = "";
-  const handle: TestAppHandle = {
+  function makeJar(): Jar {
+    let cookie = "";
+    return {
+      request: async (method, path, body) => {
+        const headers: Record<string, string> = {};
+        if (cookie) headers["Cookie"] = cookie;
+        if (body !== undefined) headers["Content-Type"] = "application/json";
+
+        const res = await fetch(baseUrl + path, {
+          method,
+          headers,
+          body: body === undefined ? undefined : JSON.stringify(body),
+        });
+
+        const setCookie = res.headers.get("set-cookie");
+        if (setCookie) {
+          const [nameValue] = setCookie.split(";");
+          cookie = setCookie.includes("Max-Age=0") ? "" : nameValue;
+        }
+
+        return {
+          status: res.status,
+          headers: res.headers,
+          json: () => res.json() as Promise<unknown>,
+          text: () => res.text(),
+        };
+      },
+      clearCookie: () => {
+        cookie = "";
+      },
+    };
+  }
+
+  const defaultJar = makeJar();
+  return {
     app,
     baseUrl,
-    request: async (method, path, body) => {
-      const headers: Record<string, string> = {};
-      if (cookie) headers["Cookie"] = cookie;
-      if (body !== undefined) headers["Content-Type"] = "application/json";
-
-      const res = await fetch(baseUrl + path, {
-        method,
-        headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
-      });
-
-      const setCookie = res.headers.get("set-cookie");
-      if (setCookie) {
-        const [nameValue] = setCookie.split(";");
-        cookie = setCookie.includes("Max-Age=0") ? "" : nameValue;
-      }
-
-      return {
-        status: res.status,
-        headers: res.headers,
-        json: () => res.json() as Promise<unknown>,
-        text: () => res.text(),
-      };
-    },
-    clearCookie: () => {
-      cookie = "";
-    },
+    request: defaultJar.request,
+    newJar: makeJar,
+    clearCookie: defaultJar.clearCookie,
     cleanup: async () => {
       await app.stop();
       rmSync(dir, { recursive: true, force: true });
     },
   };
-  return handle;
 }

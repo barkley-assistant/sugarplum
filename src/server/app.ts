@@ -7,6 +7,9 @@ import { sweepExpiredSessions } from "./auth/sessions";
 import type { Config } from "./config";
 import { openDatabase } from "./db/db";
 import { authRoutes } from "./routes/auth";
+import { healthRoutes } from "./routes/health";
+import { userRoutes } from "./routes/users";
+import { wishlistRoutes } from "./routes/wishlist";
 
 const PUBLIC_DIR = join(import.meta.dir, "..", "..", "..", "dist", "public");
 
@@ -29,6 +32,9 @@ export function createApp(config: Config): App {
     port: config.port,
     routes: {
       ...authRoutes(db, config, limiter),
+      ...userRoutes(db),
+      ...wishlistRoutes(db),
+      ...healthRoutes(),
     },
     fetch: (req) => handleNonApiRequest(req),
   });
