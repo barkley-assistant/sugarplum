@@ -318,6 +318,24 @@ describe("wishlist API", () => {
     });
     expect(invalid.status).toBe(400);
   });
+
+  test("sweep: undeclared /api/* → 404 JSON; missing user → 404; owner cannot claim own item", async () => {
+    const stranger = app.newJar();
+    await login(stranger, "admin", "admin-password");
+
+    const unknown = await stranger.request("GET", "/api/does-not-exist");
+    expect(unknown.status).toBe(404);
+    const body = (await unknown.json()) as { error?: string };
+    expect(body.error).toBe("Not found");
+
+    const missingUser = await stranger.request("GET", "/api/users/00000000-0000-0000-0000-000000000000/wishlist");
+    expect(missingUser.status).toBe(404);
+
+    // Claiming one's own item is rejected, distinct from a conflict.
+    const own = await createItem(stranger, "Own claim attempt");
+    const ownClaim = await stranger.request("POST", `/api/wishlist/items/${own.id}/claim`);
+    expect(ownClaim.status).toBe(400);
+  });
 });
 
 async function aliceIdOf(): Promise<string> {
