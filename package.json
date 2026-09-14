@@ -1,0 +1,31 @@
+{
+  "name": "sugarplum",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run scripts/dev.ts",
+    "build:web": "bun run scripts/build-web.ts",
+    "build": "bun run build:web",
+    "start": "bun src/server/index.ts",
+    "typecheck": "bunx tsc --noEmit",
+    "lint": "bunx eslint .",
+    "test": "bun test tests/",
+    "check": "bun run typecheck && bun run lint && bun run test && bun run build"
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/bun": "1.4.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@typescript-eslint/eslint-plugin": "8.70.0",
+    "@typescript-eslint/parser": "8.70.0",
+    "eslint": "10.10.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "typescript": "5.9.3"
+  }
+}
