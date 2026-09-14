@@ -40,6 +40,9 @@ export function makeTestConfig(overrides: Partial<Config> = {}): { config: Confi
     adminDisplayName: "Admin",
     cookieSecure: false,
     dev: false,
+    imagesDir: join(dir, "images"),
+    scraperUserAgent: "test-agent/1.0",
+    maxEnrichConcurrency: 2,
     ...overrides,
   };
   return { config, dir };

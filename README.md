@@ -28,6 +28,10 @@ done in the app's admin panel.
 | `SUGARPLUM_ADMIN_PASSWORD` | — | Bootstrap admin password (required) |
 | `SUGARPLUM_ADMIN_DISPLAY_NAME` | — | Bootstrap admin display name |
 | `SUGARPLUM_DEV` | `0` | `1` disables the Secure cookie flag (plain-HTTP LAN dev) |
+| `SUGARPLUM_IMAGES_DIR` | `./data/images` | Where downloaded product images are stored (created on demand) |
+| `SUGARPLUM_USER_AGENT` | Firefox desktop UA | User agent the scraper uses to fetch product pages |
+| `SUGARPLUM_ENRICH_CONCURRENCY` | `2` | Max concurrent background enrichment jobs (clamped 1..8) |
+| `SUGARPLUM_SEARXNG_URL` | unset | Optional self-hosted SearXNG instance for best-effort price hints (unset disables the fallback) |
 
 ## Gates
 

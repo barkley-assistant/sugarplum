@@ -9,6 +9,14 @@ export interface Config {
   /** Cookie gets the Secure attribute unless SUGARPLUM_DEV=1. */
   cookieSecure: boolean;
   dev: boolean;
+  /** SearXNG instance for best-effort price hints; unset → fallback disabled. */
+  searxngUrl?: string;
+  /** Where downloaded product images are stored (runtime dir, gitignored). */
+  imagesDir: string;
+  /** Desktop-class UA for the scraper (plain browser, no "bot" advertising). */
+  scraperUserAgent: string;
+  /** Max concurrent enrichment jobs; clamped to [1, 8]. */
+  maxEnrichConcurrency: number;
 }
 
 export class ConfigError extends Error {
@@ -31,6 +39,13 @@ export function readConfig(env: Record<string, string | undefined> = process.env
   }
 
   const dev = env.SUGARPLUM_DEV === "1";
+
+  const rawConcurrency = Number(env.SUGARPLUM_ENRICH_CONCURRENCY ?? "2");
+  const maxEnrichConcurrency = Math.min(8, Math.max(1, Number.isFinite(rawConcurrency) ? rawConcurrency : 2));
+
+  const searxngUrlRaw = env.SUGARPLUM_SEARXNG_URL;
+  const searxngUrl = searxngUrlRaw ? searxngUrlRaw.replace(/\/+$/, "") : undefined;
+
   return {
     port: Number(env.SUGARPLUM_PORT ?? "3499"),
     host: env.SUGARPLUM_HOST ?? "127.0.0.1",
@@ -41,5 +56,11 @@ export function readConfig(env: Record<string, string | undefined> = process.env
     adminDisplayName: adminDisplayName as string,
     cookieSecure: !dev,
     dev,
+    searxngUrl,
+    imagesDir: env.SUGARPLUM_IMAGES_DIR ?? "./data/images",
+    scraperUserAgent:
+      env.SUGARPLUM_USER_AGENT ??
+      "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0",
+    maxEnrichConcurrency,
   };
 }
