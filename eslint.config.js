@@ -60,6 +60,8 @@ export default [
         HTMLCollection: "readonly",
         location: "readonly",
         history: "readonly",
+        confirm: "readonly",
+        prompt: "readonly",
         FormData: "readonly",
         File: "readonly",
         Blob: "readonly",
