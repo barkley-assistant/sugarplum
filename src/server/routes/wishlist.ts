@@ -242,6 +242,22 @@ export function wishlistRoutes(db: Database, imagesDir: string, queue: Enrichmen
         return new Response(null, { status: 204 });
       }),
     },
+    "/api/wishlist/items/:id/refresh": {
+      POST: requireSession(db, (req, viewer) => {
+        const item = getItem(db, req.params.id);
+        if (!item) return jsonError(404, "Item not found");
+        if (item.user_id !== viewer.id) return jsonError(403, "Only the owner can refresh this item");
+        if (!item.url) return jsonError(400, "This item has no link to fetch");
+        // Hints are kept until new evidence replaces them.
+        db.run(
+          `UPDATE wishlist_items SET fetch_state = 'pending', last_fetch_error = NULL, updated_at = ?
+           WHERE id = ?`,
+          [new Date().toISOString(), item.id],
+        );
+        queue.enqueue(item.id);
+        return jsonOk(toOwnedItem(getItem(db, item.id) as ItemRow), 202);
+      }),
+    },
     "/api/wishlist/items/:id/claim": {
       POST: requireSession(db, (req, viewer) => {
         const item = getItem(db, req.params.id);

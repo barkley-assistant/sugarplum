@@ -369,6 +369,41 @@ describe("wishlist API", () => {
     expect(tooLong.status).toBe(400);
   });
 
+  test("wave2: refresh: owner POST /api/wishlist/items/:id/refresh → 202 + re-enriches; non-owner → 403; no-url item → 400; unauthenticated → 401", async () => {
+    const alice = app.newJar();
+    const bob = app.newJar();
+    const stranger = app.newJar();
+    await login(alice, "alice", "alice-pass");
+    await login(bob, "bob", "bob-pass");
+
+    const item = await createItem(alice, "Refresh me", { url: closedLocalUrl() });
+
+    const unauth = await stranger.request("POST", `/api/wishlist/items/${item.id}/refresh`);
+    expect(unauth.status).toBe(401);
+
+    const forbidden = await bob.request("POST", `/api/wishlist/items/${item.id}/refresh`);
+    expect(forbidden.status).toBe(403);
+
+    const manual = await createItem(alice, "Manual item");
+    const noUrl = await alice.request("POST", `/api/wishlist/items/${manual.id}/refresh`);
+    expect(noUrl.status).toBe(400);
+
+    const ok = await alice.request("POST", `/api/wishlist/items/${item.id}/refresh`);
+    expect(ok.status).toBe(202);
+    const body = (await ok.json()) as OwnedItem;
+    expect(body.fetchState).toBe("pending");
+  });
+
+  test("wave2: refresh on a missing item → 404", async () => {
+    const alice = app.newJar();
+    await login(alice, "alice", "alice-pass");
+    const res = await alice.request(
+      "POST",
+      "/api/wishlist/items/00000000-0000-0000-0000-000000000000/refresh",
+    );
+    expect(res.status).toBe(404);
+  });
+
   test("wave2: fetchState + siteName present on owner list and public list", async () => {
     const alice = app.newJar();
     const bob = app.newJar();

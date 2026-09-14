@@ -297,6 +297,56 @@ describe("async enrichment", () => {
     }
   });
 
+  test("refresh on a failed item clears last_fetch_error once enrichment succeeds", async () => {
+    await login(admin, "admin", "admin-password");
+    const userId = await myId(admin);
+    const botwall = await Bun.file(join(FIXTURES, "botwall-captcha.html")).text();
+    const goodHtml = await Bun.file(join(FIXTURES, "shopify-local.html")).text();
+    let serveGood = false;
+    const flip = serve({
+      port: 0,
+      fetch: async (req) => {
+        const url = new URL(req.url);
+        if (url.pathname === "/img/trio.jpg") {
+          return new Response(JPEG_BYTES, { headers: { "Content-Type": "image/jpeg" } });
+        }
+        return new Response(serveGood ? goodHtml : botwall, { status: 200 });
+      },
+    });
+    try {
+      const res = await admin.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${flip.port}/product`,
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+
+      // First pass: bot-walled → failed with an error mentioning the heuristic.
+      expect(await waitForFetchState(admin, userId, item.id, "failed")).toBe(true);
+      let row = app.app.db
+        .query("SELECT fetch_state, last_fetch_error FROM wishlist_items WHERE id = ?")
+        .get(item.id) as { fetch_state: string; last_fetch_error: string | null };
+      expect(row.fetch_state).toBe("failed");
+      expect(row.last_fetch_error).toContain("captcha");
+
+      // The site opens up; the owner retries via refresh.
+      serveGood = true;
+      const refresh = await admin.request("POST", `/api/wishlist/items/${item.id}/refresh`);
+      expect(refresh.status).toBe(202);
+      const refreshed = (await refresh.json()) as OwnedItem;
+      expect(refreshed.fetchState).toBe("pending");
+
+      expect(await waitForFetchState(admin, userId, item.id, "complete")).toBe(true);
+      const rowAfter = app.app.db
+        .query("SELECT fetch_state, last_fetch_error, title FROM wishlist_items WHERE id = ?")
+        .get(item.id) as { fetch_state: string; last_fetch_error: string | null; title: string };
+      expect(rowAfter.fetch_state).toBe("complete");
+      expect(rowAfter.last_fetch_error).toBeNull();
+      expect(rowAfter.title).toBe("Fresh Kiss Trio");
+    } finally {
+      flip.stop(true);
+    }
+  });
+
   test("crash sweep: stop app mid-pending → reboot on same dbPath marks the row 'failed'", async () => {
     const stall = serve({
       port: 0,
