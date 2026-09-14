@@ -32,11 +32,18 @@ scripts/       dev wrapper, deploy.sh, probes
 
 ## Auth model
 
-Exactly two named users (env-configured credentials on first boot).
-Sessions: HttpOnly + Secure + SameSite=Lax cookies, server-side session
-table. Password hashing: `scrypt` via `node:crypto` (the one legit
-node:crypto import). Every non-auth route requires a valid session —
-there is no public surface except the login page and `/api/health`.
+Multi-user: N users, per-user wishlists. NOT hardcoded to two users —
+the app currently happens to be used by two people, but the model is
+general. Sessions: HttpOnly + Secure + SameSite=Lax cookies,
+server-side session table. Password hashing: `scrypt` via `node:crypto`
+(the one legit node:crypto import). Every non-auth route requires a
+valid session — there is no public surface except the login page and
+`/api/health`.
+
+User management: a SUPER-EASY basic admin surface — create a user, list
+users, deactivate/remove a user, reset a password. Bootstrap admin is
+env-configured on first boot; everything after that is managed in-app.
+No email flows, no invites, no complex roles. Keep it lightweight.
 
 ## Secrets
 
