@@ -78,10 +78,16 @@ git clone -> bun install --frozen-lockfile -> gates pass on the clone.
 
 ## Product rules
 
+- Design language: professional product. NO Christmas theme, NO emojis
+  in the UI, no decorative whimsy. Clean, neutral, confident — think
+  Linear/Notion-grade polish.
 - Mobile-first: every UI change is verified at 360-430px widths as well
   as desktop. No horizontal page overflow, ever.
 - PWA: installable, offline app shell, icons + manifest + iOS meta tags
-  maintained as the UI evolves.
+  maintained as the UI evolves. Web Share Target (Android) is the
+  primary add flow alongside paste-a-link.
+- Drag-and-drop ordering is a first-class feature: manual order
+  persists per user, filter chips do not destroy it.
 - Adding an item is a paste-a-link flow first; manual entry is the
   fallback, not the default.
 - Failures degrade gracefully: a scrape that can't fetch price/image
