@@ -27,12 +27,22 @@ export interface CommonItem {
   tags: string[];
   sortOrder: number;
   createdAt: string;
+  /** 'pending' while a background scrape is running; 'failed' when a scrape
+   *  (and any search hint) could not produce a usable item. */
+  fetchState: "pending" | "complete" | "failed";
+  /** Source site name from og:site_name, or the hostname fallback. */
+  siteName: string | null;
 }
 
 /** Owner view of an item. Deliberately has NO claim fields — the API never
- *  transmits claim state to an item's owner. */
+ *  transmits claim state to an item's owner. Hint fields are owner data:
+ *  PublicItem stays lean. */
 export interface OwnedItem extends CommonItem {
   updatedAt: string;
+  /** Best-effort SearXNG price hint (decimal string, like priceCents). */
+  hintPriceCents: string | null;
+  hintCurrency: string | null;
+  hintSourceUrl: string | null;
 }
 
 /** Viewer is not the owner: only booleans, never claimant identity. */

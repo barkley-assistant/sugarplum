@@ -64,6 +64,21 @@ CREATE TABLE price_history (
 CREATE INDEX idx_price_history_item ON price_history(item_id, observed_at);
 `,
   },
+  {
+    version: 2,
+    sql: `
+-- Wave 2: paste-a-link enrichment state + best-effort price hints.
+-- fetch_state DEFAULT 'complete' keeps every pre-wave-2 row (and every
+-- manual item) untouched: 'pending'/'failed' are opt-in states of the
+-- URL-driven flow only.
+ALTER TABLE wishlist_items ADD COLUMN fetch_state TEXT NOT NULL DEFAULT 'complete';
+ALTER TABLE wishlist_items ADD COLUMN last_fetch_error TEXT;
+ALTER TABLE wishlist_items ADD COLUMN site_name TEXT;
+ALTER TABLE wishlist_items ADD COLUMN hint_price_cents INTEGER;
+ALTER TABLE wishlist_items ADD COLUMN hint_currency TEXT;
+ALTER TABLE wishlist_items ADD COLUMN hint_source_url TEXT;
+`,
+  },
 ];
 
 export function runMigrations(db: Database): void {

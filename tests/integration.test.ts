@@ -336,6 +336,68 @@ describe("wishlist API", () => {
     const ownClaim = await stranger.request("POST", `/api/wishlist/items/${own.id}/claim`);
     expect(ownClaim.status).toBe(400);
   });
+
+  test("wave2: URL-only create → 201, provisional title = hostname, fetchState 'pending'", async () => {
+    const alice = app.newJar();
+    await login(alice, "alice", "alice-pass");
+    const res = await alice.request("POST", "/api/wishlist/items", {
+      url: "https://shop.example.com/products/teapot",
+    });
+    expect(res.status).toBe(201);
+    const item = (await res.json()) as OwnedItem;
+    expect(item.fetchState).toBe("pending");
+    expect(item.title).toBe("shop.example.com");
+  });
+
+  test("wave2: neither url nor title → 400; ftp:// → 400; >2048-char URL → 400", async () => {
+    const alice = app.newJar();
+    await login(alice, "alice", "alice-pass");
+
+    const neither = await alice.request("POST", "/api/wishlist/items", {});
+    expect(neither.status).toBe(400);
+
+    const ftp = await alice.request("POST", "/api/wishlist/items", {
+      title: "FTP thing",
+      url: "ftp://example.com/file",
+    });
+    expect(ftp.status).toBe(400);
+
+    const tooLong = await alice.request("POST", "/api/wishlist/items", {
+      url: `https://example.com/${"x".repeat(2100)}`,
+    });
+    expect(tooLong.status).toBe(400);
+  });
+
+  test("wave2: fetchState + siteName present on owner list and public list", async () => {
+    const alice = app.newJar();
+    const bob = app.newJar();
+    await login(alice, "alice", "alice-pass");
+    await login(bob, "bob", "bob-pass");
+    const aliceId = await aliceIdOf();
+
+    const created = await alice.request("POST", "/api/wishlist/items", {
+      url: "https://shop.example.com/products/teapot",
+    });
+    const item = (await created.json()) as OwnedItem;
+    expect(item.fetchState).toBe("pending");
+    expect(item.siteName).toBeNull();
+    expect(item.hintPriceCents).toBeNull();
+
+    const ownerList = await alice.request("GET", `/api/users/${aliceId}/wishlist`);
+    const ownerItems = (await ownerList.json()) as OwnedItem[];
+    const ownerItem = ownerItems.find((i) => i.id === item.id) as OwnedItem;
+    expect(ownerItem.fetchState).toBe("pending");
+    expect(ownerItem.siteName).toBeNull();
+    expect("hintPriceCents" in ownerItem).toBe(true);
+
+    // Public view: fetchState/siteName present, hint data is owner-only.
+    const publicList = await bob.request("GET", `/api/users/${aliceId}/wishlist`);
+    const publicItems = (await publicList.json()) as PublicItem[];
+    const publicItem = publicItems.find((i) => i.id === item.id) as PublicItem;
+    expect(publicItem.fetchState).toBe("pending");
+    expect(publicItem.siteName).toBeNull();
+    expect("hintPriceCents" in publicItem).toBe(false);
+  });
 });
 
 async function aliceIdOf(): Promise<string> {

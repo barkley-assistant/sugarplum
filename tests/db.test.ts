@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { openDatabase } from "../src/server/db/db";
-import { runMigrations } from "../src/server/db/migrations";
+import { MIGRATIONS, runMigrations } from "../src/server/db/migrations";
 
 let dir: string;
 let dbPath: string;
@@ -24,13 +24,62 @@ afterAll(() => {
 describe("db migrations", () => {
   test("migrations are idempotent", () => {
     const version = db.query("PRAGMA user_version").get() as { user_version: number };
-    expect(version.user_version).toBe(1);
+    expect(version.user_version).toBe(2);
 
     // Re-run migrations on the same connection (and a second open) — no-op.
     runMigrations(db);
     const again = openDatabase(dbPath);
-    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 1 });
+    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 2 });
     again.close();
+  });
+
+  test("v2 migration adds fetch_state family; old rows stay 'complete'", () => {
+    const v = db.query("PRAGMA user_version").get() as { user_version: number };
+    expect(v.user_version).toBe(2);
+    const cols = db.query("PRAGMA table_info(wishlist_items)").all() as { name: string }[];
+    for (const c of [
+      "fetch_state",
+      "last_fetch_error",
+      "site_name",
+      "hint_price_cents",
+      "hint_currency",
+      "hint_source_url",
+    ]) {
+      expect(cols.some((x) => x.name === c)).toBe(true);
+    }
+
+    // A row created under the v1 schema (before v2 ran) reads 'complete' —
+    // the DEFAULT guarantees zero data migration.
+    const freshPath = join(dir, "v2-upgrade.sqlite");
+    const fresh = new Database(freshPath);
+    try {
+      const v1 = MIGRATIONS.find((m) => m.version === 1);
+      if (!v1) throw new Error("v1 migration missing");
+      fresh.exec(v1.sql);
+      fresh.exec("PRAGMA user_version = 1");
+      fresh.run("INSERT INTO users (id, username, display_name, password_hash) VALUES (?, ?, ?, ?)", [
+        "v2-upgrade-user",
+        "v2_upgrade_user",
+        "Upgrade",
+        "scrypt$x",
+      ]);
+      fresh.run("INSERT INTO wishlist_items (id, user_id, title) VALUES (?, ?, ?)", [
+        "v2-upgrade-item",
+        "v2-upgrade-user",
+        "Old item",
+      ]);
+      runMigrations(fresh);
+      expect((fresh.query("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(2);
+      const row = fresh
+        .query("SELECT fetch_state, site_name, hint_price_cents FROM wishlist_items WHERE id = ?")
+        .get("v2-upgrade-item") as { fetch_state: string; site_name: string | null; hint_price_cents: number | null };
+      expect(row.fetch_state).toBe("complete");
+      expect(row.site_name).toBeNull();
+      expect(row.hint_price_cents).toBeNull();
+    } finally {
+      fresh.close();
+      rmSync(freshPath, { force: true });
+    }
   });
 
   test("core tables exist", () => {
