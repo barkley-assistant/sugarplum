@@ -32,6 +32,7 @@ export default [
         crypto: "readonly",
         TextEncoder: "readonly",
         TextDecoder: "readonly",
+        Buffer: "readonly",
         Event: "readonly",
         Error: "readonly",
         Date: "readonly",
