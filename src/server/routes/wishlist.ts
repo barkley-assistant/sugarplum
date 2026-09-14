@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { jsonError, jsonOk, requireSession, type RouteRequest } from "../auth/middleware";
+import { deleteItemFile } from "../images";
 import type { CommonItem, OwnedItem, PublicItem, WishlistSummaryRow } from "../../shared/types";
 
 interface ItemRow {
@@ -113,7 +114,7 @@ function parseTagsInput(value: unknown): { ok: true; tags: string[] } | { ok: fa
   return { ok: true, tags: value };
 }
 
-export function wishlistRoutes(db: Database) {
+export function wishlistRoutes(db: Database, imagesDir: string) {
   return {
     "/api/users/:id/wishlist": {
       GET: requireSession(db, (req, viewer) => {
@@ -234,6 +235,7 @@ export function wishlistRoutes(db: Database) {
         const item = getItem(db, req.params.id);
         if (!item) return jsonError(404, "Item not found");
         if (item.user_id !== viewer.id) return jsonError(403, "Only the owner can delete this item");
+        deleteItemFile(imagesDir, item.image_path);
         db.run("DELETE FROM wishlist_items WHERE id = ?", [item.id]);
         return new Response(null, { status: 204 });
       }),

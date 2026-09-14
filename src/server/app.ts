@@ -8,6 +8,7 @@ import type { Config } from "./config";
 import { openDatabase } from "./db/db";
 import { authRoutes } from "./routes/auth";
 import { healthRoutes } from "./routes/health";
+import { imageRoutes } from "./routes/images";
 import { userRoutes } from "./routes/users";
 import { wishlistRoutes } from "./routes/wishlist";
 
@@ -33,7 +34,8 @@ export function createApp(config: Config): App {
     routes: {
       ...authRoutes(db, config, limiter),
       ...userRoutes(db),
-      ...wishlistRoutes(db),
+      ...wishlistRoutes(db, config.imagesDir),
+      ...imageRoutes(db, config.imagesDir),
       ...healthRoutes(),
     },
     fetch: (req) => handleNonApiRequest(req),

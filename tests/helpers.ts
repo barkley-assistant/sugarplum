@@ -9,6 +9,7 @@ export interface TestResponse {
   headers: Headers;
   json: () => Promise<unknown>;
   text: () => Promise<string>;
+  arrayBuffer: () => Promise<ArrayBuffer>;
 }
 
 /** A cookie-jar fetch wrapper bound to one session identity. */
@@ -78,6 +79,7 @@ export function createTestApp(overrides: Partial<Config> = {}): TestAppHandle {
           headers: res.headers,
           json: () => res.json() as Promise<unknown>,
           text: () => res.text(),
+          arrayBuffer: () => res.arrayBuffer(),
         };
       },
       clearCookie: () => {
