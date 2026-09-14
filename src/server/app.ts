@@ -11,7 +11,7 @@ import { healthRoutes } from "./routes/health";
 import { userRoutes } from "./routes/users";
 import { wishlistRoutes } from "./routes/wishlist";
 
-const PUBLIC_DIR = join(import.meta.dir, "..", "..", "..", "dist", "public");
+const PUBLIC_DIR = join(import.meta.dir, "..", "..", "dist", "public");
 
 export interface App {
   server: ReturnType<typeof Bun.serve>;
