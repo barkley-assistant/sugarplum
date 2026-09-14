@@ -95,7 +95,10 @@ export function AppPage() {
     if (!res.ok) throw new Error("Could not add item");
     setAddOpen(false);
     setPrefill({ url: "", title: "" });
-    if (me) await refreshOwnList(me.id);
+    if (me) {
+      await refreshOwnList(me.id);
+      if (values.url) void pollAfterCreate(me.id);
+    }
     await refreshSummary();
   }
 
@@ -121,6 +124,24 @@ export function AppPage() {
     if (!res.ok) throw new Error("Could not delete item");
     if (me) await refreshOwnList(me.id);
     await refreshSummary();
+  }
+
+  async function refreshItem(id: string) {
+    const res = await fetch(`/api/wishlist/items/${id}/refresh`, { method: "POST" });
+    if (!res.ok) {
+      setError("Could not retry that item.");
+      return;
+    }
+    if (me) await refreshOwnList(me.id);
+  }
+
+  /** After a URL-only add, poll the list a few times so "Fetching details…"
+   *  resolves without user action (reuses the existing list GET; cheap). */
+  async function pollAfterCreate(userId: string) {
+    for (let i = 0; i < 5; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await refreshOwnList(userId);
+    }
   }
 
   async function claim(id: string) {
@@ -231,6 +252,7 @@ export function AppPage() {
               viewerIsOwner
               onEdit={editItem}
               onDelete={deleteItem}
+              onRefresh={refreshItem}
             />
           </>
         )}
