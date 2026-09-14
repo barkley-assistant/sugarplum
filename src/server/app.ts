@@ -11,6 +11,7 @@ import { healthRoutes } from "./routes/health";
 import { imageRoutes } from "./routes/images";
 import { userRoutes } from "./routes/users";
 import { wishlistRoutes } from "./routes/wishlist";
+import { createEnrichmentQueue } from "./jobs/enrich";
 
 const PUBLIC_DIR = join(import.meta.dir, "..", "..", "dist", "public");
 
@@ -26,7 +27,22 @@ export function createApp(config: Config): App {
   ensureBootstrapAdmin(db, config);
   sweepExpiredSessions(db);
 
+  // Crash sweep: anything left 'pending' by a previous process (kill -9,
+  // reboot mid-enrichment) degrades to 'failed' so it is visibly incomplete
+  // rather than stuck; the owner refresh route re-drives it.
+  db.run(
+    `UPDATE wishlist_items SET fetch_state = 'failed',
+            last_fetch_error = 'Interrupted by restart' WHERE fetch_state = 'pending'`,
+  );
+
   const limiter = new RateLimiter();
+  const queue = createEnrichmentQueue({
+    db,
+    imagesDir: config.imagesDir,
+    userAgent: config.scraperUserAgent,
+    searxngUrl: config.searxngUrl,
+    maxConcurrent: config.maxEnrichConcurrency,
+  });
 
   const server = Bun.serve({
     hostname: config.host,
@@ -34,7 +50,7 @@ export function createApp(config: Config): App {
     routes: {
       ...authRoutes(db, config, limiter),
       ...userRoutes(db),
-      ...wishlistRoutes(db, config.imagesDir),
+      ...wishlistRoutes(db, config.imagesDir, queue),
       ...imageRoutes(db, config.imagesDir),
       ...healthRoutes(),
     },
@@ -46,6 +62,7 @@ export function createApp(config: Config): App {
     db,
     config,
     async stop() {
+      queue.stop();
       await server.stop(true);
       db.close();
     },

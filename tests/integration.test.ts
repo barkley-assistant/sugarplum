@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { serve } from "bun";
 import { createTestApp, type Jar, type TestAppHandle } from "./helpers";
 import type { AdminUser, OwnedItem, PublicItem, WishlistSummaryRow } from "../src/shared/types";
 
@@ -341,12 +342,12 @@ describe("wishlist API", () => {
     const alice = app.newJar();
     await login(alice, "alice", "alice-pass");
     const res = await alice.request("POST", "/api/wishlist/items", {
-      url: "https://shop.example.com/products/teapot",
+      url: closedLocalUrl(),
     });
     expect(res.status).toBe(201);
     const item = (await res.json()) as OwnedItem;
     expect(item.fetchState).toBe("pending");
-    expect(item.title).toBe("shop.example.com");
+    expect(item.title).toBe("127.0.0.1");
   });
 
   test("wave2: neither url nor title → 400; ftp:// → 400; >2048-char URL → 400", async () => {
@@ -375,8 +376,11 @@ describe("wishlist API", () => {
     await login(bob, "bob", "bob-pass");
     const aliceId = await aliceIdOf();
 
+    // URL points at a closed local port: the enqueued worker fails fast and
+    // locally — the DTO assertions below check field PRESENCE, so the item's
+    // eventual state (pending/failed) is irrelevant to this test.
     const created = await alice.request("POST", "/api/wishlist/items", {
-      url: "https://shop.example.com/products/teapot",
+      url: closedLocalUrl(),
     });
     const item = (await created.json()) as OwnedItem;
     expect(item.fetchState).toBe("pending");
@@ -386,16 +390,16 @@ describe("wishlist API", () => {
     const ownerList = await alice.request("GET", `/api/users/${aliceId}/wishlist`);
     const ownerItems = (await ownerList.json()) as OwnedItem[];
     const ownerItem = ownerItems.find((i) => i.id === item.id) as OwnedItem;
-    expect(ownerItem.fetchState).toBe("pending");
-    expect(ownerItem.siteName).toBeNull();
+    expect(["pending", "complete", "failed"]).toContain(ownerItem.fetchState);
+    expect("siteName" in ownerItem).toBe(true);
     expect("hintPriceCents" in ownerItem).toBe(true);
 
     // Public view: fetchState/siteName present, hint data is owner-only.
     const publicList = await bob.request("GET", `/api/users/${aliceId}/wishlist`);
     const publicItems = (await publicList.json()) as PublicItem[];
     const publicItem = publicItems.find((i) => i.id === item.id) as PublicItem;
-    expect(publicItem.fetchState).toBe("pending");
-    expect(publicItem.siteName).toBeNull();
+    expect(["pending", "complete", "failed"]).toContain(publicItem.fetchState);
+    expect("siteName" in publicItem).toBe(true);
     expect("hintPriceCents" in publicItem).toBe(false);
   });
 });
@@ -405,4 +409,14 @@ async function aliceIdOf(): Promise<string> {
     id: string;
   };
   return row.id;
+}
+
+/** A valid http URL on a just-freed local port: URL validation passes, the
+ *  enqueued enrichment worker fails instantly with a network error, and no
+ *  external network is touched. */
+function closedLocalUrl(): string {
+  const probe = serve({ port: 0, fetch: () => new Response("ok") });
+  const port = probe.port;
+  probe.stop(true);
+  return `http://127.0.0.1:${port}/item`;
 }

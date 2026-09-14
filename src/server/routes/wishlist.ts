@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { jsonError, jsonOk, requireSession, type RouteRequest } from "../auth/middleware";
 import { deleteItemFile } from "../images";
+import type { EnrichmentQueue } from "../jobs/enrich";
 import type { CommonItem, OwnedItem, PublicItem, WishlistSummaryRow } from "../../shared/types";
 
 interface ItemRow {
@@ -114,7 +115,7 @@ function parseTagsInput(value: unknown): { ok: true; tags: string[] } | { ok: fa
   return { ok: true, tags: value };
 }
 
-export function wishlistRoutes(db: Database, imagesDir: string) {
+export function wishlistRoutes(db: Database, imagesDir: string, queue: EnrichmentQueue) {
   return {
     "/api/users/:id/wishlist": {
       GET: requireSession(db, (req, viewer) => {
@@ -157,6 +158,7 @@ export function wishlistRoutes(db: Database, imagesDir: string) {
             parsed.hasUrl ? "pending" : "complete",
           ],
         );
+        if (parsed.hasUrl) queue.enqueue(id);
         return jsonOk(toOwnedItem(getItem(db, id) as ItemRow), 201);
       }),
     },
