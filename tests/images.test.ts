@@ -1,11 +1,11 @@
 // tests/images.test.ts — LOCAL http server serves image bytes; no external sites
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { serve } from "bun";
 import { createTestApp, type Jar, type TestAppHandle } from "./helpers";
-import { downloadImage } from "../src/server/images";
+import { downloadImage, serveItemImage } from "../src/server/images";
 import type { OwnedItem } from "../src/shared/types";
 
 // 1x1 transparent PNG (magic: 89 50 4E 47 0D 0A 1A 0A)
@@ -219,5 +219,35 @@ describe("GET /api/wishlist/items/:id/image", () => {
     const del = await admin.request("DELETE", `/api/wishlist/items/${item.id}`);
     expect(del.status).toBe(204);
     expect(await Bun.file(join(app.app.config.imagesDir, `${item.id}.png`)).exists()).toBe(false);
+  });
+
+  test("serveItemImage works with a RELATIVE imagesDir (the default is ./data/images)", async () => {
+    // join() normalizes "./data/images" to "data/images", which used to break
+    // the naive startsWith guard and 404 every image in default configs.
+    const dir = mkdtempSync(join(tmpdir(), "img-rel-"));
+    const relativeDir = relative(process.cwd(), dir);
+    try {
+      writeFileSync(join(relativeDir, "rel-item.png"), PNG_1X1);
+      const owner = app.app.db.query("SELECT id FROM users WHERE username = ?").get("admin") as {
+        id: string;
+      };
+      const id = "rel-serve-item";
+      app.app.db.run("INSERT INTO wishlist_items (id, user_id, title, image_path) VALUES (?, ?, ?, ?)", [
+        id,
+        owner.id,
+        "Rel",
+        "rel-item.png",
+      ]);
+      try {
+        const ok = await serveItemImage(app.app.db, relativeDir, id);
+        expect(ok.status).toBe(200);
+        const bytes = new Uint8Array(await ok.arrayBuffer());
+        expect(bytes.length).toBe(PNG_1X1.length);
+      } finally {
+        app.app.db.run("DELETE FROM wishlist_items WHERE id = ?", [id]);
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

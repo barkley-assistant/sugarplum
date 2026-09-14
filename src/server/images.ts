@@ -7,7 +7,7 @@
 
 import { Database } from "bun:sqlite";
 import { mkdirSync, unlinkSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve, sep } from "node:path";
 
 export interface ImageDeps {
   imagesDir: string;
@@ -127,15 +127,19 @@ async function readCapped(res: Response, maxBytes: number): Promise<Uint8Array |
 }
 
 /** Serves the item's stored image. The filename comes from the DB row, never
- *  the request URL — traversal-proof by construction. */
+ *  the request URL — traversal-proof by construction (both paths resolved so
+ *  the guard also holds for relative imagesDir values like the default). */
 export async function serveItemImage(db: Database, imagesDir: string, id: string): Promise<Response> {
   const row = db
     .query("SELECT image_path FROM wishlist_items WHERE id = ?")
     .get(id) as { image_path: string | null } | undefined;
   if (!row || !row.image_path) return new Response("Not found", { status: 404 });
 
-  const filePath = join(imagesDir, row.image_path);
-  if (!filePath.startsWith(imagesDir)) return new Response("Not found", { status: 404 });
+  const root = resolve(imagesDir);
+  const filePath = resolve(imagesDir, row.image_path);
+  if (filePath !== root && !filePath.startsWith(root + sep)) {
+    return new Response("Not found", { status: 404 });
+  }
 
   const file = Bun.file(filePath);
   if (!(await file.exists())) return new Response("Not found", { status: 404 });
@@ -152,7 +156,7 @@ export async function serveItemImage(db: Database, imagesDir: string, id: string
 export function deleteItemFile(imagesDir: string, imagePath: string | null): void {
   if (!imagePath) return;
   try {
-    unlinkSync(join(imagesDir, imagePath));
+    unlinkSync(resolve(imagesDir, imagePath));
   } catch {
     // ignore — file may already be gone
   }
