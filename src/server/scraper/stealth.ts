@@ -7,8 +7,16 @@
  * Concurrency: process-wide promise-chain mutex — Firefox profile locks would
  * fail a second concurrent launch anyway, so the mutex is defense-in-depth,
  * not the primary gate. Timeout ladder is `timeoutMs + termGraceMs` for
- * SIGTERM, then +5s for SIGKILL (a hard last resort; library teardown via the
- * helper's signal handlers should make SIGKILL unreachable).
+ * SIGTERM, then +SIGKILL_DELAY_MS for SIGKILL (a hard last resort; the
+ * helper's signal handlers should make SIGKILL unreachable in the happy
+ * path).
+ *
+ * Process-group kill: the helper is spawned with `detached: true` so it
+ * becomes the leader of a new process group; both ladder rungs use
+ * `process.kill(-pid, sig)` so a SIGTERM-ignoring Python child cannot leave
+ * Firefox/Xvfb orphaned in the parent's absence. Linux has no
+ * kernel kill-on-exit for the browser tree, so the group kill is the only
+ * thing that reaps the whole stack.
  */
 
 import { existsSync } from "node:fs";
@@ -28,6 +36,10 @@ export type StealthRunner = (
   env: Record<string, string>,
 ) => Promise<StealthRunResult>;
 
+/** Wrapper around `process.kill` — overridable in tests so we can assert
+ *  the group-kill path (-pid) without spawning a real browser tree. */
+export type ProcessKillFn = (pid: number, signal: NodeJS.Signals) => boolean;
+
 export interface StealthDeps {
   /** Absolute; must exist at call time (gated by statSync). */
   pythonBin: string;
@@ -39,8 +51,14 @@ export interface StealthDeps {
   timeoutMs: number;
   /** SIGTERM → SIGKILL delay; default 15s. */
   termGraceMs?: number;
+  /** SIGKILL rung delay after SIGTERM; default 5s. */
+  killDelayMs?: number;
   /** Test seam: default uses Bun.spawn. */
   runner?: StealthRunner;
+  /** Test seam: default uses `process.kill`. Both ladder rungs call this
+   *  with a NEGATIVE pid (process-group kill) so Firefox/Xvfb cannot be
+   *  orphaned when the helper is wedged. */
+  processKill?: ProcessKillFn;
   /** SSRF parity with fetchPage: skip both literal pre-check and post-fetch
    *  final-URL DNS check. Tests opt in; production readConfig never sets it. */
   allowPrivate?: boolean;
@@ -80,22 +98,41 @@ function withLock<T>(fn: () => Promise<T>): Promise<T> {
 const DEFAULT_TERM_GRACE_MS = 15_000;
 const SIGKILL_DELAY_MS = 5_000;
 
+interface DefaultRunnerOpts {
+  /** Wraps `process.kill`; tests inject a recorder. */
+  processKill?: ProcessKillFn;
+  /** SIGKILL rung delay after SIGTERM; default 5s. */
+  killDelayMs?: number;
+}
+
 /** Default runner: Bun subprocess with the documented argv + env.
  *  The stdout reader can hang on processes killed by SIGKILL (the pipe
  *  never gets EOF cleanly under Bun on Linux), so we drive it with a
- *  short drain race after the process has been reaped. */
+ *  short drain race after the process has been reaped.
+ *
+ *  Process-group safety: `detached: true` makes the helper a session/
+ *  process-group leader via setsid(2); both ladder rungs use a NEGATIVE
+ *  pid so the kernel sends the signal to every member of the helper's
+ *  group (Firefox, Xvfb, the playwright driver). Without this, a
+ *  SIGTERM-ignoring Python child leaves the browser tree orphaned in
+ *  the parent's absence — Linux has no kernel kill-on-exit for the
+ *  browser tree. */
 async function defaultRunner(
   argv: string[],
   env: Record<string, string>,
+  opts: DefaultRunnerOpts = {},
 ): Promise<StealthRunResult> {
   const proc = Bun.spawn(argv, {
     env,
     stdout: "pipe",
     stderr: "pipe",
+    detached: true,
   });
 
   const timeoutMs = Number(argv[argv.indexOf("--timeout-ms") + 1] ?? "60000");
   const termGraceMs = Number(env.__SUGARPLUM_STEALTH_TERM_GRACE_MS ?? DEFAULT_TERM_GRACE_MS);
+  const killDelayMs = opts.killDelayMs ?? SIGKILL_DELAY_MS;
+  const kill = opts.processKill ?? ((pid, sig) => process.kill(pid, sig));
 
   let killed = false;
   let killReason: "term" | "kill" | null = null;
@@ -104,7 +141,7 @@ async function defaultRunner(
     killed = true;
     killReason = "term";
     try {
-      proc.kill("SIGTERM");
+      kill(-proc.pid, "SIGTERM");
     } catch {
       /* already exited */
     }
@@ -112,11 +149,11 @@ async function defaultRunner(
   const killTimer = setTimeout(() => {
     killReason = "kill";
     try {
-      proc.kill("SIGKILL");
+      kill(-proc.pid, "SIGKILL");
     } catch {
       /* already exited */
     }
-  }, timeoutMs + termGraceMs + SIGKILL_DELAY_MS);
+  }, timeoutMs + termGraceMs + killDelayMs);
 
   // Read stdout concurrently with waiting for exit. After exit, give it a
   // brief drain window — if SIGKILL has detached the pipe's EOF, return
@@ -210,7 +247,15 @@ export async function stealthFetch(url: string, deps: StealthDeps): Promise<Stea
       "--profiles-dir",
       deps.profilesDir,
     ];
-    const runner = deps.runner ?? defaultRunner;
+    // Default runner closes over deps so the group-kill seam is wired
+    // through; custom runners (tests) get full control of argv + env.
+    const runner =
+      deps.runner ??
+      ((a, e) =>
+        defaultRunner(a, e, {
+          processKill: deps.processKill,
+          killDelayMs: deps.killDelayMs,
+        }));
     let result: StealthRunResult;
     try {
       result = await runner(argv, env);

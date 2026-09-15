@@ -48,6 +48,11 @@ export default [
         HTMLElement: "readonly",
         Element: "readonly",
         Node: "readonly",
+        // NodeJS namespace — used as a TypeScript type-only construct for
+        // typing platform signals (NodeJS.Signals). It's not a runtime
+        // global, but eslint's no-undef treats it as an unknown identifier
+        // without this declaration.
+        NodeJS: "readonly",
         requestAnimationFrame: "readonly",
         cancelAnimationFrame: "readonly",
         performance: "readonly",

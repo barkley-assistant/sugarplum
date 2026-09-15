@@ -5,6 +5,7 @@ import {
   createStealthDeps,
   type StealthRunner,
   type StealthDeps,
+  type ProcessKillFn,
 } from "../src/server/scraper/stealth";
 
 function deps(
@@ -193,5 +194,83 @@ describe("stealth client", () => {
       }
     },
     15_000,
+  );
+
+  test(
+    "regression (BLOCKING 1): helper exits non-zero with no JSON → bounded wait + stealth-exit-* verdict",
+    async () => {
+      // BLOCKING 1 from the wave-13 review: when the SIGALRM watchdog races
+      // the goto timeout, the alarm's unwind can wedge the playwright driver
+      // and the helper hangs forever with no JSON. This test exercises the
+      // post-fix path through the default runner with a helper that simply
+      // dies (no JSON, non-zero exit) and asserts the runner bounds the wait
+      // instead of blocking forever on an EOF that never arrives.
+      //
+      // /bin/false exits 1 with no stdout — the worst-case "helper crashed
+      // before printing JSON" scenario. Large timeoutMs so the ladder never
+      // fires; only the post-exit drain race bounds the wait.
+      const start = Date.now();
+      const r = await stealthFetch("https://www.smythstoys.com/p/1", {
+        pythonBin: "/bin/false",
+        scriptPath: "ignored",
+        profilesDir: "/tmp/p",
+        timeoutMs: 60_000,
+        allowPrivate: true,
+      });
+      const elapsed = Date.now() - start;
+      expect(r.ok).toBe(false);
+      if (!r.ok) {
+        expect(r.reason).toBe("network");
+        // Non-zero exit with no JSON → stealth-exit-{code}.
+        expect(String(r.heuristic)).toMatch(/^stealth-exit-/);
+      }
+      // 250ms drain race caps the post-exit wait; full call overhead is
+      // sub-second on any reasonable machine.
+      expect(elapsed).toBeLessThan(2_000);
+    },
+    5_000,
+  );
+
+  test(
+    "regression (BLOCKING 2): SIGTERM-ignoring child → both ladder rungs address the whole process group (-pid)",
+    async () => {
+      // BLOCKING 2 from the wave-13 review: SIGTERM only killed the Python
+      // child; Firefox/Xvfb were orphaned and SIGKILL never fired because the
+      // child was already dead. The fix is `detached: true` + kill(-pid, sig)
+      // on both ladder rungs so the kernel sends the signal to every member
+      // of the helper's group.
+      //
+      // We inject processKill to record every kill call. We forward to the
+      // real process.kill too, so the trap actually dies and the runner
+      // returns — without the real kill the trap would sleep through the
+      // ladder and proc.exited would never resolve.
+      const calls: Array<{ pid: number; sig: NodeJS.Signals }> = [];
+      const realKill: ProcessKillFn = (pid, sig) => process.kill(pid, sig);
+      const trap = join(import.meta.dir, "fixtures", "stealth-trap.sh");
+      await stealthFetch("https://www.smythstoys.com/p/1", {
+        pythonBin: trap,
+        scriptPath: "ignored-by-trap-script",
+        profilesDir: "/tmp/p",
+        timeoutMs: 100,
+        termGraceMs: 100,
+        killDelayMs: 100,
+        allowPrivate: true,
+        processKill: (pid, sig) => {
+          calls.push({ pid, sig });
+          return realKill(pid, sig);
+        },
+      });
+      expect(calls.length).toBe(2);
+      // Both rungs address the whole group (negative pid). A positive pid
+      // here would mean "just this process" — the pre-fix bug.
+      expect(calls[0]?.pid).toBeLessThan(0);
+      expect(calls[0]?.sig).toBe("SIGTERM");
+      expect(calls[1]?.pid).toBeLessThan(0);
+      expect(calls[1]?.sig).toBe("SIGKILL");
+      // The two pids are the same group; on POSIX the negative pid equals
+      // -pgid, so both rungs target the same group leader.
+      expect(calls[0]?.pid).toBe(calls[1]?.pid);
+    },
+    10_000,
   );
 });
