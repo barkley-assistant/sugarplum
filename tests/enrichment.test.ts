@@ -622,4 +622,128 @@ describe("async enrichment", () => {
       await pricedApp.cleanup();
     }
   }, 20_000);
+
+  test("page with NO image at all → searxng image fallback stored with source 'search'", async () => {
+    const imgHost = serve({
+      port: 0,
+      fetch: () => new Response(JPEG_BYTES, { headers: { "Content-Type": "image/jpeg" } }),
+    });
+    const searx = serve({
+      port: 0,
+      fetch: () =>
+        new Response(
+          JSON.stringify({
+            results: [
+              {
+                title: "Widget 9000 — Reseller",
+                url: "https://reseller.example.com/p/1",
+                content: "no price in this snippet",
+                img_src: `${imgHost.url}search.jpg`,
+              },
+            ],
+          }),
+        ),
+    });
+    // Title-only page: extractable, but no image and no price anywhere.
+    const textOnly = serve({
+      port: 0,
+      fetch: () =>
+        new Response(
+          "<!DOCTYPE html><html><head><title>Widget 9000</title></head><body><h1>Widget 9000</h1></body></html>",
+        ),
+    });
+    const imgApp = createTestApp({ searxngUrl: `http://127.0.0.1:${searx.port}` });
+    const jar = imgApp.newJar();
+    await login(jar, "admin", "admin-password");
+    const userId = await myId(jar);
+    try {
+      const res = await jar.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${textOnly.port}/products/widget-9000`,
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+
+      expect(await waitForFetchState(jar, userId, item.id, "complete")).toBe(true);
+      expect(
+        await waitFor(async () => {
+          const r = imgApp.app.db
+            .query("SELECT image_path FROM wishlist_items WHERE id = ?")
+            .get(item.id) as { image_path: string | null };
+          return r.image_path !== null;
+        }),
+      ).toBe(true);
+
+      const row = imgApp.app.db
+        .query("SELECT fetch_state, image_path, image_source, price_cents FROM wishlist_items WHERE id = ?")
+        .get(item.id) as {
+        fetch_state: string;
+        image_path: string | null;
+        image_source: string | null;
+        price_cents: number | null;
+      };
+      expect(row.fetch_state).toBe("complete");
+      expect(row.image_path).toBe(`${item.id}.jpg`);
+      expect(row.image_source).toBe("search"); // labelled provenance, not 'direct'
+      expect(row.price_cents).toBeNull(); // the snippet carried no price
+
+      // Stored file is served through the normal image route.
+      const served = await jar.request("GET", `/api/wishlist/items/${item.id}/image`);
+      expect(served.status).toBe(200);
+
+      const list = await jar.request("GET", `/api/users/${userId}/wishlist`);
+      const items = (await list.json()) as OwnedItem[];
+      const dto = items.find((i) => i.id === item.id) as OwnedItem;
+      expect(dto.imageSource).toBe("search");
+    } finally {
+      textOnly.stop(true);
+      imgHost.stop(true);
+      searx.stop(true);
+      await imgApp.cleanup();
+    }
+  }, 20_000);
+
+  test("searxng unreachable → item stays 'complete' with no image (no crash, no dead end)", async () => {
+    const probe = serve({ port: 0, fetch: () => new Response("x") });
+    const deadUrl = probe.url.href.replace(/\/$/, "");
+    probe.stop(true); // free port → connection refused
+
+    const textOnly = serve({
+      port: 0,
+      fetch: () =>
+        new Response(
+          "<!DOCTYPE html><html><head><title>Widget 9000</title></head><body><h1>Widget 9000</h1></body></html>",
+        ),
+    });
+    const deadApp = createTestApp({ searxngUrl: deadUrl });
+    const jar = deadApp.newJar();
+    await login(jar, "admin", "admin-password");
+    const userId = await myId(jar);
+    try {
+      const res = await jar.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${textOnly.port}/products/widget-9000`,
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+      expect(await waitForFetchState(jar, userId, item.id, "complete")).toBe(true);
+
+      // Give the (failing) hint legs time to settle, then confirm the row was
+      // not dragged into 'failed' by an unreachable hint service.
+      await Bun.sleep(400);
+      const row = deadApp.app.db
+        .query("SELECT fetch_state, last_fetch_error, image_path, image_source FROM wishlist_items WHERE id = ?")
+        .get(item.id) as {
+        fetch_state: string;
+        last_fetch_error: string | null;
+        image_path: string | null;
+        image_source: string | null;
+      };
+      expect(row.fetch_state).toBe("complete");
+      expect(row.last_fetch_error).toBeNull();
+      expect(row.image_path).toBeNull();
+      expect(row.image_source).toBeNull();
+    } finally {
+      textOnly.stop(true);
+      await deadApp.cleanup();
+    }
+  }, 20_000);
 });

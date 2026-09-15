@@ -71,6 +71,11 @@ export function ItemCard({
           <div className="item-card-text">
             <h3 className="item-title">{item.title}</h3>
             {item.siteName && <span className="item-site">{item.siteName}</span>}
+            {/* Provenance note: this item's picture came from a search, not
+                from the shop. Owner-only, like the price hint. */}
+            {viewerIsOwner && item.imageSource === "search" && (
+              <span className="item-image-source">{S.item.imageViaSearch}</span>
+            )}
             {item.url && (
               <a className="item-link" href={item.url} target="_blank" rel="noreferrer">
                 {item.url}

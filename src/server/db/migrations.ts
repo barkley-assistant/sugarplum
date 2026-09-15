@@ -79,6 +79,16 @@ ALTER TABLE wishlist_items ADD COLUMN hint_currency TEXT;
 ALTER TABLE wishlist_items ADD COLUMN hint_source_url TEXT;
 `,
   },
+  {
+    version: 3,
+    sql: `
+-- Wave 12: provenance of the stored image. NULL/'direct' = downloaded from the
+-- page the user pasted; 'search' = labelled best-effort fallback image from
+-- SearXNG because the page carried none. No backfill: pre-wave-12 rows stay
+-- NULL and read as direct.
+ALTER TABLE wishlist_items ADD COLUMN image_source TEXT;
+`,
+  },
 ];
 
 export function runMigrations(db: Database): void {

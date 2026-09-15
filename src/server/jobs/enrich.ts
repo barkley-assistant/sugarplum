@@ -7,7 +7,7 @@
 import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { scrapeProduct, type ScrapeStrategyName } from "../scraper";
-import { buildSearchQuery, searchPriceHint, type PriceHint } from "../searxng";
+import { buildSearchQuery, searchImageHint, searchPriceHint, type PriceHint } from "../searxng";
 import { downloadImage } from "../images";
 import type { StealthDeps } from "../scraper/stealth";
 
@@ -38,6 +38,7 @@ interface ItemRowForEnrich {
   currency: string | null;
   site_name: string | null;
   fetch_state: string;
+  image_path: string | null;
 }
 
 export function createEnrichmentQueue(deps: EnrichmentDeps): EnrichmentQueue {
@@ -69,7 +70,7 @@ export function createEnrichmentQueue(deps: EnrichmentDeps): EnrichmentQueue {
   async function runItem(itemId: string): Promise<void> {
     const row = deps.db
       .query(
-        `SELECT id, url, title, price_cents, currency, site_name, fetch_state
+        `SELECT id, url, title, price_cents, currency, site_name, fetch_state, image_path
          FROM wishlist_items WHERE id = ?`,
       )
       .get(itemId) as ItemRowForEnrich | undefined;
@@ -163,7 +164,9 @@ async function applyScrape(
   }
 
   // Image download happens AFTER the row update; failure leaves the item
-  // 'complete' with image_path NULL (graceful).
+  // 'complete' with image_path NULL (graceful). image_source records where the
+  // picture came from: 'direct' here, 'search' for the labelled fallback below.
+  let storedImage = false;
   if (product.image) {
     const filename = await downloadImage(product.image, row.id, {
       imagesDir: deps.imagesDir,
@@ -171,20 +174,42 @@ async function applyScrape(
       allowPrivate: deps.allowPrivate,
     });
     if (filename) {
-      deps.db.run("UPDATE wishlist_items SET image_path = ? WHERE id = ?", [filename, row.id]);
+      deps.db.run("UPDATE wishlist_items SET image_path = ?, image_source = 'direct' WHERE id = ?", [
+        filename,
+        row.id,
+      ]);
+      storedImage = true;
     }
   }
 
-  // Partial-ok backstop: the scrape succeeded but left the price empty (the
-  // item is still a success — title/image are usable). searxng gets a chance
-  // to attach a LABELLED hint instead of the item having no price signal at
-  // all; it never writes to the direct price_cents column.
-  if (deps.searxngUrl && row.url && row.price_cents === null && product.priceCents === null) {
-    const hint = await searchPriceHint(buildSearchQuery(row.url), {
-      baseUrl: deps.searxngUrl,
-      fetchImpl: deps.fetchImpl,
-    });
+  // Partial-ok backstop: the scrape succeeded but left the price and/or the
+  // image empty — the item is STILL a success (a title alone is usable), so
+  // fetch_state stays 'complete'. searxng gets one chance to attach LABELLED
+  // hint data (hint_* columns / image_source='search'); it never writes to the
+  // direct price_cents or overwrites a direct image.
+  const searxngUrl = deps.searxngUrl;
+  if (!searxngUrl || !row.url) return;
+  const query = buildSearchQuery(row.url);
+
+  if (row.price_cents === null && product.priceCents === null) {
+    const hint = await searchPriceHint(query, { baseUrl: searxngUrl, fetchImpl: deps.fetchImpl });
     if (hint) persistPriceHint(deps, row.id, hint);
+  }
+
+  if (!storedImage && row.image_path === null) {
+    const imageUrl = await searchImageHint(query, { baseUrl: searxngUrl, fetchImpl: deps.fetchImpl });
+    if (!imageUrl) return;
+    const filename = await downloadImage(imageUrl, row.id, {
+      imagesDir: deps.imagesDir,
+      fetchImpl: deps.fetchImpl,
+      allowPrivate: deps.allowPrivate,
+    });
+    if (filename) {
+      deps.db.run("UPDATE wishlist_items SET image_path = ?, image_source = 'search' WHERE id = ?", [
+        filename,
+        row.id,
+      ]);
+    }
   }
 }
 

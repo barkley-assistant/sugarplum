@@ -36,6 +36,7 @@ export const S = {
     fetching: "Fetching details…",
     unavailable: "Details unavailable",
     hintPriceNote: "unverified — via search",
+    imageViaSearch: "image via search",
   },
   form: {
     title: "Title",
