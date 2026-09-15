@@ -9,8 +9,10 @@ import type {
 import { S } from "../strings";
 import { useToast } from "../toast";
 import { useDragReorder } from "../reorder";
+import { parseShareTarget } from "../format";
 import { AdminPanel } from "./AdminPanel";
 import { EmptyState } from "./EmptyState";
+import { FilterChips } from "./FilterChips";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { ItemList, ListHeading, type OwnerRef } from "./ItemList";
 import { SkeletonList } from "./SkeletonList";
@@ -28,6 +30,7 @@ export function AppPage() {
   const [booted, setBooted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
   const toast = useToast();
   const reorder = useDragReorder(ownItems, onReorder);
 
@@ -46,12 +49,12 @@ export function AppPage() {
       const meBody = (await meRes.json()) as Me;
       setMe(meBody);
 
-      // Share Target seam: /add?url=…&title=… prefills the add form.
-      const params = new URLSearchParams(location.search);
-      const url = params.get("url") ?? "";
-      const title = params.get("title") ?? "";
-      setPrefill({ url, title });
-      if (url || title) setAddOpen(true);
+      // Share Target seam: /add?url=&title=&text= prefills the add form.
+      // title falls back to the first line of text; url to the first
+      // http(s) token in text (D8).
+      const share = parseShareTarget(new URLSearchParams(location.search));
+      setPrefill({ url: share.url, title: share.title });
+      if (share.url || share.title) setAddOpen(true);
 
       await Promise.all([refreshSummary(), refreshOwnList(meBody.id)]);
       if (meBody.isAdmin) await refreshUsers();
@@ -254,6 +257,12 @@ export function AppPage() {
   const others = summary.filter((row) => row.userId !== me.id);
   const ownRef: OwnerRef = { id: me.id, displayName: me.username };
 
+  const allTags = Array.from(new Set(ownItems.flatMap((i) => i.tags))).sort();
+  const tagCounts: Record<string, number> = {};
+  for (const item of ownItems) {
+    for (const t of item.tags) tagCounts[t] = (tagCounts[t] ?? 0) + 1;
+  }
+
   function ownerRefFor(userId: string): OwnerRef {
     const row = summary.find((r) => r.userId === userId);
     return row ? { id: row.userId, displayName: row.displayName } : ownRef;
@@ -291,7 +300,21 @@ export function AppPage() {
 
     const orderedOwn = reorder.orderedIds
       .map((id) => ownItems.find((i) => i.id === id))
-      .filter((i): i is OwnedItem => i !== undefined);
+      .filter((i): i is OwnedItem => i !== undefined)
+      .filter((i) => !activeTag || i.tags.includes(activeTag));
+
+    if (orderedOwn.length === 0 && activeTag) {
+      return (
+        <EmptyState
+          title={S.empty.filtered(activeTag)}
+          action={
+            <button className="secondary" onClick={() => setActiveTag(null)}>
+              {S.empty.clearFilter}
+            </button>
+          }
+        />
+      );
+    }
 
     return (
       <ItemList
@@ -363,6 +386,14 @@ export function AppPage() {
 
         <section className="list-section">
           <ListHeading owner={viewing ? ownerRefFor(viewing) : ownRef} count={viewing ? otherItems.length : ownItems.length} />
+          {!viewing && ownItems.length > 0 && (
+            <FilterChips
+              tags={allTags}
+              counts={tagCounts}
+              active={activeTag}
+              onSelect={setActiveTag}
+            />
+          )}
           {renderList()}
         </section>
 
@@ -380,6 +411,7 @@ export function AppPage() {
                 initialValues={prefill}
                 onSubmit={createItem}
                 onCancel={() => setAddOpen(false)}
+                autoFocusUrl
               />
             </div>
           </div>

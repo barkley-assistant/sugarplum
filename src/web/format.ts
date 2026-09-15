@@ -52,3 +52,39 @@ export function formatRelativeTime(iso: string, now: number = Date.now()): strin
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
 }
+
+export interface ShareTargetValues {
+  url: string;
+  title: string;
+}
+
+/** Parses the Web Share Target query params (D8): title falls back to the
+ *  first line of `text` when absent; url falls back to the first http(s)
+ *  token in `text` (some share sources put the URL in text only). When the
+ *  text-derived title is the URL itself, it is left empty so the server
+ *  auto-fills a readable hostname title. */
+export function parseShareTarget(params: URLSearchParams): ShareTargetValues {
+  const text = params.get("text") ?? "";
+  const urlParam = (params.get("url") ?? "").trim();
+  const titleParam = (params.get("title") ?? "").trim();
+
+  const url = urlParam || firstUrlToken(text);
+
+  let title = titleParam;
+  if (!title) {
+    const line = firstLine(text);
+    title = line === url ? "" : line;
+  }
+  return { url, title };
+}
+
+function firstLine(text: string): string {
+  const line = text.split("\n")[0].trim();
+  return line;
+}
+
+function firstUrlToken(text: string): string {
+  const match = /\bhttps?:\/\/[^\s]+/.exec(text);
+  if (!match) return "";
+  return match[0].replace(/[),.;]+$/, "");
+}

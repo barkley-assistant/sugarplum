@@ -18,11 +18,20 @@ interface ItemFormProps {
   submitLabel: string;
   onSubmit: (values: ItemFormValues) => void | Promise<void>;
   onCancel?: () => void;
+  /** Paste-a-link is the primary add flow: autofocus the URL field. */
+  autoFocusUrl?: boolean;
 }
 
 const CURRENCIES = ["GBP", "USD", "EUR"];
 
-export function ItemForm({ initial, initialValues, submitLabel, onSubmit, onCancel }: ItemFormProps) {
+export function ItemForm({
+  initial,
+  initialValues,
+  submitLabel,
+  onSubmit,
+  onCancel,
+  autoFocusUrl = false,
+}: ItemFormProps) {
   const [title, setTitle] = useState(initialValues?.title ?? initial?.title ?? "");
   const [url, setUrl] = useState(initialValues?.url ?? initial?.url ?? "");
   const [priceCents, setPriceCents] = useState(initial?.priceCents ?? "");
@@ -65,6 +74,20 @@ export function ItemForm({ initial, initialValues, submitLabel, onSubmit, onCanc
 
   return (
     <form className="item-form" onSubmit={submit}>
+      <div className="field">
+        <label htmlFor="item-url">{S.form.link}</label>
+        <input
+          id="item-url"
+          type="text"
+          inputMode="url"
+          placeholder={S.form.linkPlaceholder}
+          className="input-lg"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          autoFocus={autoFocusUrl}
+        />
+      </div>
+
       <div className="field-row">
         <div className="field grow">
           <label htmlFor="item-title">{S.form.title}</label>
@@ -114,18 +137,6 @@ export function ItemForm({ initial, initialValues, submitLabel, onSubmit, onCanc
             />
           </div>
         )}
-      </div>
-
-      <div className="field">
-        <label htmlFor="item-url">{S.form.link}</label>
-        <input
-          id="item-url"
-          type="text"
-          inputMode="url"
-          placeholder={S.form.linkPlaceholder}
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-        />
       </div>
 
       <div className="field">

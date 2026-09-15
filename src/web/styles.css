@@ -236,6 +236,10 @@ label {
   color: var(--text-3);
 }
 
+.input-lg {
+  font-size: var(--text-lg);
+}
+
 /* ---------- Utilities ---------- */
 .muted {
   color: var(--text-2);

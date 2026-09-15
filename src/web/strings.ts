@@ -94,6 +94,10 @@ export const S = {
   pwa: {
     install: "Install app",
   },
+  tags: {
+    all: "All",
+    filterLabel: "Filter by tag",
+  },
   errors: {
     loadWishlist: "Could not load your wishlist. Refresh to try again.",
     retryItem: "Could not retry that item.",

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { formatPrice, formatRelativeTime } from "../src/web/format";
+import { formatPrice, formatRelativeTime, parseShareTarget } from "../src/web/format";
 
 describe("formatPrice", () => {
   test("GBP 24.99 → £24.99", () => {
@@ -64,5 +64,46 @@ describe("formatRelativeTime", () => {
 
   test("invalid input → empty string", () => {
     expect(formatRelativeTime("not-a-date", now)).toBe("");
+  });
+});
+
+describe("parseShareTarget", () => {
+  test("canonical shape: url + title params pass through", () => {
+    const p = new URLSearchParams({ url: "https://example.com/x", title: "Test item" });
+    expect(parseShareTarget(p)).toEqual({ url: "https://example.com/x", title: "Test item" });
+  });
+
+  test("text-only share: URL token + first line become url/title", () => {
+    const p = new URLSearchParams({ text: "Check this out\nhttps://example.com/x" });
+    expect(parseShareTarget(p)).toEqual({
+      url: "https://example.com/x",
+      title: "Check this out",
+    });
+  });
+
+  test("text-only URL: url extracted, title left empty for server auto-fill", () => {
+    const p = new URLSearchParams({ text: "https://example.com/x" });
+    expect(parseShareTarget(p)).toEqual({ url: "https://example.com/x", title: "" });
+  });
+
+  test("title param wins over text line; url param wins over text token", () => {
+    const p = new URLSearchParams({
+      title: "My title",
+      url: "https://param.example.com",
+      text: "https://text.example.com\nignored line",
+    });
+    expect(parseShareTarget(p)).toEqual({
+      url: "https://param.example.com",
+      title: "My title",
+    });
+  });
+
+  test("trailing punctuation is stripped from a text URL token", () => {
+    const p = new URLSearchParams({ text: "see https://example.com/x, thanks!" });
+    expect(parseShareTarget(p).url).toBe("https://example.com/x");
+  });
+
+  test("no params → both empty", () => {
+    expect(parseShareTarget(new URLSearchParams())).toEqual({ url: "", title: "" });
   });
 });
