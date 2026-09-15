@@ -18,6 +18,7 @@
 #
 # Test overrides (used by sandbox tests; do NOT set for a real deploy):
 #   DEPLOY_LIVE_DIR, DEPLOY_ENV_FILE, DEPLOY_SERVICE, DEPLOY_HEALTH_URL
+#   DEPLOY_STEALTH_VENV, DEPLOY_SKIP_STEALTH (1 = skip venv provision)
 
 set -euo pipefail
 
@@ -95,6 +96,28 @@ for var in SUGARPLUM_ADMIN_USERNAME SUGARPLUM_ADMIN_PASSWORD SUGARPLUM_ADMIN_DIS
     exit 4
   fi
 done
+
+# ── Stealth browser venv (optional capability; failure is loud but the app
+#    boots fine without it — the scraper falls back to plain-only).
+STEALTH_VENV="${DEPLOY_STEALTH_VENV:-$LIVE_DIR/../.stealth-venv}"
+if [ "${DEPLOY_SKIP_STEALTH:-0}" = "1" ]; then
+  echo "-> stealth: skipped (DEPLOY_SKIP_STEALTH=1)"
+elif [ -f "$STEALTH_VENV/.provisioned" ]; then
+  echo "-> stealth: venv + engine present (marker found)"
+else
+  if ! command -v python3 >/dev/null 2>&1; then
+    echo "-> stealth: python3 not found — skipping provision (scrapes stay plain-only)" >&2
+  elif ! command -v Xvfb >/dev/null 2>&1; then
+    echo "-> stealth: Xvfb not found — skipping provision (headless engine needs it)" >&2
+  else
+    echo "-> stealth: provisioning $STEALTH_VENV (first boot: ~238MB engine download)"
+    [ -d "$STEALTH_VENV" ] || python3 -m venv "$STEALTH_VENV"
+    "$STEALTH_VENV/bin/pip" install --quiet invisible-playwright
+    "$STEALTH_VENV/bin/python" -m invisible_playwright fetch   # downloads engine if missing, verifies seal
+    date -u +"provisioned %Y-%m-%dT%H:%M:%SZ" > "$STEALTH_VENV/.provisioned"
+    echo "-> stealth: provisioned."
+  fi
+fi
 
 echo "-> restarting $SERVICE"
 systemctl --user restart "$SERVICE"
