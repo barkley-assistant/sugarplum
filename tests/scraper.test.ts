@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { serve } from "bun";
-import { extractProduct } from "../src/server/scraper/parse";
+import { extractProduct, parseSymbolPriceToCents } from "../src/server/scraper/parse";
 import { scrapeProduct } from "../src/server/scraper";
 import { fetchPage } from "../src/server/scraper/fetch";
 import type { StealthRunner } from "../src/server/scraper/stealth";
@@ -51,6 +51,64 @@ describe("extractProduct", () => {
   test("price garbage (og:price:amount='abc') → null, never NaN", async () => {
     const p = await parseFixture("badprice.html");
     expect(p.priceCents).toBeNull();
+  });
+});
+
+describe("extractProduct DOM fallback tier (no og/json-ld pages)", () => {
+  const AMAZON_DP = "https://www.amazon.co.uk/dp/B0DLGMVR4C";
+  const AMAZON_NOOFFER = "https://www.amazon.co.uk/dp/B0BPCCKL3N";
+
+  test("amazon-shaped: aod-ingress price + data-old-hires image, no og/json-ld", async () => {
+    const p = await parseFixture("amazon-dp.html", AMAZON_DP);
+    expect(p.priceCents).toBe(1900);
+    expect(p.currency).toBe("GBP");
+    expect(p.image).toBe("https://m.media-amazon.com/images/I/81I0WIRzQ9L._AC_SL1500_.jpg");
+    expect(p.title).toBe("Playmobil Pirates Danger from Giant Shark 71793");
+  });
+
+  test("no-featured-offer page: picks NO price (other-ASIN carousel widget ignored)", async () => {
+    const p = await parseFixture("amazon-dp-nooffer.html", AMAZON_NOOFFER);
+    expect(p.priceCents).toBeNull(); // honest: no main-ASIN price exists in the DOM
+    expect(p.currency).toBeNull();
+    expect(p.image).toMatch(/^https:\/\/m\.media-amazon\.com\/images\/I\//);
+    expect(p.title).toContain("LEGO City Explorer Diving Boat");
+  });
+
+  test("tier-1 wins when present: og:price beats the .a-price DOM tier", async () => {
+    // shopify.html proves tier 1; appending Amazon-shaped price markup guarded
+    // by nothing must NOT shadow it (tier 2 only ever fills nulls).
+    const base = await Bun.file(join(FIXTURES, "shopify.html")).text();
+    const html = `${base}<a id="aod-ingress-link"><span class="a-price"><span class="a-offscreen">£99.99</span></span></a>`;
+    const p = await extractProduct(html, PAGE_URL);
+    expect(p.priceCents).toBe(2500); // og:price, not 9999
+    expect(p.currency).toBe("USD");
+  });
+
+  test("first .a-price in the document is NOT the answer (anchor discipline)", async () => {
+    // Regression guard for the trap encoded in amazon-dp.html: £24.88 (other
+    // ASIN, carousel) precedes the main ASIN's £19.00.
+    const p = await parseFixture("amazon-dp.html", AMAZON_DP);
+    expect(p.priceCents).not.toBe(2488);
+  });
+});
+
+describe("parseSymbolPriceToCents", () => {
+  test("symbol-prefixed and symbol-suffixed shapes", () => {
+    expect(parseSymbolPriceToCents("£19.00")).toEqual({ cents: 1900, currency: "GBP" });
+    expect(parseSymbolPriceToCents("£24.88")).toEqual({ cents: 2488, currency: "GBP" });
+    expect(parseSymbolPriceToCents("$1,234.50")).toEqual({ cents: 123450, currency: "USD" });
+    expect(parseSymbolPriceToCents("19,99 €")).toEqual({ cents: 1999, currency: "EUR" });
+    expect(parseSymbolPriceToCents("£1,200")).toEqual({ cents: 120000, currency: "GBP" });
+    expect(parseSymbolPriceToCents("  £ 19.00 ")).toEqual({ cents: 1900, currency: "GBP" });
+  });
+
+  test("garbage / symbol-less / out-of-range → null (never NaN)", () => {
+    expect(parseSymbolPriceToCents("19.00")).toBeNull(); // no currency symbol
+    expect(parseSymbolPriceToCents("£")).toBeNull();
+    expect(parseSymbolPriceToCents("£abc")).toBeNull();
+    expect(parseSymbolPriceToCents("£99,999,999")).toBeNull(); // > MAX_CENTS
+    expect(parseSymbolPriceToCents(null)).toBeNull();
+    expect(parseSymbolPriceToCents(1900)).toBeNull();
   });
 });
 
