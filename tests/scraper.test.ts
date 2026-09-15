@@ -1,9 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { serve } from "bun";
-import { extractProduct, parseSymbolPriceToCents } from "../src/server/scraper/parse";
+import {
+  extractProduct,
+  parseSymbolPriceToCents,
+  stripStoreTitleNoise,
+} from "../src/server/scraper/parse";
 import { scrapeProduct } from "../src/server/scraper";
-import { fetchPage } from "../src/server/scraper/fetch";
+import { fetchPage, detectBotWall } from "../src/server/scraper/fetch";
 import type { StealthRunner } from "../src/server/scraper/stealth";
 import type { SearxngFetch } from "../src/server/searxng";
 
@@ -52,6 +56,16 @@ describe("extractProduct", () => {
     const p = await parseFixture("badprice.html");
     expect(p.priceCents).toBeNull();
   });
+  test("wave14: og:title with sale banner + ' on Steam' suffix → clean name", async () => {
+    const html = `<!DOCTYPE html><html><head>
+    <meta property="og:title" content="Save 30% on Baldur's Gate 3 on Steam">
+    <meta property="og:site" content="Steam">
+    <title>Save 30% on Baldur's Gate 3 on Steam</title>
+  </head><body></body></html>`;
+    const p = await extractProduct(html, "https://store.steampowered.com/app/1086940/");
+    expect(p.title).toBe("Baldur's Gate 3");
+    expect(p.siteName).toBe("Steam"); // og:site joins the siteName chain
+  });
 });
 
 describe("extractProduct DOM fallback tier (no og/json-ld pages)", () => {
@@ -96,6 +110,75 @@ describe("extractProduct DOM fallback tier (no og/json-ld pages)", () => {
   });
 });
 
+describe("extractProduct Steam tier (wave 14)", () => {
+  const STEAM = "https://store.steampowered.com/app/0/x/";
+
+  test("discounted: clean title + first-block discount_final_price", async () => {
+    const p = await parseFixture(
+      "steam-discounted.html",
+      "https://store.steampowered.com/app/1086940/",
+    );
+    expect(p.title).toBe("Baldur's Gate 3");
+    expect(p.priceCents).toBe(3499); // NOT 595 (the DLC block after it)
+    expect(p.priceCents).not.toBe(595);
+    expect(p.currency).toBe("GBP");
+    expect(p.siteName).toBe("Steam");
+    expect(p.image).toBe(
+      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1086940/header.jpg",
+    );
+  });
+
+  test("plain price: game_purchase_price text, no discount block", async () => {
+    const p = await parseFixture("steam-plain.html", "https://store.steampowered.com/app/632360/");
+    expect(p.title).toBe("Risk of Rain 2");
+    expect(p.priceCents).toBe(1999);
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("free-to-play: 'Free To Play' text → null price (NOT 0), clean title", async () => {
+    const p = await parseFixture("steam-f2p.html", "https://store.steampowered.com/app/570/");
+    expect(p.title).toBe("Dota 2");
+    expect(p.priceCents).toBeNull();
+    expect(p.currency).toBeNull();
+  });
+
+  test("agecheck shell: clean title, honest null price, image survives", async () => {
+    const p = await parseFixture(
+      "steam-agecheck.html",
+      "https://store.steampowered.com/agecheck/app/1086940/",
+    );
+    expect(p.title).toBe("Baldur's Gate 3");
+    expect(p.priceCents).toBeNull();
+    expect(p.image).toContain("header.jpg");
+  });
+
+  test("numeric entity in the price text decodes (&#163;9.99)", async () => {
+    const html = `<!DOCTYPE html><html><head>
+    <meta property="og:title" content="Tiny Game on Steam">
+    <meta property="og:site" content="Steam">
+    <title>Tiny Game on Steam</title>
+  </head><body>
+    <div class="game_area_purchase_game">
+      <div class="game_purchase_price price">&#163;9.99</div>
+    </div>
+  </body></html>`;
+    const p = await extractProduct(html, STEAM);
+    expect(p.priceCents).toBe(999);
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("tier-1 still wins: og:price beats the Steam DOM tier", async () => {
+    const base = await Bun.file(join(FIXTURES, "steam-plain.html")).text();
+    const html = base.replace(
+      "<title>",
+      `<meta property="og:price:amount" content="12.34"><meta property="og:price:currency" content="USD"><title>`,
+    );
+    const p = await extractProduct(html, STEAM);
+    expect(p.priceCents).toBe(1234);
+    expect(p.currency).toBe("USD");
+  });
+});
+
 describe("parseSymbolPriceToCents", () => {
   test("symbol-prefixed and symbol-suffixed shapes", () => {
     expect(parseSymbolPriceToCents("£19.00")).toEqual({ cents: 1900, currency: "GBP" });
@@ -113,6 +196,42 @@ describe("parseSymbolPriceToCents", () => {
     expect(parseSymbolPriceToCents("£99,999,999")).toBeNull(); // > MAX_CENTS
     expect(parseSymbolPriceToCents(null)).toBeNull();
     expect(parseSymbolPriceToCents(1900)).toBeNull();
+  });
+});
+
+describe("stripStoreTitleNoise (wave 14)", () => {
+  test("steam sale shape: promo prefix + site suffix both strip", () => {
+    expect(stripStoreTitleNoise("Save 30% on Baldur's Gate 3 on Steam", "Steam")).toBe(
+      "Baldur's Gate 3",
+    );
+  });
+  test("steam non-sale shape: site suffix strips", () => {
+    expect(stripStoreTitleNoise("Risk of Rain 2 on Steam", "Steam")).toBe("Risk of Rain 2");
+  });
+  test("separator variants", () => {
+    expect(stripStoreTitleNoise("Product X | ColourPop", "ColourPop")).toBe("Product X");
+    expect(stripStoreTitleNoise("Product X - ColourPop", "ColourPop")).toBe("Product X");
+    expect(stripStoreTitleNoise("Product X :: Steam", "Steam")).toBe("Product X");
+  });
+  test("clean titles are untouched (regression guard for existing fixtures)", () => {
+    expect(stripStoreTitleNoise("Fresh Kiss Trio", "ColourPop")).toBe("Fresh Kiss Trio");
+    expect(stripStoreTitleNoise("Just A Shop", null)).toBe("Just A Shop");
+    expect(
+      stripStoreTitleNoise(
+        "LEGO City Explorer Diving Boat Toy with Mini-Submarine 60377",
+        "amazon",
+      ),
+    ).toBe("LEGO City Explorer Diving Boat Toy with Mini-Submarine 60377");
+  });
+  test("no site token → only the promo prefix strips", () => {
+    expect(stripStoreTitleNoise("Save 75% on Some Game", null)).toBe("Some Game");
+  });
+  test("degenerate guards: empty result falls back to input; short tokens ignored", () => {
+    expect(stripStoreTitleNoise("Steam", "Steam")).toBe("Steam");
+    expect(stripStoreTitleNoise("X on ab", "ab")).toBe("X on ab"); // token < 3 chars
+  });
+  test("regex metachars in the site token are literal", () => {
+    expect(stripStoreTitleNoise("Product X - C++.Shop", "C++.Shop")).toBe("Product X");
   });
 });
 
@@ -349,6 +468,17 @@ describe("scrapeProduct SSRF guard (private ranges)", () => {
     }
   });
 });
+
+describe("detectBotWall (wave 14)", () => {
+  test("akamai CDN references in a legit page are NOT a bot wall", async () => {
+    const html = `<!DOCTYPE html><html><head>
+    <link href="https://store.akamai.steamstatic.com/public/css/v6/store.css" rel="stylesheet">
+    <title>Some Product</title>
+  </head><body></body></html>`;
+    expect(detectBotWall(html)).toBeNull();
+  });
+});
+
 describe("scrapeProduct strategy pipeline (wave 13)", () => {
   test("registered host: stealth stub returns html → extract + strategy recorded", async () => {
     const html = await Bun.file(join(FIXTURES, "shopify.html")).text();
@@ -497,5 +627,33 @@ describe("scrapeProduct strategy pipeline (wave 13)", () => {
     } finally {
       srv.stop(true);
     }
+  });
+});
+
+describe("scrapeProduct Steam pipeline (wave 14)", () => {
+  test("custom-headers sends the age cookie; clean title + price extracted", async () => {
+    const html = await Bun.file(join(FIXTURES, "steam-discounted.html")).text();
+    const seenCookies: string[] = [];
+    const fetchImpl: SearxngFetch = async (_input, init) => {
+      seenCookies.push(new Headers(init?.headers).get("cookie") ?? "");
+      const res = new Response(html);
+      Object.defineProperty(res, "url", {
+        value: "https://store.steampowered.com/app/1086940/",
+      });
+      return res;
+    };
+    const result = await scrapeProduct("https://store.steampowered.com/app/1086940/", {
+      userAgent: "UA/1.0",
+      fetchImpl,
+      allowPrivate: true,
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.strategy).toBe("custom-headers");
+      expect(result.product.title).toBe("Baldur's Gate 3");
+      expect(result.product.priceCents).toBe(3499);
+      expect(result.product.currency).toBe("GBP");
+    }
+    expect(seenCookies[0]).toContain("birthtime=");
   });
 });

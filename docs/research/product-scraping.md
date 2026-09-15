@@ -222,3 +222,54 @@ so the item stays price-less with a hint at best; the `#aod-ingress-link`
 number is the cheapest NEW offer floor, not necessarily the buybox price; and
 the `amazon.*` markup shapes were verified on `.co.uk` only (the generic
 extractor degrades to title-only elsewhere, never to a wrong value).
+
+---
+
+## 2026-09-15 Steam ground truth (wave 14)
+
+Measured on this host against `store.steampowered.com` with the production
+Firefox UA and the REAL pipeline (`bun run scripts/steam-probe.ts`). Re-verify
+any time with that probe — live Steam, never in CI. Saved pages from the probe
+run: `/tmp/steam-live-*.html` (transient).
+
+The issue's two hypotheses were both wrong: `og:title` is *not* clean, and
+there is *no* embedded JSON/JSON-LD price on a Steam app page. Measured facts:
+
+| # | Fact |
+|---|------|
+| S1 | **Title pollution lives in `og:title` itself.** During a sale both `<title>` and `og:title` read `Save 30% on Baldur's Gate 3 on Steam`; without a sale they read `Risk of Rain 2 on Steam`. Steam ships **zero** `application/ld+json` blocks and no `og:price:*`, so re-prioritizing metadata tiers cannot clean the title — a strip is required. |
+| S2 | Steam's site token sits in a **nonstandard `og:site`** meta (`content="Steam"`), not `og:site_name`. The siteName chain now reads `og:site_name` → `og:site` → hostname. |
+| S3 | **Mature apps 302 to `/agecheck/app/<id>/`** — a ~52KB shell with a promo-laden `og:title`/`og:image` and **no purchase block, no `data-price-final`, no `apphub_AppName`**. This is what a plain scrape gets for age-gated games (title, no price). Sending `Cookie: birthtime=347077200; lastagecheckage=1-0-1980` returns the full ~150–230KB purchase page — verified through `fetchPage` and end-to-end via the probe (`strategy=custom-headers`). |
+| S4 | **Price = the FIRST `div.game_area_purchase_game` block.** Every later block is DLC/bundle with a different price (the anchoring trap, encoded in `tests/fixtures/steam-discounted.html`). Three measured shapes: discounted → `.discount_final_price` (BG3 `£34.99`, `data-price-final="3499"`); plain → `.game_purchase_price.price` (Cyberpunk 2077 / ELDEN RING `£49.99`, `data-price-final="4999"`); free-to-play → `game_purchase_price` with **no** `data-price-final` and text `Free To Play` (Dota 2) → price **null**, not 0. |
+| S5 | **`HTMLRewriter` does NOT decode entities in text nodes.** A price node written `&pound;34.99` arrives as the literal string `&pound;34.99`. Live Steam markup carries a literal `£`, but entity-encoded price text is a real shape (and what the fixtures encode), so the Steam tier decodes the currency entities + numeric character references before parsing. |
+| S6 | **The `/akamai/` bot-wall pattern was a false positive.** Steam pages that reference `*.akamai.steamstatic.com` assets (Chrome-UA transport) were classified `botwall` on every page; the pattern was also dead weight for eBay, whose block page (403, "Error Page \| eBay", 1.8KB) contains no "akamai" in the body — AkamaiGHost is a response *header* `detectBotWall` never reads. Pattern removed; eBay is still caught by the 403 → `reason:"http"` path. |
+
+Shipped in wave 14: a **generic** promo-prefix/site-suffix strip
+(`stripStoreTitleNoise`, applied to the chosen title candidate using only the
+declared `og:site(_name)` token — no hostname checks); `og:site` admitted to the
+siteName chain; a Steam purchase-block DOM tier in `parse.ts` (first block only,
+fills nulls only, after the Amazon tier); a `store.steampowered.com` registry
+entry (`custom-headers` with the age cookie → `plain` fallback); and the akamai
+pattern deletion.
+
+Live probe output for the wave-14 manual proof (2026-09-15, from this host):
+
+```
+$ bun run scripts/steam-probe.ts https://store.steampowered.com/app/1086940/Baldurs_Gate_3/
+ok strategy=custom-headers ms=357 title="Baldur's Gate 3" price=3499 cur=GBP site=Steam image=https://shared.fastly.steamstatic.com/...
+
+$ bun run scripts/steam-probe.ts https://store.steampowered.com/app/1091500/Cyberpunk_2077/
+ok strategy=custom-headers ms=301 title="Cyberpunk 2077" price=4999 cur=GBP site=Steam image=https://shared.fastly.steamstatic.com/...
+
+$ bun run scripts/steam-probe.ts https://store.steampowered.com/app/570/Dota_2/
+ok strategy=custom-headers ms=361 title="Dota 2" price=null cur=null site=Steam image=https://shared.fastly.steamstatic.com/...
+```
+
+Honest limits: currency coverage stays £/€/$ (Steam regional prices in ₽/¥/R$
+→ null price, never a wrong one); free-to-play games report no price by design;
+Steam's store edge returned intermittent HTTP 500s with an empty body for some
+app ids during the probe run (e.g. `/app/632360/`), which surfaces as
+`reason:"http"` after both strategies — a Steam-side flake, reproduced without
+our headers; already-stored items whose title was polluted before this wave are
+not rewritten (re-add or edit them); and if Steam renames the purchase-block
+classes the tier degrades to title-only rather than to a wrong price.

@@ -45,7 +45,9 @@ const BOT_WALL_PATTERNS: [RegExp, string][] = [
   [/robot or human/, "robot or human"],
   [/are you a human/, "are you a human"],
   [/attention required/, "attention required"],
-  [/akamai/, "akamai"],
+  // "akamai" removed 2026-09-15 (wave 14): it never matched eBay's actual block
+  // body (the AkamaiGHost marker is a response header, unseen here) and it
+  // false-positived on legit pages loading assets from *.akamai.steamstatic.com.
   [/captcha/, "captcha"],
   // Imperva Incapsula — specific markers; matches `/_Incapsula_Resource?...`
   // and `distil_referrer` (case-insensitive via the lowercased sample at the

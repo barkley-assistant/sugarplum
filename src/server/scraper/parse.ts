@@ -4,12 +4,19 @@
  *
  * Precedence is locked to the research report (§RECOMMENDATION steps 2-4):
  *   title    = og:title → twitter:title → JSON-LD name → <title>
+ *              → generic promo/site-suffix strip (wave 14)
  *   price    = og:price:amount → product:price:amount → JSON-LD offers.price
  *              → DOM fallback tier (see below)
  *   currency = og:price:currency → product:price:currency → JSON-LD offers.priceCurrency
  *              → DOM fallback tier
  *   image    = og:image → JSON-LD image → twitter:image → DOM fallback tier → favicon
- *   siteName = og:site_name → hostname sans www.
+ *   siteName = og:site_name → og:site (nonstandard, Steam ships it) → hostname sans www.
+ *
+ * Title strip (wave 14): the chosen candidate is passed through
+ * `stripStoreTitleNoise` with the token declared by og:site_name/og:site. Steam
+ * puts the sale banner INSIDE og:title ("Save 30% on Baldur's Gate 3 on
+ * Steam"), so re-prioritizing tiers cannot clean it. Generic rule, no hostname
+ * check — see docs/research/product-scraping.md §2026-09-15 Steam ground truth.
  *
  * DOM fallback tier (wave 12): shops that ship NO structured metadata at all
  * (Amazon serves zero og:*, zero JSON-LD, zero microdata) still carry product
@@ -22,6 +29,13 @@
  * prices/images out of the result: a bare `.a-price` scan picks a neighbour
  * product's price. See tests/fixtures/amazon-dp*.html and
  * docs/research/product-scraping.md §"2026-09-15 Amazon ground truth".
+ *
+ * Steam purchase tier (wave 14): same discipline as the Amazon tier — anchored
+ * to `div.game_area_purchase_game`, FIRST block only (every later block is a
+ * DLC/bundle with a different price), `.discount_final_price` (else
+ * `.game_purchase_price`) text through the same symbol parser. Steam has no
+ * og:price:* and no JSON-LD, so this tier is its only price source; "Free To
+ * Play" yields null (honest "no price"), never 0.
  */
 
 export interface ParsedProduct {
@@ -79,6 +93,33 @@ export function parseSymbolPriceToCents(
   return { cents, currency };
 }
 
+/** HTMLRewriter hands TEXT chunks back raw — entities are NOT decoded (measured
+ *  on Bun 1.4: a Steam price node yields "&pound;34.99"). Money is where this
+ *  bites, so decode the entity shapes that appear in prices: the supported
+ *  currency symbols, &nbsp;, &amp;, plus numeric character references.
+ *  Unknown/unparsable entities are returned unchanged. */
+const NAMED_ENTITIES: Record<string, string> = {
+  "&pound;": "£",
+  "&euro;": "€",
+  "&dollar;": "$",
+  "&nbsp;": " ",
+  "&amp;": "&",
+};
+
+function decodeHtmlEntities(raw: string): string {
+  if (!raw.includes("&")) return raw;
+  return raw.replace(/&(#[xX][0-9a-fA-F]+|#\d+|[a-zA-Z]+);/g, (match, body: string) => {
+    if (!body.startsWith("#")) return NAMED_ENTITIES[match.toLowerCase()] ?? match;
+    const code =
+      body[1] === "x" || body[1] === "X"
+        ? Number.parseInt(body.slice(2), 16)
+        : Number.parseInt(body.slice(1), 10);
+    return Number.isFinite(code) && code > 0 && code <= 0x10ffff
+      ? String.fromCodePoint(code)
+      : match;
+  });
+}
+
 /** "25.00" | 19.99 → 2500 | 1999. Garbage → null (never NaN, never negative). */
 export function parsePriceToCents(raw: unknown): number | null {
   if (raw === null || raw === undefined) return null;
@@ -120,6 +161,23 @@ function cleanTitle(value: unknown): string | null {
   const text = value.trim().replace(/\s+/g, " ");
   if (!text || text === "undefined" || text === "null") return null;
   return text;
+}
+
+/** Wave 14: strip store promo noise from a page title. Generic on purpose —
+ *  measured shapes: Steam prefixes sales as "Save 30% on <Game>" inside
+ *  og:title itself, and suffixes every title with " on Steam" (the token from
+ *  og:site). Other stores use " | Site" / " - Site" / " :: Site". The site
+ *  token comes ONLY from declared metadata (og:site_name/og:site) — hostname
+ *  labels like "store" would be noise. Empty result → return the input. */
+export function stripStoreTitleNoise(raw: string, siteToken: string | null): string {
+  let text = raw.trim().replace(/\s+/g, " ");
+  if (!text) return text;
+  text = text.replace(/^save\s+[\d.,]+\s*%?\s*on\s+/i, "");
+  if (siteToken !== null && siteToken.length >= 3 && text.length > siteToken.length + 2) {
+    const esc = siteToken.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    text = text.replace(new RegExp(`\\s+(?:on|\\||-|–|::)\\s+${esc}\\s*$`, "i"), "");
+  }
+  return text.trim() || raw.trim();
 }
 
 function cleanCurrency(value: unknown): string | null {
@@ -193,6 +251,15 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
   let corePriceText: string | null = null;
   let landingHires: string | null = null;
   let landingDynamic: string | null = null;
+
+  // Steam-shaped purchase block (wave 14): same discipline as the Amazon tier —
+  // class-anchored, document order, FIRST block only, end-tag disarm. Later
+  // game_area_purchase_game blocks are DLC/bundles for OTHER prices.
+  let steamBlockOpen = false;
+  let steamBlockDone = false;
+  let steamPriceText: string | null = null;
+  let steamCapTarget: "dfp" | "gpp" | null = null;
+  let steamBuf: string[] = [];
 
   await new HTMLRewriter()
     .on('meta[property^="og:"]', {
@@ -284,6 +351,51 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
         landingDynamic ??= el.getAttribute("data-a-dynamic-image");
       },
     })
+    .on("div.game_area_purchase_game", {
+      element(el) {
+        if (steamBlockDone || steamBlockOpen) return;
+        steamBlockOpen = true;
+        el.onEndTag(() => {
+          if (steamBlockOpen) {
+            steamBlockDone = true;
+            steamBlockOpen = false;
+          }
+        });
+      },
+    })
+    .on(".discount_final_price", {
+      element() {
+        if (steamBlockOpen && !steamBlockDone && steamPriceText === null && steamCapTarget === null) {
+          steamCapTarget = "dfp";
+          steamBuf = [];
+        }
+      },
+      text(t) {
+        if (steamCapTarget !== "dfp") return;
+        steamBuf.push(t.text);
+        if (t.lastInTextNode) {
+          steamPriceText ??= decodeHtmlEntities(steamBuf.join(""));
+          steamCapTarget = null;
+        }
+      },
+    })
+    .on(".game_purchase_price", {
+      element() {
+        // Only when the first block had no discount price at all (plain / F2P).
+        if (steamBlockOpen && !steamBlockDone && steamPriceText === null && steamCapTarget === null) {
+          steamCapTarget = "gpp";
+          steamBuf = [];
+        }
+      },
+      text(t) {
+        if (steamCapTarget !== "gpp") return;
+        steamBuf.push(t.text);
+        if (t.lastInTextNode) {
+          steamPriceText ??= decodeHtmlEntities(steamBuf.join(""));
+          steamCapTarget = null;
+        }
+      },
+    })
     .transform(new Response(html))
     .text();
 
@@ -292,24 +404,33 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
   // price block second. Both id-anchored — never a bare .a-price.
   const domPrice = parseSymbolPriceToCents(ingressPriceText ?? corePriceText);
   const domImage = landingHires ?? firstDynamicImageKey(landingDynamic);
+  const steamPrice = parseSymbolPriceToCents(steamPriceText);
+
+  // Store promo noise is stripped from the ONE chosen title candidate (not from
+  // every tier): the site token comes from declared metadata only, so a page
+  // without og:site_name/og:site keeps its title untouched.
+  const siteToken = cleanTitle(og["og:site_name"]) ?? cleanTitle(og["og:site"]);
+  const rawTitle =
+    cleanTitle(og["og:title"]) ??
+    cleanTitle(twitter["twitter:title"]) ??
+    cleanTitle(ldNode?.name) ??
+    cleanTitle(titleTag);
 
   return {
-    title:
-      cleanTitle(og["og:title"]) ??
-      cleanTitle(twitter["twitter:title"]) ??
-      cleanTitle(ldNode?.name) ??
-      cleanTitle(titleTag),
+    title: rawTitle === null ? null : stripStoreTitleNoise(rawTitle, siteToken),
     priceCents:
       parsePriceToCents(og["og:price:amount"]) ??
       parsePriceToCents(product["product:price:amount"]) ??
       parsePriceToCents(ldNode?.offersPrice) ??
       domPrice?.cents ??
+      steamPrice?.cents ??
       null,
     currency:
       cleanCurrency(og["og:price:currency"]) ??
       cleanCurrency(product["product:price:currency"]) ??
       cleanCurrency(ldNode?.offersCurrency) ??
       domPrice?.currency ??
+      steamPrice?.currency ??
       null,
     image:
       normalizeImageUrl(og["og:image"], pageUrl) ??
@@ -319,7 +440,8 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
       // is the last resort, not a tier-1 value tier 2 must defer to.
       normalizeImageUrl(domImage, pageUrl) ??
       normalizeImageUrl(favicon, pageUrl),
-    siteName: cleanTitle(og["og:site_name"]) ?? pageHostname(pageUrl),
+    siteName:
+      cleanTitle(og["og:site_name"]) ?? cleanTitle(og["og:site"]) ?? pageHostname(pageUrl),
   };
 }
 
