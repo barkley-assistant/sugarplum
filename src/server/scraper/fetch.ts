@@ -5,10 +5,16 @@
  * either signal alone misclassifies.
  */
 
+import { isPrivateLiteralUrl, finalUrlIsPrivate } from "../net/private-ip";
+// Bun's `typeof fetch` has extra static members (e.g. preconnect) that make
+// test stubs awkward; SearxngFetch is the structural fetch type the codebase
+// already uses for that reason (see src/server/searxng.ts).
+import type { SearxngFetch as FetchLike } from "../searxng";
+
 export type FetchFailure =
   | {
       ok: false;
-      reason: "network" | "http" | "botwall" | "empty";
+      reason: "network" | "http" | "botwall" | "empty" | "private-ip";
       status?: number;
       heuristic?: string;
     };
@@ -16,7 +22,10 @@ export type FetchFailure =
 export interface FetchPageOptions {
   userAgent: string;
   timeoutMs?: number;
-  fetchImpl?: typeof fetch;
+  fetchImpl?: FetchLike;
+  /** Explicit opt-in to allow private/loopback targets (tests use local
+   *  Bun.serve servers on 127.0.0.1). Never a silent global. */
+  allowPrivate?: boolean;
 }
 
 export type FetchPageResult =
@@ -47,6 +56,12 @@ export function detectBotWall(html: string): string | null {
 }
 
 export async function fetchPage(url: string, opts: FetchPageOptions): Promise<FetchPageResult> {
+  // SSRF guard, pre-fetch: literal private/loopback host → reject before any
+  // network I/O. Skipped only by the explicit allowPrivate opt-in.
+  if (!opts.allowPrivate && isPrivateLiteralUrl(url)) {
+    return { ok: false, reason: "private-ip" };
+  }
+
   const fetchImpl = opts.fetchImpl ?? fetch;
   let res: Response;
   try {
@@ -64,7 +79,15 @@ export async function fetchPage(url: string, opts: FetchPageOptions): Promise<Fe
     return { ok: false, reason: "network" };
   }
 
+  // SSRF guard, post-fetch: redirects were followed, so check the FINAL url.
+  // Literal private → reject; otherwise one DNS lookup — any resolved private
+  // address → reject. (The fetch already happened, but the result is dropped
+  // before the body is read or parsed.)
   const finalUrl = res.url || url;
+  if (!opts.allowPrivate && (await finalUrlIsPrivate(finalUrl))) {
+    return { ok: false, reason: "private-ip" };
+  }
+
   let html: string;
   try {
     html = await res.text();

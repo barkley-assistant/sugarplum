@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { serve } from "bun";
 import { createTestApp, type Jar, type TestAppHandle } from "./helpers";
 import { downloadImage, serveItemImage } from "../src/server/images";
+import type { SearxngFetch } from "../src/server/searxng";
 import type { OwnedItem } from "../src/shared/types";
 
 // 1x1 transparent PNG (magic: 89 50 4E 47 0D 0A 1A 0A)
@@ -29,7 +30,7 @@ describe("downloadImage", () => {
     });
     const dir = mkdtempSync(join(tmpdir(), "img-test-"));
     try {
-      const name = await downloadImage(`${srv.url}pic`, "item-1", { imagesDir: dir });
+      const name = await downloadImage(`${srv.url}pic`, "item-1", { imagesDir: dir, allowPrivate: true });
       expect(name).toBe("item-1.png");
       const file = Bun.file(join(dir, "item-1.png"));
       expect(await file.exists()).toBe(true);
@@ -53,9 +54,9 @@ describe("downloadImage", () => {
     });
     const dir = mkdtempSync(join(tmpdir(), "img-test-"));
     try {
-      const png = await downloadImage(`${srv.url}octet`, "item-2", { imagesDir: dir });
+      const png = await downloadImage(`${srv.url}octet`, "item-2", { imagesDir: dir, allowPrivate: true });
       expect(png).toBe("item-2.png");
-      const jpg = await downloadImage(`${srv.url}jpeg`, "item-3", { imagesDir: dir });
+      const jpg = await downloadImage(`${srv.url}jpeg`, "item-3", { imagesDir: dir, allowPrivate: true });
       expect(jpg).toBe("item-3.jpg");
     } finally {
       srv.stop(true);
@@ -70,7 +71,7 @@ describe("downloadImage", () => {
     });
     const dir = mkdtempSync(join(tmpdir(), "img-test-"));
     try {
-      const name = await downloadImage(`${srv.url}pic`, "item-4", { imagesDir: dir });
+      const name = await downloadImage(`${srv.url}pic`, "item-4", { imagesDir: dir, allowPrivate: true });
       expect(name).toBeNull();
       expect(await Bun.file(join(dir, "item-4.html")).exists()).toBe(false);
     } finally {
@@ -105,11 +106,11 @@ describe("downloadImage", () => {
     });
     const dir = mkdtempSync(join(tmpdir(), "img-test-"));
     try {
-      const byLength = await downloadImage(`${srv.url}cl`, "item-5", { imagesDir: dir });
+      const byLength = await downloadImage(`${srv.url}cl`, "item-5", { imagesDir: dir, allowPrivate: true });
       expect(byLength).toBeNull();
       expect(await Bun.file(join(dir, "item-5.png")).exists()).toBe(false);
 
-      const byStream = await downloadImage(`${srv.url}stream`, "item-6", { imagesDir: dir });
+      const byStream = await downloadImage(`${srv.url}stream`, "item-6", { imagesDir: dir, allowPrivate: true });
       expect(byStream).toBeNull();
       expect(await Bun.file(join(dir, "item-6.png")).exists()).toBe(false);
     } finally {
@@ -122,7 +123,7 @@ describe("downloadImage", () => {
     const srv = serve({ port: 0, fetch: () => new Response("nope", { status: 404 }) });
     const dir = mkdtempSync(join(tmpdir(), "img-test-"));
     try {
-      const missing = await downloadImage(`${srv.url}missing`, "item-7", { imagesDir: dir });
+      const missing = await downloadImage(`${srv.url}missing`, "item-7", { imagesDir: dir, allowPrivate: true });
       expect(missing).toBeNull();
     } finally {
       srv.stop(true);
@@ -133,7 +134,7 @@ describe("downloadImage", () => {
     const probe = serve({ port: 0, fetch: () => new Response("ok") });
     const closedUrl = probe.url.href;
     probe.stop(true);
-    const refused = await downloadImage(closedUrl, "item-8", { imagesDir: dir, timeoutMs: 1000 });
+    const refused = await downloadImage(closedUrl, "item-8", { imagesDir: dir, timeoutMs: 1000, allowPrivate: true });
     expect(refused).toBeNull();
   });
 });
@@ -247,6 +248,61 @@ describe("GET /api/wishlist/items/:id/image", () => {
         app.app.db.run("DELETE FROM wishlist_items WHERE id = ?", [id]);
       }
     } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("downloadImage SSRF guard (private ranges)", () => {
+  const PRIVATE_LITERALS = [
+    "http://127.0.0.1:9/pic",
+    "http://192.168.1.1:80/pic",
+    "http://169.254.0.1:80/pic",
+    "http://[::1]:8080/pic",
+  ];
+
+  test.each(PRIVATE_LITERALS)("literal private URL %s → null (never throws, nothing written)", async (url) => {
+    const dir = mkdtempSync(join(tmpdir(), "img-ssrf-"));
+    try {
+      const name = await downloadImage(url, "item-ssrf", { imagesDir: dir });
+      expect(name).toBeNull();
+      expect(await Bun.file(join(dir, "item-ssrf.png")).exists()).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("redirect target on a literal private IP → null (post-fetch final-URL check)", async () => {
+    const fetchImpl: SearxngFetch = async () => {
+      const res = new Response(PNG_1X1, { headers: { "Content-Type": "image/png" } });
+      Object.defineProperty(res, "url", { value: "http://127.0.0.1:8080/pic" });
+      return res;
+    };
+    const dir = mkdtempSync(join(tmpdir(), "img-ssrf-"));
+    try {
+      const name = await downloadImage("https://public.example.com/pic", "item-redir", {
+        imagesDir: dir,
+        fetchImpl,
+      });
+      expect(name).toBeNull();
+      expect(await Bun.file(join(dir, "item-redir.png")).exists()).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("allowPrivate: true → the local-server image path is untouched", async () => {
+    const srv = serve({
+      port: 0,
+      fetch: () => new Response(PNG_1X1, { headers: { "Content-Type": "image/png" } }),
+    });
+    const dir = mkdtempSync(join(tmpdir(), "img-ssrf-"));
+    try {
+      const name = await downloadImage(`${srv.url}pic`, "item-ok", { imagesDir: dir, allowPrivate: true });
+      expect(name).toBe("item-ok.png");
+      expect(await Bun.file(join(dir, "item-ok.png")).exists()).toBe(true);
+    } finally {
+      srv.stop(true);
       rmSync(dir, { recursive: true, force: true });
     }
   });

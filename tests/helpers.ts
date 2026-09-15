@@ -44,6 +44,11 @@ export function makeTestConfig(overrides: Partial<Config> = {}): { config: Confi
     imagesDir: join(dir, "images"),
     scraperUserAgent: "test-agent/1.0",
     maxEnrichConcurrency: 2,
+    // The ENTIRE test suite deliberately serves scrape/image targets from
+    // local Bun.serve servers on 127.0.0.1, so the test app explicitly opts
+    // out of the SSRF private-range guard. Explicit per-app opt-in — never a
+    // silent global; the production path (readConfig) never sets this.
+    allowPrivateFetch: true,
     ...overrides,
   };
   return { config, dir };

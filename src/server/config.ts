@@ -17,6 +17,12 @@ export interface Config {
   scraperUserAgent: string;
   /** Max concurrent enrichment jobs; clamped to [1, 8]. */
   maxEnrichConcurrency: number;
+  /**
+   * Test/operator escape hatch: allow outbound fetch targets on
+   * private/loopback ranges (scrape + product-image download). Production
+   * readConfig never sets this — tests opt in explicitly.
+   */
+  allowPrivateFetch?: boolean;
 }
 
 export class ConfigError extends Error {

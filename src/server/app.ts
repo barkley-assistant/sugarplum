@@ -42,6 +42,9 @@ export function createApp(config: Config): App {
     userAgent: config.scraperUserAgent,
     searxngUrl: config.searxngUrl,
     maxConcurrent: config.maxEnrichConcurrency,
+    // SSRF guard: production readConfig never sets allowPrivateFetch, so the
+    // default is guarded; only an explicit test/operator opt-in disables it.
+    allowPrivate: config.allowPrivateFetch ?? false,
   });
 
   const server = Bun.serve({

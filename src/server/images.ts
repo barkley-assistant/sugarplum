@@ -8,12 +8,17 @@
 import { Database } from "bun:sqlite";
 import { mkdirSync, unlinkSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
+import { isPrivateLiteralUrl, finalUrlIsPrivate } from "./net/private-ip";
+import type { SearxngFetch as FetchLike } from "./searxng";
 
 export interface ImageDeps {
   imagesDir: string;
-  fetchImpl?: typeof fetch;
+  fetchImpl?: FetchLike;
   maxBytes?: number;
   timeoutMs?: number;
+  /** Explicit opt-in to allow private/loopback targets (tests use local
+   *  Bun.serve servers on 127.0.0.1). Never a silent global. */
+  allowPrivate?: boolean;
 }
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -72,6 +77,12 @@ export async function downloadImage(url: string, itemId: string, deps: ImageDeps
   const maxBytes = deps.maxBytes ?? MAX_BYTES;
   const fetchImpl = deps.fetchImpl ?? fetch;
 
+  // SSRF guard: same private/loopback rule as the scraper. Literal private
+  // host → null before any network I/O; after the fetch the FINAL url is
+  // re-checked (redirect targets). Skipped only by the explicit allowPrivate
+  // opt-in. downloadImage never throws — private targets are just null.
+  if (!deps.allowPrivate && isPrivateLiteralUrl(url)) return null;
+
   let res: Response;
   try {
     res = await fetchImpl(url, { signal: AbortSignal.timeout(deps.timeoutMs ?? 10_000) });
@@ -79,6 +90,8 @@ export async function downloadImage(url: string, itemId: string, deps: ImageDeps
     return null;
   }
   if (!res.ok) return null;
+
+  if (!deps.allowPrivate && (await finalUrlIsPrivate(res.url || url))) return null;
 
   const declared = CONTENT_TYPE_EXT[(res.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase()];
   const contentLength = Number(res.headers.get("content-length"));

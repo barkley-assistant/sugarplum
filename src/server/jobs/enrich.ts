@@ -17,6 +17,9 @@ export interface EnrichmentDeps {
   searxngUrl?: string;
   maxConcurrent: number;
   fetchImpl?: typeof fetch; // test injection (scraper + searxng + image all honor it)
+  /** Explicit opt-in to allow private/loopback targets (the test app targets
+   *  local Bun.serve servers on 127.0.0.1). Never a silent global. */
+  allowPrivate?: boolean;
 }
 
 export interface EnrichmentQueue {
@@ -74,6 +77,7 @@ export function createEnrichmentQueue(deps: EnrichmentDeps): EnrichmentQueue {
     const result = await scrapeProduct(row.url, {
       userAgent: deps.userAgent,
       fetchImpl: deps.fetchImpl,
+      allowPrivate: deps.allowPrivate,
     });
 
     if (result.ok) {
@@ -152,6 +156,7 @@ async function applyScrape(
     const filename = await downloadImage(product.image, row.id, {
       imagesDir: deps.imagesDir,
       fetchImpl: deps.fetchImpl,
+      allowPrivate: deps.allowPrivate,
     });
     if (filename) {
       deps.db.run("UPDATE wishlist_items SET image_path = ? WHERE id = ?", [filename, row.id]);

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { serve } from "bun";
 import { extractProduct } from "../src/server/scraper/parse";
 import { scrapeProduct } from "../src/server/scraper";
+import type { SearxngFetch } from "../src/server/searxng";
 
 const FIXTURES = join(import.meta.dir, "fixtures");
 const PAGE_URL = "https://colourpop.example.com/products/fresh-kiss-trio";
@@ -66,7 +67,7 @@ describe("scrapeProduct", () => {
       },
     });
     try {
-      const result = await scrapeProduct(`${srv.url}product`, { userAgent: "UA/1.0" });
+      const result = await scrapeProduct(`${srv.url}product`, { userAgent: "UA/1.0", allowPrivate: true });
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.product.title).toBe("Fresh Kiss Trio");
@@ -81,7 +82,7 @@ describe("scrapeProduct", () => {
     const html = await Bun.file(join(FIXTURES, "botwall-captcha.html")).text();
     const srv = serve({ port: 0, fetch: () => new Response(html, { status: 200 }) });
     try {
-      const result = await scrapeProduct(`${srv.url}product`, { userAgent: "UA/1.0" });
+      const result = await scrapeProduct(`${srv.url}product`, { userAgent: "UA/1.0", allowPrivate: true });
       expect(result.ok).toBe(false);
       if (result.ok) return;
       expect(result.reason).toBe("botwall");
@@ -95,7 +96,7 @@ describe("scrapeProduct", () => {
     const html = await Bun.file(join(FIXTURES, "botwall-403.html")).text();
     const srv = serve({ port: 0, fetch: () => new Response(html, { status: 403 }) });
     try {
-      const result = await scrapeProduct(`${srv.url}product`, { userAgent: "UA/1.0" });
+      const result = await scrapeProduct(`${srv.url}product`, { userAgent: "UA/1.0", allowPrivate: true });
       expect(result.ok).toBe(false);
       if (result.ok) return;
       expect(result.reason).toBe("botwall");
@@ -116,11 +117,11 @@ describe("scrapeProduct", () => {
       },
     });
     try {
-      const notFound = await scrapeProduct(`${srv.url}404`, { userAgent: "UA/1.0" });
+      const notFound = await scrapeProduct(`${srv.url}404`, { userAgent: "UA/1.0", allowPrivate: true });
       expect(notFound.ok).toBe(false);
       if (!notFound.ok) expect(notFound.reason).toBe("http");
 
-      const serverError = await scrapeProduct(`${srv.url}500`, { userAgent: "UA/1.0" });
+      const serverError = await scrapeProduct(`${srv.url}500`, { userAgent: "UA/1.0", allowPrivate: true });
       expect(serverError.ok).toBe(false);
       if (!serverError.ok) expect(serverError.reason).toBe("http");
     } finally {
@@ -131,7 +132,7 @@ describe("scrapeProduct", () => {
     const probe = serve({ port: 0, fetch: () => new Response("ok") });
     const closedUrl = probe.url.href;
     probe.stop(true);
-    const refused = await scrapeProduct(closedUrl, { userAgent: "UA/1.0", timeoutMs: 1000 });
+    const refused = await scrapeProduct(closedUrl, { userAgent: "UA/1.0", timeoutMs: 1000, allowPrivate: true });
     expect(refused.ok).toBe(false);
     if (!refused.ok) expect(refused.reason).toBe("network");
   });
@@ -139,7 +140,7 @@ describe("scrapeProduct", () => {
   test("tiny body with no extractable meta → reason 'empty' (research §117)", async () => {
     const srv = serve({ port: 0, fetch: () => new Response("<html><body>hi</body></html>") });
     try {
-      const result = await scrapeProduct(`${srv.url}x`, { userAgent: "UA/1.0" });
+      const result = await scrapeProduct(`${srv.url}x`, { userAgent: "UA/1.0", allowPrivate: true });
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.reason).toBe("empty");
     } finally {
@@ -165,7 +166,7 @@ describe("scrapeProduct", () => {
       },
     });
     try {
-      const result = await scrapeProduct(`${srv.url}start`, { userAgent: "UA/1.0" });
+      const result = await scrapeProduct(`${srv.url}start`, { userAgent: "UA/1.0", allowPrivate: true });
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.product.image).toBe(`${srv.url}img/pic.jpg`);
@@ -184,7 +185,7 @@ describe("scrapeProduct", () => {
       },
     });
     try {
-      const result = await scrapeProduct(`${srv.url}hang`, { userAgent: "UA/1.0", timeoutMs: 300 });
+      const result = await scrapeProduct(`${srv.url}hang`, { userAgent: "UA/1.0", timeoutMs: 300, allowPrivate: true });
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.reason).toBe("network");
     } finally {
@@ -206,9 +207,79 @@ describe("scrapeProduct", () => {
       },
     });
     try {
-      const result = await scrapeProduct(`${srv.url}stall`, { userAgent: "UA/1.0", timeoutMs: 300 });
+      const result = await scrapeProduct(`${srv.url}stall`, { userAgent: "UA/1.0", timeoutMs: 300, allowPrivate: true });
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.reason).toBe("network");
+    } finally {
+      srv.stop(true);
+    }
+  });
+});
+
+describe("scrapeProduct SSRF guard (private ranges)", () => {
+  const PRIVATE_LITERALS = [
+    "http://127.0.0.1:9/product", // loopback
+    "http://10.0.0.5:80/x", // 10.0.0.0/8
+    "http://172.16.0.1:80/x", // 172.16.0.0/12 lower edge
+    "http://172.31.255.254:80/x", // 172.16.0.0/12 upper edge
+    "http://192.168.1.1:80/x", // 192.168.0.0/16
+    "http://169.254.0.1:80/x", // 169.254.0.0/16 link-local
+    "http://[::1]:8080/x", // IPv6 loopback
+    "http://[fc00::1]:8080/x", // fc00::/7 lower edge
+    "http://[fd12:3456:789a::1]:8080/x", // fc00::/7 (fdxx)
+    "http://[::ffff:127.0.0.1]:8080/x", // IPv4-mapped loopback must not bypass
+  ];
+
+  test.each(PRIVATE_LITERALS)("literal private URL %s → { ok:false, reason:'private-ip' } before any fetch", async (url) => {
+    const result = await scrapeProduct(url, { userAgent: "UA/1.0" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe("private-ip");
+  });
+
+  test("public literal IP host still fetches (fetchImpl stub — no real network)", async () => {
+    const html = await Bun.file(join(FIXTURES, "shopify.html")).text();
+    const seen: string[] = [];
+    const fetchImpl: SearxngFetch = async (input) => {
+      seen.push(String(input));
+      return new Response(html);
+    };
+    const result = await scrapeProduct("http://93.184.216.34:80/product", { userAgent: "UA/1.0", fetchImpl });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.product.title).toBe("Fresh Kiss Trio");
+    expect(seen).toEqual(["http://93.184.216.34:80/product"]);
+  });
+
+  test("redirect target on a literal private IP → 'private-ip' (post-fetch final-URL check)", async () => {
+    const fetchImpl: SearxngFetch = async () => {
+      const res = new Response("<html></html>", { status: 200 });
+      Object.defineProperty(res, "url", { value: "http://127.0.0.1:8080/admin" });
+      return res;
+    };
+    const result = await scrapeProduct("https://public.example.com/p", { userAgent: "UA/1.0", fetchImpl });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe("private-ip");
+  });
+
+  test("hostname that resolves to a private address → 'private-ip' (one DNS lookup on the final URL)", async () => {
+    const fetchImpl: SearxngFetch = async () => {
+      const res = new Response("<html></html>", { status: 200 });
+      Object.defineProperty(res, "url", { value: "http://localhost:9/product" });
+      return res;
+    };
+    const result = await scrapeProduct("http://localhost:9/product", { userAgent: "UA/1.0", fetchImpl });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe("private-ip");
+  });
+
+  test("allowPrivate: true → the local-server scrape path is untouched", async () => {
+    const html = await Bun.file(join(FIXTURES, "shopify.html")).text();
+    const srv = serve({ port: 0, fetch: () => new Response(html) });
+    try {
+      const result = await scrapeProduct(`${srv.url}product`, { userAgent: "UA/1.0", allowPrivate: true });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.product.title).toBe("Fresh Kiss Trio");
     } finally {
       srv.stop(true);
     }

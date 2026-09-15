@@ -437,4 +437,39 @@ describe("async enrichment", () => {
       rmSync(dirname(dbPath), { recursive: true, force: true });
     }
   });
+
+  test("private-IP URL with the SSRF guard enabled → fetchState 'failed' + last_fetch_error 'private-ip' (guard applies through the real pipeline when the test opt-in is OFF)", async () => {
+    // The default createTestApp opts out of the private-range guard (local
+    // servers everywhere); THIS app explicitly keeps the guard on.
+    const guardedApp = createTestApp({ allowPrivateFetch: false });
+    const jar = guardedApp.newJar();
+    await login(jar, "admin", "admin-password");
+    const userId = await myId(jar);
+    const srv = serve({ port: 0, fetch: () => new Response("<html>ok</html>") });
+    try {
+      const res = await jar.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${srv.port}/product`,
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+      expect(item.fetchState).toBe("pending");
+
+      expect(await waitForFetchState(jar, userId, item.id, "failed")).toBe(true);
+
+      const row = guardedApp.app.db
+        .query("SELECT fetch_state, last_fetch_error FROM wishlist_items WHERE id = ?")
+        .get(item.id) as { fetch_state: string; last_fetch_error: string | null };
+      expect(row.fetch_state).toBe("failed");
+      expect(row.last_fetch_error).toBe("private-ip");
+
+      // Graceful degradation: the item is still listed (visible incomplete
+      // state, not a dead end).
+      const list = await jar.request("GET", `/api/users/${userId}/wishlist`);
+      const items = (await list.json()) as OwnedItem[];
+      expect(items.some((i) => i.id === item.id)).toBe(true);
+    } finally {
+      srv.stop(true);
+      await guardedApp.cleanup();
+    }
+  });
 });

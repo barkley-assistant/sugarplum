@@ -5,6 +5,7 @@
 
 import { extractProduct, type ParsedProduct } from "./parse";
 import { fetchPage, type FetchFailure } from "./fetch";
+import type { SearxngFetch as FetchLike } from "../searxng";
 
 export type ScrapeResult =
   | { ok: true; product: ParsedProduct; finalUrl: string }
@@ -12,8 +13,11 @@ export type ScrapeResult =
 
 export interface ScrapeDeps {
   userAgent: string;
-  fetchImpl?: typeof fetch;
+  fetchImpl?: FetchLike;
   timeoutMs?: number;
+  /** Explicit opt-in to allow private/loopback targets (tests use local
+   *  Bun.serve servers on 127.0.0.1). Never a silent global. */
+  allowPrivate?: boolean;
 }
 
 export async function scrapeProduct(url: string, deps: ScrapeDeps): Promise<ScrapeResult> {
