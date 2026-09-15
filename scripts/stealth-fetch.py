@@ -14,6 +14,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import re
 import signal
 import sys
@@ -118,6 +119,12 @@ def main() -> int:
 
     profile_dir = profile_dir_for(Path(args.profiles_dir), host)
     remaining_ms = args.timeout_ms
+    # Bound the goto/page-load timeout well below the alarm budget so
+    # playwright's own TimeoutError lands inside the error-verdict path
+    # instead of racing the SIGALRM alarm — when the two fire at the
+    # same instant, the alarm's unwind wedges the playwright sync driver
+    # and the helper hangs forever with no JSON on stdout.
+    goto_timeout_ms = max(1000, remaining_ms - 3000)
 
     try:
         with InvisiblePlaywright(
@@ -127,7 +134,7 @@ def main() -> int:
             profile_dir=profile_dir,
         ) as ctx:
             page = ctx.new_page()
-            resp = page.goto(args.url, wait_until="domcontentloaded", timeout=remaining_ms)
+            resp = page.goto(args.url, wait_until="domcontentloaded", timeout=goto_timeout_ms)
             status = resp.status if resp is not None else None
 
             if resp is not None and status is not None and status >= 400:
@@ -162,8 +169,14 @@ def main() -> int:
             print(json.dumps(verdict), flush=True)
             return 0
     except ScrapeTimeout:
-        print(json.dumps({"ok": False, "reason": "timeout"}), flush=True)
-        return 0
+        # SIGALRM fired (launch wedged past the budget, or the alarm slipped
+        # in during the challenge-wait poll). The graceful `return 0`
+        # unwinds through the with-block __exit__, which can wedge on a
+        # stuck Firefox/Xvfb tree — print the verdict, flush, and die
+        # hard so the parent sees a definite exit.
+        sys.stdout.write(json.dumps({"ok": False, "reason": "timeout"}) + "\n")
+        sys.stdout.flush()
+        os._exit(0)
     except SystemExit:
         # SIGTERM path: the with-block already unwound (library teardown
         # reaped Firefox+Xvfb). Exit quietly without printing JSON — the
