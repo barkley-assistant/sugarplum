@@ -10,6 +10,7 @@ import { S } from "../strings";
 import { useToast } from "../toast";
 import { useDragReorder } from "../reorder";
 import { parseShareTarget } from "../format";
+import { useInstallPrompt } from "../pwa/install";
 import { AdminPanel } from "./AdminPanel";
 import { EmptyState } from "./EmptyState";
 import { FilterChips } from "./FilterChips";
@@ -33,6 +34,7 @@ export function AppPage() {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const toast = useToast();
   const reorder = useDragReorder(ownItems, onReorder);
+  const install = useInstallPrompt();
 
   useEffect(() => {
     void boot();
@@ -360,6 +362,18 @@ export function AppPage() {
             isAdmin={me.isAdmin}
             onLogout={logout}
             onAdmin={scrollToAdmin}
+            extra={
+              install.canInstall ? (
+                <button
+                  type="button"
+                  className="menu-item"
+                  role="menuitem"
+                  onClick={install.promptInstall}
+                >
+                  {S.pwa.install}
+                </button>
+              ) : undefined
+            }
           />
         </div>
       </header>
