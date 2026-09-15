@@ -13,7 +13,7 @@
 set -euo pipefail
 
 PY="${STEALTH_PY:-$(dirname "$PWD")/.stealth-venv/bin/python}"
-URL="${1:-https://www.smythstoys.com/en-gb/toys/lego-city-60456-police-boat-chase-toy/248662}"
+URL="${1:-https://www.smythstoys.com/en-gb/p/248662}"
 
 python3 -m py_compile scripts/stealth-fetch.py
 python3 -m py_compile scripts/stealth-verdict.py
