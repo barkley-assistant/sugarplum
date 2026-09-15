@@ -179,3 +179,59 @@ SESSION_SECRET.
   the app.
 - The dev instance on port 3499 and openwebui on 34999 are unrelated to this
   service; don't touch them.
+
+## Stealth scraper
+
+The `stealth-browser` strategy exists so bot-walled shops (currently Smyths
+Toys via Imperva Incapsula) can enrich. The chain in
+`src/server/scraper/overrides.ts` resolves per-host; the actual transport
+is a Python helper (`scripts/stealth-fetch.py`) that spawns an
+`invisible_playwright` Firefox from a sibling venv.
+
+### Venv location
+
+- Live: `$HOME/.local/share/.stealth-venv` (sibling of the live checkout).
+- Profiles: `~/.local/share/sugarplum/data/stealth-profiles/<host>/`
+  (gitignored; rides along with the existing `data/` backup).
+
+### Provision
+
+`scripts/deploy.sh` provisions the venv + engine the first time
+(marker-gated via `.stealth-venv/.provisioned`). Routine deploys skip
+the step in <1s. Override with `DEPLOY_STEALTH_VENV=<path>` or skip
+entirely with `DEPLOY_SKIP_STEALTH=1`.
+
+### Escape hatches
+
+- `SUGARPLUM_STEALTH_DISABLED=1` in the env file: the chain filters out
+  `stealth-browser` and falls through to plain-only. Use this if Firefox
+  is misbehaving and you want the rest of the service to keep working.
+- `rm -rf data/stealth-profiles/<host>`: force a fresh challenge solve
+  for a single host (e.g. after a wall cookie expires or a fingerprint
+  drift). The next scrape of that host re-solves into a clean profile;
+  other hosts are untouched.
+
+### Rare orphan cleanup
+
+The Linux build of `invisible_playwright` has no kernel kill-on-exit
+for the browser tree, so the timeout ladder is `helper SIGALRM →
+parent SIGTERM → parent SIGKILL`. SIGKILL can orphan the Firefox + Xvfb
+tree (~300-400MB). Check for one with:
+
+    ps aux | grep invisible-playwright
+    # engine path is distinctive (under ~/.cache/invisible-playwright)
+
+If one is stuck, reap it narrowly — never a blanket Firefox kill:
+
+    pkill -f 'invisible-playwright/firefox'
+    pkill -f Xvfb
+
+### Manual smoke
+
+For a one-off real-Smyths run (NEVER in CI):
+
+    STEALTH_PY=/path/to/venv/bin/python bash scripts/stealth-smoke.sh
+
+Run 1 is the cold profile (challenge solve); run 2 is the warm profile
+(no re-solve). The script asserts both verdicts are `ok=true` and the
+HTML lengths look like real pages, then prints a one-line summary.
