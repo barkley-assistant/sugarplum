@@ -1,6 +1,18 @@
 import { useState, type FormEvent } from "react";
 import { S } from "../strings";
 
+/** Open-redirect guard: only follow a same-site relative path. The
+ *  share-target prefill fix uses /login?next=<encoded path>; any other
+ *  shape (absolute URL, protocol-relative `//evil.example`, empty) falls
+ *  back to the home shell. */
+function safeNext(raw: string | null): string {
+  if (!raw) return "/";
+  if (raw.length > 512) return "/";
+  if (!raw.startsWith("/")) return "/";
+  if (raw.startsWith("//")) return "/";
+  return raw;
+}
+
 export function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -19,7 +31,12 @@ export function Login() {
       });
       if (res.status === 200) {
         // Full navigation so the session cookie applies to the shell fetch.
-        location.href = "/";
+        // Honor ?next= for the share-target carry-through; the safeNext guard
+        // blocks open redirects via `//attacker.example` etc.
+        const next = safeNext(
+          new URLSearchParams(location.search).get("next"),
+        );
+        location.href = next;
         return;
       }
       if (res.status === 429) {

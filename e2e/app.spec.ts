@@ -249,6 +249,59 @@ test("12: primary button contrast meets WCAG AA (>= 4.5)", async ({ page }) => {
   expect(ratio).toBeGreaterThanOrEqual(4.5);
 });
 
+test("13: offline reload still shows a previously loaded list", async ({ page, context }) => {
+  // Seed an item the SW will cache on the next reload, then load the app
+  // once online so boot() writes the last-known me to localStorage.
+  const added = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Offline candle" },
+  });
+  expect(added.status()).toBe(201);
+  await page.goto(`${BASE}/`);
+  await expect(page.getByRole("heading", { name: "Offline candle" })).toBeVisible();
+
+  // Now drop the network: a reload must still render the cached card.
+  await context.setOffline(true);
+  try {
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Offline candle" })).toBeVisible();
+  } finally {
+    await context.setOffline(false);
+  }
+});
+
+test("14: share-target GET prefills the add sheet through the login hop", async ({ page, context }) => {
+  // Log out by dropping the session cookie — the shared context carries
+  // it forward from beforeEach, so a fresh cookie jar starts the user off
+  // the same way an Android share-target recipient lands.
+  await context.clearCookies();
+  await page.goto(`${BASE}/add?url=https%3A%2F%2Fexample.com%2Fshared&title=Shared%20mug`);
+
+  // The 401 hop must carry the share URL forward (encoded), not silently
+  // drop the prefill onto /.
+  await expect(page).toHaveURL(/\/login\?next=/);
+  await page.getByLabel("Username").fill("admin");
+  await page.getByLabel("Password").fill("admin-password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+
+  // After sign-in we land back on /add with the sheet open and the title
+  // + link prefilled. Submit and confirm the card renders.
+  const sheet = page.getByRole("dialog", { name: "Add item" });
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByLabel("Title")).toHaveValue("Shared mug");
+  await expect(sheet.getByLabel("Link")).toHaveValue("https://example.com/shared");
+  await sheet.getByRole("button", { name: "Add item" }).click();
+  await expect(page.getByRole("heading", { name: "Shared mug" })).toBeVisible();
+
+  // Open-redirect guard: a protocol-relative `next` must fall back to /.
+  await page.request.post(`${BASE}/api/auth/logout`);
+  await context.clearCookies();
+  await page.goto(`${BASE}/login?next=${encodeURIComponent("//evil.example/x")}`);
+  await page.getByLabel("Username").fill("admin");
+  await page.getByLabel("Password").fill("admin-password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/$/);
+});
+
 /** Local static fixture server: the app's scraper (server-side) fetches it,
  *  so it must listen on 127.0.0.1 — the e2e server runs with
  *  SUGARPLUM_ALLOW_PRIVATE_FETCH=1 (global-setup). */

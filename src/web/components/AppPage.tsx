@@ -19,6 +19,59 @@ import { ItemList, ListHeading, type OwnerRef } from "./ItemList";
 import { SkeletonList } from "./SkeletonList";
 import { UserMenu } from "./UserMenu";
 
+/** localStorage keys. The cached `me` lets boot() render offline using the
+ *  last known identity (so the SW's cached list bytes — keyed by user id —
+ *  can be requested by URL). `summary` powers the user-switcher chips. */
+const STORAGE_KEY_ME = "sugarplum.me";
+const STORAGE_KEY_SUMMARY = "sugarplum.summary";
+
+function readStoredMe(): Me | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_ME);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<Me>;
+    if (typeof parsed.id === "string" && parsed.id.length > 0) {
+      return {
+        id: parsed.id,
+        username: parsed.username ?? "",
+        displayName: parsed.displayName ?? "",
+        isAdmin: Boolean(parsed.isAdmin),
+      };
+    }
+  } catch {
+    // Corrupted entry — ignore and fall through to no-identity error.
+  }
+  return null;
+}
+
+function writeStoredMe(me: Me): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_ME, JSON.stringify(me));
+  } catch {
+    // Storage may be unavailable (private mode); offline fallback just won't work.
+  }
+}
+
+function readStoredSummary(): WishlistSummaryRow[] | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_SUMMARY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed as WishlistSummaryRow[];
+  } catch {
+    // Ignore.
+  }
+  return null;
+}
+
+function writeStoredSummary(rows: WishlistSummaryRow[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_SUMMARY, JSON.stringify(rows));
+  } catch {
+    // Ignore.
+  }
+}
+
 export function AppPage() {
   const [me, setMe] = useState<Me | null>(null);
   const [summary, setSummary] = useState<WishlistSummaryRow[]>([]);
@@ -45,11 +98,34 @@ export function AppPage() {
     try {
       const meRes = await fetch("/api/auth/me");
       if (meRes.status === 401) {
-        location.href = "/login";
+        // Carry share-target prefill through the login hop.
+        const here = location.pathname + location.search;
+        location.href = `/login?next=${encodeURIComponent(here)}`;
+        return;
+      }
+      if (!meRes.ok) {
+        // Offline (or any non-401 network failure). Fall back to the last-known
+        // identity cached from a prior successful boot so we can request the
+        // SW-cached list bytes by the right URL.
+        const stored = readStoredMe();
+        if (!stored) {
+          setError(S.errors.loadWishlist);
+          setBooted(true);
+          return;
+        }
+        setMe(stored);
+        const cachedSummary = readStoredSummary();
+        if (cachedSummary) setSummary(cachedSummary);
+        const share = parseShareTarget(new URLSearchParams(location.search));
+        setPrefill({ url: share.url, title: share.title });
+        if (share.url || share.title) setAddOpen(true);
+        await Promise.all([refreshSummary(stored.id), refreshOwnList(stored.id)]);
+        setBooted(true);
         return;
       }
       const meBody = (await meRes.json()) as Me;
       setMe(meBody);
+      writeStoredMe(meBody);
 
       // Share Target seam: /add?url=&title=&text= prefills the add form.
       // title falls back to the first line of text; url to the first
@@ -62,16 +138,33 @@ export function AppPage() {
       if (meBody.isAdmin) await refreshUsers();
       setBooted(true);
     } catch {
-      setError(S.errors.loadWishlist);
+      const stored = readStoredMe();
+      if (!stored) {
+        setError(S.errors.loadWishlist);
+        setBooted(true);
+        return;
+      }
+      setMe(stored);
+      const cachedSummary = readStoredSummary();
+      if (cachedSummary) setSummary(cachedSummary);
       setBooted(true);
     }
   }
 
-  async function refreshSummary() {
+  async function refreshSummary(forUserId?: string) {
     setRefreshing(true);
     try {
       const res = await fetch("/api/wishlist/summary");
-      if (res.ok) setSummary((await res.json()) as WishlistSummaryRow[]);
+      if (res.ok) {
+        const rows = (await res.json()) as WishlistSummaryRow[];
+        setSummary(rows);
+        // Only persist rows that match a known identity — when the viewer
+        // impersonates, we don't want to clobber the owner's chips with
+        // an unfiltered fetch.
+        if (!forUserId || rows.some((r) => r.userId === forUserId)) {
+          writeStoredSummary(rows);
+        }
+      }
     } finally {
       setRefreshing(false);
     }
@@ -219,6 +312,12 @@ export function AppPage() {
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
+    try {
+      localStorage.removeItem(STORAGE_KEY_ME);
+      localStorage.removeItem(STORAGE_KEY_SUMMARY);
+    } catch {
+      // Ignore.
+    }
     location.href = "/login";
   }
 
