@@ -148,6 +148,53 @@ describe("async enrichment", () => {
     }
   });
 
+  test("mid-body stall: server sends headers then never closes the body → fetchState 'failed' + 'network' error, NOT stuck 'pending' (dead-end regression)", async () => {
+    await login(admin, "admin", "admin-password");
+    const userId = await myId(admin);
+    const stall = serve({
+      port: 0,
+      fetch: () => {
+        const stream = new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode("<html><head><title>partial"));
+            // never close() — the body stalls after the headers
+          },
+        });
+        return new Response(stream, { status: 200 });
+      },
+    });
+    try {
+      const res = await admin.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${stall.port}/stall`,
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+
+      // The default scrape timeout is 10s; wait past it for the failure to land.
+      expect(
+        await waitFor(async () => {
+          const list = await admin.request("GET", `/api/users/${userId}/wishlist`);
+          if (list.status !== 200) return false;
+          const items = (await list.json()) as OwnedItem[];
+          return items.find((i) => i.id === item.id)?.fetchState === "failed";
+        }, 15_000),
+      ).toBe(true);
+
+      const row = app.app.db
+        .query("SELECT fetch_state, last_fetch_error FROM wishlist_items WHERE id = ?")
+        .get(item.id) as { fetch_state: string; last_fetch_error: string | null };
+      expect(row.fetch_state).toBe("failed");
+      expect(row.last_fetch_error).toContain("network");
+
+      // Item still listed → Retry affordance available, no dead end.
+      const list = await admin.request("GET", `/api/users/${userId}/wishlist`);
+      const items = (await list.json()) as OwnedItem[];
+      expect(items.some((i) => i.id === item.id)).toBe(true);
+    } finally {
+      stall.stop(true);
+    }
+  }, 20_000);
+
   test("bot-walled URL + searxng configured + hint found → fetchState 'complete' + hint_* stored + price_history row (source 'searxng-hint'); price_cents stays NULL", async () => {
     const botwall = await Bun.file(join(FIXTURES, "botwall-captcha.html")).text();
     const wall = serve({ port: 0, fetch: () => new Response(botwall, { status: 200 }) });

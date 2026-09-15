@@ -65,7 +65,15 @@ export async function fetchPage(url: string, opts: FetchPageOptions): Promise<Fe
   }
 
   const finalUrl = res.url || url;
-  const html = await res.text();
+  let html: string;
+  try {
+    html = await res.text();
+  } catch {
+    // Headers arrived but the body stalled or reset mid-read (a server that
+    // sends headers then never closes the stream). Same class of failure as
+    // the fetch itself — "network", never a throw out of the pipeline.
+    return { ok: false, reason: "network" };
+  }
 
   const heuristic = detectBotWall(html);
   if (heuristic) return { ok: false, reason: "botwall", status: res.status, heuristic };

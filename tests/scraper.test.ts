@@ -191,4 +191,26 @@ describe("scrapeProduct", () => {
       srv.stop(true);
     }
   });
+
+  test("mid-body stall: headers sent, stream enqueues partial HTML then never closes → 'network', NOT a throw (regression: res.text() was outside the try/catch)", async () => {
+    const srv = serve({
+      port: 0,
+      fetch: () => {
+        const stream = new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode("<html><head><title>partial"));
+            // never close() — the body stalls after the headers
+          },
+        });
+        return new Response(stream, { status: 200 });
+      },
+    });
+    try {
+      const result = await scrapeProduct(`${srv.url}stall`, { userAgent: "UA/1.0", timeoutMs: 300 });
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toBe("network");
+    } finally {
+      srv.stop(true);
+    }
+  });
 });
