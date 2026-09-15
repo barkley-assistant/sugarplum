@@ -11,6 +11,7 @@ interface ItemRow {
   title: string;
   url: string | null;
   image_path: string | null;
+  image_source: string | null;
   price_cents: number | null;
   currency: string | null;
   notes: string | null;
@@ -68,6 +69,7 @@ function commonItem(row: ItemRow): CommonItem {
     title: row.title,
     url: row.url,
     imagePath: row.image_path,
+    imageSource: row.image_source,
     priceCents: row.price_cents === null ? null : formatPrice(row.price_cents),
     currency: row.currency,
     notes: row.notes,
@@ -100,7 +102,7 @@ function toPublicItem(row: ItemRow, viewerId: string): PublicItem {
 }
 
 const ITEM_SELECT = `
-  SELECT id, user_id, title, url, image_path, price_cents, currency, notes, tags,
+  SELECT id, user_id, title, url, image_path, image_source, price_cents, currency, notes, tags,
          sort_order, created_at, updated_at, claimed_by, claimed_at,
          fetch_state, last_fetch_error, site_name, hint_price_cents, hint_currency, hint_source_url
   FROM wishlist_items`;

@@ -66,6 +66,27 @@ function serveShopifyPage(): ReturnType<typeof serve> {
   });
 }
 
+const AMAZON_HIRES = "https://m.media-amazon.com/images/I/91Mzr09ls6L._AC_SL1500_.jpg";
+
+/** The amazon-dp-nooffer fixture over a LOCAL server: its media-amazon image
+ *  URL is rewritten to this server, so extraction+image stay on localhost and
+ *  still exercise the real generic DOM tier (title + image, no main-ASIN
+ *  price — exactly what a no-featured-offer Amazon page yields). */
+function serveAmazonNoOfferPage(): ReturnType<typeof serve> {
+  const fixture = Bun.file(join(FIXTURES, "amazon-dp-nooffer.html")).text();
+  return serve({
+    port: 0,
+    fetch: async (req) => {
+      const url = new URL(req.url);
+      if (url.pathname === "/img/lego.jpg") {
+        return new Response(JPEG_BYTES, { headers: { "Content-Type": "image/jpeg" } });
+      }
+      const html = (await fixture).replace(AMAZON_HIRES, `${url.origin}/img/lego.jpg`);
+      return new Response(html);
+    },
+  });
+}
+
 let app: TestAppHandle;
 let admin: Jar;
 
@@ -472,4 +493,257 @@ describe("async enrichment", () => {
       await guardedApp.cleanup();
     }
   });
+
+  test("partial-ok: scrape ok with NO price → stays 'complete', image stored, searxng price hint attached", async () => {
+    const searx = serve({
+      port: 0,
+      fetch: () =>
+        new Response(
+          JSON.stringify({
+            results: [
+              {
+                title: "LEGO City Explorer Diving Boat — Reseller",
+                url: "https://reseller.example.com/p/1",
+                content: "Only £24.99 today",
+              },
+            ],
+          }),
+        ),
+    });
+    const partialApp = createTestApp({ searxngUrl: `http://127.0.0.1:${searx.port}` });
+    const jar = partialApp.newJar();
+    await login(jar, "admin", "admin-password");
+    const userId = await myId(jar);
+    const page = serveAmazonNoOfferPage();
+    try {
+      const res = await jar.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${page.port}/dp/B0BPCCKL3N`,
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+
+      expect(await waitForFetchState(jar, userId, item.id, "complete")).toBe(true);
+      // fetch_state flips before the hint block runs — poll for the hint itself.
+      expect(
+        await waitFor(async () => {
+          const r = partialApp.app.db
+            .query("SELECT hint_price_cents FROM wishlist_items WHERE id = ?")
+            .get(item.id) as { hint_price_cents: number | null };
+          return r.hint_price_cents === 2499;
+        }),
+      ).toBe(true);
+
+      const row = partialApp.app.db
+        .query(
+          `SELECT fetch_state, last_fetch_error, title, price_cents, hint_price_cents,
+                  hint_currency, hint_source_url, image_path
+           FROM wishlist_items WHERE id = ?`,
+        )
+        .get(item.id) as {
+        fetch_state: string;
+        last_fetch_error: string | null;
+        title: string;
+        price_cents: number | null;
+        hint_price_cents: number | null;
+        hint_currency: string | null;
+        hint_source_url: string | null;
+        image_path: string | null;
+      };
+      // A title+image item is a success, not a failure.
+      expect(row.fetch_state).toBe("complete");
+      expect(row.last_fetch_error).toBeNull();
+      expect(row.title).toContain("LEGO City Explorer Diving Boat");
+      expect(row.image_path).toBe(`${item.id}.jpg`);
+      // Honest: no main-ASIN price exists on that page, so the direct column
+      // stays NULL and the search value is a SEPARATE, labelled hint.
+      expect(row.price_cents).toBeNull();
+      expect(row.hint_price_cents).toBe(2499);
+      expect(row.hint_currency).toBe("GBP");
+      expect(row.hint_source_url).toBe("https://reseller.example.com/p/1");
+
+      const history = partialApp.app.db
+        .query("SELECT price_cents, source FROM price_history WHERE item_id = ?")
+        .all(item.id) as { price_cents: number; source: string }[];
+      expect(history.some((h) => h.price_cents === 2499 && h.source === "searxng-hint")).toBe(true);
+
+      const list = await jar.request("GET", `/api/users/${userId}/wishlist`);
+      const items = (await list.json()) as OwnedItem[];
+      const dto = items.find((i) => i.id === item.id) as OwnedItem;
+      expect(dto.priceCents).toBeNull();
+      expect(dto.hintPriceCents).toBe("24.99");
+    } finally {
+      page.stop(true);
+      searx.stop(true);
+      await partialApp.cleanup();
+    }
+  }, 20_000);
+
+  test("complete scrape WITH a price+image → searxng is never queried", async () => {
+    let searxCalls = 0;
+    const searx = serve({
+      port: 0,
+      fetch: () => {
+        searxCalls++;
+        return new Response(JSON.stringify({ results: [] }));
+      },
+    });
+    const pricedApp = createTestApp({ searxngUrl: `http://127.0.0.1:${searx.port}` });
+    const jar = pricedApp.newJar();
+    await login(jar, "admin", "admin-password");
+    const userId = await myId(jar);
+    const shop = serveShopifyPage();
+    try {
+      const res = await jar.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${shop.port}/product`,
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+      expect(await waitForFetchState(jar, userId, item.id, "complete")).toBe(true);
+      // image_path is written BEFORE the (skipped) hint block, so waiting for
+      // it proves the worker ran past the point where a query would fire.
+      expect(
+        await waitFor(async () => {
+          const r = pricedApp.app.db
+            .query("SELECT image_path FROM wishlist_items WHERE id = ?")
+            .get(item.id) as { image_path: string | null };
+          return r.image_path !== null;
+        }),
+      ).toBe(true);
+
+      const row = pricedApp.app.db
+        .query("SELECT price_cents, hint_price_cents FROM wishlist_items WHERE id = ?")
+        .get(item.id) as { price_cents: number | null; hint_price_cents: number | null };
+      expect(row.price_cents).toBe(2500);
+      expect(row.hint_price_cents).toBeNull();
+      expect(searxCalls).toBe(0);
+    } finally {
+      shop.stop(true);
+      searx.stop(true);
+      await pricedApp.cleanup();
+    }
+  }, 20_000);
+
+  test("page with NO image at all → searxng image fallback stored with source 'search'", async () => {
+    const imgHost = serve({
+      port: 0,
+      fetch: () => new Response(JPEG_BYTES, { headers: { "Content-Type": "image/jpeg" } }),
+    });
+    const searx = serve({
+      port: 0,
+      fetch: () =>
+        new Response(
+          JSON.stringify({
+            results: [
+              {
+                title: "Widget 9000 — Reseller",
+                url: "https://reseller.example.com/p/1",
+                content: "no price in this snippet",
+                img_src: `${imgHost.url}search.jpg`,
+              },
+            ],
+          }),
+        ),
+    });
+    // Title-only page: extractable, but no image and no price anywhere.
+    const textOnly = serve({
+      port: 0,
+      fetch: () =>
+        new Response(
+          "<!DOCTYPE html><html><head><title>Widget 9000</title></head><body><h1>Widget 9000</h1></body></html>",
+        ),
+    });
+    const imgApp = createTestApp({ searxngUrl: `http://127.0.0.1:${searx.port}` });
+    const jar = imgApp.newJar();
+    await login(jar, "admin", "admin-password");
+    const userId = await myId(jar);
+    try {
+      const res = await jar.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${textOnly.port}/products/widget-9000`,
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+
+      expect(await waitForFetchState(jar, userId, item.id, "complete")).toBe(true);
+      expect(
+        await waitFor(async () => {
+          const r = imgApp.app.db
+            .query("SELECT image_path FROM wishlist_items WHERE id = ?")
+            .get(item.id) as { image_path: string | null };
+          return r.image_path !== null;
+        }),
+      ).toBe(true);
+
+      const row = imgApp.app.db
+        .query("SELECT fetch_state, image_path, image_source, price_cents FROM wishlist_items WHERE id = ?")
+        .get(item.id) as {
+        fetch_state: string;
+        image_path: string | null;
+        image_source: string | null;
+        price_cents: number | null;
+      };
+      expect(row.fetch_state).toBe("complete");
+      expect(row.image_path).toBe(`${item.id}.jpg`);
+      expect(row.image_source).toBe("search"); // labelled provenance, not 'direct'
+      expect(row.price_cents).toBeNull(); // the snippet carried no price
+
+      // Stored file is served through the normal image route.
+      const served = await jar.request("GET", `/api/wishlist/items/${item.id}/image`);
+      expect(served.status).toBe(200);
+
+      const list = await jar.request("GET", `/api/users/${userId}/wishlist`);
+      const items = (await list.json()) as OwnedItem[];
+      const dto = items.find((i) => i.id === item.id) as OwnedItem;
+      expect(dto.imageSource).toBe("search");
+    } finally {
+      textOnly.stop(true);
+      imgHost.stop(true);
+      searx.stop(true);
+      await imgApp.cleanup();
+    }
+  }, 20_000);
+
+  test("searxng unreachable → item stays 'complete' with no image (no crash, no dead end)", async () => {
+    const probe = serve({ port: 0, fetch: () => new Response("x") });
+    const deadUrl = probe.url.href.replace(/\/$/, "");
+    probe.stop(true); // free port → connection refused
+
+    const textOnly = serve({
+      port: 0,
+      fetch: () =>
+        new Response(
+          "<!DOCTYPE html><html><head><title>Widget 9000</title></head><body><h1>Widget 9000</h1></body></html>",
+        ),
+    });
+    const deadApp = createTestApp({ searxngUrl: deadUrl });
+    const jar = deadApp.newJar();
+    await login(jar, "admin", "admin-password");
+    const userId = await myId(jar);
+    try {
+      const res = await jar.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${textOnly.port}/products/widget-9000`,
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+      expect(await waitForFetchState(jar, userId, item.id, "complete")).toBe(true);
+
+      // Give the (failing) hint legs time to settle, then confirm the row was
+      // not dragged into 'failed' by an unreachable hint service.
+      await Bun.sleep(400);
+      const row = deadApp.app.db
+        .query("SELECT fetch_state, last_fetch_error, image_path, image_source FROM wishlist_items WHERE id = ?")
+        .get(item.id) as {
+        fetch_state: string;
+        last_fetch_error: string | null;
+        image_path: string | null;
+        image_source: string | null;
+      };
+      expect(row.fetch_state).toBe("complete");
+      expect(row.last_fetch_error).toBeNull();
+      expect(row.image_path).toBeNull();
+      expect(row.image_source).toBeNull();
+    } finally {
+      textOnly.stop(true);
+      await deadApp.cleanup();
+    }
+  }, 20_000);
 });

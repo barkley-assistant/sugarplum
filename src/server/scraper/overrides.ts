@@ -20,6 +20,22 @@ export interface SiteOverride {
   notes: string;
 }
 
+/** Amazon regional storefronts. The served HTML carries NO og:*, NO JSON-LD
+ *  and NO microdata on ANY transport (plain or stealth), so price/image come
+ *  from the extractor's generic DOM tier (parse.ts); this entry only decides
+ *  how the page is fetched. Measured 2026-09-15: a plain fetch from a
+ *  residential IP passes Amazon's wall on both an available and a no-featured-
+ *  offer ASIN, and stealth costs a browser launch (~2-6s, ~250-400MB) — so
+ *  stealth is the fallback. If Amazon tightens, flip the order in one line. */
+const AMAZON_OVERRIDE: SiteOverride = {
+  strategies: ["plain", "stealth-browser"],
+  notes:
+    "No og:/JSON-LD/microdata in served HTML — extraction via the generic DOM " +
+    "tier. Plain fetch passes from a residential IP (2026-09-15); stealth " +
+    "fallback if that changes. Evidence: docs/research/product-scraping.md " +
+    "§2026-09-15 Amazon ground truth",
+};
+
 /** key = exact hostname, lowercase, no leading "www.". */
 export const SITE_OVERRIDES: Record<string, SiteOverride> = {
   "smythstoys.com": {
@@ -28,6 +44,9 @@ export const SITE_OVERRIDES: Record<string, SiteOverride> = {
       "Imperva Incapsula JS challenge + fingerprinting; plain fetch gets " +
       "403 / 1KB interstitial. Proof: docs/research/stealth-browser-proof.md",
   },
+  "amazon.co.uk": AMAZON_OVERRIDE,
+  "amazon.com": AMAZON_OVERRIDE,
+  "amazon.de": AMAZON_OVERRIDE,
 };
 
 /** hostname("https://WWW.SmythsToys.com/x") → "smythstoys.com" or null. */

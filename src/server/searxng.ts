@@ -5,6 +5,8 @@
  * display data — they never overwrite a direct scrape.
  */
 
+import { SYMBOL_CURRENCY } from "./scraper/parse";
+
 export interface PriceHint {
   priceCents: number;
   currency: string;
@@ -25,7 +27,6 @@ export type SearxngFetch = (
   init?: RequestInit,
 ) => Promise<Response>;
 
-const SYMBOL_CURRENCY: Record<string, string> = { $: "USD", "£": "GBP", "€": "EUR" };
 const PRICE_RE = /([$£€])\s?(\d{1,4}(?:[.,]\d{1,2})?)/;
 const NOISE_TERMS = new Set(["products", "dp", "itm", "ip", "p", "ref", "gp"]);
 
@@ -92,6 +93,43 @@ export async function searchPriceHint(query: string, deps: SearxngDeps): Promise
       sourceUrl: result.url,
       title: result.title,
     };
+  }
+  return null;
+}
+
+/** Best-effort SearXNG image fallback (issue #12 "image via search"). Same
+ *  contract as the price hint: one request, never throws, null when nothing
+ *  usable comes back. `categories=images` is what makes a SearXNG instance
+ *  populate `img_src` at all — general results carry an EMPTY img_src string
+ *  (verified against the household instance 2026-09-15), so an empty/absent
+ *  field just means "try the next result". */
+export async function searchImageHint(query: string, deps: SearxngDeps): Promise<string | null> {
+  const fetchImpl = deps.fetchImpl ?? fetch;
+
+  let res: Response;
+  try {
+    res = await fetchImpl(
+      `${deps.baseUrl}/search?q=${encodeURIComponent(query)}&format=json&categories=images`,
+      { signal: AbortSignal.timeout(deps.timeoutMs ?? 5_000) },
+    );
+  } catch {
+    return null;
+  }
+  if (!res.ok) return null;
+
+  let payload: { results?: unknown[] };
+  try {
+    payload = (await res.json()) as { results?: unknown[] };
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(payload.results)) return null;
+
+  for (const raw of payload.results) {
+    if (typeof raw !== "object" || raw === null) continue;
+    const result = raw as Record<string, unknown>;
+    const img = typeof result.img_src === "string" ? result.img_src.trim() : "";
+    if (/^https?:\/\//i.test(img)) return img;
   }
   return null;
 }

@@ -21,6 +21,10 @@ export interface CommonItem {
   title: string;
   url: string | null;
   imagePath: string | null;
+  /** Where imagePath came from: 'direct' (downloaded from the pasted page),
+   *  'search' (labelled SearXNG fallback image), or null for rows that
+   *  predate the column. */
+  imageSource: string | null;
   priceCents: string | null;
   currency: string | null;
   notes: string | null;
