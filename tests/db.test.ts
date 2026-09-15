@@ -24,18 +24,18 @@ afterAll(() => {
 describe("db migrations", () => {
   test("migrations are idempotent", () => {
     const version = db.query("PRAGMA user_version").get() as { user_version: number };
-    expect(version.user_version).toBe(2);
+    expect(version.user_version).toBe(3);
 
     // Re-run migrations on the same connection (and a second open) — no-op.
     runMigrations(db);
     const again = openDatabase(dbPath);
-    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 2 });
+    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 3 });
     again.close();
   });
 
-  test("v2 migration adds fetch_state family; old rows stay 'complete'", () => {
+  test("v2 (enrichment state) + v3 (image provenance) columns exist on an upgraded db", () => {
     const v = db.query("PRAGMA user_version").get() as { user_version: number };
-    expect(v.user_version).toBe(2);
+    expect(v.user_version).toBe(3);
     const cols = db.query("PRAGMA table_info(wishlist_items)").all() as { name: string }[];
     for (const c of [
       "fetch_state",
@@ -44,12 +44,13 @@ describe("db migrations", () => {
       "hint_price_cents",
       "hint_currency",
       "hint_source_url",
+      "image_source",
     ]) {
       expect(cols.some((x) => x.name === c)).toBe(true);
     }
 
-    // A row created under the v1 schema (before v2 ran) reads 'complete' —
-    // the DEFAULT guarantees zero data migration.
+    // A row created under the v1 schema (before v2/v3 ran) reads 'complete'
+    // with NULL provenance — the DEFAULT guarantees zero data migration.
     const freshPath = join(dir, "v2-upgrade.sqlite");
     const fresh = new Database(freshPath);
     try {
@@ -69,13 +70,19 @@ describe("db migrations", () => {
         "Old item",
       ]);
       runMigrations(fresh);
-      expect((fresh.query("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(2);
+      expect((fresh.query("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(3);
       const row = fresh
-        .query("SELECT fetch_state, site_name, hint_price_cents FROM wishlist_items WHERE id = ?")
-        .get("v2-upgrade-item") as { fetch_state: string; site_name: string | null; hint_price_cents: number | null };
+        .query("SELECT fetch_state, site_name, hint_price_cents, image_source FROM wishlist_items WHERE id = ?")
+        .get("v2-upgrade-item") as {
+        fetch_state: string;
+        site_name: string | null;
+        hint_price_cents: number | null;
+        image_source: string | null;
+      };
       expect(row.fetch_state).toBe("complete");
       expect(row.site_name).toBeNull();
       expect(row.hint_price_cents).toBeNull();
+      expect(row.image_source).toBeNull(); // no backfill: reads as 'direct'
     } finally {
       fresh.close();
       rmSync(freshPath, { force: true });
