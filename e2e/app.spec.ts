@@ -299,7 +299,10 @@ test("14: share-target GET prefills the add sheet through the login hop", async 
   await page.getByLabel("Username").fill("admin");
   await page.getByLabel("Password").fill("admin-password");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  // Pin the ORIGIN, not just a trailing slash: the off-site navigation
+  // to a non-resolving host ends on chrome-error://chromewebdata/, whose
+  // URL ends in "/", so /\/$/ passes vacuously on the unguarded code.
+  await expect(page).toHaveURL(`${BASE}/`);
 
   // Open-redirect guard, bypass class: WHATWG URL parsing treats
   // backslash / tab / LF / CR as a slash, so /\<host>, /\t<host>, /\n<host>
@@ -312,7 +315,10 @@ test("14: share-target GET prefills the add sheet through the login hop", async 
   await page.getByLabel("Username").fill("admin");
   await page.getByLabel("Password").fill("admin-password");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  // Pin the ORIGIN, not just a trailing slash: the off-site navigation
+  // to a non-resolving host ends on chrome-error://chromewebdata/, whose
+  // URL ends in "/", so /\/$/ passes vacuously on the unguarded code.
+  await expect(page).toHaveURL(`${BASE}/`);
 });
 
 /** Local static fixture server: the app's scraper (server-side) fetches it,
