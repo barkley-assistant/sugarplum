@@ -70,6 +70,10 @@ describe("extractProduct DOM fallback tier (no og/json-ld pages)", () => {
     const p = await parseFixture("amazon-dp-nooffer.html", AMAZON_NOOFFER);
     expect(p.priceCents).toBeNull(); // honest: no main-ASIN price exists in the DOM
     expect(p.currency).toBeNull();
+    // Both traps explicitly: the carousel BEFORE the (empty) buybox block and
+    // the sponsored carousel AFTER it.
+    expect(p.priceCents).not.toBe(2488);
+    expect(p.priceCents).not.toBe(2199);
     expect(p.image).toMatch(/^https:\/\/m\.media-amazon\.com\/images\/I\//);
     expect(p.title).toContain("LEGO City Explorer Diving Boat");
   });

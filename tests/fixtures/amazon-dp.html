@@ -15,7 +15,12 @@
        its .a-price spans belong to OTHER ASINs, so an extractor that takes
        the first .a-price on the page returns £24.88 instead of the main
        ASIN's £19.00. Tier 2 must stay anchored to the id-scoped blocks
-       below, never to a bare .a-price. -->
+       below, never to a bare .a-price.
+
+       There is also a sponsored carousel AFTER the buybox blocks (£21.99,
+       another ASIN) and a favicon link in <head> — both are traps: the
+       buybox capture must be closed by its end tag, and a real gallery image
+       must beat the favicon. -->
   <div id="anonCarousel" class="a-carousel-container">
     <a class="a-link-normal a-text-normal" href="/dp/B0OTHER001" role="link">
       <span class='a-price' data-a-size='m'><span class='a-offscreen'>£24.88</span></span>
@@ -49,6 +54,14 @@
   <!-- Main gallery image: data-old-hires carries the SL1500 hi-res variant. -->
   <div id="imageBlock" class="a-section">
     <img alt="Playmobil Pirates Danger from Giant Shark | Pirate Toys | 71793" src="https://m.media-amazon.com/images/I/81I0WIRzQ9L._AC_SY300_SX300_QL70_ML2_.jpg" data-mb-pv-slot-index="0" data-old-hires="https://m.media-amazon.com/images/I/81I0WIRzQ9L._AC_SL1500_.jpg" data-a-image-name="landingImage" class="a-dynamic-image media-block-image-tag" id="landingImage" data-a-dynamic-image="{&quot;https://m.media-amazon.com/images/I/81I0WIRzQ9L._AC_SY355_.jpg&quot;:[355,284],&quot;https://m.media-amazon.com/images/I/81I0WIRzQ9L._AC_SY450_.jpg&quot;:[450,360]}" fetchpriority="high"/>
+  </div>
+
+  <!-- Trailing sponsored carousel (other ASIN) BELOW the buybox blocks: the
+       buybox capture must already be closed by then. -->
+  <div id="sp_detail" class="celwidget" data-csa-c-asin="B0OTHER009">
+    <div class="a-row a-color-price">
+      <a class="a-link-normal a-text-normal" href="/sspa/click?url=%2Fdp%2FB0OTHER009"><span class="a-price" data-a-size="medium_plus"><span class="a-offscreen">£21.99</span></span></a>
+    </div>
   </div>
 </body>
 </html>

@@ -180,9 +180,14 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
 
   // DOM fallback tier state (see the file header). Kept in locals, updated in
   // document order: an #aod-ingress-link / div[id^=corePrice] open tag arms the
-  // capture, the first .a-offscreen text inside it becomes the price string.
-  let inIngress = false;
-  let inCorePrice = false;
+  // capture, the first .a-offscreen text inside it becomes the price string,
+  // and the element's END tag disarms it again. The end-tag disarm is load
+  // bearing: an EMPTY buybox block (exactly what Amazon serves for an item
+  // with no featured offer — #corePrice_desktop renders empty) must not leak
+  // into the next .a-price on the page, which belongs to a sponsored carousel
+  // for a DIFFERENT ASIN.
+  let ingressDepth = 0;
+  let corePriceDepth = 0;
   let capturingPrice: "ingress" | "core" | null = null;
   let ingressPriceText: string | null = null;
   let corePriceText: string | null = null;
@@ -245,20 +250,26 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
       },
     })
     .on("a#aod-ingress-link", {
-      element() {
-        inIngress = true;
+      element(el) {
+        ingressDepth++;
+        el.onEndTag(() => {
+          ingressDepth--;
+        });
       },
     })
     .on('div[id^="corePrice"]', {
-      element() {
-        inCorePrice = true;
+      element(el) {
+        corePriceDepth++;
+        el.onEndTag(() => {
+          corePriceDepth--;
+        });
       },
     })
     .on(".a-offscreen", {
       element() {
         if (capturingPrice !== null) return;
-        if (inIngress && ingressPriceText === null) capturingPrice = "ingress";
-        else if (inCorePrice && corePriceText === null) capturingPrice = "core";
+        if (ingressDepth > 0 && ingressPriceText === null) capturingPrice = "ingress";
+        else if (corePriceDepth > 0 && corePriceText === null) capturingPrice = "core";
       },
       text(t) {
         if (capturingPrice === null) return;

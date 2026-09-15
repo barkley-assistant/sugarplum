@@ -25,6 +25,17 @@
     <span class="a-declarative" data-action="show-all-offers-display"><a class="a-link-normal olp-link" href="/gp/offer-listing/B0BPCCKL3N/ref=dp_olp_NONE?condition=NEW" role="button">See All Buying Options</a></span>
   </div>
 
+  <!-- Sponsored products carousel for a DIFFERENT ASIN, later in the document
+       than the (empty) buybox blocks — this is the real page's shape: on the
+       live capture the sponsored .a-price is £21.99 for ASIN B0HCJFVT3Z. An
+       extractor that arms a "corePrice" capture and never disarms it on the
+       end tag hands THIS price back as the main ASIN's. Tier 2 must ignore it. -->
+  <div id="sp_detail" class="celwidget" data-csa-c-asin="B0HCJFVT3Z">
+    <div class="a-row a-color-price">
+      <a class="a-link-normal a-text-normal" href="/sspa/click?url=%2Fdp%2FB0HCJFVT3Z"><span class="a-price apex-price-to-pay-value" data-a-size="medium_plus"><span class="a-offscreen">£21.99</span></span></a>
+    </div>
+  </div>
+
   <div id="imageBlock" class="a-section">
     <img alt="LEGO City Explorer Diving Boat 60377" src="https://m.media-amazon.com/images/I/91Mzr09ls6L._AC_SY300_SX300_QL70_ML2_.jpg" data-mb-pv-slot-index="0" data-old-hires="https://m.media-amazon.com/images/I/91Mzr09ls6L._AC_SL1500_.jpg" data-a-image-name="landingImage" class="a-dynamic-image media-block-image-tag" id="landingImage" data-a-dynamic-image="{&quot;https://m.media-amazon.com/images/I/91Mzr09ls6L._AC_SY355_.jpg&quot;:[355,355],&quot;https://m.media-amazon.com/images/I/91Mzr09ls6L._AC_SY450_.jpg&quot;:[450,450]}" fetchpriority="high"/>
   </div>
