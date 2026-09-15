@@ -19,6 +19,10 @@
 # Test overrides (used by sandbox tests; do NOT set for a real deploy):
 #   DEPLOY_LIVE_DIR, DEPLOY_ENV_FILE, DEPLOY_SERVICE, DEPLOY_HEALTH_URL
 #   DEPLOY_STEALTH_VENV, DEPLOY_SKIP_STEALTH (1 = skip venv provision)
+#   DEPLOY_REPO_URL   (sandbox ONLY — must be a local bare repo; real
+#                      deploys default to git@github.com:barkley-assistant/
+#                      sugarplum.git. Setting this to anything other than
+#                      a local path/file URL is almost certainly a bug.)
 
 set -euo pipefail
 
@@ -27,15 +31,23 @@ LIVE_DIR="${DEPLOY_LIVE_DIR:-$HOME/.local/share/sugarplum}"
 ENV_FILE="${DEPLOY_ENV_FILE:-$HOME/.config/sugarplum/.env}"
 SERVICE="${DEPLOY_SERVICE:-sugarplum.service}"
 HEALTH_URL="${DEPLOY_HEALTH_URL:-http://127.0.0.1:34995/api/health}"
+# DEPLOY_REPO_URL: override the git clone source. The real default is the
+# public origin. Sandbox tests MUST set this to a local bare repo (created
+# with `git init --bare` under /tmp) so the sandbox can never reach
+# github.com. The eeeabf9 incident: a sandbox fixture accidentally pushed
+# an empty "initial" commit to the real origin — the fix is making the
+# override mandatory in sandbox mode AND refusing to clone from any URL
+# the sandbox didn't set.
+REPO_URL="${DEPLOY_REPO_URL:-git@github.com:barkley-assistant/sugarplum.git}"
 
 echo "-> sugarplum deploy (branch: $BRANCH, live dir: $LIVE_DIR)"
 
 if [ ! -d "$LIVE_DIR/.git" ]; then
-  echo "-> cloning $BRANCH into $LIVE_DIR"
-  git clone -b "$BRANCH" --single-branch \
-    git@github.com:barkley-assistant/sugarplum.git "$LIVE_DIR"
+  echo "-> cloning $BRANCH into $LIVE_DIR (from $REPO_URL)"
+  git clone -b "$BRANCH" --single-branch "$REPO_URL" "$LIVE_DIR"
 else
-  echo "-> fetching + checking out $BRANCH"
+  echo "-> fetching + checking out $BRANCH (from $REPO_URL)"
+  git -C "$LIVE_DIR" remote set-url origin "$REPO_URL" 2>/dev/null || true
   git -C "$LIVE_DIR" fetch origin "$BRANCH"
   git -C "$LIVE_DIR" checkout -f "$BRANCH"
   git -C "$LIVE_DIR" reset --hard "origin/$BRANCH"
