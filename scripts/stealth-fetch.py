@@ -250,7 +250,11 @@ def reap_xvfb_by_display(
     return killed
 
 
-def spawn_xvfb_reaper(parent_pid: int) -> int | None:
+def spawn_xvfb_reaper(
+    parent_pid: int,
+    *,
+    poll_budget_seconds: float | None = None,
+) -> int | None:
     """Fork a DETACHED child that waits for `parent_pid` to die, then reaps
     any orphaned Xvfb tied to the parent's DISPLAY.
 
@@ -266,11 +270,25 @@ def spawn_xvfb_reaper(parent_pid: int) -> int | None:
         `InvisiblePlaywright` with-block).
 
     The reaper's loop:
-      - poll `os.kill(parent_pid, 0)` until the parent dies (or 120s
-        budget — after that we assume something exotic happened and
-        give up)
-      - on parent death, run `reap_xvfb_by_display(os.environ["DISPLAY"])`
+      - poll `os.kill(parent_pid, 0)` until the parent dies. The wait
+        is UNBOUNDED in production — the helper's own SIGALRM bounds
+        it in practice (the helper can't run for longer than its alarm
+        budget anyway), and a long-running stealth scrape is
+        legitimate, so the reaper MUST NOT race the parent.
+      - on OBSERVED parent death, run
+        `reap_xvfb_by_display(os.environ["DISPLAY"])`. On budget
+        exhaustion (test-only path), the reaper exits WITHOUT calling
+        reap — calling reap on a live parent is the r3 bug we're
+        fixing: it SIGKILLed the live helper's Xvfb at t=120 whenever
+        SUGARPLUM_STEALTH_TIMEOUT_MS exceeded ~120000.
       - exit
+
+    `poll_budget_seconds` (test seam only): when set, the loop exits
+    after that many seconds if the parent has not died yet. The
+    reaper does NOT reap on budget exhaustion. PRODUCTION CALLERS MUST
+    PASS None (the default) — the only reason this knob exists is to
+    let tests exercise the "budget exhausted + parent alive → no kill"
+    semantics without sleeping for 120s of real time.
 
     Returns the reaper's pid (the parent continues immediately), or
     None if DISPLAY is unset / fork fails.
@@ -294,20 +312,36 @@ def spawn_xvfb_reaper(parent_pid: int) -> int | None:
     except OSError:
         os._exit(0)
     try:
-        # Wait for the parent to die. Cap at 120s — past that the
-        # reaper is no longer useful (the parent is gone or stuck in
-        # some unkillable state, neither of which the reaper can fix).
-        deadline = time.monotonic() + 120.0
-        while time.monotonic() < deadline:
+        # Wait for the parent to die. Production default (None) is
+        # unbounded — the helper's own SIGALRM bounds the wait in
+        # practice. The previous 120s hard deadline was removed in r3
+        # because it SIGKILLed a still-running parent's Xvfb whenever
+        # the helper legitimately outlived the budget
+        # (SUGARPLUM_STEALTH_TIMEOUT_MS > ~120000).
+        deadline = (
+            time.monotonic() + poll_budget_seconds
+            if poll_budget_seconds is not None
+            else None
+        )
+        parent_died = False
+        while True:
+            if deadline is not None and time.monotonic() >= deadline:
+                # Budget exhausted with parent still alive — DO NOT
+                # reap. The parent owns this Xvfb and may still be
+                # using it. This branch is reachable only on the
+                # test-only `poll_budget_seconds` path.
+                break
             try:
                 os.kill(parent_pid, 0)
             except OSError:
                 # Parent is gone — reaping time.
+                parent_died = True
                 break
             time.sleep(0.5)
-        # Best-effort reap. Empty list is fine; it's the normal-exit
-        # case where the with-block teardown already cleaned up.
-        reap_xvfb_by_display(display)
+        if parent_died:
+            # Best-effort reap. Empty list is fine; it's the normal-exit
+            # case where the with-block teardown already cleaned up.
+            reap_xvfb_by_display(display)
     except Exception:
         # Never let the reaper crash — it has no observer and no
         # recovery path. Silent best-effort is the design.
