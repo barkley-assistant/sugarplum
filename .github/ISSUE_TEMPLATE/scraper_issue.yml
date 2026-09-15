@@ -1,0 +1,52 @@
+name: Scraper issue
+description: A retailer/product page that scrapes poorly or not at all
+title: "[scraper]: "
+labels: ["scraper"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for anything about link scraping: missing title/price/image, bot walls, wrong data. Include the URL — it's the single most useful thing.
+  - type: input
+    id: url
+    attributes:
+      label: Product URL
+      description: The exact URL that misbehaves.
+      placeholder: "https://..."
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: What's wrong?
+      options:
+        - Nothing fetches at all (dead fetch)
+        - Title is wrong / includes extra text
+        - Price missing
+        - Image missing or wrong
+        - Partial data (some fields, not all)
+        - Wrong data (mismatched product)
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: Details
+      description: What came through vs what you expected.
+      placeholder: "e.g. Title fetched but no price, and the image is a banner."
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device / browser
+      description: Where you added it (e.g. Android Chrome, desktop).
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues for a duplicate
+          required: true

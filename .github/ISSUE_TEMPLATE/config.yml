@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Project conventions
+    url: https://github.com/barkley-assistant/sugarplum/blob/main/AGENTS.md
+    about: Read the conventions before opening an issue.
