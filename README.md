@@ -32,6 +32,10 @@ done in the app's admin panel.
 | `SUGARPLUM_USER_AGENT` | Firefox desktop UA | User agent the scraper uses to fetch product pages |
 | `SUGARPLUM_ENRICH_CONCURRENCY` | `2` | Max concurrent background enrichment jobs (clamped 1..8) |
 | `SUGARPLUM_SEARXNG_URL` | unset | Optional self-hosted SearXNG instance for best-effort price hints (unset disables the fallback) |
+| `SUGARPLUM_STEALTH_DISABLED` | `0` | `1` disables the stealth-browser strategy (chain falls back to plain-only) |
+| `SUGARPLUM_STEALTH_TIMEOUT_MS` | `60000` | Whole-scrape budget for the stealth-browser strategy |
+| `SUGARPLUM_STEALTH_PROFILES_DIR` | `./data/stealth-profiles` | Per-host Firefox profile dirs (gitignored; self-healing) |
+| `SUGARPLUM_STEALTH_VENV_PY` | `<repo>/../.stealth-venv/bin/python` | Path to the stealth venv python (deploy.sh provisions it) |
 
 ## Paste-a-link
 
@@ -52,6 +56,12 @@ What gets extracted depends on the shop:
   unavailable" with a Retry button. That is the honest, graceful state — add
   the details manually, or (if configured) let the optional SearXNG fallback
   show an unverified "~£25.00 (via search)" price hint.
+- Smyths Toys (and any future Imperva / Distil-class JS-challenge site) is
+  served via the `stealth-browser` strategy: a per-host persistent Firefox
+  profile solves the challenge once, then later scrapes reuse the cookies
+  and fingerprint identity. Walled-site support is per-site opt-in — adding
+  one is a single reviewed entry in `src/server/scraper/overrides.ts` (no
+  core-scraper edits).
 
 Price snapshots are recorded to the item's price history whenever a scrape or
 a hint succeeds; a history UI ships in a later wave. If a fetch is interrupted

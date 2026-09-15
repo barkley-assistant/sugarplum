@@ -12,6 +12,7 @@ import { imageRoutes } from "./routes/images";
 import { userRoutes } from "./routes/users";
 import { wishlistRoutes } from "./routes/wishlist";
 import { createEnrichmentQueue } from "./jobs/enrich";
+import { createStealthDeps } from "./scraper/stealth";
 
 const PUBLIC_DIR = join(import.meta.dir, "..", "..", "dist", "public");
 
@@ -36,6 +37,7 @@ export function createApp(config: Config): App {
   );
 
   const limiter = new RateLimiter();
+  const stealth = createStealthDeps(config);
   const queue = createEnrichmentQueue({
     db,
     imagesDir: config.imagesDir,
@@ -45,6 +47,7 @@ export function createApp(config: Config): App {
     // SSRF guard: production readConfig never sets allowPrivateFetch, so the
     // default is guarded; only an explicit test/operator opt-in disables it.
     allowPrivate: config.allowPrivateFetch ?? false,
+    stealth,
   });
 
   const server = Bun.serve({

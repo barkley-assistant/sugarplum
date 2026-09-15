@@ -49,6 +49,13 @@ export function makeTestConfig(overrides: Partial<Config> = {}): { config: Confi
     // out of the SSRF private-range guard. Explicit per-app opt-in — never a
     // silent global; the production path (readConfig) never sets this.
     allowPrivateFetch: true,
+    // Stealth is disabled by default in the test app: no test exercises a
+    // registered hostname, so enabling it would only add a subprocess-path
+    // fork for nothing. Tests that need it override per-app.
+    stealthDisabled: true,
+    stealthTimeoutMs: 1000,
+    stealthProfilesDir: join(dir, "stealth-profiles"),
+    stealthVenvPython: "/nonexistent/stealth-python",
     ...overrides,
   };
   return { config, dir };
