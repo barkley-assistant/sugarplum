@@ -7,7 +7,7 @@ import {
   stripStoreTitleNoise,
 } from "../src/server/scraper/parse";
 import { scrapeProduct } from "../src/server/scraper";
-import { fetchPage } from "../src/server/scraper/fetch";
+import { fetchPage, detectBotWall } from "../src/server/scraper/fetch";
 import type { StealthRunner } from "../src/server/scraper/stealth";
 import type { SearxngFetch } from "../src/server/searxng";
 
@@ -468,6 +468,17 @@ describe("scrapeProduct SSRF guard (private ranges)", () => {
     }
   });
 });
+
+describe("detectBotWall (wave 14)", () => {
+  test("akamai CDN references in a legit page are NOT a bot wall", async () => {
+    const html = `<!DOCTYPE html><html><head>
+    <link href="https://store.akamai.steamstatic.com/public/css/v6/store.css" rel="stylesheet">
+    <title>Some Product</title>
+  </head><body></body></html>`;
+    expect(detectBotWall(html)).toBeNull();
+  });
+});
+
 describe("scrapeProduct strategy pipeline (wave 13)", () => {
   test("registered host: stealth stub returns html → extract + strategy recorded", async () => {
     const html = await Bun.file(join(FIXTURES, "shopify.html")).text();
