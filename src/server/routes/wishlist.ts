@@ -142,10 +142,14 @@ export function wishlistRoutes(db: Database, imagesDir: string, queue: Enrichmen
         if (!parsed.ok) return parsed.error;
 
         const id = randomUUID();
+        // D17: new items append to the BOTTOM of the list. The max+10 is
+        // computed inside the INSERT so two rapid adds can't race to the
+        // same value under WAL.
         db.run(
           `INSERT INTO wishlist_items
-             (id, user_id, title, url, price_cents, currency, notes, tags, fetch_state)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (id, user_id, title, url, price_cents, currency, notes, tags, fetch_state, sort_order)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,
+             (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM wishlist_items WHERE user_id = ?))`,
           [
             id,
             viewer.id,
@@ -156,10 +160,55 @@ export function wishlistRoutes(db: Database, imagesDir: string, queue: Enrichmen
             parsed.notes,
             parsed.tags.length ? JSON.stringify(parsed.tags) : null,
             parsed.hasUrl ? "pending" : "complete",
+            viewer.id,
           ],
         );
         if (parsed.hasUrl) queue.enqueue(id);
         return jsonOk(toOwnedItem(getItem(db, id) as ItemRow), 201);
+      }),
+    },
+    "/api/wishlist/order": {
+      PUT: requireSession(db, async (req, viewer) => {
+        let body: { itemIds?: unknown };
+        try {
+          body = (await req.json()) as { itemIds?: unknown };
+        } catch {
+          return jsonError(400, "Invalid JSON body");
+        }
+        const itemIds = body.itemIds;
+        if (!Array.isArray(itemIds) || !itemIds.every((id) => typeof id === "string" && id.length > 0)) {
+          return jsonError(400, "itemIds must be an array of strings");
+        }
+        if (new Set(itemIds).size !== itemIds.length) {
+          return jsonError(400, "itemIds must not contain duplicates");
+        }
+
+        // Strict full-list match: catches stale clients, foreign ids, and
+        // mid-flight deletes. An empty list is a valid no-op for an empty
+        // wishlist.
+        const ownedIds = (
+          db.query("SELECT id FROM wishlist_items WHERE user_id = ?").all(viewer.id) as { id: string }[]
+        ).map((row) => row.id);
+        if (itemIds.length !== ownedIds.length) {
+          return jsonError(400, "item list does not match your wishlist");
+        }
+        const ownedSet = new Set(ownedIds);
+        if (itemIds.some((id) => !ownedSet.has(id))) {
+          return jsonError(400, "item list does not match your wishlist");
+        }
+
+        // Single transaction: reassign spacing 10, 20, 30… in the submitted
+        // order. The AND user_id is belt-and-braces.
+        db.transaction(() => {
+          const update = db.query(
+            "UPDATE wishlist_items SET sort_order = ? WHERE id = ? AND user_id = ?",
+          );
+          itemIds.forEach((id, i) => {
+            update.run((i + 1) * 10, id, viewer.id);
+          });
+        })();
+
+        return jsonOk({ ok: true });
       }),
     },
     "/api/wishlist/items/:id": {

@@ -1,0 +1,49 @@
+name: Feature request
+description: A new capability, improvement, or design change
+title: "[feat]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the feature and why it matters. Be concrete — vague requests get vague plans.
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: The problem or use case this solves (who needs it, when).
+      placeholder: "e.g. We want to send a wishlist to a friend who has no account."
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: The behaviour you want, as concretely as possible.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How will we know this is done? Bullet points help.
+      placeholder: |
+        - [ ] Share link is unguessable and revocable
+        - [ ] Anonymous visitors can view items
+        - [ ] Owner never sees purchased flags
+    validations:
+      required: false
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals
+      description: What this is explicitly NOT (scope control).
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues for a duplicate
+          required: true

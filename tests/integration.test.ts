@@ -294,8 +294,12 @@ describe("wishlist API", () => {
     const first = await createItem(alice, "First item");
     const second = await createItem(alice, "Second item");
 
-    // Both default to sort_order 0 → creation order. Move first to the end.
-    const patch = await alice.request("PATCH", `/api/wishlist/items/${first.id}`, { sortOrder: 1 });
+    // D17 appends at max+10, so the pair is already ordered. Move first past
+    // second with a larger sortOrder to prove PATCH sortOrder drives order.
+    expect(first.sortOrder).toBeLessThan(second.sortOrder);
+    const patch = await alice.request("PATCH", `/api/wishlist/items/${first.id}`, {
+      sortOrder: second.sortOrder + 10,
+    });
     expect(patch.status).toBe(200);
 
     const list = await alice.request("GET", `/api/users/${aliceId}/wishlist`);
@@ -436,6 +440,104 @@ describe("wishlist API", () => {
     expect(["pending", "complete", "failed"]).toContain(publicItem.fetchState);
     expect("siteName" in publicItem).toBe(true);
     expect("hintPriceCents" in publicItem).toBe(false);
+  });
+});
+
+describe("reorder", () => {
+  /** Each test gets a dedicated user so the strict full-list match sees a
+   *  controlled item set (the shared alice/bob lists accumulate items). */
+  async function newUser(prefix: string): Promise<{ jar: Jar; id: string }> {
+    const name = `${prefix}-${Math.random().toString(36).slice(2, 8)}`;
+    await login(admin, "admin", "admin-password");
+    const id = await createUser(admin, name, "pass", prefix);
+    const jar = app.newJar();
+    await login(jar, name, "pass");
+    return { jar, id };
+  }
+
+  test("reorder [c,a,b] persists → GET returns c,a,b", async () => {
+    const { jar, id } = await newUser("reorder");
+    const a = await createItem(jar, "Reorder A");
+    const b = await createItem(jar, "Reorder B");
+    const c = await createItem(jar, "Reorder C");
+
+    const res = await jar.request("PUT", "/api/wishlist/order", { itemIds: [c.id, a.id, b.id] });
+    expect(res.status).toBe(200);
+
+    const list = await jar.request("GET", `/api/users/${id}/wishlist`);
+    const items = (await list.json()) as OwnedItem[];
+    expect(items.map((i) => i.id)).toEqual([c.id, a.id, b.id]);
+  });
+
+  test("duplicate ids → 400", async () => {
+    const { jar } = await newUser("reorder-dup");
+    const a = await createItem(jar, "Dup A");
+    const b = await createItem(jar, "Dup B");
+    const res = await jar.request("PUT", "/api/wishlist/order", { itemIds: [a.id, a.id, b.id] });
+    expect(res.status).toBe(400);
+  });
+
+  test("missing id (stale client) → 400", async () => {
+    const { jar } = await newUser("reorder-missing");
+    const a = await createItem(jar, "Missing A");
+    const res = await jar.request("PUT", "/api/wishlist/order", {
+      itemIds: [a.id, "00000000-0000-0000-0000-000000000000"],
+    });
+    expect(res.status).toBe(400);
+  });
+
+  test("foreign user's id → 400", async () => {
+    const alice = await newUser("reorder-alice");
+    const bob = await newUser("reorder-bob");
+    const aliceItem = await createItem(alice.jar, "Alice's item");
+    const bobItem = await createItem(bob.jar, "Bob's item");
+    const res = await bob.jar.request("PUT", "/api/wishlist/order", {
+      itemIds: [bobItem.id, aliceItem.id],
+    });
+    expect(res.status).toBe(400);
+  });
+
+  test("unauthenticated → 401", async () => {
+    const stranger = app.newJar();
+    const res = await stranger.request("PUT", "/api/wishlist/order", { itemIds: [] });
+    expect(res.status).toBe(401);
+  });
+
+  test("empty list is a valid no-op → 200 (for an empty wishlist)", async () => {
+    const { jar } = await newUser("reorder-empty");
+    const res = await jar.request("PUT", "/api/wishlist/order", { itemIds: [] });
+    expect(res.status).toBe(200);
+  });
+
+  test("items created after a reorder append to the bottom (sort_order 30, 40)", async () => {
+    const { jar, id } = await newUser("reorder-append");
+    const a = await createItem(jar, "Append A");
+    const b = await createItem(jar, "Append B");
+
+    const reorder = await jar.request("PUT", "/api/wishlist/order", { itemIds: [b.id, a.id] });
+    expect(reorder.status).toBe(200);
+
+    const c = await createItem(jar, "Append C");
+    const d = await createItem(jar, "Append D");
+
+    const list = await jar.request("GET", `/api/users/${id}/wishlist`);
+    const items = (await list.json()) as OwnedItem[];
+    expect(items.map((i) => i.id)).toEqual([b.id, a.id, c.id, d.id]);
+
+    const rows = app.app.db
+      .query("SELECT id, sort_order FROM wishlist_items WHERE id IN (?, ?, ?, ?)")
+      .all(c.id, d.id, a.id, b.id) as { id: string; sort_order: number }[];
+    const orderOf = Object.fromEntries(rows.map((r) => [r.id, r.sort_order]));
+    expect(orderOf[c.id]).toBe(30);
+    expect(orderOf[d.id]).toBe(40);
+  });
+
+  test("non-array / non-string itemIds → 400", async () => {
+    const { jar } = await newUser("reorder-shape");
+    const bad = await jar.request("PUT", "/api/wishlist/order", { itemIds: [1, 2] });
+    expect(bad.status).toBe(400);
+    const missing = await jar.request("PUT", "/api/wishlist/order", {});
+    expect(missing.status).toBe(400);
   });
 });
 

@@ -1,8 +1,13 @@
-import { cp, mkdir } from "node:fs/promises";
+import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { generateServiceWorker } from "./generate-sw";
 
 const ROOT = import.meta.dir ? join(import.meta.dir, "..") : process.cwd();
 const OUT_DIR = join(ROOT, "dist", "public");
+
+// Production builds register the service worker; dev (SUGARPLUM_DEV=1, set by
+// scripts/dev.ts) must not, so a dev session never fights a stale shell.
+const isProd = process.env.SUGARPLUM_DEV !== "1";
 
 async function buildWeb() {
   await mkdir(OUT_DIR, { recursive: true });
@@ -12,6 +17,9 @@ async function buildWeb() {
     outdir: OUT_DIR,
     minify: false,
     sourcemap: "none",
+    // Bun's bundler does not inline import.meta.env on its own; define it so
+    // the SPA can gate service-worker registration on production.
+    define: { "import.meta.env.PROD": isProd ? "true" : "false" },
   });
 
   if (!result.success) {
@@ -21,6 +29,21 @@ async function buildWeb() {
 
   // Brand assets are referenced statically (favicon); ship them with the bundle.
   await cp(join(ROOT, "assets", "brand"), join(OUT_DIR, "assets", "brand"), { recursive: true });
+
+  // PWA manifest: the bundler hashes any link it resolves, but the manifest
+  // must live at the STABLE URL /manifest.webmanifest (share-target install
+  // contract). Copy the canonical source verbatim and rewrite the built HTML
+  // link back to the absolute path.
+  await cp(join(ROOT, "src", "web", "manifest.webmanifest"), join(OUT_DIR, "manifest.webmanifest"));
+  for (const page of ["index.html", "login.html"]) {
+    const path = join(OUT_DIR, page);
+    const html = await readFile(path, "utf8");
+    const fixed = html.replace(/\.\/manifest-[a-z0-9]+\.webmanifest/g, "/manifest.webmanifest");
+    if (fixed !== html) await writeFile(path, fixed);
+  }
+
+  // Service worker precache must reflect the ACTUAL hashed outputs.
+  await generateServiceWorker(OUT_DIR);
 
   console.log(`Built web bundle -> ${OUT_DIR}`);
 }
