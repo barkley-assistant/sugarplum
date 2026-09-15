@@ -110,6 +110,75 @@ describe("extractProduct DOM fallback tier (no og/json-ld pages)", () => {
   });
 });
 
+describe("extractProduct Steam tier (wave 14)", () => {
+  const STEAM = "https://store.steampowered.com/app/0/x/";
+
+  test("discounted: clean title + first-block discount_final_price", async () => {
+    const p = await parseFixture(
+      "steam-discounted.html",
+      "https://store.steampowered.com/app/1086940/",
+    );
+    expect(p.title).toBe("Baldur's Gate 3");
+    expect(p.priceCents).toBe(3499); // NOT 595 (the DLC block after it)
+    expect(p.priceCents).not.toBe(595);
+    expect(p.currency).toBe("GBP");
+    expect(p.siteName).toBe("Steam");
+    expect(p.image).toBe(
+      "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1086940/header.jpg",
+    );
+  });
+
+  test("plain price: game_purchase_price text, no discount block", async () => {
+    const p = await parseFixture("steam-plain.html", "https://store.steampowered.com/app/632360/");
+    expect(p.title).toBe("Risk of Rain 2");
+    expect(p.priceCents).toBe(1999);
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("free-to-play: 'Free To Play' text → null price (NOT 0), clean title", async () => {
+    const p = await parseFixture("steam-f2p.html", "https://store.steampowered.com/app/570/");
+    expect(p.title).toBe("Dota 2");
+    expect(p.priceCents).toBeNull();
+    expect(p.currency).toBeNull();
+  });
+
+  test("agecheck shell: clean title, honest null price, image survives", async () => {
+    const p = await parseFixture(
+      "steam-agecheck.html",
+      "https://store.steampowered.com/agecheck/app/1086940/",
+    );
+    expect(p.title).toBe("Baldur's Gate 3");
+    expect(p.priceCents).toBeNull();
+    expect(p.image).toContain("header.jpg");
+  });
+
+  test("numeric entity in the price text decodes (&#163;9.99)", async () => {
+    const html = `<!DOCTYPE html><html><head>
+    <meta property="og:title" content="Tiny Game on Steam">
+    <meta property="og:site" content="Steam">
+    <title>Tiny Game on Steam</title>
+  </head><body>
+    <div class="game_area_purchase_game">
+      <div class="game_purchase_price price">&#163;9.99</div>
+    </div>
+  </body></html>`;
+    const p = await extractProduct(html, STEAM);
+    expect(p.priceCents).toBe(999);
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("tier-1 still wins: og:price beats the Steam DOM tier", async () => {
+    const base = await Bun.file(join(FIXTURES, "steam-plain.html")).text();
+    const html = base.replace(
+      "<title>",
+      `<meta property="og:price:amount" content="12.34"><meta property="og:price:currency" content="USD"><title>`,
+    );
+    const p = await extractProduct(html, STEAM);
+    expect(p.priceCents).toBe(1234);
+    expect(p.currency).toBe("USD");
+  });
+});
+
 describe("parseSymbolPriceToCents", () => {
   test("symbol-prefixed and symbol-suffixed shapes", () => {
     expect(parseSymbolPriceToCents("£19.00")).toEqual({ cents: 1900, currency: "GBP" });

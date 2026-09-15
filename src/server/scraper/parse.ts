@@ -29,6 +29,13 @@
  * prices/images out of the result: a bare `.a-price` scan picks a neighbour
  * product's price. See tests/fixtures/amazon-dp*.html and
  * docs/research/product-scraping.md §"2026-09-15 Amazon ground truth".
+ *
+ * Steam purchase tier (wave 14): same discipline as the Amazon tier — anchored
+ * to `div.game_area_purchase_game`, FIRST block only (every later block is a
+ * DLC/bundle with a different price), `.discount_final_price` (else
+ * `.game_purchase_price`) text through the same symbol parser. Steam has no
+ * og:price:* and no JSON-LD, so this tier is its only price source; "Free To
+ * Play" yields null (honest "no price"), never 0.
  */
 
 export interface ParsedProduct {
@@ -84,6 +91,33 @@ export function parseSymbolPriceToCents(
   const cents = Number(whole) * 100 + Number(frac.padEnd(2, "0"));
   if (!Number.isFinite(cents) || cents > MAX_CENTS) return null;
   return { cents, currency };
+}
+
+/** HTMLRewriter hands TEXT chunks back raw — entities are NOT decoded (measured
+ *  on Bun 1.4: a Steam price node yields "&pound;34.99"). Money is where this
+ *  bites, so decode the entity shapes that appear in prices: the supported
+ *  currency symbols, &nbsp;, &amp;, plus numeric character references.
+ *  Unknown/unparsable entities are returned unchanged. */
+const NAMED_ENTITIES: Record<string, string> = {
+  "&pound;": "£",
+  "&euro;": "€",
+  "&dollar;": "$",
+  "&nbsp;": " ",
+  "&amp;": "&",
+};
+
+function decodeHtmlEntities(raw: string): string {
+  if (!raw.includes("&")) return raw;
+  return raw.replace(/&(#[xX][0-9a-fA-F]+|#\d+|[a-zA-Z]+);/g, (match, body: string) => {
+    if (!body.startsWith("#")) return NAMED_ENTITIES[match.toLowerCase()] ?? match;
+    const code =
+      body[1] === "x" || body[1] === "X"
+        ? Number.parseInt(body.slice(2), 16)
+        : Number.parseInt(body.slice(1), 10);
+    return Number.isFinite(code) && code > 0 && code <= 0x10ffff
+      ? String.fromCodePoint(code)
+      : match;
+  });
 }
 
 /** "25.00" | 19.99 → 2500 | 1999. Garbage → null (never NaN, never negative). */
@@ -218,6 +252,15 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
   let landingHires: string | null = null;
   let landingDynamic: string | null = null;
 
+  // Steam-shaped purchase block (wave 14): same discipline as the Amazon tier —
+  // class-anchored, document order, FIRST block only, end-tag disarm. Later
+  // game_area_purchase_game blocks are DLC/bundles for OTHER prices.
+  let steamBlockOpen = false;
+  let steamBlockDone = false;
+  let steamPriceText: string | null = null;
+  let steamCapTarget: "dfp" | "gpp" | null = null;
+  let steamBuf: string[] = [];
+
   await new HTMLRewriter()
     .on('meta[property^="og:"]', {
       element(el) {
@@ -308,6 +351,51 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
         landingDynamic ??= el.getAttribute("data-a-dynamic-image");
       },
     })
+    .on("div.game_area_purchase_game", {
+      element(el) {
+        if (steamBlockDone || steamBlockOpen) return;
+        steamBlockOpen = true;
+        el.onEndTag(() => {
+          if (steamBlockOpen) {
+            steamBlockDone = true;
+            steamBlockOpen = false;
+          }
+        });
+      },
+    })
+    .on(".discount_final_price", {
+      element() {
+        if (steamBlockOpen && !steamBlockDone && steamPriceText === null && steamCapTarget === null) {
+          steamCapTarget = "dfp";
+          steamBuf = [];
+        }
+      },
+      text(t) {
+        if (steamCapTarget !== "dfp") return;
+        steamBuf.push(t.text);
+        if (t.lastInTextNode) {
+          steamPriceText ??= decodeHtmlEntities(steamBuf.join(""));
+          steamCapTarget = null;
+        }
+      },
+    })
+    .on(".game_purchase_price", {
+      element() {
+        // Only when the first block had no discount price at all (plain / F2P).
+        if (steamBlockOpen && !steamBlockDone && steamPriceText === null && steamCapTarget === null) {
+          steamCapTarget = "gpp";
+          steamBuf = [];
+        }
+      },
+      text(t) {
+        if (steamCapTarget !== "gpp") return;
+        steamBuf.push(t.text);
+        if (t.lastInTextNode) {
+          steamPriceText ??= decodeHtmlEntities(steamBuf.join(""));
+          steamCapTarget = null;
+        }
+      },
+    })
     .transform(new Response(html))
     .text();
 
@@ -316,6 +404,7 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
   // price block second. Both id-anchored — never a bare .a-price.
   const domPrice = parseSymbolPriceToCents(ingressPriceText ?? corePriceText);
   const domImage = landingHires ?? firstDynamicImageKey(landingDynamic);
+  const steamPrice = parseSymbolPriceToCents(steamPriceText);
 
   // Store promo noise is stripped from the ONE chosen title candidate (not from
   // every tier): the site token comes from declared metadata only, so a page
@@ -334,12 +423,14 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
       parsePriceToCents(product["product:price:amount"]) ??
       parsePriceToCents(ldNode?.offersPrice) ??
       domPrice?.cents ??
+      steamPrice?.cents ??
       null,
     currency:
       cleanCurrency(og["og:price:currency"]) ??
       cleanCurrency(product["product:price:currency"]) ??
       cleanCurrency(ldNode?.offersCurrency) ??
       domPrice?.currency ??
+      steamPrice?.currency ??
       null,
     image:
       normalizeImageUrl(og["og:image"], pageUrl) ??
