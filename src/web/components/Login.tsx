@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { S } from "../strings";
 
 export function Login() {
   const [username, setUsername] = useState("");
@@ -22,15 +23,15 @@ export function Login() {
         return;
       }
       if (res.status === 429) {
-        setError("Too many attempts. Try again later.");
+        setError(S.auth.tooManyAttempts);
       } else if (res.status === 400) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        setError(body?.error ?? "Sign-in failed.");
+        setError(body?.error ?? S.auth.signInFailed);
       } else {
-        setError("Invalid username or password.");
+        setError(S.auth.invalidCredentials);
       }
     } catch {
-      setError("Network error. Try again.");
+      setError(S.auth.networkError);
     } finally {
       setBusy(false);
     }
@@ -39,10 +40,10 @@ export function Login() {
   return (
     <main className="auth-page">
       <form className="card auth-card" onSubmit={submit}>
-        <h1>sugarplum</h1>
-        <p className="muted">Private wishlists, shared with people you trust.</p>
+        <h1>{S.app.name}</h1>
+        <p className="muted">{S.app.tagline}</p>
 
-        <label htmlFor="username">Username</label>
+        <label htmlFor="username">{S.auth.username}</label>
         <input
           id="username"
           type="text"
@@ -52,7 +53,7 @@ export function Login() {
           required
         />
 
-        <label htmlFor="password">Password</label>
+        <label htmlFor="password">{S.auth.password}</label>
         <input
           id="password"
           type="password"
@@ -65,7 +66,7 @@ export function Login() {
         {error && <p className="error" role="alert">{error}</p>}
 
         <button type="submit" disabled={busy}>
-          {busy ? "Signing in…" : "Sign in"}
+          {busy ? S.auth.signingIn : S.auth.signIn}
         </button>
       </form>
     </main>

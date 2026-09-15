@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import type { AdminUser } from "../../shared/types";
+import { S } from "../strings";
 
 interface AdminPanelProps {
   users: AdminUser[];
@@ -26,7 +27,7 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        setError(body?.error ?? "Could not create user.");
+        setError(body?.error ?? S.admin.createFailed);
         return;
       }
       setUsername("");
@@ -35,7 +36,7 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
       setIsAdmin(false);
       await onChanged();
     } catch {
-      setError("Network error. Try again.");
+      setError(S.admin.networkError);
     } finally {
       setBusy(false);
     }
@@ -50,7 +51,7 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
     });
     if (!res.ok) {
       const parsed = (await res.json().catch(() => null)) as { error?: string } | null;
-      setError(parsed?.error ?? "Request failed.");
+      setError(parsed?.error ?? S.admin.requestFailed);
       return;
     }
     await onChanged();
@@ -58,15 +59,15 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
 
   return (
     <section className="card admin-panel">
-      <h2>Users</h2>
+      <h2>{S.admin.users}</h2>
 
       <table className="admin-table">
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Username</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th>{S.admin.name}</th>
+            <th>{S.admin.username}</th>
+            <th>{S.admin.status}</th>
+            <th>{S.admin.actions}</th>
           </tr>
         </thead>
         <tbody>
@@ -75,8 +76,8 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
               <td>{user.displayName}</td>
               <td>{user.username}</td>
               <td>
-                {user.isAdmin ? "admin" : "user"}
-                {user.isActive ? "" : " · inactive"}
+                {user.isAdmin ? S.admin.adminRole : S.admin.userRole}
+                {user.isActive ? "" : S.admin.inactiveSuffix}
               </td>
               <td className="admin-actions">
                 {user.isActive ? (
@@ -84,36 +85,36 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
                     className="secondary"
                     onClick={() => act(`/api/users/${user.id}/deactivate`)}
                   >
-                    Deactivate
+                    {S.admin.deactivate}
                   </button>
                 ) : (
                   <button
                     className="secondary"
                     onClick={() => act(`/api/users/${user.id}/activate`)}
                   >
-                    Activate
+                    {S.admin.activate}
                   </button>
                 )}
                 <button
                   className="secondary"
                   onClick={() => {
-                    const next = prompt("New password for " + user.username);
+                    const next = prompt(S.admin.resetPasswordPrompt(user.username));
                     if (next) void act(`/api/users/${user.id}/reset-password`, "POST", {
                       password: next,
                     });
                   }}
                 >
-                  Reset password
+                  {S.admin.resetPassword}
                 </button>
                 <button
                   className="danger"
                   onClick={() => {
-                    if (confirm(`Delete ${user.username}? Their items and claims will be removed.`)) {
+                    if (confirm(S.admin.deleteUserConfirm(user.username))) {
                       void act(`/api/users/${user.id}`, "DELETE");
                     }
                   }}
                 >
-                  Delete
+                  {S.admin.delete}
                 </button>
               </td>
             </tr>
@@ -121,11 +122,11 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
         </tbody>
       </table>
 
-      <h3>Create user</h3>
+      <h3>{S.admin.createUser}</h3>
       <form className="item-form" onSubmit={createUser}>
         <div className="field-row">
           <div className="field grow">
-            <label htmlFor="new-username">Username</label>
+            <label htmlFor="new-username">{S.admin.username}</label>
             <input
               id="new-username"
               type="text"
@@ -135,7 +136,7 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
             />
           </div>
           <div className="field grow">
-            <label htmlFor="new-display-name">Display name</label>
+            <label htmlFor="new-display-name">{S.admin.displayName}</label>
             <input
               id="new-display-name"
               type="text"
@@ -144,7 +145,7 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
             />
           </div>
           <div className="field">
-            <label htmlFor="new-password">Password</label>
+            <label htmlFor="new-password">{S.admin.password}</label>
             <input
               id="new-password"
               type="password"
@@ -156,11 +157,11 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
         </div>
         <label className="checkbox">
           <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} />
-          Admin
+          {S.admin.isAdmin}
         </label>
         {error && <p className="error" role="alert">{error}</p>}
         <button type="submit" disabled={busy}>
-          {busy ? "Creating…" : "Create user"}
+          {busy ? S.admin.creating : S.admin.createUser}
         </button>
       </form>
     </section>

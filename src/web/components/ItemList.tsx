@@ -1,5 +1,7 @@
 import { useState } from "react";
 import type { OwnedItem, PublicItem } from "../../shared/types";
+import { formatPrice } from "../format";
+import { S } from "../strings";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
 
 export interface OwnerRef {
@@ -15,19 +17,6 @@ interface ItemListProps {
   onClaim?: (id: string) => void | Promise<void>;
   onUnclaim?: (id: string) => void | Promise<void>;
   onRefresh?: (id: string) => void | Promise<void>;
-}
-
-const SYMBOLS: Record<string, string> = {
-  GBP: "£",
-  USD: "$",
-  EUR: "€",
-};
-
-export function formatPriceDisplay(priceCents: string | null, currency: string | null): string {
-  if (priceCents === null) return "";
-  const symbol = currency ? SYMBOLS[currency] : "";
-  if (symbol) return `${symbol}${priceCents}`;
-  return currency ? `${priceCents} ${currency}` : priceCents;
 }
 
 export function ItemList({
@@ -49,24 +38,21 @@ export function ItemList({
   }
 
   function handleDelete(item: OwnedItem) {
-    if (onDelete && confirm(`Delete "${item.title}"? This cannot be undone.`)) {
+    if (onDelete && confirm(S.confirm.deleteItem(item.title))) {
       void onDelete(item.id);
     }
   }
 
   if (items.length === 0) {
-    return <p className="muted empty-note">No items yet.</p>;
+    return <p className="muted empty-note">{S.empty.own}</p>;
   }
 
   return (
     <ul className="item-list">
       {items.map((item) => {
-        const price = formatPriceDisplay(item.priceCents, item.currency);
+        const price = formatPrice(item.priceCents, item.currency);
         const hintPrice = viewerIsOwner
-          ? formatPriceDisplay(
-              (item as OwnedItem).hintPriceCents,
-              (item as OwnedItem).hintCurrency,
-            )
+          ? formatPrice((item as OwnedItem).hintPriceCents, (item as OwnedItem).hintCurrency)
           : "";
         const publicItem = item as PublicItem;
         return (
@@ -92,18 +78,18 @@ export function ItemList({
                   <p className="tags">{item.tags.map((t) => `#${t}`).join(" ")}</p>
                 )}
                 {item.fetchState === "pending" && (
-                  <p className="fetch-state">Fetching details…</p>
+                  <p className="fetch-state">{S.item.fetching}</p>
                 )}
                 {item.fetchState === "failed" && (
                   <p className="fetch-state">
-                    Details unavailable
+                    {S.item.unavailable}
                     {viewerIsOwner && onRefresh && (
                       <button
                         type="button"
                         className="secondary retry-btn"
                         onClick={() => void onRefresh(item.id)}
                       >
-                        Retry
+                        {S.item.retryShort}
                       </button>
                     )}
                   </p>
@@ -114,7 +100,7 @@ export function ItemList({
               ) : (
                 hintPrice && (
                   <span className="hint-price">
-                    ~{hintPrice} <span className="hint-note">(unverified — via search)</span>
+                    ~{hintPrice} <span className="hint-note">({S.item.hintPriceNote})</span>
                   </span>
                 )
               )}
@@ -125,7 +111,7 @@ export function ItemList({
                 {editingId === item.id ? (
                   <ItemForm
                     initial={item}
-                    submitLabel="Save"
+                    submitLabel={S.form.save}
                     onSubmit={(values) => handleEdit(item.id, values)}
                     onCancel={() => setEditingId(null)}
                   />
@@ -133,12 +119,12 @@ export function ItemList({
                   <>
                     {onEdit && (
                       <button className="secondary" onClick={() => setEditingId(item.id)}>
-                        Edit
+                        {S.item.edit}
                       </button>
                     )}
                     {onDelete && (
                       <button className="danger" onClick={() => handleDelete(item as OwnedItem)}>
-                        Delete
+                        {S.item.delete}
                       </button>
                     )}
                   </>
@@ -147,17 +133,17 @@ export function ItemList({
             ) : (
               <div className="item-row-actions">
                 {!publicItem.claimed && onClaim && (
-                  <button onClick={() => void onClaim(publicItem.id)}>Claim</button>
+                  <button onClick={() => void onClaim(publicItem.id)}>{S.claims.claim}</button>
                 )}
                 {publicItem.claimed && !publicItem.claimedByYou && (
-                  <span className="muted">Claimed by someone</span>
+                  <span className="muted">{S.claims.claimedBySomeone}</span>
                 )}
                 {publicItem.claimedByYou && (
                   <span className="claimed-badge">
-                    Claimed by you
+                    {S.claims.claimedByYou}
                     {onUnclaim && (
                       <button className="secondary" onClick={() => void onUnclaim(publicItem.id)}>
-                        Unclaim
+                        {S.claims.unclaim}
                       </button>
                     )}
                   </span>
@@ -174,8 +160,8 @@ export function ItemList({
 export function ListHeading({ owner, count }: { owner: OwnerRef; count: number }) {
   return (
     <div className="list-heading">
-      <h2>{owner.displayName}'s wishlist</h2>
-      <span className="muted">{count} item{count === 1 ? "" : "s"}</span>
+      <h2>{S.list.heading(owner.displayName)}</h2>
+      <span className="muted">{S.list.itemCount(count)}</span>
     </div>
   );
 }

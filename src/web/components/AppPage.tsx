@@ -6,6 +6,7 @@ import type {
   PublicItem,
   WishlistSummaryRow,
 } from "../../shared/types";
+import { S } from "../strings";
 import { AdminPanel } from "./AdminPanel";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { ItemList, ListHeading, type OwnerRef } from "./ItemList";
@@ -48,7 +49,7 @@ export function AppPage() {
       if (meBody.isAdmin) await refreshUsers();
       setBooted(true);
     } catch {
-      setError("Could not load your wishlist. Refresh to try again.");
+      setError(S.errors.loadWishlist);
       setBooted(true);
     }
   }
@@ -92,7 +93,7 @@ export function AppPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error("Could not add item");
+    if (!res.ok) throw new Error(S.errors.addItem);
     setAddOpen(false);
     setPrefill({ url: "", title: "" });
     if (me) {
@@ -115,13 +116,13 @@ export function AppPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error("Could not save item");
+    if (!res.ok) throw new Error(S.errors.saveItem);
     if (me) await refreshOwnList(me.id);
   }
 
   async function deleteItem(id: string) {
     const res = await fetch(`/api/wishlist/items/${id}`, { method: "DELETE" });
-    if (!res.ok) throw new Error("Could not delete item");
+    if (!res.ok) throw new Error(S.errors.deleteItem);
     if (me) await refreshOwnList(me.id);
     await refreshSummary();
   }
@@ -129,7 +130,7 @@ export function AppPage() {
   async function refreshItem(id: string) {
     const res = await fetch(`/api/wishlist/items/${id}/refresh`, { method: "POST" });
     if (!res.ok) {
-      setError("Could not retry that item.");
+      setError(S.errors.retryItem);
       return;
     }
     if (me) await refreshOwnList(me.id);
@@ -148,7 +149,7 @@ export function AppPage() {
     if (!viewing) return;
     const res = await fetch(`/api/wishlist/items/${id}/claim`, { method: "POST" });
     if (!res.ok) {
-      setError("Could not claim that item.");
+      setError(S.errors.claimItem);
       return;
     }
     await viewList(viewing);
@@ -159,7 +160,7 @@ export function AppPage() {
     if (!viewing) return;
     const res = await fetch(`/api/wishlist/items/${id}/unclaim`, { method: "POST" });
     if (!res.ok) {
-      setError("Could not unclaim that item.");
+      setError(S.errors.unclaimItem);
       return;
     }
     await viewList(viewing);
@@ -176,7 +177,7 @@ export function AppPage() {
   }
 
   if (!booted || !me) {
-    return <main className="auth-page"><p className="muted">Loading…</p></main>;
+    return <main className="auth-page"><p className="muted">{S.app.loading}</p></main>;
   }
 
   const others = summary.filter((row) => row.userId !== me.id);
@@ -190,30 +191,30 @@ export function AppPage() {
   return (
     <main className="app-page">
       <header className="topbar">
-        <h1>sugarplum</h1>
+        <h1>{S.app.name}</h1>
         <div className="topbar-right">
           <span className="muted">{me.username}</span>
           <button className="secondary" onClick={() => void logout()}>
-            Log out
+            {S.auth.signOut}
           </button>
         </div>
       </header>
 
       {error && <p className="error" role="alert">{error}</p>}
 
-      <nav className="user-switcher" aria-label="Wishlists">
+      <nav className="user-switcher" aria-label={S.list.heading(me.username)}>
         {others.map((row) => (
           <button
             key={row.userId}
             className={viewing === row.userId ? "chip active" : "chip"}
             onClick={() => void viewList(row.userId)}
           >
-            View {row.displayName}'s list
+            {S.list.viewList(row.displayName)}
           </button>
         ))}
         {viewing && (
           <button className="chip" onClick={backToOwnList}>
-            Back to my list
+            {S.list.backToMyList}
           </button>
         )}
       </nav>
@@ -237,14 +238,14 @@ export function AppPage() {
             <ListHeading owner={ownRef} count={ownItems.length} />
             {addOpen ? (
               <ItemForm
-                submitLabel="Add item"
+                submitLabel={S.list.addItem}
                 initialValues={prefill}
                 onSubmit={createItem}
                 onCancel={() => setAddOpen(false)}
               />
             ) : (
               <button className="primary" onClick={() => setAddOpen(true)}>
-                Add item
+                {S.list.addItem}
               </button>
             )}
             <ItemList

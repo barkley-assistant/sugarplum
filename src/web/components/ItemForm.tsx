@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import type { CommonItem } from "../../shared/types";
+import { S } from "../strings";
 
 export interface ItemFormValues {
   title: string;
@@ -35,10 +36,10 @@ export function ItemForm({ initial, initialValues, submitLabel, onSubmit, onCanc
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!title.trim() && !url.trim()) {
-      setError("Add a title or a link.");
+      setError(S.form.needTitleOrLink);
       return;
     }
-    const effectiveCurrency = currency === "Other" ? otherCurrency.trim().toUpperCase() : currency;
+    const effectiveCurrency = currency === S.form.currencyOther ? otherCurrency.trim().toUpperCase() : currency;
     setBusy(true);
     setError(null);
     try {
@@ -56,7 +57,7 @@ export function ItemForm({ initial, initialValues, submitLabel, onSubmit, onCanc
           .filter(Boolean),
       });
     } catch {
-      setError("Something went wrong. Try again.");
+      setError(S.errors.generic);
     } finally {
       setBusy(false);
     }
@@ -66,31 +67,31 @@ export function ItemForm({ initial, initialValues, submitLabel, onSubmit, onCanc
     <form className="item-form" onSubmit={submit}>
       <div className="field-row">
         <div className="field grow">
-          <label htmlFor="item-title">Title</label>
+          <label htmlFor="item-title">{S.form.title}</label>
           <input
             id="item-title"
             type="text"
-            placeholder="Leave blank to auto-fill from the link"
+            placeholder={S.form.titlePlaceholder}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
         </div>
         <div className="field">
-          <label htmlFor="item-price">Price</label>
+          <label htmlFor="item-price">{S.form.price}</label>
           <input
             id="item-price"
             type="text"
             inputMode="decimal"
-            placeholder="24.99"
+            placeholder={S.form.pricePlaceholder}
             value={priceCents}
             onChange={(e) => setPriceCents(e.target.value)}
           />
         </div>
         <div className="field">
-          <label htmlFor="item-currency">Currency</label>
+          <label htmlFor="item-currency">{S.form.currency}</label>
           <select
             id="item-currency"
-            value={CURRENCIES.includes(currency) ? currency : "Other"}
+            value={CURRENCIES.includes(currency) ? currency : S.form.currencyOther}
             onChange={(e) => setCurrency(e.target.value)}
           >
             {CURRENCIES.map((c) => (
@@ -98,16 +99,16 @@ export function ItemForm({ initial, initialValues, submitLabel, onSubmit, onCanc
                 {c}
               </option>
             ))}
-            <option value="Other">Other</option>
+            <option value={S.form.currencyOther}>{S.form.currencyOther}</option>
           </select>
         </div>
-        {currency === "Other" && (
+        {currency === S.form.currencyOther && (
           <div className="field">
-            <label htmlFor="item-other-currency">Code</label>
+            <label htmlFor="item-other-currency">{S.form.currencyCode}</label>
             <input
               id="item-other-currency"
               type="text"
-              placeholder="SEK"
+              placeholder={S.form.currencyCodePlaceholder}
               value={otherCurrency}
               onChange={(e) => setOtherCurrency(e.target.value)}
             />
@@ -116,30 +117,30 @@ export function ItemForm({ initial, initialValues, submitLabel, onSubmit, onCanc
       </div>
 
       <div className="field">
-        <label htmlFor="item-url">Link</label>
+        <label htmlFor="item-url">{S.form.link}</label>
         <input
           id="item-url"
           type="text"
           inputMode="url"
-          placeholder="https://…"
+          placeholder={S.form.linkPlaceholder}
           value={url}
           onChange={(e) => setUrl(e.target.value)}
         />
       </div>
 
       <div className="field">
-        <label htmlFor="item-tags">Tags</label>
+        <label htmlFor="item-tags">{S.form.tags}</label>
         <input
           id="item-tags"
           type="text"
-          placeholder="Birthday, Someday"
+          placeholder={S.form.tagsPlaceholder}
           value={tags}
           onChange={(e) => setTags(e.target.value)}
         />
       </div>
 
       <div className="field">
-        <label htmlFor="item-notes">Notes</label>
+        <label htmlFor="item-notes">{S.form.notes}</label>
         <textarea
           id="item-notes"
           rows={2}
@@ -152,11 +153,11 @@ export function ItemForm({ initial, initialValues, submitLabel, onSubmit, onCanc
 
       <div className="form-actions">
         <button type="submit" disabled={busy}>
-          {busy ? "Saving…" : submitLabel}
+          {busy ? S.form.saving : submitLabel}
         </button>
         {onCancel && (
           <button type="button" className="secondary" onClick={onCancel}>
-            Cancel
+            {S.form.cancel}
           </button>
         )}
       </div>
