@@ -629,3 +629,31 @@ describe("scrapeProduct strategy pipeline (wave 13)", () => {
     }
   });
 });
+
+describe("scrapeProduct Steam pipeline (wave 14)", () => {
+  test("custom-headers sends the age cookie; clean title + price extracted", async () => {
+    const html = await Bun.file(join(FIXTURES, "steam-discounted.html")).text();
+    const seenCookies: string[] = [];
+    const fetchImpl: SearxngFetch = async (_input, init) => {
+      seenCookies.push(new Headers(init?.headers).get("cookie") ?? "");
+      const res = new Response(html);
+      Object.defineProperty(res, "url", {
+        value: "https://store.steampowered.com/app/1086940/",
+      });
+      return res;
+    };
+    const result = await scrapeProduct("https://store.steampowered.com/app/1086940/", {
+      userAgent: "UA/1.0",
+      fetchImpl,
+      allowPrivate: true,
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.strategy).toBe("custom-headers");
+      expect(result.product.title).toBe("Baldur's Gate 3");
+      expect(result.product.priceCents).toBe(3499);
+      expect(result.product.currency).toBe("GBP");
+    }
+    expect(seenCookies[0]).toContain("birthtime=");
+  });
+});
