@@ -4,12 +4,19 @@
  *
  * Precedence is locked to the research report (§RECOMMENDATION steps 2-4):
  *   title    = og:title → twitter:title → JSON-LD name → <title>
+ *              → generic promo/site-suffix strip (wave 14)
  *   price    = og:price:amount → product:price:amount → JSON-LD offers.price
  *              → DOM fallback tier (see below)
  *   currency = og:price:currency → product:price:currency → JSON-LD offers.priceCurrency
  *              → DOM fallback tier
  *   image    = og:image → JSON-LD image → twitter:image → DOM fallback tier → favicon
- *   siteName = og:site_name → hostname sans www.
+ *   siteName = og:site_name → og:site (nonstandard, Steam ships it) → hostname sans www.
+ *
+ * Title strip (wave 14): the chosen candidate is passed through
+ * `stripStoreTitleNoise` with the token declared by og:site_name/og:site. Steam
+ * puts the sale banner INSIDE og:title ("Save 30% on Baldur's Gate 3 on
+ * Steam"), so re-prioritizing tiers cannot clean it. Generic rule, no hostname
+ * check — see docs/research/product-scraping.md §2026-09-15 Steam ground truth.
  *
  * DOM fallback tier (wave 12): shops that ship NO structured metadata at all
  * (Amazon serves zero og:*, zero JSON-LD, zero microdata) still carry product
@@ -310,12 +317,18 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
   const domPrice = parseSymbolPriceToCents(ingressPriceText ?? corePriceText);
   const domImage = landingHires ?? firstDynamicImageKey(landingDynamic);
 
+  // Store promo noise is stripped from the ONE chosen title candidate (not from
+  // every tier): the site token comes from declared metadata only, so a page
+  // without og:site_name/og:site keeps its title untouched.
+  const siteToken = cleanTitle(og["og:site_name"]) ?? cleanTitle(og["og:site"]);
+  const rawTitle =
+    cleanTitle(og["og:title"]) ??
+    cleanTitle(twitter["twitter:title"]) ??
+    cleanTitle(ldNode?.name) ??
+    cleanTitle(titleTag);
+
   return {
-    title:
-      cleanTitle(og["og:title"]) ??
-      cleanTitle(twitter["twitter:title"]) ??
-      cleanTitle(ldNode?.name) ??
-      cleanTitle(titleTag),
+    title: rawTitle === null ? null : stripStoreTitleNoise(rawTitle, siteToken),
     priceCents:
       parsePriceToCents(og["og:price:amount"]) ??
       parsePriceToCents(product["product:price:amount"]) ??
@@ -336,7 +349,8 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
       // is the last resort, not a tier-1 value tier 2 must defer to.
       normalizeImageUrl(domImage, pageUrl) ??
       normalizeImageUrl(favicon, pageUrl),
-    siteName: cleanTitle(og["og:site_name"]) ?? pageHostname(pageUrl),
+    siteName:
+      cleanTitle(og["og:site_name"]) ?? cleanTitle(og["og:site"]) ?? pageHostname(pageUrl),
   };
 }
 

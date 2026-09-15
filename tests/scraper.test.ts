@@ -56,6 +56,16 @@ describe("extractProduct", () => {
     const p = await parseFixture("badprice.html");
     expect(p.priceCents).toBeNull();
   });
+  test("wave14: og:title with sale banner + ' on Steam' suffix → clean name", async () => {
+    const html = `<!DOCTYPE html><html><head>
+    <meta property="og:title" content="Save 30% on Baldur's Gate 3 on Steam">
+    <meta property="og:site" content="Steam">
+    <title>Save 30% on Baldur's Gate 3 on Steam</title>
+  </head><body></body></html>`;
+    const p = await extractProduct(html, "https://store.steampowered.com/app/1086940/");
+    expect(p.title).toBe("Baldur's Gate 3");
+    expect(p.siteName).toBe("Steam"); // og:site joins the siteName chain
+  });
 });
 
 describe("extractProduct DOM fallback tier (no og/json-ld pages)", () => {
