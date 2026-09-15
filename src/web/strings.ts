@@ -76,9 +76,13 @@ export const S = {
     deactivate: "Deactivate",
     activate: "Activate",
     resetPassword: "Reset password",
-    resetPasswordPrompt: (username: string) => `New password for ${username}`,
-    deleteUserConfirm: (username: string) =>
-      `Delete ${username}? Their items and claims will be removed.`,
+    newPasswordFor: "New password",
+    passwordPlaceholder: "New password",
+    setPassword: "Set password",
+    deleteUserConfirm: (username: string) => `Delete ${username}?`,
+    deleteUserBody: "Their items and claims will be removed.",
+    passwordReset: "Password reset.",
+    userDeleted: "User deleted.",
     delete: "Delete",
     displayName: "Display name",
     password: "Password",
@@ -112,7 +116,8 @@ export const S = {
     moveItem: "Move item",
   },
   confirm: {
-    deleteItem: (title: string) => `Delete "${title}"? This cannot be undone.`,
+    deleteItem: (title: string) => `Delete "${title}"?`,
+    deleteItemBody: "This cannot be undone.",
     cancel: "Cancel",
   },
 } as const;

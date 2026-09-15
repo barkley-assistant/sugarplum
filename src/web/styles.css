@@ -273,9 +273,9 @@ label {
 
 .auth-lockup {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--sp-3);
-  justify-content: center;
+  gap: var(--sp-2);
 }
 
 .auth-lockup img {
@@ -285,12 +285,7 @@ label {
 }
 
 .auth-card h1 {
-  text-align: center;
   margin: 0;
-}
-
-.auth-card .muted {
-  text-align: center;
 }
 
 /* ---------- App shell ---------- */
@@ -998,6 +993,32 @@ label {
 }
 
 .admin-actions button {
+  min-height: 40px;
+}
+
+.reset-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+
+.reset-form-row {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.reset-form-row input {
+  flex: 1;
+  min-width: 180px;
+}
+
+.reset-form-row button {
   min-height: 40px;
 }
 

@@ -40,8 +40,11 @@ export function Login() {
   return (
     <main className="auth-page">
       <form className="card auth-card" onSubmit={submit}>
-        <h1>{S.app.name}</h1>
-        <p className="muted">{S.app.tagline}</p>
+        <div className="auth-lockup">
+          <img src="/assets/brand/icon.png" alt="" />
+          <h1>{S.app.name}</h1>
+          <p className="muted">{S.app.tagline}</p>
+        </div>
 
         <label htmlFor="username">{S.auth.username}</label>
         <input

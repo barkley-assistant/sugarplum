@@ -7,9 +7,13 @@ import type {
   WishlistSummaryRow,
 } from "../../shared/types";
 import { S } from "../strings";
+import { useToast } from "../toast";
 import { AdminPanel } from "./AdminPanel";
+import { EmptyState } from "./EmptyState";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { ItemList, ListHeading, type OwnerRef } from "./ItemList";
+import { SkeletonList } from "./SkeletonList";
+import { UserMenu } from "./UserMenu";
 
 export function AppPage() {
   const [me, setMe] = useState<Me | null>(null);
@@ -22,6 +26,8 @@ export function AppPage() {
   const [prefill, setPrefill] = useState<{ url: string; title: string }>({ url: "", title: "" });
   const [booted, setBooted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     void boot();
@@ -55,13 +61,23 @@ export function AppPage() {
   }
 
   async function refreshSummary() {
-    const res = await fetch("/api/wishlist/summary");
-    if (res.ok) setSummary((await res.json()) as WishlistSummaryRow[]);
+    setRefreshing(true);
+    try {
+      const res = await fetch("/api/wishlist/summary");
+      if (res.ok) setSummary((await res.json()) as WishlistSummaryRow[]);
+    } finally {
+      setRefreshing(false);
+    }
   }
 
   async function refreshOwnList(userId: string) {
-    const res = await fetch(`/api/users/${userId}/wishlist`);
-    if (res.ok) setOwnItems((await res.json()) as OwnedItem[]);
+    setRefreshing(true);
+    try {
+      const res = await fetch(`/api/users/${userId}/wishlist`);
+      if (res.ok) setOwnItems((await res.json()) as OwnedItem[]);
+    } finally {
+      setRefreshing(false);
+    }
   }
 
   async function refreshUsers() {
@@ -71,8 +87,13 @@ export function AppPage() {
 
   async function viewList(userId: string) {
     setViewing(userId);
-    const res = await fetch(`/api/users/${userId}/wishlist`);
-    if (res.ok) setOtherItems((await res.json()) as PublicItem[]);
+    setRefreshing(true);
+    try {
+      const res = await fetch(`/api/users/${userId}/wishlist`);
+      if (res.ok) setOtherItems((await res.json()) as PublicItem[]);
+    } finally {
+      setRefreshing(false);
+    }
   }
 
   function backToOwnList() {
@@ -121,16 +142,20 @@ export function AppPage() {
   }
 
   async function deleteItem(id: string) {
-    const res = await fetch(`/api/wishlist/items/${id}`, { method: "DELETE" });
-    if (!res.ok) throw new Error(S.errors.deleteItem);
-    if (me) await refreshOwnList(me.id);
-    await refreshSummary();
+    try {
+      const res = await fetch(`/api/wishlist/items/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      if (me) await refreshOwnList(me.id);
+      await refreshSummary();
+    } catch {
+      toast(S.errors.deleteItem, "danger");
+    }
   }
 
   async function refreshItem(id: string) {
     const res = await fetch(`/api/wishlist/items/${id}/refresh`, { method: "POST" });
     if (!res.ok) {
-      setError(S.errors.retryItem);
+      toast(S.errors.retryItem, "danger");
       return;
     }
     if (me) await refreshOwnList(me.id);
@@ -149,7 +174,7 @@ export function AppPage() {
     if (!viewing) return;
     const res = await fetch(`/api/wishlist/items/${id}/claim`, { method: "POST" });
     if (!res.ok) {
-      setError(S.errors.claimItem);
+      toast(S.errors.claimItem, "danger");
       return;
     }
     await viewList(viewing);
@@ -160,7 +185,7 @@ export function AppPage() {
     if (!viewing) return;
     const res = await fetch(`/api/wishlist/items/${id}/unclaim`, { method: "POST" });
     if (!res.ok) {
-      setError(S.errors.unclaimItem);
+      toast(S.errors.unclaimItem, "danger");
       return;
     }
     await viewList(viewing);
@@ -176,8 +201,34 @@ export function AppPage() {
     await Promise.all([refreshSummary(), refreshUsers()]);
   }
 
+  function scrollToAdmin() {
+    document.getElementById("admin-panel")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  if (error && !me) {
+    return (
+      <main className="auth-page">
+        <div className="card auth-card">
+          <p className="error" role="alert">{error}</p>
+        </div>
+      </main>
+    );
+  }
+
   if (!booted || !me) {
-    return <main className="auth-page"><p className="muted">{S.app.loading}</p></main>;
+    return (
+      <main className="app-shell">
+        <header className="topbar">
+          <div className="brand">
+            <img className="brand-mark" src="/assets/brand/pwa/favicon-32.png" alt="" />
+            <h1 className="brand-name">{S.app.name}</h1>
+          </div>
+        </header>
+        <div className="app-main">
+          <SkeletonList />
+        </div>
+      </main>
+    );
   }
 
   const others = summary.filter((row) => row.userId !== me.id);
@@ -188,78 +239,115 @@ export function AppPage() {
     return row ? { id: row.userId, displayName: row.displayName } : ownRef;
   }
 
+  function renderList() {
+    if (viewing) {
+      const owner = ownerRefFor(viewing);
+      if (otherItems.length === 0) {
+        return <EmptyState title={S.empty.other(owner.displayName)} />;
+      }
+      return (
+        <ItemList
+          items={otherItems}
+          viewerIsOwner={false}
+          onClaim={claim}
+          onUnclaim={unclaim}
+        />
+      );
+    }
+
+    if (ownItems.length === 0) {
+      return (
+        <EmptyState
+          title={S.empty.own}
+          body={S.empty.ownHint}
+          action={
+            <button className="primary" onClick={() => setAddOpen(true)}>
+              {S.list.addItem}
+            </button>
+          }
+        />
+      );
+    }
+
+    return (
+      <ItemList
+        items={ownItems}
+        viewerIsOwner
+        onEdit={editItem}
+        onDelete={deleteItem}
+        onRefresh={refreshItem}
+      />
+    );
+  }
+
   return (
-    <main className="app-page">
+    <main className="app-shell">
+      {refreshing && <div className="progress-hairline" aria-hidden="true" />}
       <header className="topbar">
-        <h1>{S.app.name}</h1>
+        <div className="brand">
+          <img className="brand-mark" src="/assets/brand/pwa/favicon-32.png" alt="" />
+          <h1 className="brand-name">{S.app.name}</h1>
+        </div>
         <div className="topbar-right">
-          <span className="muted">{me.username}</span>
-          <button className="secondary" onClick={() => void logout()}>
-            {S.auth.signOut}
-          </button>
+          <UserMenu
+            displayName={me.displayName || me.username}
+            isAdmin={me.isAdmin}
+            onLogout={logout}
+            onAdmin={scrollToAdmin}
+          />
         </div>
       </header>
 
-      {error && <p className="error" role="alert">{error}</p>}
+      <div className="app-main">
+        {error && <p className="error" role="alert">{error}</p>}
 
-      <nav className="user-switcher" aria-label={S.list.heading(me.username)}>
-        {others.map((row) => (
-          <button
-            key={row.userId}
-            className={viewing === row.userId ? "chip active" : "chip"}
-            onClick={() => void viewList(row.userId)}
+        <nav className="user-switcher" aria-label={S.list.heading(me.username)}>
+          {others.map((row) => (
+            <button
+              key={row.userId}
+              className={viewing === row.userId ? "chip active" : "chip"}
+              onClick={() => void viewList(row.userId)}
+            >
+              {S.list.viewList(row.displayName)}
+            </button>
+          ))}
+          {viewing && (
+            <button className="chip" onClick={backToOwnList}>
+              {S.list.backToMyList}
+            </button>
+          )}
+        </nav>
+
+        <section className="list-section">
+          <ListHeading owner={viewing ? ownerRefFor(viewing) : ownRef} count={viewing ? otherItems.length : ownItems.length} />
+          {renderList()}
+        </section>
+
+        {!viewing && addOpen && (
+          <div
+            className="sheet-overlay"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setAddOpen(false);
+            }}
           >
-            {S.list.viewList(row.displayName)}
-          </button>
-        ))}
-        {viewing && (
-          <button className="chip" onClick={backToOwnList}>
-            {S.list.backToMyList}
-          </button>
-        )}
-      </nav>
-
-      <section className="list-section">
-        {viewing ? (
-          <>
-            <ListHeading
-              owner={ownerRefFor(viewing)}
-              count={otherItems.length}
-            />
-            <ItemList
-              items={otherItems}
-              viewerIsOwner={false}
-              onClaim={claim}
-              onUnclaim={unclaim}
-            />
-          </>
-        ) : (
-          <>
-            <ListHeading owner={ownRef} count={ownItems.length} />
-            {addOpen ? (
+            <div className="sheet" role="dialog" aria-modal="true" aria-label={S.list.addItem}>
+              <h2>{S.list.addItem}</h2>
               <ItemForm
                 submitLabel={S.list.addItem}
                 initialValues={prefill}
                 onSubmit={createItem}
                 onCancel={() => setAddOpen(false)}
               />
-            ) : (
-              <button className="primary" onClick={() => setAddOpen(true)}>
-                {S.list.addItem}
-              </button>
-            )}
-            <ItemList
-              items={ownItems}
-              viewerIsOwner
-              onEdit={editItem}
-              onDelete={deleteItem}
-              onRefresh={refreshItem}
-            />
-          </>
+            </div>
+          </div>
         )}
-      </section>
 
-      {me.isAdmin && <AdminPanel users={users} onChanged={adminChanged} />}
+        {me.isAdmin && (
+          <section id="admin-panel">
+            <AdminPanel users={users} onChanged={adminChanged} />
+          </section>
+        )}
+      </div>
     </main>
   );
 }

@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from "react";
 import type { AdminUser } from "../../shared/types";
 import { S } from "../strings";
+import { useConfirm } from "../confirm";
+import { useToast } from "../toast";
 
 interface AdminPanelProps {
   users: AdminUser[];
@@ -14,6 +16,10 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [resettingId, setResettingId] = useState<string | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
+  const confirm = useConfirm();
+  const toast = useToast();
 
   async function createUser(e: FormEvent) {
     e.preventDefault();
@@ -52,75 +58,114 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
     if (!res.ok) {
       const parsed = (await res.json().catch(() => null)) as { error?: string } | null;
       setError(parsed?.error ?? S.admin.requestFailed);
-      return;
+      return false;
     }
     await onChanged();
+    return true;
+  }
+
+  async function submitReset(e: FormEvent, userId: string) {
+    e.preventDefault();
+    if (!resetPassword.trim()) return;
+    const ok = await act(`/api/users/${userId}/reset-password`, "POST", { password: resetPassword });
+    if (ok) {
+      toast(S.admin.passwordReset);
+      setResettingId(null);
+      setResetPassword("");
+    }
+  }
+
+  async function deleteUser(user: AdminUser) {
+    const ok = await confirm({
+      title: S.admin.deleteUserConfirm(user.username),
+      body: S.admin.deleteUserBody,
+    });
+    if (ok) {
+      const done = await act(`/api/users/${user.id}`, "DELETE");
+      if (done) toast(S.admin.userDeleted);
+    }
   }
 
   return (
     <section className="card admin-panel">
       <h2>{S.admin.users}</h2>
 
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th>{S.admin.name}</th>
-            <th>{S.admin.username}</th>
-            <th>{S.admin.status}</th>
-            <th>{S.admin.actions}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
-              <td>{user.displayName}</td>
-              <td>{user.username}</td>
-              <td>
-                {user.isAdmin ? S.admin.adminRole : S.admin.userRole}
-                {user.isActive ? "" : S.admin.inactiveSuffix}
-              </td>
-              <td className="admin-actions">
-                {user.isActive ? (
-                  <button
-                    className="secondary"
-                    onClick={() => act(`/api/users/${user.id}/deactivate`)}
-                  >
-                    {S.admin.deactivate}
-                  </button>
-                ) : (
-                  <button
-                    className="secondary"
-                    onClick={() => act(`/api/users/${user.id}/activate`)}
-                  >
-                    {S.admin.activate}
-                  </button>
-                )}
-                <button
-                  className="secondary"
-                  onClick={() => {
-                    const next = prompt(S.admin.resetPasswordPrompt(user.username));
-                    if (next) void act(`/api/users/${user.id}/reset-password`, "POST", {
-                      password: next,
-                    });
-                  }}
-                >
-                  {S.admin.resetPassword}
-                </button>
-                <button
-                  className="danger"
-                  onClick={() => {
-                    if (confirm(S.admin.deleteUserConfirm(user.username))) {
-                      void act(`/api/users/${user.id}`, "DELETE");
-                    }
-                  }}
-                >
-                  {S.admin.delete}
-                </button>
-              </td>
+      <div className="admin-table-wrap">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>{S.admin.name}</th>
+              <th>{S.admin.username}</th>
+              <th>{S.admin.status}</th>
+              <th>{S.admin.actions}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id}>
+                <td>{user.displayName}</td>
+                <td>{user.username}</td>
+                <td>
+                  {user.isAdmin ? S.admin.adminRole : S.admin.userRole}
+                  {user.isActive ? "" : S.admin.inactiveSuffix}
+                </td>
+                <td className="admin-actions">
+                  {user.isActive ? (
+                    <button
+                      className="secondary"
+                      onClick={() => void act(`/api/users/${user.id}/deactivate`)}
+                    >
+                      {S.admin.deactivate}
+                    </button>
+                  ) : (
+                    <button
+                      className="secondary"
+                      onClick={() => void act(`/api/users/${user.id}/activate`)}
+                    >
+                      {S.admin.activate}
+                    </button>
+                  )}
+                  <button
+                    className="secondary"
+                    onClick={() => {
+                      setResettingId(resettingId === user.id ? null : user.id);
+                      setResetPassword("");
+                    }}
+                  >
+                    {S.admin.resetPassword}
+                  </button>
+                  <button className="danger" onClick={() => void deleteUser(user)}>
+                    {S.admin.delete}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {resettingId && (
+        <form className="reset-form" onSubmit={(e) => submitReset(e, resettingId)}>
+          <label htmlFor="reset-password">{S.admin.newPasswordFor}</label>
+          <div className="reset-form-row">
+            <input
+              id="reset-password"
+              type="password"
+              autoComplete="new-password"
+              value={resetPassword}
+              onChange={(e) => setResetPassword(e.target.value)}
+              placeholder={S.admin.passwordPlaceholder}
+              required
+            />
+            <button type="submit" disabled={!resetPassword.trim()}>
+              {S.admin.setPassword}
+            </button>
+            <button type="button" className="secondary" onClick={() => setResettingId(null)}>
+              {S.form.cancel}
+            </button>
+          </div>
+        </form>
+      )}
 
       <h3>{S.admin.createUser}</h3>
       <form className="item-form" onSubmit={createUser}>
