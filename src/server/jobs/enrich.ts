@@ -7,7 +7,7 @@
 import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { scrapeProduct, type ScrapeStrategyName } from "../scraper";
-import { buildSearchQuery, searchPriceHint } from "../searxng";
+import { buildSearchQuery, searchPriceHint, type PriceHint } from "../searxng";
 import { downloadImage } from "../images";
 import type { StealthDeps } from "../scraper/stealth";
 
@@ -174,6 +174,35 @@ async function applyScrape(
       deps.db.run("UPDATE wishlist_items SET image_path = ? WHERE id = ?", [filename, row.id]);
     }
   }
+
+  // Partial-ok backstop: the scrape succeeded but left the price empty (the
+  // item is still a success — title/image are usable). searxng gets a chance
+  // to attach a LABELLED hint instead of the item having no price signal at
+  // all; it never writes to the direct price_cents column.
+  if (deps.searxngUrl && row.url && row.price_cents === null && product.priceCents === null) {
+    const hint = await searchPriceHint(buildSearchQuery(row.url), {
+      baseUrl: deps.searxngUrl,
+      fetchImpl: deps.fetchImpl,
+    });
+    if (hint) persistPriceHint(deps, row.id, hint);
+  }
+}
+
+/** hint_* columns + their price_history row. Shared by the failure path and
+ *  the partial-ok path so both keep identical hint semantics; callers own
+ *  fetch_state. */
+function persistPriceHint(deps: EnrichmentDeps, itemId: string, hint: PriceHint): void {
+  deps.db.run(
+    `UPDATE wishlist_items
+     SET hint_price_cents = ?, hint_currency = ?, hint_source_url = ?, updated_at = ?
+     WHERE id = ?`,
+    [hint.priceCents, hint.currency, hint.sourceUrl, new Date().toISOString(), itemId],
+  );
+  deps.db.run(
+    `INSERT INTO price_history (id, item_id, price_cents, currency, source, observed_at)
+     VALUES (?, ?, ?, ?, 'searxng-hint', ?)`,
+    [randomUUID(), itemId, hint.priceCents, hint.currency, new Date().toISOString()],
+  );
 }
 
 /** Direct scrape failed: optional SearXNG hint makes the item usable
@@ -191,16 +220,11 @@ async function applyFailure(
     if (hint) {
       deps.db.run(
         `UPDATE wishlist_items
-         SET hint_price_cents = ?, hint_currency = ?, hint_source_url = ?,
-             fetch_state = 'complete', last_fetch_error = NULL, updated_at = ?
+         SET fetch_state = 'complete', last_fetch_error = NULL, updated_at = ?
          WHERE id = ?`,
-        [hint.priceCents, hint.currency, hint.sourceUrl, new Date().toISOString(), row.id],
+        [new Date().toISOString(), row.id],
       );
-      deps.db.run(
-        `INSERT INTO price_history (id, item_id, price_cents, currency, source, observed_at)
-         VALUES (?, ?, ?, ?, 'searxng-hint', ?)`,
-        [randomUUID(), row.id, hint.priceCents, hint.currency, new Date().toISOString()],
-      );
+      persistPriceHint(deps, row.id, hint);
       return;
     }
   }
