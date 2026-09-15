@@ -67,7 +67,34 @@ bun test tests/
 bun run build
 ```
 
+## Deployment
+
+`sugarplum` ships as a single Bun process, so "deploy" is boring in the best
+way:
+
+```bash
+bash scripts/deploy.sh
+```
+
+That pins the `main` branch, pulls, installs with the frozen lockfile, builds
+the web bundle, restarts the `sugarplum.service` user unit, and health-waits
+on `http://127.0.0.1:34995/api/health` up to 20×1s. A template systemd unit
+lives at `packaging/systemd/sugarplum.service` — it runs
+`bun run src/server/index.ts` via `mise exec` and reads
+`~/.config/sugarplum/.env`:
+
+```bash
+cp packaging/systemd/sugarplum.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now sugarplum.service
+```
+
+First boot: `deploy.sh` seeds `~/.config/sugarplum/.env` (port + bind host)
+and exits 3; fill in the three admin variables, install the unit, and re-run
+`deploy.sh`. The production env template is `.env.production.example`. The
+full operator manual (access, backup, update, rollback, restore, tunnel
+cutover) lives in `docs/operations.md`.
+
 ## Roadmap
 
-Later waves add the PWA install + share target, the price-history UI, and
-deployment.
+Later waves add the PWA install + share target and the price-history UI.
