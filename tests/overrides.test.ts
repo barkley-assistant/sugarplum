@@ -31,6 +31,17 @@ describe("override registry", () => {
     expect(resolveOverride("https://colourpop.com/products/x")).toBeUndefined();
   });
 
+  test("store.steampowered.com registered: custom-headers first (age gate), plain fallback", () => {
+    const o = resolveOverride("https://store.steampowered.com/app/1091500/");
+    expect(o?.strategies).toEqual(["custom-headers", "plain"]);
+    expect(o?.headers?.["Cookie"]).toContain("birthtime=");
+  });
+
+  test("steam matching is exact: other Valve hosts stay unregistered", () => {
+    expect(resolveOverride("https://steamcommunity.com/app/1091500")).toBeUndefined();
+    expect(resolveOverride("https://store.steampowered.com.evil.example.com/")).toBeUndefined();
+  });
+
   test("registry invariants: lowercase keys, no www., non-empty known strategies", () => {
     for (const [host, o] of Object.entries(SITE_OVERRIDES)) {
       expect(host).toBe(host.toLowerCase());

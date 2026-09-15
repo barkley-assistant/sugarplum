@@ -36,6 +36,20 @@ const AMAZON_OVERRIDE: SiteOverride = {
     "§2026-09-15 Amazon ground truth",
 };
 
+/** Steam store. Two measured facts drive this entry (2026-09-15):
+ *  (1) mature apps 302 to /agecheck/app/<id>/ — a ~52KB shell with a promo-
+ *      laden og:title and NO price data; sending an age-acknowledgement cookie
+ *      returns the full purchase page (verified through fetchPage itself).
+ *  (2) og:title carries "Save N% on <Game> on Steam" during sales — cleaned by
+ *      the generic title strip in parse.ts, not by an override. */
+const STEAM_OVERRIDE: SiteOverride = {
+  strategies: ["custom-headers", "plain"],
+  headers: { Cookie: "birthtime=347077200; lastagecheckage=1-0-1980" },
+  notes:
+    "Age gate hides the purchase page; cookie returns it (2026-09-15). " +
+    "Title/price extraction is generic — see parse.ts wave-14 tier.",
+};
+
 /** key = exact hostname, lowercase, no leading "www.". */
 export const SITE_OVERRIDES: Record<string, SiteOverride> = {
   "smythstoys.com": {
@@ -47,6 +61,7 @@ export const SITE_OVERRIDES: Record<string, SiteOverride> = {
   "amazon.co.uk": AMAZON_OVERRIDE,
   "amazon.com": AMAZON_OVERRIDE,
   "amazon.de": AMAZON_OVERRIDE,
+  "store.steampowered.com": STEAM_OVERRIDE,
 };
 
 /** hostname("https://WWW.SmythsToys.com/x") → "smythstoys.com" or null. */
