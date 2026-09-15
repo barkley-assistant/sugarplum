@@ -122,6 +122,23 @@ function cleanTitle(value: unknown): string | null {
   return text;
 }
 
+/** Wave 14: strip store promo noise from a page title. Generic on purpose —
+ *  measured shapes: Steam prefixes sales as "Save 30% on <Game>" inside
+ *  og:title itself, and suffixes every title with " on Steam" (the token from
+ *  og:site). Other stores use " | Site" / " - Site" / " :: Site". The site
+ *  token comes ONLY from declared metadata (og:site_name/og:site) — hostname
+ *  labels like "store" would be noise. Empty result → return the input. */
+export function stripStoreTitleNoise(raw: string, siteToken: string | null): string {
+  let text = raw.trim().replace(/\s+/g, " ");
+  if (!text) return text;
+  text = text.replace(/^save\s+[\d.,]+\s*%?\s*on\s+/i, "");
+  if (siteToken !== null && siteToken.length >= 3 && text.length > siteToken.length + 2) {
+    const esc = siteToken.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    text = text.replace(new RegExp(`\\s+(?:on|\\||-|–|::)\\s+${esc}\\s*$`, "i"), "");
+  }
+  return text.trim() || raw.trim();
+}
+
 function cleanCurrency(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const text = value.trim().toUpperCase();

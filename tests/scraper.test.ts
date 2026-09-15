@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { serve } from "bun";
-import { extractProduct, parseSymbolPriceToCents } from "../src/server/scraper/parse";
+import {
+  extractProduct,
+  parseSymbolPriceToCents,
+  stripStoreTitleNoise,
+} from "../src/server/scraper/parse";
 import { scrapeProduct } from "../src/server/scraper";
 import { fetchPage } from "../src/server/scraper/fetch";
 import type { StealthRunner } from "../src/server/scraper/stealth";
@@ -113,6 +117,42 @@ describe("parseSymbolPriceToCents", () => {
     expect(parseSymbolPriceToCents("£99,999,999")).toBeNull(); // > MAX_CENTS
     expect(parseSymbolPriceToCents(null)).toBeNull();
     expect(parseSymbolPriceToCents(1900)).toBeNull();
+  });
+});
+
+describe("stripStoreTitleNoise (wave 14)", () => {
+  test("steam sale shape: promo prefix + site suffix both strip", () => {
+    expect(stripStoreTitleNoise("Save 30% on Baldur's Gate 3 on Steam", "Steam")).toBe(
+      "Baldur's Gate 3",
+    );
+  });
+  test("steam non-sale shape: site suffix strips", () => {
+    expect(stripStoreTitleNoise("Risk of Rain 2 on Steam", "Steam")).toBe("Risk of Rain 2");
+  });
+  test("separator variants", () => {
+    expect(stripStoreTitleNoise("Product X | ColourPop", "ColourPop")).toBe("Product X");
+    expect(stripStoreTitleNoise("Product X - ColourPop", "ColourPop")).toBe("Product X");
+    expect(stripStoreTitleNoise("Product X :: Steam", "Steam")).toBe("Product X");
+  });
+  test("clean titles are untouched (regression guard for existing fixtures)", () => {
+    expect(stripStoreTitleNoise("Fresh Kiss Trio", "ColourPop")).toBe("Fresh Kiss Trio");
+    expect(stripStoreTitleNoise("Just A Shop", null)).toBe("Just A Shop");
+    expect(
+      stripStoreTitleNoise(
+        "LEGO City Explorer Diving Boat Toy with Mini-Submarine 60377",
+        "amazon",
+      ),
+    ).toBe("LEGO City Explorer Diving Boat Toy with Mini-Submarine 60377");
+  });
+  test("no site token → only the promo prefix strips", () => {
+    expect(stripStoreTitleNoise("Save 75% on Some Game", null)).toBe("Some Game");
+  });
+  test("degenerate guards: empty result falls back to input; short tokens ignored", () => {
+    expect(stripStoreTitleNoise("Steam", "Steam")).toBe("Steam");
+    expect(stripStoreTitleNoise("X on ab", "ab")).toBe("X on ab"); // token < 3 chars
+  });
+  test("regex metachars in the site token are literal", () => {
+    expect(stripStoreTitleNoise("Product X - C++.Shop", "C++.Shop")).toBe("Product X");
   });
 });
 
