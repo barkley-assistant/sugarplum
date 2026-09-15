@@ -400,6 +400,11 @@ export function AppPage() {
 
         <section className="list-section">
           <ListHeading owner={viewing ? ownerRefFor(viewing) : ownRef} count={viewing ? otherItems.length : ownItems.length} />
+          {!viewing && !addOpen && ownItems.length > 0 && (
+            <button className="primary" onClick={() => setAddOpen(true)}>
+              {S.list.addItem}
+            </button>
+          )}
           {!viewing && ownItems.length > 0 && (
             <FilterChips
               tags={allTags}

@@ -68,5 +68,8 @@ export function readConfig(env: Record<string, string | undefined> = process.env
       env.SUGARPLUM_USER_AGENT ??
       "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0",
     maxEnrichConcurrency,
+    // Operator/test escape hatch for local scrape fixtures. Production env
+    // never sets this; the e2e suite enables it to scrape 127.0.0.1 pages.
+    allowPrivateFetch: env.SUGARPLUM_ALLOW_PRIVATE_FETCH === "1",
   };
 }
