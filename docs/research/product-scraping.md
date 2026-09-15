@@ -210,6 +210,13 @@ Shipped in wave 12: a generic (site-agnostic) DOM fallback tier in
 the order in one line if the IP reputation changes); and a labelled SearXNG
 price/image backstop for items whose page yields no price or no image.
 
+**Stealth transport returns the same shape.** The 2026-09-15 smoke run also
+fetched both probe ASINs through the stealth helper (`invisible_playwright`,
+`ok=True status=200`, 2.36MB / 2.50MB pages) and extraction produced the exact
+same title, price and image as the plain pass. The extraction is therefore
+transport-independent: plain-first is a latency choice (~1.6–1.9s vs a browser
+launch), not a correctness one.
+
 Honest limits: when Amazon has no featured offer the price is genuinely absent,
 so the item stays price-less with a hint at best; the `#aod-ingress-link`
 number is the cheapest NEW offer floor, not necessarily the buybox price; and
