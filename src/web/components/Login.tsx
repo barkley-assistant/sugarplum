@@ -4,12 +4,17 @@ import { S } from "../strings";
 /** Open-redirect guard: only follow a same-site relative path. The
  *  share-target prefill fix uses /login?next=<encoded path>; any other
  *  shape (absolute URL, protocol-relative `//evil.example`, empty) falls
- *  back to the home shell. */
+ *  back to the home shell. WHATWG URL parsing treats backslash and
+ *  tab/LF/CR as slash equivalents, so we also reject `/\evil.example`,
+ *  `/\tevil.example`, etc. — all of which would otherwise navigate
+ *  off-site after login. */
 function safeNext(raw: string | null): string {
   if (!raw) return "/";
   if (raw.length > 512) return "/";
   if (!raw.startsWith("/")) return "/";
-  if (raw.startsWith("//")) return "/";
+  // URL parsing treats backslash / tab / LF / CR as a slash, so reject
+  // every shape the parser would read as protocol-relative.
+  if (raw.startsWith("//") || (raw.length >= 2 && /[\\\t\n\r]/.test(raw[1]))) return "/";
   return raw;
 }
 

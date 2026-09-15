@@ -300,6 +300,19 @@ test("14: share-target GET prefills the add sheet through the login hop", async 
   await page.getByLabel("Password").fill("admin-password");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/$/);
+
+  // Open-redirect guard, bypass class: WHATWG URL parsing treats
+  // backslash / tab / LF / CR as a slash, so /\<host>, /\t<host>, /\n<host>
+  // all navigate off-site as protocol-relative URLs unless the guard
+  // rejects them. Pin the class instead of only the literal `//` shape.
+  await page.request.post(`${BASE}/api/auth/logout`);
+  await context.clearCookies();
+  // `/\evil.example/x` — URL-encoded as %2F%5Cevil.example%2Fx.
+  await page.goto(`${BASE}/login?next=%2F%5Cevil.example%2Fx`);
+  await page.getByLabel("Username").fill("admin");
+  await page.getByLabel("Password").fill("admin-password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/$/);
 });
 
 /** Local static fixture server: the app's scraper (server-side) fetches it,
