@@ -86,17 +86,22 @@ git -C "$ORIGIN" init --bare --quiet --initial-branch=main
 # (irrelevant here — we push into the bare repo from a separate worktree).
 git -C "$ORIGIN" config receive.denyCurrentBranch ignore
 
-# Create a temporary worktree pointing at THIS repo's main so we can push
-# a copy of the current tip into the bare sandbox origin.
+# Create a temporary worktree pointing at THIS repo's current branch so
+# we can push a copy of the current tip into the bare sandbox origin.
 #
 # We push via an explicit URL (no `git remote add`) because the worktree
 # shares this repo's `.git/config` — a leftover "sandbox" remote from a
 # previous run would make `git remote add sandbox` fail. Pushing directly
 # is also strictly local: `git push file://...` is a fully-offline copy.
+#
+# We push the CURRENT branch (whatever HEAD is), not main — this makes
+# the sandbox robust to running from a feature branch in a fresh clone
+# (`git clone --single-branch --branch feat/...`).
 WORKTREE="$(mktemp -d -t sugarplum-deploy-sandbox-work.XXXXXX)"
-git worktree add --quiet --detach "$WORKTREE" main
+CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+git worktree add --quiet --detach "$WORKTREE" "$CURRENT_BRANCH"
 pushd "$WORKTREE" >/dev/null || exit 1
-git push --quiet --force "$ORIGIN" main:main
+git push --quiet --force "$ORIGIN" "$CURRENT_BRANCH:main"
 popd >/dev/null || exit 1
 git worktree remove --force "$WORKTREE" 2>/dev/null || true
 # `git worktree remove` deletes the directory; the rmdir is a belt-and-
