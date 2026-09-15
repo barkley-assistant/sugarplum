@@ -152,6 +152,11 @@ Reasons:
 
 **Expected coverage:** Shopify-based stores (Decathlon, ColourPop, Death Wish, indie Shopify stores) → full extraction. Steam, Bandcamp, most blogs/indie sites → title + image, no price. Amazon, Walmart, eBay, Etsy, Best Buy, Target, Argos, John Lewis, IKEA → graceful failure (bot wall), user enters manually.
 
+> **Superseded for Amazon (2026-09-15):** a plain fetch passes Amazon's wall
+> from this host and the served HTML carries product data in id-anchored DOM
+> blocks — see §"2026-09-15 Amazon ground truth" below. The 2026-09-14 row
+> below is kept as history.
+
 ### Price comparison verdict
 
 **Not a v1 feature. Ship the product scrape first; revisit price comparison only if users actively request it, and then only as an unverified "SearXNG found these listings" hint with a disclaimer — never as a reliable "cheapest price" claim.**
@@ -180,3 +185,33 @@ All claims verified by fetching live pages/endpoints on 2026-09-14:
 - metascraper: npm registry → v5.57.0, deps include cheerio + @metascraper/helpers (jsdom, re2, chrono-node)
 - unfurl.js: GitHub API → `archived: true`, last push 2024-04-09
 - Bun HTMLRewriter: [https://bun.sh/docs/runtime/html-rewriter] + [https://bun.sh/guides/html-rewriter/extract-social-meta]
+
+---
+
+## 2026-09-15 Amazon ground truth (wave 12)
+
+Measured on this host against `www.amazon.co.uk` with the REAL pipeline
+(`bun run scripts/amazon-probe.ts`) and the REAL stealth helper. Re-verify any
+time with `bash scripts/amazon-smoke.sh` — live Amazon, never in CI.
+
+| # | Fact |
+|---|------|
+| F1 | Plain `fetchPage` gets a **200 with the full real page** (2.4–2.7MB) — no captcha, no bot wall from this IP. Both probe ASINs: `ok strategy=plain`, ~1.6–2.1s, no stealth needed. |
+| F2 | Amazon ships **zero** `og:*` metas, **zero** JSON-LD and **zero** microdata on any transport (plain and stealth pages alike). |
+| F3 | `<title>` is always present and clean; `img#landingImage[data-old-hires]` carries the SL1500 hi-res gallery image. |
+| F4 | Price presence is **ASIN-dependent**. With a featured offer the offer floor sits in `#aod-ingress-link` ("New (19) from £19.00") and `#corePrice*`; without one there is **no main-ASIN price anywhere** — `#corePrice_desktop` renders EMPTY and the buybox is "See All Buying Options". B0DLGMVR4C → `price=1900 cur=GBP`; B0BPCCKL3N → `price=null` (honest). |
+| F5 | Waiting does not help: a live DOM poll every 2s for 27s never saw the buybox appear; page bytes static after 5.7s. (planning probe, `/tmp/wait-probe.py`) |
+| F6 | Every other `.a-price` on the page belongs to a DIFFERENT ASIN: a recommendation carousel EARLIER in the document (£24.88) and a sponsored `sp_detail` carousel LATER (£21.99, ASIN B0HCJFVT3Z). Anchoring to `#aod-ingress-link` / `div[id^=corePrice]` ids keeps them out — **and the capture must be disarmed on the element's end tag**, or the empty buybox block leaks the sponsored price into the result (observed on the real page until that fix landed; `tests/fixtures/amazon-dp*.html` now encode both traps). |
+| F7 | `/gp/offer-listing/<asin>` redirects back to `/dp/…?aod=1` and the AOD ajax endpoints return 404 unauthenticated — chasing offers is a dead end. (planning probe) |
+
+Shipped in wave 12: a generic (site-agnostic) DOM fallback tier in
+`src/server/scraper/parse.ts`; `amazon.co.uk/.com/.de` registry entries in
+`src/server/scraper/overrides.ts` (plain-first with a stealth fallback — flip
+the order in one line if the IP reputation changes); and a labelled SearXNG
+price/image backstop for items whose page yields no price or no image.
+
+Honest limits: when Amazon has no featured offer the price is genuinely absent,
+so the item stays price-less with a hint at best; the `#aod-ingress-link`
+number is the cheapest NEW offer floor, not necessarily the buybox price; and
+the `amazon.*` markup shapes were verified on `.co.uk` only (the generic
+extractor degrades to title-only elsewhere, never to a wrong value).
