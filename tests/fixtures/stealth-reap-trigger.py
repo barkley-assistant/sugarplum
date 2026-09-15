@@ -29,6 +29,7 @@ import json
 import os
 import sys
 import time
+from pathlib import Path
 
 
 def main() -> int:
@@ -54,6 +55,19 @@ def main() -> int:
         default=300,
         help="How long to wait after spawn before os._exit, so the reaper has time to call setsid",
     )
+    parser.add_argument(
+        "--poll-budget-seconds",
+        type=float,
+        default=None,
+        help=(
+            "If set, cap the reaper's parent-poll wait at this many seconds. "
+            "Test-only: the production helper calls spawn_xvfb_reaper with "
+            "the default (None = unbounded) so a long-running stealth scrape "
+            "is never raced. Used by the r3 regression test to exercise "
+            "'budget exhausted + parent alive -> no kill' without sleeping "
+            "for 120s."
+        ),
+    )
     args = parser.parse_args()
 
     # Validate --fake-ps as JSON before forking so a typo fails fast.
@@ -69,8 +83,23 @@ def main() -> int:
     os.environ["__SUGARPLUM_FAKE_PS_OUTPUT"] = args.fake_ps
     os.environ["__SUGARPLUM_FAKE_KILL_RECORD"] = args.kill_record
 
+    # Derive the helper path from THIS file's location so the fixture
+    # works on a fresh clone at any absolute path. Previously this was
+    # hardcoded to /home/agent/projects/barkley-assistant/sugarplum/...
+    # which silently loaded the DEV checkout's helper instead of the
+    # clone's on this box, masking the r3 regression.
+    # Path: tests/fixtures/stealth-reap-trigger.py -> parents[2] is the
+    # repo root (parents[0] = tests/fixtures, parents[1] = tests,
+    # parents[2] = repo root).
+    helper_path = (
+        Path(__file__).resolve().parents[2] / "scripts" / "stealth-fetch.py"
+    )
+    if not helper_path.is_file():
+        print(f"stealth-fetch.py not found at {helper_path}", file=sys.stderr)
+        return 5
+
     spec = importlib.util.spec_from_file_location(
-        "stealth_fetch", "/home/agent/projects/barkley-assistant/sugarplum/scripts/stealth-fetch.py"
+        "stealth_fetch", str(helper_path)
     )
     if spec is None or spec.loader is None:
         print("failed to load stealth_fetch module", file=sys.stderr)
@@ -78,7 +107,10 @@ def main() -> int:
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
 
-    reaper_pid = m.spawn_xvfb_reaper(os.getpid())
+    reaper_pid = m.spawn_xvfb_reaper(
+        os.getpid(),
+        poll_budget_seconds=args.poll_budget_seconds,
+    )
     if reaper_pid is None or reaper_pid <= 0:
         print(f"spawn_xvfb_reaper failed: {reaper_pid}", file=sys.stderr)
         return 4

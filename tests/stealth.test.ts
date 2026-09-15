@@ -23,6 +23,19 @@ async function readFile(path: string, _enc: string): Promise<string> {
   return readFileSync(path, "utf-8");
 }
 
+/** Like readFile, but returns "" if the file doesn't exist. Used for
+ *  kill-record assertions where a missing file means "no kill happened"
+ *  (the reaper's _default_kill_sigkill only opens the file when it
+ *  actually kills something). */
+async function readFileSafe(path: string): Promise<string> {
+  try {
+    return readFileSync(path, "utf-8").trim();
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return "";
+    throw err;
+  }
+}
+
 function deps(
   runner: StealthRunner,
   extra: Partial<StealthDeps> = {},
@@ -428,6 +441,102 @@ describe("stealth client", () => {
       expect(killed.sort()).toEqual(["1234"]);
     },
     15_000,
+  );
+
+  test(
+    "regression (BLOCKING 2 r3): reaper does NOT reap while parent is alive, even past the poll budget; reap fires on observed parent death",
+    async () => {
+      // The r3 review found a live-Xvfb kill bug: the reaper SIGKILLed
+      // a still-running helper's Xvfb at its 120s poll deadline. The
+      // fix removes the fixed deadline in production and adds a test
+      // seam (`poll_budget_seconds`) so this test can exercise the
+      // semantics in <2s instead of >120s.
+      //
+      // Two sub-tests against REAP_TRIGGER with --poll-budget-seconds:
+      //   A. budget=0.5s, settle=1.5s → parent outlives budget →
+      //      reaper must exit WITHOUT calling reap → empty kill-record.
+      //      (Pre-fix code would reap at t=0.5s, killing the live
+      //      helper's Xvfb.)
+      //   B. budget=10s, settle=0.3s → parent dies first →
+      //      reaper must reap → kill-record contains the matched pid.
+      // Both sub-tests share the same fake-ps fixture (one Xvfb on :99).
+      const FAKE_PS = JSON.stringify([
+        [1234, "/usr/bin/Xvfb :99 -screen 0 1280x720x24"],
+        [5678, "/usr/bin/Xvfb :100 -screen 0 1280x720x24"],
+        [9999, "grep Xvfb :99"],
+        [8888, "Xvfb-launcher.sh :99"],
+      ]);
+
+      // ── Sub-test A: budget exhausted with parent alive → NO kill ──
+      const killRecordA = join(
+        await mkdtemp(join(tmpdir(), "stealth-reap-r3-a-")),
+        "kills.txt",
+      );
+      const procA = Bun.spawn(
+        [
+          "python3",
+          REAP_TRIGGER,
+          "--fake-ps",
+          FAKE_PS,
+          "--kill-record",
+          killRecordA,
+          "--display",
+          ":99",
+          "--poll-budget-seconds",
+          "0.5",
+          "--settle-ms",
+          "1500",
+        ],
+        { stdout: "pipe", stderr: "pipe" },
+      );
+      const outA = await new Response(procA.stdout).text();
+      const reaperPidA = parseInt(outA.trim(), 10);
+      expect(Number.isFinite(reaperPidA)).toBe(true);
+      expect(reaperPidA).toBeGreaterThan(0);
+      const triggerExitA = await procA.exited;
+      expect(triggerExitA).toBe(0);
+      // Generous wait: reaper exits at t=0.5s on budget exhaustion;
+      // trigger exits at t=1.5s; total settle ~2s is plenty.
+      await Bun.sleep(2_500);
+      const killedA = await readFileSafe(killRecordA); // empty when no kill happened
+      expect(killedA).toBe(""); // r3 bug: pre-fix code would have killed 1234 here
+
+      // ── Sub-test B: parent dies first → kill fires ──
+      const killRecordB = join(
+        await mkdtemp(join(tmpdir(), "stealth-reap-r3-b-")),
+        "kills.txt",
+      );
+      const procB = Bun.spawn(
+        [
+          "python3",
+          REAP_TRIGGER,
+          "--fake-ps",
+          FAKE_PS,
+          "--kill-record",
+          killRecordB,
+          "--display",
+          ":99",
+          // Budget long enough that parent death wins the race; also
+          // proves budget-exhaustion suppression doesn't break the
+          // happy path on parent death.
+          "--poll-budget-seconds",
+          "10",
+          "--settle-ms",
+          "300",
+        ],
+        { stdout: "pipe", stderr: "pipe" },
+      );
+      const outB = await new Response(procB.stdout).text();
+      const reaperPidB = parseInt(outB.trim(), 10);
+      expect(Number.isFinite(reaperPidB)).toBe(true);
+      expect(reaperPidB).toBeGreaterThan(0);
+      const triggerExitB = await procB.exited;
+      expect(triggerExitB).toBe(0);
+      await Bun.sleep(2_500);
+      const killedB = (await readFile(killRecordB, "utf-8")).trim().split("\n").filter(Boolean);
+      expect(killedB.sort()).toEqual(["1234"]);
+    },
+    20_000,
   );
 
   test(
