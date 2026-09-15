@@ -20,3 +20,31 @@ describe("wave2 config", () => {
     expect(readConfig({ ...BASE, SUGARPLUM_ENRICH_CONCURRENCY: "0" }).maxEnrichConcurrency).toBe(1);
   });
 });
+
+describe("wave13 config (stealth)", () => {
+  test("defaults: stealth enabled, 60s timeout, default profiles dir, no venv override", () => {
+    const cfg = readConfig({ ...BASE });
+    expect(cfg.stealthDisabled).toBe(false);
+    expect(cfg.stealthTimeoutMs).toBe(60000);
+    expect(cfg.stealthProfilesDir).toBe("./data/stealth-profiles");
+    expect(cfg.stealthVenvPython).toBeUndefined();
+  });
+  test("SUGARPLUM_STEALTH_DISABLED=1 → stealthDisabled true", () => {
+    const cfg = readConfig({ ...BASE, SUGARPLUM_STEALTH_DISABLED: "1" });
+    expect(cfg.stealthDisabled).toBe(true);
+  });
+  test("invalid stealth timeout → falls back to 60000", () => {
+    expect(readConfig({ ...BASE, SUGARPLUM_STEALTH_TIMEOUT_MS: "abc" }).stealthTimeoutMs).toBe(60000);
+    expect(readConfig({ ...BASE, SUGARPLUM_STEALTH_TIMEOUT_MS: "0" }).stealthTimeoutMs).toBe(60000);
+    expect(readConfig({ ...BASE, SUGARPLUM_STEALTH_TIMEOUT_MS: "12000" }).stealthTimeoutMs).toBe(12000);
+  });
+  test("explicit profiles dir + venv python override flow through", () => {
+    const cfg = readConfig({
+      ...BASE,
+      SUGARPLUM_STEALTH_PROFILES_DIR: "/srv/stealth",
+      SUGARPLUM_STEALTH_VENV_PY: "/opt/stealth-venv/bin/python",
+    });
+    expect(cfg.stealthProfilesDir).toBe("/srv/stealth");
+    expect(cfg.stealthVenvPython).toBe("/opt/stealth-venv/bin/python");
+  });
+});

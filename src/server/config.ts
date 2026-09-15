@@ -23,6 +23,15 @@ export interface Config {
    * readConfig never sets this — tests opt in explicitly.
    */
   allowPrivateFetch?: boolean;
+  /** Stealth-browser capability. Disabled → chain filters out stealth-browser. */
+  stealthDisabled: boolean;
+  /** Stealth per-scrape budget in milliseconds (default 60000). */
+  stealthTimeoutMs: number;
+  /** Where per-host Firefox profiles are persisted (gitignored). */
+  stealthProfilesDir: string;
+  /** Raw env value when SUGARPLUM_STEALTH_VENV_PY is set; resolution to an
+   *  absolute path lives in createStealthDeps (stealth.ts). */
+  stealthVenvPython?: string;
 }
 
 export class ConfigError extends Error {
@@ -52,6 +61,11 @@ export function readConfig(env: Record<string, string | undefined> = process.env
   const searxngUrlRaw = env.SUGARPLUM_SEARXNG_URL;
   const searxngUrl = searxngUrlRaw ? searxngUrlRaw.replace(/\/+$/, "") : undefined;
 
+  const rawStealthTimeout = Number(env.SUGARPLUM_STEALTH_TIMEOUT_MS ?? "60000");
+  const stealthTimeoutMs = Number.isFinite(rawStealthTimeout) && rawStealthTimeout > 0
+    ? rawStealthTimeout
+    : 60000;
+
   return {
     port: Number(env.SUGARPLUM_PORT ?? "3499"),
     host: env.SUGARPLUM_HOST ?? "127.0.0.1",
@@ -71,5 +85,11 @@ export function readConfig(env: Record<string, string | undefined> = process.env
     // Operator/test escape hatch for local scrape fixtures. Production env
     // never sets this; the e2e suite enables it to scrape 127.0.0.1 pages.
     allowPrivateFetch: env.SUGARPLUM_ALLOW_PRIVATE_FETCH === "1",
+    // Stealth-browser capability. Disabled → the chain filters the
+    // stealth-browser strategy out (chain falls back to plain-only).
+    stealthDisabled: env.SUGARPLUM_STEALTH_DISABLED === "1",
+    stealthTimeoutMs,
+    stealthProfilesDir: env.SUGARPLUM_STEALTH_PROFILES_DIR ?? "./data/stealth-profiles",
+    stealthVenvPython: env.SUGARPLUM_STEALTH_VENV_PY,
   };
 }
