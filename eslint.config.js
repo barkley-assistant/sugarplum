@@ -14,6 +14,7 @@ export default [
       globals: {
         // Bun runtime + platform globals used across src, scripts, and tests.
         Bun: "readonly",
+        HTMLRewriter: "readonly",
         process: "readonly",
         fetch: "readonly",
         setTimeout: "readonly",

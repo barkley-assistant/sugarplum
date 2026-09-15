@@ -34,8 +34,8 @@ export function ItemForm({ initial, initialValues, submitLabel, onSubmit, onCanc
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!title.trim()) {
-      setError("Title is required.");
+    if (!title.trim() && !url.trim()) {
+      setError("Add a title or a link.");
       return;
     }
     const effectiveCurrency = currency === "Other" ? otherCurrency.trim().toUpperCase() : currency;
@@ -46,7 +46,9 @@ export function ItemForm({ initial, initialValues, submitLabel, onSubmit, onCanc
         title: title.trim(),
         url: url.trim() || "",
         priceCents: priceCents.trim() || "",
-        currency: effectiveCurrency,
+        // A currency with no price is meaningless; leaving it empty lets a
+        // URL-only add receive the scraped currency instead of a stale default.
+        currency: priceCents.trim() ? effectiveCurrency : "",
         notes: notes.trim() || "",
         tags: tags
           .split(",")
@@ -68,9 +70,9 @@ export function ItemForm({ initial, initialValues, submitLabel, onSubmit, onCanc
           <input
             id="item-title"
             type="text"
+            placeholder="Leave blank to auto-fill from the link"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            required
           />
         </div>
         <div className="field">

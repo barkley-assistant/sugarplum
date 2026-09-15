@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { serve } from "bun";
 import { createTestApp, type Jar, type TestAppHandle } from "./helpers";
 import type { AdminUser, OwnedItem, PublicItem, WishlistSummaryRow } from "../src/shared/types";
 
@@ -336,6 +337,106 @@ describe("wishlist API", () => {
     const ownClaim = await stranger.request("POST", `/api/wishlist/items/${own.id}/claim`);
     expect(ownClaim.status).toBe(400);
   });
+
+  test("wave2: URL-only create → 201, provisional title = hostname, fetchState 'pending'", async () => {
+    const alice = app.newJar();
+    await login(alice, "alice", "alice-pass");
+    const res = await alice.request("POST", "/api/wishlist/items", {
+      url: closedLocalUrl(),
+    });
+    expect(res.status).toBe(201);
+    const item = (await res.json()) as OwnedItem;
+    expect(item.fetchState).toBe("pending");
+    expect(item.title).toBe("127.0.0.1");
+  });
+
+  test("wave2: neither url nor title → 400; ftp:// → 400; >2048-char URL → 400", async () => {
+    const alice = app.newJar();
+    await login(alice, "alice", "alice-pass");
+
+    const neither = await alice.request("POST", "/api/wishlist/items", {});
+    expect(neither.status).toBe(400);
+
+    const ftp = await alice.request("POST", "/api/wishlist/items", {
+      title: "FTP thing",
+      url: "ftp://example.com/file",
+    });
+    expect(ftp.status).toBe(400);
+
+    const tooLong = await alice.request("POST", "/api/wishlist/items", {
+      url: `https://example.com/${"x".repeat(2100)}`,
+    });
+    expect(tooLong.status).toBe(400);
+  });
+
+  test("wave2: refresh: owner POST /api/wishlist/items/:id/refresh → 202 + re-enriches; non-owner → 403; no-url item → 400; unauthenticated → 401", async () => {
+    const alice = app.newJar();
+    const bob = app.newJar();
+    const stranger = app.newJar();
+    await login(alice, "alice", "alice-pass");
+    await login(bob, "bob", "bob-pass");
+
+    const item = await createItem(alice, "Refresh me", { url: closedLocalUrl() });
+
+    const unauth = await stranger.request("POST", `/api/wishlist/items/${item.id}/refresh`);
+    expect(unauth.status).toBe(401);
+
+    const forbidden = await bob.request("POST", `/api/wishlist/items/${item.id}/refresh`);
+    expect(forbidden.status).toBe(403);
+
+    const manual = await createItem(alice, "Manual item");
+    const noUrl = await alice.request("POST", `/api/wishlist/items/${manual.id}/refresh`);
+    expect(noUrl.status).toBe(400);
+
+    const ok = await alice.request("POST", `/api/wishlist/items/${item.id}/refresh`);
+    expect(ok.status).toBe(202);
+    const body = (await ok.json()) as OwnedItem;
+    expect(body.fetchState).toBe("pending");
+  });
+
+  test("wave2: refresh on a missing item → 404", async () => {
+    const alice = app.newJar();
+    await login(alice, "alice", "alice-pass");
+    const res = await alice.request(
+      "POST",
+      "/api/wishlist/items/00000000-0000-0000-0000-000000000000/refresh",
+    );
+    expect(res.status).toBe(404);
+  });
+
+  test("wave2: fetchState + siteName present on owner list and public list", async () => {
+    const alice = app.newJar();
+    const bob = app.newJar();
+    await login(alice, "alice", "alice-pass");
+    await login(bob, "bob", "bob-pass");
+    const aliceId = await aliceIdOf();
+
+    // URL points at a closed local port: the enqueued worker fails fast and
+    // locally — the DTO assertions below check field PRESENCE, so the item's
+    // eventual state (pending/failed) is irrelevant to this test.
+    const created = await alice.request("POST", "/api/wishlist/items", {
+      url: closedLocalUrl(),
+    });
+    const item = (await created.json()) as OwnedItem;
+    expect(item.fetchState).toBe("pending");
+    expect(item.siteName).toBeNull();
+    expect(item.hintPriceCents).toBeNull();
+
+    const ownerList = await alice.request("GET", `/api/users/${aliceId}/wishlist`);
+    const ownerItems = (await ownerList.json()) as OwnedItem[];
+    const ownerItem = ownerItems.find((i) => i.id === item.id) as OwnedItem;
+    expect(["pending", "complete", "failed"]).toContain(ownerItem.fetchState);
+    expect("siteName" in ownerItem).toBe(true);
+    expect("hintPriceCents" in ownerItem).toBe(true);
+
+    // Public view: fetchState/siteName present, hint data is owner-only.
+    const publicList = await bob.request("GET", `/api/users/${aliceId}/wishlist`);
+    const publicItems = (await publicList.json()) as PublicItem[];
+    const publicItem = publicItems.find((i) => i.id === item.id) as PublicItem;
+    expect(["pending", "complete", "failed"]).toContain(publicItem.fetchState);
+    expect("siteName" in publicItem).toBe(true);
+    expect("hintPriceCents" in publicItem).toBe(false);
+  });
 });
 
 async function aliceIdOf(): Promise<string> {
@@ -343,4 +444,14 @@ async function aliceIdOf(): Promise<string> {
     id: string;
   };
   return row.id;
+}
+
+/** A valid http URL on a just-freed local port: URL validation passes, the
+ *  enqueued enrichment worker fails instantly with a network error, and no
+ *  external network is touched. */
+function closedLocalUrl(): string {
+  const probe = serve({ port: 0, fetch: () => new Response("ok") });
+  const port = probe.port;
+  probe.stop(true);
+  return `http://127.0.0.1:${port}/item`;
 }

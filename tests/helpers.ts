@@ -9,6 +9,7 @@ export interface TestResponse {
   headers: Headers;
   json: () => Promise<unknown>;
   text: () => Promise<string>;
+  arrayBuffer: () => Promise<ArrayBuffer>;
 }
 
 /** A cookie-jar fetch wrapper bound to one session identity. */
@@ -40,6 +41,14 @@ export function makeTestConfig(overrides: Partial<Config> = {}): { config: Confi
     adminDisplayName: "Admin",
     cookieSecure: false,
     dev: false,
+    imagesDir: join(dir, "images"),
+    scraperUserAgent: "test-agent/1.0",
+    maxEnrichConcurrency: 2,
+    // The ENTIRE test suite deliberately serves scrape/image targets from
+    // local Bun.serve servers on 127.0.0.1, so the test app explicitly opts
+    // out of the SSRF private-range guard. Explicit per-app opt-in — never a
+    // silent global; the production path (readConfig) never sets this.
+    allowPrivateFetch: true,
     ...overrides,
   };
   return { config, dir };
@@ -75,6 +84,7 @@ export function createTestApp(overrides: Partial<Config> = {}): TestAppHandle {
           headers: res.headers,
           json: () => res.json() as Promise<unknown>,
           text: () => res.text(),
+          arrayBuffer: () => res.arrayBuffer(),
         };
       },
       clearCookie: () => {

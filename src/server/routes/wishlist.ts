@@ -1,6 +1,8 @@
 import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { jsonError, jsonOk, requireSession, type RouteRequest } from "../auth/middleware";
+import { deleteItemFile } from "../images";
+import type { EnrichmentQueue } from "../jobs/enrich";
 import type { CommonItem, OwnedItem, PublicItem, WishlistSummaryRow } from "../../shared/types";
 
 interface ItemRow {
@@ -18,6 +20,12 @@ interface ItemRow {
   updated_at: string;
   claimed_by: string | null;
   claimed_at: string | null;
+  fetch_state: "pending" | "complete" | "failed";
+  last_fetch_error: string | null;
+  site_name: string | null;
+  hint_price_cents: number | null;
+  hint_currency: string | null;
+  hint_source_url: string | null;
 }
 
 interface SummaryRow {
@@ -66,12 +74,20 @@ function commonItem(row: ItemRow): CommonItem {
     tags: parseTags(row.tags),
     sortOrder: row.sort_order,
     createdAt: row.created_at,
+    fetchState: row.fetch_state,
+    siteName: row.site_name,
   };
 }
 
-/** Owner view: NO claim fields, ever. */
+/** Owner view: NO claim fields, ever. Hint fields are owner data. */
 function toOwnedItem(row: ItemRow): OwnedItem {
-  return { ...commonItem(row), updatedAt: row.updated_at };
+  return {
+    ...commonItem(row),
+    updatedAt: row.updated_at,
+    hintPriceCents: row.hint_price_cents === null ? null : formatPrice(row.hint_price_cents),
+    hintCurrency: row.hint_currency,
+    hintSourceUrl: row.hint_source_url,
+  };
 }
 
 /** Non-owner view: booleans only; claimant identity is never exposed. */
@@ -85,7 +101,8 @@ function toPublicItem(row: ItemRow, viewerId: string): PublicItem {
 
 const ITEM_SELECT = `
   SELECT id, user_id, title, url, image_path, price_cents, currency, notes, tags,
-         sort_order, created_at, updated_at, claimed_by, claimed_at
+         sort_order, created_at, updated_at, claimed_by, claimed_at,
+         fetch_state, last_fetch_error, site_name, hint_price_cents, hint_currency, hint_source_url
   FROM wishlist_items`;
 
 function getItem(db: Database, id: string): ItemRow | undefined {
@@ -98,7 +115,7 @@ function parseTagsInput(value: unknown): { ok: true; tags: string[] } | { ok: fa
   return { ok: true, tags: value };
 }
 
-export function wishlistRoutes(db: Database) {
+export function wishlistRoutes(db: Database, imagesDir: string, queue: EnrichmentQueue) {
   return {
     "/api/users/:id/wishlist": {
       GET: requireSession(db, (req, viewer) => {
@@ -127,8 +144,8 @@ export function wishlistRoutes(db: Database) {
         const id = randomUUID();
         db.run(
           `INSERT INTO wishlist_items
-             (id, user_id, title, url, price_cents, currency, notes, tags)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+             (id, user_id, title, url, price_cents, currency, notes, tags, fetch_state)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             viewer.id,
@@ -138,8 +155,10 @@ export function wishlistRoutes(db: Database) {
             parsed.currency,
             parsed.notes,
             parsed.tags.length ? JSON.stringify(parsed.tags) : null,
+            parsed.hasUrl ? "pending" : "complete",
           ],
         );
+        if (parsed.hasUrl) queue.enqueue(id);
         return jsonOk(toOwnedItem(getItem(db, id) as ItemRow), 201);
       }),
     },
@@ -218,8 +237,25 @@ export function wishlistRoutes(db: Database) {
         const item = getItem(db, req.params.id);
         if (!item) return jsonError(404, "Item not found");
         if (item.user_id !== viewer.id) return jsonError(403, "Only the owner can delete this item");
+        deleteItemFile(imagesDir, item.image_path);
         db.run("DELETE FROM wishlist_items WHERE id = ?", [item.id]);
         return new Response(null, { status: 204 });
+      }),
+    },
+    "/api/wishlist/items/:id/refresh": {
+      POST: requireSession(db, (req, viewer) => {
+        const item = getItem(db, req.params.id);
+        if (!item) return jsonError(404, "Item not found");
+        if (item.user_id !== viewer.id) return jsonError(403, "Only the owner can refresh this item");
+        if (!item.url) return jsonError(400, "This item has no link to fetch");
+        // Hints are kept until new evidence replaces them.
+        db.run(
+          `UPDATE wishlist_items SET fetch_state = 'pending', last_fetch_error = NULL, updated_at = ?
+           WHERE id = ?`,
+          [new Date().toISOString(), item.id],
+        );
+        queue.enqueue(item.id);
+        return jsonOk(toOwnedItem(getItem(db, item.id) as ItemRow), 202);
       }),
     },
     "/api/wishlist/items/:id/claim": {
@@ -277,7 +313,7 @@ export function wishlistRoutes(db: Database) {
 async function parseItemBody(
   req: RouteRequest,
 ): Promise<
-  | { ok: true; title: string; url: string | null; priceCents: number | null; currency: string | null; notes: string | null; tags: string[] }
+  | { ok: true; title: string; url: string | null; hasUrl: boolean; priceCents: number | null; currency: string | null; notes: string | null; tags: string[] }
   | { ok: false; error: Response }
 > {
   let body: Record<string, unknown>;
@@ -287,14 +323,58 @@ async function parseItemBody(
     return { ok: false, error: jsonError(400, "Invalid JSON body") };
   }
 
+  const urlParsed = parseUrlInput(body.url);
+  if (!urlParsed.ok) return urlParsed;
+  const url = urlParsed.url;
+  const hasUrl = url !== null;
+
   const title = typeof body.title === "string" ? body.title.trim() : "";
-  if (!title) return { ok: false, error: jsonError(400, "title is required") };
-
-  if (body.url !== undefined && body.url !== null && typeof body.url !== "string") {
-    return { ok: false, error: jsonError(400, "url must be a string or null") };
+  if (!title) {
+    if (!hasUrl) return { ok: false, error: jsonError(400, "title or a valid url is required") };
+    // Provisional title sentinel: hostname sans www. Enrichment overwrites it
+    // only when the current value still equals this sentinel.
+    return finalizeItemBody(body, provisionalTitle(url as string), url, true);
   }
-  const url = typeof body.url === "string" ? body.url : null;
+  return finalizeItemBody(body, title, url, hasUrl);
+}
 
+function parseUrlInput(value: unknown): { ok: true; url: string | null } | { ok: false; error: Response } {
+  if (value === undefined || value === null) return { ok: true, url: null };
+  if (typeof value !== "string") return { ok: false, error: jsonError(400, "url must be a string or null") };
+  const url = value.trim();
+  if (!url) return { ok: true, url: null };
+  if (url.length > 2048) return { ok: false, error: jsonError(400, "url is too long (max 2048 characters)") };
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return { ok: false, error: jsonError(400, "url must be a valid http(s) URL") };
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return { ok: false, error: jsonError(400, "url must be http(s)") };
+  }
+  if (!parsed.hostname.includes(".")) {
+    return { ok: false, error: jsonError(400, "url must have a valid hostname") };
+  }
+  return { ok: true, url };
+}
+
+function provisionalTitle(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url; // unreachable — parseUrlInput already validated the URL
+  }
+}
+
+function finalizeItemBody(
+  body: Record<string, unknown>,
+  title: string,
+  url: string | null,
+  hasUrl: boolean,
+):
+  | { ok: true; title: string; url: string | null; hasUrl: boolean; priceCents: number | null; currency: string | null; notes: string | null; tags: string[] }
+  | { ok: false; error: Response } {
   let priceCents: number | null = null;
   if (body.priceCents !== undefined && body.priceCents !== null) {
     const parsed = parsePriceInput(body.priceCents);
@@ -319,5 +399,5 @@ async function parseItemBody(
   const tagsParsed = parseTagsInput(body.tags);
   if (!tagsParsed.ok) return { ok: false, error: jsonError(400, "tags must be an array of strings") };
 
-  return { ok: true, title, url, priceCents, currency, notes, tags: tagsParsed.tags };
+  return { ok: true, title, url, hasUrl, priceCents, currency, notes, tags: tagsParsed.tags };
 }

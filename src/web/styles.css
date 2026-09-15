@@ -215,8 +215,48 @@ label {
 
 .item-row-main {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.item-row-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.fetch-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0.25rem 0 0;
+}
+
+.retry-btn {
+  padding: 0.2rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.hint-price {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.hint-note {
+  font-weight: 400;
+  color: var(--muted);
+  white-space: normal;
 }
 
 .item-row-actions {

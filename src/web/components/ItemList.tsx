@@ -14,6 +14,7 @@ interface ItemListProps {
   onDelete?: (id: string) => void | Promise<void>;
   onClaim?: (id: string) => void | Promise<void>;
   onUnclaim?: (id: string) => void | Promise<void>;
+  onRefresh?: (id: string) => void | Promise<void>;
 }
 
 const SYMBOLS: Record<string, string> = {
@@ -36,6 +37,7 @@ export function ItemList({
   onDelete,
   onClaim,
   onUnclaim,
+  onRefresh,
 }: ItemListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -60,11 +62,25 @@ export function ItemList({
     <ul className="item-list">
       {items.map((item) => {
         const price = formatPriceDisplay(item.priceCents, item.currency);
+        const hintPrice = viewerIsOwner
+          ? formatPriceDisplay(
+              (item as OwnedItem).hintPriceCents,
+              (item as OwnedItem).hintCurrency,
+            )
+          : "";
         const publicItem = item as PublicItem;
         return (
           <li key={item.id} className="card item-row">
             <div className="item-row-main">
-              <div>
+              {item.imagePath && (
+                <img
+                  className="item-thumb"
+                  src={`/api/wishlist/items/${item.id}/image`}
+                  alt=""
+                  loading="lazy"
+                />
+              )}
+              <div className="item-row-text">
                 <h3>{item.title}</h3>
                 {item.url && (
                   <a href={item.url} target="_blank" rel="noreferrer">
@@ -75,8 +91,33 @@ export function ItemList({
                 {item.tags.length > 0 && (
                   <p className="tags">{item.tags.map((t) => `#${t}`).join(" ")}</p>
                 )}
+                {item.fetchState === "pending" && (
+                  <p className="fetch-state">Fetching details…</p>
+                )}
+                {item.fetchState === "failed" && (
+                  <p className="fetch-state">
+                    Details unavailable
+                    {viewerIsOwner && onRefresh && (
+                      <button
+                        type="button"
+                        className="secondary retry-btn"
+                        onClick={() => void onRefresh(item.id)}
+                      >
+                        Retry
+                      </button>
+                    )}
+                  </p>
+                )}
               </div>
-              {price && <span className="price">{price}</span>}
+              {price ? (
+                <span className="price">{price}</span>
+              ) : (
+                hintPrice && (
+                  <span className="hint-price">
+                    ~{hintPrice} <span className="hint-note">(unverified — via search)</span>
+                  </span>
+                )
+              )}
             </div>
 
             {viewerIsOwner ? (
