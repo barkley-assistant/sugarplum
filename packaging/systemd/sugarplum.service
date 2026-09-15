@@ -1,0 +1,23 @@
+[Unit]
+Description=Sugarplum — private wishlist tracker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/agent/.local/share/sugarplum
+EnvironmentFile=%h/.config/sugarplum/.env
+Environment=PATH=/home/agent/.local/bin:/home/agent/.local/share/mise/shims:/usr/bin:/bin
+Environment=SUGARPLUM_PORT=34995
+Environment=SUGARPLUM_HOST=0.0.0.0
+ExecStart=/home/agent/.local/bin/mise exec -- bun run src/server/index.ts
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=60
+TimeoutStopSec=30
+KillSignal=SIGTERM
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
