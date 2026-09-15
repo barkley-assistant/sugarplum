@@ -76,3 +76,10 @@ export interface UpdateItemInput {
   tags?: string[];
   sortOrder?: number;
 }
+
+/** PUT /api/wishlist/order body: the FULL ordered list of the viewer's item
+ *  ids. The server validates it matches the viewer's wishlist exactly (no
+ *  dupes, no foreign ids, no missing items) and reassigns spacing 10, 20… */
+export interface ReorderRequest {
+  itemIds: string[];
+}
