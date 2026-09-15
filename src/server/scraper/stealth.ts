@@ -80,7 +80,10 @@ function withLock<T>(fn: () => Promise<T>): Promise<T> {
 const DEFAULT_TERM_GRACE_MS = 15_000;
 const SIGKILL_DELAY_MS = 5_000;
 
-/** Default runner: Bun subprocess with the documented argv + env. */
+/** Default runner: Bun subprocess with the documented argv + env.
+ *  The stdout reader can hang on processes killed by SIGKILL (the pipe
+ *  never gets EOF cleanly under Bun on Linux), so we drive it with a
+ *  short drain race after the process has been reaped. */
 async function defaultRunner(
   argv: string[],
   env: Record<string, string>,
@@ -115,15 +118,28 @@ async function defaultRunner(
     }
   }, timeoutMs + termGraceMs + SIGKILL_DELAY_MS);
 
-  const [stdout, exitCode] = await Promise.all([
-    new Response(proc.stdout).text(),
-    proc.exited,
-  ]);
+  // Read stdout concurrently with waiting for exit. After exit, give it a
+  // brief drain window — if SIGKILL has detached the pipe's EOF, return
+  // what we have rather than hanging the runner.
+  let stdoutText = "";
+  const readPromise = (async () => {
+    try {
+      stdoutText = await new Response(proc.stdout).text();
+    } catch {
+      /* ignore — pipe error after kill */
+    }
+  })();
+
+  const exitCode = await proc.exited;
   clearTimeout(termTimer);
   clearTimeout(killTimer);
 
+  // Reader may still be parked on a pipe whose EOF never came (SIGKILL).
+  // Race against a short window so the runner always returns.
+  await Promise.race([readPromise, Bun.sleep(250)]);
+
   return {
-    stdout,
+    stdout: stdoutText,
     exitCode,
     signal: killed
       ? killReason === "kill"
