@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { OwnedItem, PublicItem } from "../../shared/types";
 import { S } from "../strings";
 import { ItemCard } from "./ItemCard";
@@ -16,6 +17,10 @@ interface ItemListProps {
   onClaim?: (id: string) => void | Promise<void>;
   onUnclaim?: (id: string) => void | Promise<void>;
   onRefresh?: (id: string) => void | Promise<void>;
+  /** Builds the drag handle for a card (own lists only). */
+  renderDragHandle?: (itemId: string) => ReactNode;
+  /** Id of the card currently lifted, for the .dragging style. */
+  draggingId?: string | null;
 }
 
 /** Renders the ordered list of cards. Empty lists return null — the caller
@@ -28,6 +33,8 @@ export function ItemList({
   onClaim,
   onUnclaim,
   onRefresh,
+  renderDragHandle,
+  draggingId = null,
 }: ItemListProps) {
   if (items.length === 0) return null;
 
@@ -43,6 +50,8 @@ export function ItemList({
           onClaim={onClaim}
           onUnclaim={onUnclaim}
           onRefresh={onRefresh}
+          dragHandle={renderDragHandle ? renderDragHandle(item.id) : undefined}
+          dragging={draggingId === item.id}
         />
       ))}
     </ul>

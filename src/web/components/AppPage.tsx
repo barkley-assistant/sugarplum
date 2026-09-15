@@ -8,6 +8,7 @@ import type {
 } from "../../shared/types";
 import { S } from "../strings";
 import { useToast } from "../toast";
+import { useDragReorder } from "../reorder";
 import { AdminPanel } from "./AdminPanel";
 import { EmptyState } from "./EmptyState";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
@@ -28,6 +29,7 @@ export function AppPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const toast = useToast();
+  const reorder = useDragReorder(ownItems, onReorder);
 
   useEffect(() => {
     void boot();
@@ -152,6 +154,24 @@ export function AppPage() {
     }
   }
 
+  /** Optimistic reorder commit: PUT the full ordered id array. On failure,
+   *  restore the pre-drag order and surface a danger toast. */
+  async function onReorder(ids: string[]) {
+    const previous = ownItems;
+    try {
+      const res = await fetch("/api/wishlist/order", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemIds: ids }),
+      });
+      if (!res.ok) throw new Error();
+      if (me) await refreshOwnList(me.id);
+    } catch {
+      setOwnItems(previous);
+      toast(S.errors.reorder, "danger");
+    }
+  }
+
   async function refreshItem(id: string) {
     const res = await fetch(`/api/wishlist/items/${id}/refresh`, { method: "POST" });
     if (!res.ok) {
@@ -269,13 +289,36 @@ export function AppPage() {
       );
     }
 
+    const orderedOwn = reorder.orderedIds
+      .map((id) => ownItems.find((i) => i.id === id))
+      .filter((i): i is OwnedItem => i !== undefined);
+
     return (
       <ItemList
-        items={ownItems}
+        items={orderedOwn}
         viewerIsOwner
         onEdit={editItem}
         onDelete={deleteItem}
         onRefresh={refreshItem}
+        draggingId={reorder.draggingId}
+        renderDragHandle={(id) => (
+          <button type="button" {...reorder.getHandleProps(id)}>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M3 4h10M3 8h10M3 12h10"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        )}
       />
     );
   }

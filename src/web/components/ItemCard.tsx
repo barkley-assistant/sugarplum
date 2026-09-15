@@ -13,8 +13,10 @@ interface ItemCardProps {
   onClaim?: (id: string) => void | Promise<void>;
   onUnclaim?: (id: string) => void | Promise<void>;
   onRefresh?: (id: string) => void | Promise<void>;
-  /** Drag handle slot (Task 5 wires the pointer state machine). */
+  /** Drag handle slot (pointer state machine wired by AppPage). */
   dragHandle?: ReactNode;
+  /** True while this card is lifted by the drag state machine. */
+  dragging?: boolean;
 }
 
 export function ItemCard({
@@ -26,6 +28,7 @@ export function ItemCard({
   onUnclaim,
   onRefresh,
   dragHandle,
+  dragging = false,
 }: ItemCardProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const confirm = useConfirm();
@@ -53,7 +56,7 @@ export function ItemCard({
   const publicItem = item as PublicItem;
 
   return (
-    <li className="card item-card">
+    <li className={`card item-card${dragging ? " dragging" : ""}`} data-item-id={item.id}>
       <div className="item-card-row">
         {dragHandle}
         <div className="item-card-main">
