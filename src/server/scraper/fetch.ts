@@ -26,6 +26,9 @@ export interface FetchPageOptions {
   /** Explicit opt-in to allow private/loopback targets (tests use local
    *  Bun.serve servers on 127.0.0.1). Never a silent global. */
   allowPrivate?: boolean;
+  /** Merged AFTER the default headers (override wins per key). Used by the
+   *  custom-headers strategy from the per-site override registry. */
+  extraHeaders?: Record<string, string>;
 }
 
 export type FetchPageResult =
@@ -44,6 +47,10 @@ const BOT_WALL_PATTERNS: [RegExp, string][] = [
   [/attention required/, "attention required"],
   [/akamai/, "akamai"],
   [/captcha/, "captcha"],
+  // Imperva Incapsula — specific markers; matches `/_Incapsula_Resource?...`
+  // and `distil_referrer` (case-insensitive via the lowercased sample at the
+  // call site) without false-matching the bare word "distil".
+  [/\/_?incapsula_resource|distil_referrer/, "incapsula"],
 ];
 
 /** Lowercases the first ~4KB of the body and reports the matched heuristic. */
@@ -70,6 +77,7 @@ export async function fetchPage(url: string, opts: FetchPageOptions): Promise<Fe
         "User-Agent": opts.userAgent,
         Accept: "text/html,application/xhtml+xml",
         "Accept-Language": "en-GB,en;q=0.9",
+        ...(opts.extraHeaders ?? {}),
       },
       redirect: "follow",
       signal: AbortSignal.timeout(opts.timeoutMs ?? 10_000),

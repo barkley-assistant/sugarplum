@@ -3,6 +3,8 @@ import { join } from "node:path";
 import { serve } from "bun";
 import { extractProduct } from "../src/server/scraper/parse";
 import { scrapeProduct } from "../src/server/scraper";
+import { fetchPage } from "../src/server/scraper/fetch";
+import type { StealthRunner } from "../src/server/scraper/stealth";
 import type { SearxngFetch } from "../src/server/searxng";
 
 const FIXTURES = join(import.meta.dir, "fixtures");
@@ -280,6 +282,156 @@ describe("scrapeProduct SSRF guard (private ranges)", () => {
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.product.title).toBe("Fresh Kiss Trio");
+    } finally {
+      srv.stop(true);
+    }
+  });
+});
+describe("scrapeProduct strategy pipeline (wave 13)", () => {
+  test("registered host: stealth stub returns html → extract + strategy recorded", async () => {
+    const html = await Bun.file(join(FIXTURES, "shopify.html")).text();
+    const runner: StealthRunner = async () => ({
+      stdout: JSON.stringify({
+        ok: true,
+        html,
+        finalUrl: "https://www.smythstoys.com/p/x",
+        status: 200,
+      }),
+      exitCode: 0,
+      signal: undefined,
+    });
+    const result = await scrapeProduct("https://www.smythstoys.com/en-gb/p/248662", {
+      userAgent: "UA/1.0",
+      allowPrivate: true,
+      stealth: {
+        pythonBin: "/bin/true",
+        scriptPath: "/s",
+        profilesDir: "/tmp/p",
+        timeoutMs: 1000,
+        runner,
+        allowPrivate: true,
+      },
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.product.title).toBe("Fresh Kiss Trio");
+      expect(result.strategy).toBe("stealth-browser");
+    }
+  });
+
+  test("stealth failure falls through to plain; final failure carries last strategy", async () => {
+    const runner: StealthRunner = async () => ({
+      stdout: JSON.stringify({ ok: false, reason: "timeout" }),
+      exitCode: 0,
+      signal: undefined,
+    });
+    const fetchImpl: SearxngFetch = async () => {
+      const res = new Response("<html>hi</html>", { status: 403 });
+      Object.defineProperty(res, "url", { value: "https://www.smythstoys.com/p/1" });
+      return res;
+    };
+    const result = await scrapeProduct("https://www.smythstoys.com/p/1", {
+      userAgent: "UA/1.0",
+      fetchImpl,
+      allowPrivate: true,
+      stealth: {
+        pythonBin: "/bin/true",
+        scriptPath: "/s",
+        profilesDir: "/tmp/p",
+        timeoutMs: 1000,
+        runner,
+        allowPrivate: true,
+      },
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.strategy).toBe("plain");
+      expect(result.reason).toBe("http");
+    }
+  });
+
+  test("unregistered host never invokes the stealth runner", async () => {
+    let called = 0;
+    const runner: StealthRunner = async () => {
+      called++;
+      return { stdout: "{}", exitCode: 0, signal: undefined };
+    };
+    const html = await Bun.file(join(FIXTURES, "shopify.html")).text();
+    const fetchImpl: SearxngFetch = async () => {
+      const res = new Response(html);
+      Object.defineProperty(res, "url", { value: "https://colourpop.com/products/x" });
+      return res;
+    };
+    const result = await scrapeProduct("https://colourpop.com/products/x", {
+      userAgent: "UA/1.0",
+      fetchImpl,
+      allowPrivate: true,
+      stealth: {
+        pythonBin: "/bin/true",
+        scriptPath: "/s",
+        profilesDir: "/tmp/p",
+        timeoutMs: 1000,
+        runner,
+        allowPrivate: true,
+      },
+    });
+    expect(result.ok).toBe(true);
+    expect(called).toBe(0);
+  });
+
+  test("no stealth deps → chain filters stealth-browser (plain-only)", async () => {
+    const html = await Bun.file(join(FIXTURES, "shopify.html")).text();
+    const fetchImpl: SearxngFetch = async () => {
+      const res = new Response(html);
+      Object.defineProperty(res, "url", { value: "https://www.smythstoys.com/p/1" });
+      return res;
+    };
+    const result = await scrapeProduct("https://www.smythstoys.com/p/1", {
+      userAgent: "UA/1.0",
+      fetchImpl,
+      allowPrivate: true,
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.strategy).toBe("plain");
+  });
+
+  test("incapsula interstitial → reason 'botwall', heuristic 'incapsula'", async () => {
+    const fetchImpl: SearxngFetch = async () =>
+      new Response(await Bun.file(join(FIXTURES, "incapsula.html")).text(), { status: 403 });
+    const result = await scrapeProduct("https://www.smythstoys.com/p/1", {
+      userAgent: "UA/1.0",
+      fetchImpl,
+      allowPrivate: true,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe("botwall");
+      expect(result.heuristic).toBe("incapsula");
+    }
+  });
+
+  test("custom-headers: extraHeaders merge + override semantics through fetchPage", async () => {
+    const seen: string[] = [];
+    const srv = serve({
+      port: 0,
+      fetch: (req) => {
+        seen.push(req.headers.get("user-agent") ?? "");
+        return new Response(
+          "<html><head><title>t</title></head></html>",
+        );
+      },
+    });
+    try {
+      const page = await fetchPage(`${srv.url}x`, {
+        userAgent: "default-ua",
+        extraHeaders: {
+          "User-Agent": "override-ua",
+          "Accept-Language": "de-DE,de;q=0.9",
+        },
+        allowPrivate: true,
+      });
+      expect(page.ok).toBe(true);
+      expect(seen[0]).toBe("override-ua");
     } finally {
       srv.stop(true);
     }

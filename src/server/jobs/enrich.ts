@@ -6,9 +6,10 @@
 
 import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
-import { scrapeProduct } from "../scraper";
+import { scrapeProduct, type ScrapeStrategyName } from "../scraper";
 import { buildSearchQuery, searchPriceHint } from "../searxng";
 import { downloadImage } from "../images";
+import type { StealthDeps } from "../scraper/stealth";
 
 export interface EnrichmentDeps {
   db: Database;
@@ -20,6 +21,8 @@ export interface EnrichmentDeps {
   /** Explicit opt-in to allow private/loopback targets (the test app targets
    *  local Bun.serve servers on 127.0.0.1). Never a silent global. */
   allowPrivate?: boolean;
+  /** Optional: enables the `stealth-browser` strategy on registered hosts. */
+  stealth?: StealthDeps;
 }
 
 export interface EnrichmentQueue {
@@ -78,7 +81,16 @@ export function createEnrichmentQueue(deps: EnrichmentDeps): EnrichmentQueue {
       userAgent: deps.userAgent,
       fetchImpl: deps.fetchImpl,
       allowPrivate: deps.allowPrivate,
+      stealth: deps.stealth,
     });
+
+    const strategy: ScrapeStrategyName = result.strategy ?? "plain";
+    console.info(
+      "[enrich] item %s: strategy=%s → %s",
+      itemId,
+      strategy,
+      result.ok ? "ok" : result.reason,
+    );
 
     if (result.ok) {
       await applyScrape(deps, row, result.product);
