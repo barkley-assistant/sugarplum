@@ -235,12 +235,12 @@ export function AppPage() {
 
   async function editItem(id: string, values: ItemFormValues) {
     const payload: Record<string, unknown> = { title: values.title };
-    if (values.url) payload.url = values.url;
     if (values.priceCents) payload.priceCents = values.priceCents;
     if (values.currency) payload.currency = values.currency;
     if (values.notes) payload.notes = values.notes;
     if (values.tags.length) payload.tags = values.tags;
-    // An emptied field clears the stored link (null), never a stale value.
+    // Emptied link fields clear the stored value (null), never a stale one.
+    payload.url = values.url || null;
     payload.cheaperUrl = values.cheaperUrl || null;
 
     const res = await fetch(`/api/wishlist/items/${id}`, {
