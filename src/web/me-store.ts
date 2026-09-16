@@ -18,9 +18,10 @@ export function readStoredMe(): Me | null {
         username: parsed.username ?? "",
         displayName: parsed.displayName ?? "",
         isAdmin: Boolean(parsed.isAdmin),
-        // Older cached payloads predate the field; default to hints ON (the
-        // server default) so the offline shell matches a fresh session.
+        // Older cached payloads predate the fields; default to ON (the
+        // server defaults) so the offline shell matches a fresh session.
         hintsEnabled: parsed.hintsEnabled !== false,
+        priceTrackingEnabled: parsed.priceTrackingEnabled !== false,
       };
     }
   } catch {

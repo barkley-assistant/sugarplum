@@ -13,13 +13,16 @@ import {
 } from "../auth/sessions";
 import type { Config } from "../config";
 
-export function meOf(user: Pick<SessionUser, "id" | "username" | "displayName" | "isAdmin" | "hintsEnabled">) {
+export function meOf(
+  user: Pick<SessionUser, "id" | "username" | "displayName" | "isAdmin" | "hintsEnabled" | "priceTrackingEnabled">,
+) {
   return {
     id: user.id,
     username: user.username,
     displayName: user.displayName,
     isAdmin: user.isAdmin,
     hintsEnabled: user.hintsEnabled,
+    priceTrackingEnabled: user.priceTrackingEnabled,
   };
 }
 
@@ -31,6 +34,7 @@ interface UserRow {
   is_admin: number;
   is_active: number;
   hints_enabled: number;
+  price_tracking_enabled: number;
 }
 
 export function authRoutes(db: Database, config: Config, limiter: RateLimiter) {
@@ -66,7 +70,8 @@ export function authRoutes(db: Database, config: Config, limiter: RateLimiter) {
 
         const user = db
           .query(
-            `SELECT id, username, display_name, password_hash, is_admin, is_active, hints_enabled
+            `SELECT id, username, display_name, password_hash, is_admin, is_active, hints_enabled,
+                    price_tracking_enabled
              FROM users WHERE username = ?`,
           )
           .get(username) as UserRow | undefined;
@@ -97,6 +102,7 @@ export function authRoutes(db: Database, config: Config, limiter: RateLimiter) {
               displayName: user.display_name,
               isAdmin: user.is_admin === 1,
               hintsEnabled: user.hints_enabled === 1,
+              priceTrackingEnabled: user.price_tracking_enabled === 1,
             }),
           ),
           {
@@ -124,20 +130,41 @@ export function authRoutes(db: Database, config: Config, limiter: RateLimiter) {
       GET: requireSession(db, (_req, user) => jsonOk(meOf(user))),
     },
     "/api/auth/me/settings": {
-      /** Self-only settings. The only knob today is the price-hint honesty
-       *  gate; it must hold across devices, so it lives in the users row. */
+      /** Self-only settings. Both knobs are per-user, default-on, and must
+       *  hold across devices, so they live in the users row. Either or both
+       *  may be set in one call; at least one must be present. */
       PUT: requireSession(db, async (req, user) => {
-        let body: { hintsEnabled?: unknown };
+        let body: { hintsEnabled?: unknown; priceTrackingEnabled?: unknown };
         try {
-          body = (await req.json()) as { hintsEnabled?: unknown };
+          body = (await req.json()) as { hintsEnabled?: unknown; priceTrackingEnabled?: unknown };
         } catch {
           return jsonError(400, "Invalid JSON body");
         }
-        if (typeof body.hintsEnabled !== "boolean") {
+        if (body.hintsEnabled !== undefined && typeof body.hintsEnabled !== "boolean") {
           return jsonError(400, "hintsEnabled must be a boolean");
         }
-        db.run("UPDATE users SET hints_enabled = ? WHERE id = ?", [body.hintsEnabled ? 1 : 0, user.id]);
-        return jsonOk(meOf({ ...user, hintsEnabled: body.hintsEnabled }));
+        if (body.priceTrackingEnabled !== undefined && typeof body.priceTrackingEnabled !== "boolean") {
+          return jsonError(400, "priceTrackingEnabled must be a boolean");
+        }
+        if (body.hintsEnabled === undefined && body.priceTrackingEnabled === undefined) {
+          return jsonError(400, "Nothing to update");
+        }
+        const next = { ...user };
+        if (body.hintsEnabled !== undefined) {
+          db.run("UPDATE users SET hints_enabled = ? WHERE id = ?", [
+            body.hintsEnabled ? 1 : 0,
+            user.id,
+          ]);
+          next.hintsEnabled = body.hintsEnabled;
+        }
+        if (body.priceTrackingEnabled !== undefined) {
+          db.run("UPDATE users SET price_tracking_enabled = ? WHERE id = ?", [
+            body.priceTrackingEnabled ? 1 : 0,
+            user.id,
+          ]);
+          next.priceTrackingEnabled = body.priceTrackingEnabled;
+        }
+        return jsonOk(meOf(next));
       }),
     },
     "/api/auth/me/profile": {

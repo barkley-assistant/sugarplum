@@ -11,6 +11,8 @@ export interface SessionUser {
   isActive: boolean;
   /** Honesty gate for automated price hints (users.hints_enabled). */
   hintsEnabled: boolean;
+  /** Daily price-tracking opt-in (users.price_tracking_enabled, default on). */
+  priceTrackingEnabled: boolean;
 }
 
 export function newSessionToken(): string {
@@ -39,7 +41,8 @@ export function getSessionUser(db: Database, token: string): SessionUser | null 
     .query(
       `SELECT s.expires_at AS expires_at,
               u.id AS id, u.username AS username, u.display_name AS display_name,
-              u.is_admin AS is_admin, u.is_active AS is_active, u.hints_enabled AS hints_enabled
+              u.is_admin AS is_admin, u.is_active AS is_active, u.hints_enabled AS hints_enabled,
+              u.price_tracking_enabled AS price_tracking_enabled
        FROM sessions s JOIN users u ON u.id = s.user_id
        WHERE s.token = ?`,
     )
@@ -52,6 +55,7 @@ export function getSessionUser(db: Database, token: string): SessionUser | null 
         is_admin: number;
         is_active: number;
         hints_enabled: number;
+        price_tracking_enabled: number;
       }
     | undefined;
 
@@ -68,6 +72,7 @@ export function getSessionUser(db: Database, token: string): SessionUser | null 
     isAdmin: row.is_admin === 1,
     isActive: row.is_active === 1,
     hintsEnabled: row.hints_enabled === 1,
+    priceTrackingEnabled: row.price_tracking_enabled === 1,
   };
 }
 

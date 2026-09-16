@@ -9,6 +9,9 @@ export interface Me {
   /** Honesty gate: when false the UI hides automated price-search hints and
    *  the server skips attaching them during enrichment. */
   hintsEnabled: boolean;
+  /** Daily price-tracking opt-in (default on): when false the server skips
+   *  this user's items in the daily tracking pass. */
+  priceTrackingEnabled: boolean;
 }
 
 export interface AdminUser {
@@ -70,6 +73,31 @@ export interface PriceStats {
   /** The earliest observation — the price the item was added at. */
   atAddCents: string | null;
   atAddCurrency: string | null;
+  /** 90-day window series, oldest first, capped at the server's series cap. */
+  series: PricePoint[];
+  /** Trend derived server-side from the series; null on mixed currencies. */
+  trend: PriceTrend | null;
+}
+
+/** One observation in the 90-day series. Decimal string, like the API. */
+export interface PricePoint {
+  observedAt: string;
+  priceCents: string;
+  currency: string | null;
+}
+
+/** Buy-time signal derived from the series (single source of truth: the
+ *  server derives it; the client renders it). Informational only. */
+export interface PriceTrend {
+  direction: "rising" | "falling" | "stable";
+  advice:
+    | "below-30d-avg"
+    | "near-30d-low"
+    | "near-30d-high"
+    | "trending-down"
+    | "stable"
+    | "insufficient";
+  daysSinceDrop: number | null;
 }
 
 /** One automated "prices seen elsewhere" candidate. Display-only: never
