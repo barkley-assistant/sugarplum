@@ -1220,3 +1220,10 @@ label {
   flex-wrap: wrap;
   gap: var(--sp-2);
 }
+
+/* Owner list actions: "Add item" beside "Share my list". */
+.list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}

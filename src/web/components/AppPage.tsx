@@ -18,6 +18,7 @@ import { EmptyState } from "./EmptyState";
 import { FilterChips } from "./FilterChips";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { ItemList, ListHeading, type OwnerRef } from "./ItemList";
+import { SharePanel } from "./SharePanel";
 import { SkeletonList } from "./SkeletonList";
 import { UserMenu } from "./UserMenu";
 
@@ -85,6 +86,7 @@ export function AppPage() {
   const [viewing, setViewing] = useState<string | null>(null);
   const [otherItems, setOtherItems] = useState<PublicItem[]>([]);
   const [addOpen, setAddOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [prefill, setPrefill] = useState<{ url: string; title: string }>({ url: "", title: "" });
   const [booted, setBooted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -569,10 +571,16 @@ export function AppPage() {
         <section className="list-section">
           <ListHeading owner={viewing ? ownerRefFor(viewing) : ownRef} count={viewing ? otherItems.length : ownItems.length} />
           {!viewing && !addOpen && ownItems.length > 0 && (
-            <button className="primary" onClick={() => setAddOpen(true)}>
-              {S.list.addItem}
-            </button>
+            <div className="list-actions">
+              <button className="primary" onClick={() => setAddOpen(true)}>
+                {S.list.addItem}
+              </button>
+              <button className="secondary" onClick={() => setShareOpen((v) => !v)}>
+                {S.share.shareList}
+              </button>
+            </div>
           )}
+          {!viewing && shareOpen && <SharePanel />}
           {!viewing && ownItems.length > 0 && (
             <FilterChips
               tags={allTags}
