@@ -69,14 +69,38 @@ body {
 
   /* Velvet density — the compact row system (wave 26). */
   --row-thumb: 56px;
-  --row-gap: var(--sp-3);
-  --row-pad-y: var(--sp-2);
+  --row-gap: var(--sp-2);
+  --row-pad-y: 10px;
   --row-pad-x: var(--sp-3);
+  --list-gap: 6px;
 
   /* Surface elevation (subtle, no shadows on the feed). */
   --surface-row-hover: var(--surface-2);
+  --surface-row: transparent;
   --border-row: var(--border);
   --border-row-strong: var(--border-2);
+
+  /* Tier-1 type hierarchy (G1): title primary, price secondary, meta tertiary. */
+  --text-row-title: 0.9375rem;
+  --lh-row-title: 1.35;
+  --text-row-price: 0.9375rem;
+  --text-row-meta: 0.6875rem;
+
+  /* Price delta (G3): informative secondary line, never buy/sell signalling. */
+  --delta-down: var(--text-2);
+  --delta-up: var(--text-2);
+
+  /* Topbar (G4): quieter chrome, explicit height for the rail sticky offset. */
+  --topbar-pad-y: 6px;
+  --topbar-h: 48px;
+
+  /* Chips (G5): subordinate navigation, not buttons. Soft-tint active. */
+  --chip-bg: transparent;
+  --chip-border: transparent;
+  --chip-bg-active: var(--plum-050);
+  --chip-border-active: var(--plum-100);
+  --chip-text: var(--text-2);
+  --chip-text-active: var(--plum-600);
 
   /* Interaction states. */
   --ring: var(--plum-500);
@@ -92,7 +116,7 @@ body {
   /* Layout. */
   --app-main-max: 960px;
   --app-rail-min: 260px;
-  --app-rail-sticky-top: calc(var(--sp-4) + 56px);
+  --app-rail-sticky-top: calc(var(--sp-4) + var(--topbar-h));
 
   /* Type scale (extend, don't replace). */
   --text-2xs: 0.6875rem;
@@ -120,6 +144,11 @@ body {
     --share-accent: #c4b5fd;
     --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.5);
     --surface-row-hover: var(--surface-2);
+    --chip-bg-active: var(--plum-050);
+    --chip-border-active: var(--plum-100);
+    --chip-text-active: var(--share-accent);
+    --delta-down: var(--text-2);
+    --delta-up: var(--text-2);
   }
 }
 
@@ -211,12 +240,14 @@ button.danger:hover {
   border-color: var(--danger);
 }
 
+/* Subordinate navigation, not buttons (tier-1 G5): transparent at rest,
+   soft plum tint when active. Touch targets stay 44px. */
 button.chip {
   min-height: 44px;
   padding: 0.4rem 0.9rem;
-  background: var(--surface);
-  color: var(--text-2);
-  border-color: var(--border);
+  background: var(--chip-bg);
+  color: var(--chip-text);
+  border: 1px solid var(--chip-border);
   border-radius: var(--r-full);
   font-size: var(--text-sm);
   white-space: nowrap;
@@ -225,17 +256,18 @@ button.chip {
 button.chip:hover {
   background: var(--surface-2);
   color: var(--text);
-  border-color: var(--border-2);
+  border-color: var(--border);
 }
 
 button.chip.active {
-  background: var(--plum-600);
-  color: #fff;
-  border-color: var(--plum-600);
+  background: var(--chip-bg-active);
+  color: var(--chip-text-active);
+  border-color: var(--chip-border-active);
 }
 
 button.chip.active:hover {
-  background: var(--plum-700);
+  background: var(--chip-bg-active);
+  border-color: var(--chip-border-active);
 }
 
 input,
@@ -410,7 +442,8 @@ label {
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-4);
-  padding: var(--sp-2) var(--sp-4);
+  padding: var(--topbar-pad-y) var(--sp-4);
+  min-height: var(--topbar-h);
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
@@ -438,14 +471,14 @@ a.brand:hover {
 }
 
 .brand-mark {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--r-sm);
   flex-shrink: 0;
 }
 
 .brand-name {
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   font-weight: 600;
   margin: 0;
   white-space: nowrap;
@@ -595,7 +628,7 @@ a.brand:hover {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--list-gap);
 }
 
 .item-row,
@@ -612,14 +645,6 @@ a.brand:hover {
   display: flex;
   align-items: flex-start;
   gap: var(--sp-3);
-  min-width: 0;
-}
-
-.item-card-main {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  flex: 1;
   min-width: 0;
 }
 
@@ -650,7 +675,7 @@ a.brand:hover {
 
 .item-site {
   display: block;
-  font-size: var(--text-sm);
+  font-size: var(--text-row-meta);
   color: var(--text-3);
   margin: 0 0 var(--sp-1);
   white-space: nowrap;
@@ -715,14 +740,6 @@ a.brand:hover {
   font-weight: 600;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-}
-
-.price-row {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--sp-1);
-  flex-shrink: 0;
 }
 
 .hint-price {
@@ -912,17 +929,6 @@ a.brand:hover {
   font-size: var(--text-sm);
 }
 
-.item-row-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
-}
-
-.item-row-actions button {
-  min-height: 40px;
-}
-
 .claimed-badge {
   display: inline-flex;
   align-items: center;
@@ -930,6 +936,35 @@ a.brand:hover {
   color: var(--success);
   font-size: var(--text-sm);
   font-weight: 500;
+}
+
+/* Quiet inline claim control (tier-1 G6): one-tap claim stays, but the
+   button no longer out-shouts the product title. Same chip-active grammar
+   as the filter chips; the accessible name is unchanged. */
+.claim-btn {
+  min-height: 36px;
+  padding: var(--sp-1) var(--sp-3);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-full);
+  color: var(--plum-600);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.claim-btn:hover {
+  background: var(--plum-050);
+  border-color: transparent;
+  color: var(--plum-600);
+}
+
+@media (prefers-color-scheme: dark) {
+  .claim-btn,
+  .claim-btn:hover {
+    color: var(--share-accent);
+  }
 }
 
 /* Drag handle + drag states */
@@ -970,6 +1005,8 @@ a.brand:hover {
   position: relative;
   z-index: 5;
   opacity: 0.95;
+  border-color: var(--border-2);
+  background: var(--surface);
 }
 
 .item-card.drag-over {
@@ -1420,13 +1457,6 @@ a.brand:hover {
   gap: var(--sp-2);
 }
 
-/* Owner list actions: "Add item" beside "Share my list". */
-.list-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
 /* ============================================================
    Velvet (wave 26) — compact product rows, overflow menus,
    app shell footer, desktop rail. Everything below extends the
@@ -1522,7 +1552,9 @@ a.brand:hover {
 }
 
 .price-cluster .price {
-  font-size: var(--text-base);
+  font-size: var(--text-row-price);
+  font-weight: 600;
+  color: var(--text);
 }
 
 .price-cluster .price-meta,
@@ -1531,14 +1563,28 @@ a.brand:hover {
   font-size: var(--text-2xs);
 }
 
+/* Delta is the story (tier-1 G3): a distinct weight-600 secondary line on
+   its own full-width line; meta stays tertiary. No green/red signalling. */
+.price-cluster .price-delta {
+  width: 100%;
+  font-size: var(--text-row-meta);
+  font-weight: 600;
+  color: var(--text-2);
+}
+
 /* ---------- Product row (compact .item-card) ---------- */
+/* Feed, not card stack (tier-1 G2): the row rests on the page background
+   with a transparent border (no layout shift on drag-over); hover lifts to
+   --surface-row-hover. The .card base still supplies radius + overflow. */
 .item-card {
   gap: var(--sp-2);
   padding: var(--row-pad-y) var(--row-pad-x);
+  background: var(--surface-row);
+  border: 1px solid transparent;
 }
 
 .item-card:hover {
-  border-color: var(--border-row-strong);
+  background: var(--surface-row-hover);
 }
 
 .product-row-grid {
@@ -1566,8 +1612,9 @@ a.brand:hover {
 .product-row-title-row .item-title {
   flex: 1;
   min-width: 0;
-  font-size: var(--text-base);
-  line-height: 1.4;
+  font-size: var(--text-row-title);
+  font-weight: 600;
+  line-height: var(--lh-row-title);
   margin: 0;
 }
 
