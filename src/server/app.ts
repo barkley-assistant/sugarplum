@@ -9,6 +9,7 @@ import { openDatabase } from "./db/db";
 import { authRoutes } from "./routes/auth";
 import { healthRoutes } from "./routes/health";
 import { imageRoutes } from "./routes/images";
+import { shareRoutes } from "./routes/share";
 import { userRoutes } from "./routes/users";
 import { wishlistRoutes } from "./routes/wishlist";
 import { createEnrichmentQueue } from "./jobs/enrich";
@@ -49,6 +50,9 @@ export function createApp(config: Config): App {
   );
 
   const limiter = new RateLimiter();
+  // Anonymous purchase attempts: ~5 per 15 min per token+IP. Only
+  // mutation-reaching attempts are recorded (see share.ts).
+  const shareLimiter = new RateLimiter(5, 15 * 60 * 1000);
   const stealth = createStealthDeps(config);
   const queue = createEnrichmentQueue({
     db,
@@ -69,6 +73,7 @@ export function createApp(config: Config): App {
       ...authRoutes(db, config, limiter),
       ...userRoutes(db),
       ...wishlistRoutes(db, config.imagesDir, queue, { searxngUrl: config.searxngUrl }),
+      ...shareRoutes(db, shareLimiter, { imagesDir: config.imagesDir }),
       ...imageRoutes(db, config.imagesDir),
       ...healthRoutes(),
     },
