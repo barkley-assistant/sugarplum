@@ -78,7 +78,6 @@ body {
   --surface-row-hover: var(--surface-2);
   --surface-row: transparent;
   --border-row: var(--border);
-  --border-row-strong: var(--border-2);
 
   /* Tier-1 type hierarchy (G1): title primary, price secondary, meta tertiary. */
   --text-row-title: 0.9375rem;
@@ -123,6 +122,29 @@ body {
 
   /* Motion. */
   --ease-row: 120ms ease;
+
+  /* Tier-2 refinements (wave 26 t2). */
+  /* Skeleton: match the row shape, not the old bordered card (G2). */
+  --skel-thumb: var(--row-thumb);
+  --skel-gap: var(--row-gap);
+  --skel-row-gap: var(--list-gap);
+
+  /* Empty state: quiet, generous, no dashed box (G3). */
+  --empty-pad-y: var(--sp-6);
+  --empty-pad-x: var(--sp-4);
+
+  /* Forms: one consistent radius + a focus ring (G6). */
+  --r-input: var(--r-sm);
+  --r-form-card: var(--r-md);
+  /* --focus-visible already = 2px solid var(--ring); reused on inputs. */
+
+  /* Settings section rhythm (G4): grouped sections, consistent gap. */
+  --section-gap: var(--sp-5);
+  --section-pad: var(--sp-5);
+  --section-radius: var(--r-md);
+
+  /* Micro-interaction speed (G8): one fast transition on everything. */
+  --ease-ui: 120ms ease;
 }
 
 /* ---------- Tokens: dark (auto, no toggle) ---------- */
@@ -218,6 +240,34 @@ button:disabled {
   cursor: default;
 }
 
+/* Busy state (tier-2 G9): a small inline spinner + reserved right padding
+   so the ring never overlaps the label. The busy label change on the
+   button itself is the primary signal; the spinner is decorative. */
+button.is-busy {
+  position: relative;
+  padding-right: 2.2rem;
+}
+
+button.is-busy::after {
+  content: "";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--border-2);
+  border-top-color: var(--plum-500);
+  border-radius: 50%;
+  animation: spin 600ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
 button.secondary {
   background: var(--surface);
   color: var(--text);
@@ -251,6 +301,7 @@ button.chip {
   border-radius: var(--r-full);
   font-size: var(--text-sm);
   white-space: nowrap;
+  transition: background-color var(--ease-ui), border-color var(--ease-ui), color var(--ease-ui);
 }
 
 button.chip:hover {
@@ -276,11 +327,11 @@ textarea {
   font: inherit;
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--border-2);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-input);
   background: var(--surface);
   color: var(--text);
   width: 100%;
-  transition: border-color var(--ease);
+  transition: border-color var(--ease-ui), box-shadow var(--ease-ui);
 }
 
 input:focus,
@@ -288,6 +339,13 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--plum-500);
+  box-shadow: 0 0 0 2px var(--plum-100);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
 }
 
 label {
@@ -397,6 +455,7 @@ label {
   flex-direction: column;
   gap: 0.6rem;
   padding: var(--sp-6);
+  border-radius: var(--r-lg);
 }
 
 .auth-lockup {
@@ -407,13 +466,20 @@ label {
 }
 
 .auth-lockup img {
-  width: 72px;
-  height: 72px;
-  border-radius: var(--r-lg);
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-md);
+}
+
+.auth-lockup .muted {
+  font-size: var(--text-sm);
+  color: var(--text-3);
 }
 
 .auth-card h1 {
   margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
 }
 
 /* ---------- App shell ---------- */
@@ -466,7 +532,26 @@ a.brand:hover {
   text-decoration: none;
 }
 
-.page-title {
+/* ---------- Settings (tier-2 G4): grouped sections, velvet rhythm ---------- */
+.settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+  min-width: 0;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--section-pad);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--section-radius);
+  min-width: 0;
+}
+
+.settings-section h3 {
   margin: 0;
 }
 
@@ -516,6 +601,7 @@ a.brand:hover {
   border: 1px solid var(--border-2);
   border-radius: var(--r-sm);
   color: var(--text);
+  transition: background-color var(--ease-ui), border-color var(--ease-ui);
 }
 
 .user-menu-button:hover {
@@ -551,6 +637,7 @@ a.brand:hover {
   color: var(--text);
   text-align: left;
   font-size: var(--text-sm);
+  transition: background-color var(--ease-ui);
 }
 
 .menu-item:hover {
@@ -638,7 +725,7 @@ a.brand:hover {
   gap: var(--sp-3);
   overflow: hidden;
   min-width: 0;
-  transition: box-shadow var(--ease), transform var(--ease);
+  transition: box-shadow var(--ease), transform var(--ease), background-color var(--ease-ui);
 }
 
 .item-card-row {
@@ -952,6 +1039,7 @@ a.brand:hover {
   color: var(--plum-600);
   cursor: pointer;
   white-space: nowrap;
+  transition: background-color var(--ease-ui), color var(--ease-ui);
 }
 
 .claim-btn:hover {
@@ -983,6 +1071,7 @@ a.brand:hover {
   border-radius: var(--r-sm);
   cursor: grab;
   touch-action: none;
+  transition: background-color var(--ease-ui), color var(--ease-ui);
 }
 
 .drag-handle:hover {
@@ -1014,48 +1103,56 @@ a.brand:hover {
 }
 
 /* ---------- Empty states + skeletons ---------- */
+/* Quiet centered copy + optional action, no box (tier-2 G3). */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--sp-2);
   text-align: center;
-  padding: var(--sp-6) var(--sp-4);
-  border: 1px dashed var(--border-2);
-  border-radius: var(--r-md);
+  padding: var(--empty-pad-y) var(--empty-pad-x);
 }
 
 .empty-state h3 {
   margin: 0;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text);
 }
 
 .empty-state p {
   color: var(--text-2);
   margin: 0;
+  font-size: var(--text-sm);
+}
+
+.empty-state button {
+  margin-top: var(--sp-2);
 }
 
 .empty-note {
   margin: var(--sp-2) 0;
 }
 
+/* Skeleton matches the feed shape: transparent rows, 56px thumb (tier-2 G2). */
 .skeleton-list {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--skel-row-gap);
 }
 
 .skeleton-card {
   display: flex;
-  gap: var(--sp-3);
-  padding: var(--sp-4);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  gap: var(--skel-gap);
+  padding: var(--row-pad-y) var(--row-pad-x);
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: var(--r-md);
 }
 
 .skeleton-thumb {
-  width: 72px;
-  height: 72px;
+  width: var(--skel-thumb);
+  height: var(--skel-thumb);
   border-radius: var(--r-sm);
   background: var(--surface-2);
   flex-shrink: 0;
@@ -1105,14 +1202,15 @@ a.brand:hover {
 }
 
 /* ---------- Forms + add-item sheet ---------- */
+/* One surface (tier-2 G6): the form sits directly on the sheet / section
+   surface — no card-in-card border, background, or padding. */
 .item-form {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  padding: var(--sp-4);
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 .field {
@@ -1422,11 +1520,17 @@ a.brand:hover {
   color: var(--share-accent);
 }
 
-/* Owner-side link manager. */
+/* Owner-side link manager: own surface (no generic .card — the desktop
+   rail-card already provides a surface, so .card would double it). */
 .share-panel {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  min-width: 0;
 }
 
 .share-panel h3,
