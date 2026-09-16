@@ -400,6 +400,23 @@ export function wishlistRoutes(
         return new Response(null, { status: 204 });
       }),
     },
+    "/api/wishlist/items/:id/purchased": {
+      /** Owner-only blind reset of the share-link purchased mark. The route
+       *  requires ownership, but 204 with NO body on success: it must never
+       *  reveal whether the item was marked, when, or by whom (marking is
+       *  anonymous by design — only the boolean + timestamp are stored). */
+      DELETE: requireSession(db, (req, viewer) => {
+        const item = getItem(db, req.params.id);
+        if (!item) return jsonError(404, "Item not found");
+        if (item.user_id !== viewer.id) {
+          return jsonError(403, "Only the owner can reset this item");
+        }
+        db.run("UPDATE wishlist_items SET purchased = 0, purchased_at = NULL WHERE id = ?", [
+          item.id,
+        ]);
+        return new Response(null, { status: 204 });
+      }),
+    },
     "/api/wishlist/items/:id/refresh": {
       POST: requireSession(db, (req, viewer) => {
         const item = getItem(db, req.params.id);

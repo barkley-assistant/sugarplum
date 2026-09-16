@@ -465,3 +465,57 @@ describe("anonymous share image", () => {
     ).toBe(404);
   });
 });
+
+describe("owner blind purchased reset", () => {
+  test("non-owner → 403/404; owner → 204 blind; no purchased data in any owner response", async () => {
+    await loginAsAdmin();
+    const item = await seedItem("Bike");
+    const token = await activeToken();
+    await purchase(token, item.id); // an anonymous friend marks it
+
+    // Another registered user cannot reset.
+    const create = await admin.request("POST", "/api/users", {
+      username: "snoop",
+      password: "snoop-pass",
+      displayName: "Snoop",
+    });
+    expect(create.status).toBe(201);
+    const snoop = app.newJar();
+    await snoop.request("POST", "/api/auth/login", { username: "snoop", password: "snoop-pass" });
+    const denied = await snoop.request("DELETE", `/api/wishlist/items/${item.id}/purchased`);
+    expect([403, 404]).toContain(denied.status);
+
+    // The owner's own list must not carry the flag even while it is set.
+    const ownList = await admin.request("GET", "/api/wishlist/summary");
+    expect(JSON.stringify(await ownList.json())).not.toContain("purchased");
+
+    // Owner resets blind: 204, zero body — reveals neither who nor when.
+    const reset = await admin.request("DELETE", `/api/wishlist/items/${item.id}/purchased`);
+    expect(reset.status).toBe(204);
+    expect(await reset.text()).toBe("");
+
+    const row = app.app.db
+      .query("SELECT purchased, purchased_at FROM wishlist_items WHERE id = ?")
+      .get(item.id) as { purchased: number; purchased_at: string | null };
+    expect(row.purchased).toBe(0);
+    expect(row.purchased_at).toBeNull();
+
+    // Idempotent for never-marked items.
+    const item2 = await seedItem("Never marked");
+    expect(
+      (await admin.request("DELETE", `/api/wishlist/items/${item2.id}/purchased`)).status,
+    ).toBe(204);
+
+    // Unknown item → 404.
+    expect(
+      (await admin.request("DELETE", `/api/wishlist/items/${crypto.randomUUID()}/purchased`)).status,
+    ).toBe(404);
+
+    // The reset survives a second anonymous purchase (buyer re-marks).
+    expect((await purchase(token, item.id)).status).toBe(200);
+    const after = app.app.db
+      .query("SELECT purchased FROM wishlist_items WHERE id = ?")
+      .get(item.id) as { purchased: number };
+    expect(after.purchased).toBe(1);
+  });
+});
