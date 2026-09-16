@@ -4,7 +4,14 @@ import { S } from "../strings";
 import { useToast } from "../toast";
 import { useConfirm } from "../confirm";
 import { formatPrice } from "../format";
+import { AppShell, AppShellLoading, PageHeader } from "./AppShell";
+import { DotsIcon } from "./IconButton";
 import { ItemLink } from "./ItemLink";
+import { OverflowMenu } from "./OverflowMenu";
+import { PriceCluster } from "./PriceCluster";
+import { ProductImage } from "./ProductImage";
+import { ProductRow } from "./ProductRow";
+import { StatusBadge } from "./StatusBadge";
 
 type State =
   | { status: "loading" }
@@ -44,26 +51,18 @@ export function SharePage({ token }: { token: string }) {
   }, [token]);
 
   if (state.status === "loading") {
-    return (
-      <main className="app-shell">
-        <div className="app-main">
-          <p className="muted">{S.app.loading}</p>
-        </div>
-      </main>
-    );
+    return <AppShellLoading />;
   }
 
   if (state.status === "invalid") {
     return (
-      <main className="app-shell">
-        <div className="app-main">
-          <div className="card share-card">
-            <p className="error" role="alert">
-              {S.share.invalidLink}
-            </p>
-          </div>
+      <AppShell>
+        <div className="card share-card">
+          <p className="error" role="alert">
+            {S.share.invalidLink}
+          </p>
         </div>
-      </main>
+      </AppShell>
     );
   }
 
@@ -111,72 +110,65 @@ export function SharePage({ token }: { token: string }) {
   }
 
   return (
-    <main className="app-shell">
-      <header className="topbar">
-        <div className="brand">
-          <img className="brand-mark" src="/assets/brand/pwa/favicon-32.png" alt="" />
-          <h1 className="brand-name">{S.app.name}</h1>
-        </div>
-      </header>
-      <div className="app-main">
-        <div className="list-heading">
-          <h2>{S.list.heading(view.ownerDisplayName)}</h2>
-          <span className="count">{S.list.itemCount(view.items.length)}</span>
-        </div>
-        <p className="muted share-note">{S.share.sharedByNote}</p>
-        {view.viewerIsOwner && <p className="muted share-note">{S.share.ownerViewingOwn}</p>}
-        {view.items.length === 0 ? (
-          <p className="muted">{S.empty.other(view.ownerDisplayName)}</p>
-        ) : (
-          <ul className="item-list">
-            {view.items.map((item) => (
-              <li className="card item-card" key={item.id} data-item-id={item.id}>
-                <div className="item-card-row">
-                  <div className="item-card-main">
-                    {item.hasImage && (
-                      <img
-                        className="item-thumb"
-                        src={`/api/share/${token}/items/${item.id}/image`}
-                        alt=""
-                        loading="lazy"
-                      />
-                    )}
-                    <div className="item-card-text">
-                      <h3 className="item-title">{item.title}</h3>
-                      {item.siteName && <span className="item-site">{item.siteName}</span>}
-                      {item.url && <ItemLink url={item.url} />}
-                      {item.notes && <p className="item-notes">{item.notes}</p>}
-                      {item.tags.length > 0 && (
-                        <div className="tags">
-                          {item.tags.map((t) => (
-                            <span key={t} className="tag-pill">
-                              #{t}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+    <AppShell>
+      <PageHeader title={S.list.heading(view.ownerDisplayName)} count={view.items.length} />
+      <p className="muted share-note">{S.share.sharedByNote}</p>
+      {view.viewerIsOwner && <p className="muted share-note">{S.share.ownerViewingOwn}</p>}
+      {view.items.length === 0 ? (
+        <p className="muted">{S.empty.other(view.ownerDisplayName)}</p>
+      ) : (
+        <ul className="item-list">
+          {view.items.map((item) => (
+            <ProductRow
+              key={item.id}
+              id={item.id}
+              title={item.title}
+              purchased={item.purchased}
+              image={
+                item.hasImage ? (
+                  <ProductImage src={`/api/share/${token}/items/${item.id}/image`} />
+                ) : undefined
+              }
+              actions={
+                item.purchased ? (
+                  <StatusBadge variant="purchased">{S.share.purchasedBadge}</StatusBadge>
+                ) : view.viewerIsOwner ? undefined : (
+                  <OverflowMenu
+                    triggerLabel={S.item.moreActions}
+                    triggerIcon={<DotsIcon />}
+                    triggerDisabled={busy === item.id}
+                    menuLabel={S.item.moreActions}
+                    items={[
+                      {
+                        id: "mark-purchased",
+                        label: S.share.markPurchased,
+                        onSelect: () => markPurchased(item.id),
+                      },
+                    ]}
+                  />
+                )
+              }
+              meta={
+                <>
+                  {item.siteName && <span className="item-site">{item.siteName}</span>}
+                  <PriceCluster price={formatPrice(item.priceCents, item.currency)} />
+                  {item.url && <ItemLink url={item.url} />}
+                  {item.notes && <p className="item-notes">{item.notes}</p>}
+                  {item.tags.length > 0 && (
+                    <div className="tags">
+                      {item.tags.map((t) => (
+                        <span key={t} className="tag-pill">
+                          #{t}
+                        </span>
+                      ))}
                     </div>
-                  </div>
-                  <div className="price-row">
-                    <span className="price">{formatPrice(item.priceCents, item.currency)}</span>
-                  </div>
-                </div>
-                <div className="item-row-actions">
-                  {item.purchased ? (
-                    <span className="claimed-badge share-purchased-badge">
-                      {S.share.purchasedBadge}
-                    </span>
-                  ) : view.viewerIsOwner ? null : (
-                    <button onClick={() => void markPurchased(item.id)} disabled={busy === item.id}>
-                      {S.share.markPurchased}
-                    </button>
                   )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </main>
+                </>
+              }
+            />
+          ))}
+        </ul>
+      )}
+    </AppShell>
   );
 }

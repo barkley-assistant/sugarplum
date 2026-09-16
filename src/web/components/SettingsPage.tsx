@@ -5,7 +5,7 @@ import { useToast } from "../toast";
 import { useInstallPrompt } from "../pwa/install";
 import { clearStoredIdentity, readStoredMe, writeStoredMe } from "../me-store";
 import { AdminPanel } from "./AdminPanel";
-import { SkeletonList } from "./SkeletonList";
+import { AppShell, AppShellLoading } from "./AppShell";
 import { UserMenu } from "./UserMenu";
 
 /** Dedicated settings surface: every user gets the Account section
@@ -173,50 +173,31 @@ export function SettingsPage() {
   }
 
   if (!booted || !me) {
-    return (
-      <main className="app-shell">
-        <header className="topbar">
-          <div className="brand">
-            <img className="brand-mark" src="/assets/brand/pwa/favicon-32.png" alt="" />
-            <h1 className="brand-name">{S.app.name}</h1>
-          </div>
-        </header>
-        <div className="app-main">
-          <SkeletonList />
-        </div>
-      </main>
-    );
+    return <AppShellLoading />;
   }
 
-  return (
-    <main className="app-shell">
-      <header className="topbar">
-        <a className="brand" href="/" aria-label={S.settings.backToList}>
-          <img className="brand-mark" src="/assets/brand/pwa/favicon-32.png" alt="" />
-          <h1 className="brand-name">{S.app.name}</h1>
-        </a>
-        <div className="topbar-right">
-          <UserMenu
-            displayName={me.displayName || me.username}
-            onLogout={logout}
-            extra={
-              install.canInstall ? (
-                <button
-                  type="button"
-                  className="menu-item"
-                  role="menuitem"
-                  onClick={install.promptInstall}
-                >
-                  {S.pwa.install}
-                </button>
-              ) : undefined
-            }
-          />
-        </div>
-      </header>
+  const userMenu = (
+    <UserMenu
+      displayName={me.displayName || me.username}
+      onLogout={logout}
+      extra={
+        install.canInstall ? (
+          <button
+            type="button"
+            className="menu-item"
+            role="menuitem"
+            onClick={install.promptInstall}
+          >
+            {S.pwa.install}
+          </button>
+        ) : undefined
+      }
+    />
+  );
 
-      <div className="app-main">
-        <h2 className="page-title">{S.settings.title}</h2>
+  return (
+    <AppShell brandHref="/" headerRight={userMenu}>
+      <h2 className="page-title">{S.settings.title}</h2>
 
         <section className="card" aria-label={S.settings.account}>
           <h3>{S.settings.account}</h3>
@@ -309,7 +290,6 @@ export function SettingsPage() {
             <AdminPanel users={users} onChanged={refreshUsers} />
           </section>
         )}
-      </div>
-    </main>
+    </AppShell>
   );
 }

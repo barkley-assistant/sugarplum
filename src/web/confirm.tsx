@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { S } from "./strings";
+import { Sheet } from "./components/Sheet";
 
 interface ConfirmOptions {
   title: string;
@@ -23,7 +24,8 @@ const ConfirmContext = createContext<ConfirmFn | null>(null);
 
 /** Promise-based replacement for window.confirm(): call useConfirm() and
  *  `await confirm({ title, body })` — resolves true on confirm, false on
- *  cancel or Esc. Enter confirms, Esc cancels. */
+ *  cancel or Esc. Enter confirms, Esc cancels. Rendered through the shared
+ *  Sheet primitive (focus trap + Escape + focus return). */
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<ConfirmOptions>({ title: "" });
@@ -46,8 +48,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") settle(false);
-      else if (e.key === "Enter") settle(true);
+      // Escape is handled by Sheet (it calls onClose → settle(false)).
+      if (e.key === "Enter") settle(true);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -56,26 +58,28 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   return (
     <ConfirmContext.Provider value={confirm}>
       {children}
-      {open && (
-        <div className="confirm-overlay" role="alertdialog" aria-modal="true" aria-label={options.title}>
-          <div className="confirm-dialog">
-            <h3>{options.title}</h3>
-            {options.body && <p>{options.body}</p>}
-            <div className="confirm-actions">
-              <button type="button" className="secondary" onClick={() => settle(false)}>
-                {S.confirm.cancel}
-              </button>
-              <button
-                type="button"
-                className={options.danger === false ? "" : "danger"}
-                onClick={() => settle(true)}
-              >
-                {options.confirmLabel ?? S.item.delete}
-              </button>
-            </div>
-          </div>
+      <Sheet
+        open={open}
+        onClose={() => settle(false)}
+        ariaLabel={options.title}
+        variant="dialog"
+        role="alertdialog"
+      >
+        <h3>{options.title}</h3>
+        {options.body && <p>{options.body}</p>}
+        <div className="confirm-actions">
+          <button type="button" className="secondary" onClick={() => settle(false)}>
+            {S.confirm.cancel}
+          </button>
+          <button
+            type="button"
+            className={options.danger === false ? "" : "danger"}
+            onClick={() => settle(true)}
+          >
+            {options.confirmLabel ?? S.item.delete}
+          </button>
         </div>
-      )}
+      </Sheet>
     </ConfirmContext.Provider>
   );
 }

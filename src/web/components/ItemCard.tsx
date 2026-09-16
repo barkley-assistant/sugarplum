@@ -3,9 +3,18 @@ import type { OwnedItem, PriceHintState, PricePoint, PriceStats, PriceTrend, Pub
 import { centsToDecimal, formatPrice, toCents, urlHost } from "../format";
 import { S } from "../strings";
 import { useConfirm } from "../confirm";
+import { useToast } from "../toast";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { ItemLink } from "./ItemLink";
-import { Sparkline } from "./Sparkline";
+import { DotsIcon } from "./IconButton";
+import { OverflowMenu, type OverflowItem } from "./OverflowMenu";
+import { PriceCluster, TrendBlock, HintsBlock, type TrendWindow } from "./PriceCluster";
+import { ProductImage } from "./ProductImage";
+import { ProductRow } from "./ProductRow";
+import { Sheet } from "./Sheet";
+import { StatusBadge } from "./StatusBadge";
+
+export type { TrendWindow };
 
 interface ItemCardProps {
   item: OwnedItem | PublicItem;
@@ -27,6 +36,10 @@ interface ItemCardProps {
   dragging?: boolean;
 }
 
+/** Owner + public row, composed from the shared primitives. The props and
+ *  the price helpers stay here (unit-tested via sparkline.test.ts); the
+ *  layout is ProductRow, the price surface PriceCluster, the actions one
+ *  OverflowMenu trigger (owner) or the inline claim control (public). */
 export function ItemCard({
   item,
   viewerIsOwner,
@@ -41,15 +54,16 @@ export function ItemCard({
   dragHandle,
   dragging = false,
 }: ItemCardProps) {
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const [hintsOpen, setHintsOpen] = useState(false);
   const [trendWindow, setTrendWindow] = useState<TrendWindow>(readTrendWindow);
   const confirm = useConfirm();
+  const toast = useToast();
 
   async function handleEdit(id: string, values: ItemFormValues) {
     if (onEdit) {
       await onEdit(id, values);
-      setEditingId(null);
+      setEditing(false);
     }
   }
 
@@ -75,6 +89,15 @@ export function ItemCard({
     if (ok) await onResetPurchased(item.id);
   }
 
+  async function copyProductLink(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast(S.item.copied);
+    } catch {
+      toast(S.errors.generic, "danger");
+    }
+  }
+
   /** Fetch on each open: the whole point is fresh evidence, and the route is
    *  display-only. */
   async function toggleHints() {
@@ -87,7 +110,7 @@ export function ItemCard({
   const price = formatPrice(item.priceCents, item.currency);
   const hintPrice = viewerIsOwner
     ? formatPrice(ownerItem.hintPriceCents, ownerItem.hintCurrency)
-    : "";
+    : null;
   const stats = viewerIsOwner ? ownerItem.priceStats : null;
   const delta = priceDelta(item.priceCents, item.currency, stats);
   const publicItem = item as PublicItem;
@@ -107,27 +130,111 @@ export function ItemCard({
     }
   }
 
-  return (
-    <li className={`card item-card${dragging ? " dragging" : ""}`} data-item-id={item.id}>
-      <div className="item-card-row">
-        {dragHandle}
-        <div className="item-card-main">
-          {item.imagePath && (
-            <img
-              className="item-thumb"
-              src={`/api/wishlist/items/${item.id}/image`}
-              alt=""
-              loading="lazy"
-            />
+  function ownerMenuItems(): OverflowItem[] {
+    const menu: OverflowItem[] = [];
+    if (onEdit) {
+      menu.push({ id: "edit", label: S.item.edit, onSelect: () => setEditing(true) });
+    }
+    if (item.url && onRefresh) {
+      menu.push({
+        id: "recheck",
+        label: S.item.recheckPrice,
+        onSelect: () => onRefresh(item.id),
+      });
+    }
+    if (item.url) {
+      menu.push({
+        id: "copy-link",
+        label: S.item.copyProductLink,
+        onSelect: () => copyProductLink(item.url as string),
+      });
+    }
+    if (onResetPurchased) {
+      menu.push({
+        id: "reset-purchased",
+        label: S.share.resetPurchased,
+        onSelect: handleResetPurchased,
+      });
+    }
+    if (onDelete) {
+      menu.push({
+        id: "delete",
+        label: S.item.delete,
+        danger: true,
+        onSelect: () => handleDelete(item as OwnedItem),
+      });
+    }
+    return menu;
+  }
+
+  const metaParts: string[] = [];
+  if (stats) {
+    metaParts.push(S.item.lowestSeen(formatPrice(stats.lowestCents, stats.lowestCurrency)));
+    if (stats.atAddCents !== null) {
+      metaParts.push(S.item.atAddPrice(formatPrice(stats.atAddCents, stats.atAddCurrency)));
+    }
+  }
+
+  const ownerActions =
+    viewerIsOwner && ownerMenuItems().length > 0 ? (
+      <OverflowMenu
+        triggerLabel={S.item.moreActions}
+        triggerIcon={<DotsIcon />}
+        menuLabel={S.item.moreActions}
+        items={ownerMenuItems()}
+      />
+    ) : undefined;
+
+  const publicActions = !viewerIsOwner ? (
+    <>
+      {!publicItem.claimed && onClaim && (
+        <button className="secondary" onClick={() => void onClaim(publicItem.id)}>
+          {S.claims.claim}
+        </button>
+      )}
+      {publicItem.claimed && !publicItem.claimedByYou && (
+        <StatusBadge variant="claimed">{S.claims.claimedBySomeone}</StatusBadge>
+      )}
+      {publicItem.claimedByYou && (
+        <span className="claimed-badge">
+          <StatusBadge variant="claimed">{S.claims.claimedByYou}</StatusBadge>
+          {onUnclaim && (
+            <button className="secondary" onClick={() => void onUnclaim(publicItem.id)}>
+              {S.claims.unclaim}
+            </button>
           )}
-          <div className="item-card-text">
-            <h3 className="item-title">{item.title}</h3>
+        </span>
+      )}
+    </>
+  ) : undefined;
+
+  return (
+    <>
+      <ProductRow
+        id={item.id}
+        title={item.title}
+        dragging={dragging}
+        dragHandle={dragHandle}
+        image={
+          item.imagePath ? (
+            <ProductImage src={`/api/wishlist/items/${item.id}/image`} />
+          ) : undefined
+        }
+        actions={viewerIsOwner ? ownerActions : publicActions}
+        meta={
+          <>
             {item.siteName && <span className="item-site">{item.siteName}</span>}
             {/* Provenance note: this item's picture came from a search, not
                 from the shop. Owner-only, like the price hint. */}
             {viewerIsOwner && item.imageSource === "search" && (
               <span className="item-image-source">{S.item.imageViaSearch}</span>
             )}
+            <PriceCluster
+              price={price}
+              hintPrice={hintPrice}
+              metaParts={metaParts}
+              delta={delta}
+            />
             {item.url && <ItemLink url={item.url} />}
             {/* The owner's own "found it cheaper at" note: a link they saved,
                 carrying no automatic price claim. */}
@@ -149,10 +256,12 @@ export function ItemCard({
                 ))}
               </div>
             )}
-            {item.fetchState === "pending" && <p className="fetch-state">{S.item.fetching}</p>}
+            {item.fetchState === "pending" && (
+              <StatusBadge variant="fetching">{S.item.fetching}</StatusBadge>
+            )}
             {item.fetchState === "failed" && (
-              <p className="fetch-state">
-                {S.item.unavailable}
+              <span className="fetch-state">
+                <StatusBadge variant="failed">{S.item.unavailable}</StatusBadge>
                 {viewerIsOwner && onRefresh && (
                   <button
                     type="button"
@@ -162,158 +271,50 @@ export function ItemCard({
                     {S.item.retryShort}
                   </button>
                 )}
-              </p>
-            )}
-          </div>
-          <div className="price-row">
-            {price ? (
-              <span className="price">{price}</span>
-            ) : (
-              hintPrice && (
-                <span className="hint-price">
-                  ~{hintPrice} <span className="hint-note">({S.item.hintPriceNote})</span>
-                </span>
-              )
-            )}
-            {stats && (
-              <span className="price-meta">
-                {S.item.lowestSeen(formatPrice(stats.lowestCents, stats.lowestCurrency))}
-                {stats.atAddCents !== null && (
-                  <> · {S.item.atAddPrice(formatPrice(stats.atAddCents, stats.atAddCurrency))}</>
-                )}
               </span>
             )}
-            {delta && <span className="price-delta">{delta}</span>}
-          </div>
-        </div>
-      </div>
-
-      {showTrend && stats && (
-        <div className="price-trend">
-          <div className="window-chip" role="group" aria-label={S.trend.windowLabel}>
-            <button
-              type="button"
-              aria-pressed={trendWindow === "30d"}
-              className={trendWindow === "30d" ? "active" : ""}
-              onClick={() => chooseWindow("30d")}
-            >
-              {S.trend.window30d}
-            </button>
-            <button
-              type="button"
-              aria-pressed={trendWindow === "90d"}
-              className={trendWindow === "90d" ? "active" : ""}
-              onClick={() => chooseWindow("90d")}
-            >
-              {S.trend.window90d}
-            </button>
-          </div>
-          {trendValues.length >= 2 && (
-            <div className="sparkline-wrap">
-              <Sparkline values={trendValues} />
-            </div>
-          )}
-          {stats.trend && <span className="advice-label">{adviceLabel(stats.trend.advice)}</span>}
-        </div>
-      )}
-
-      {viewerIsOwner && onCheckPrices && (
-        <div className="hint-block">
-          <button
-            type="button"
-            className="secondary hints-toggle"
-            aria-expanded={hintsOpen}
-            aria-controls={`hints-${item.id}`}
-            onClick={() => void toggleHints()}
-          >
-            {S.item.pricesElsewhere}
-          </button>
-          {hintsOpen && (
-            <div className="hint-candidates" id={`hints-${item.id}`}>
-              {(!hintState || hintState.status === "loading") && (
-                <p className="muted">{S.item.checkingPrices}</p>
-              )}
-              {hintState?.status === "error" && <p className="muted">{S.errors.checkPrices}</p>}
-              {hintState?.status === "done" && hintState.disabled && (
-                <p className="muted">{S.item.hintsDisabled}</p>
-              )}
-              {hintState?.status === "done" && !hintState.disabled && hintState.hints.length === 0 && (
-                <p className="muted">{S.item.hintsNone}</p>
-              )}
-              {hintState?.status === "done" && !hintState.disabled && hintState.hints.length > 0 && (
-                <ul className="hint-list">
-                  {hintState.hints.map((candidate) => (
-                    <li key={candidate.sourceUrl}>
-                      <a href={candidate.sourceUrl} target="_blank" rel="noreferrer">
-                        {formatPrice(candidate.priceCents, candidate.currency)} at{" "}
-                        {urlHost(candidate.sourceUrl)}
-                      </a>
-                      <span className="hint-note"> — {S.item.hintCandidateNote}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <p className="hint-footnote">{S.item.hintsFootnote}</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {viewerIsOwner ? (
-        <div className="item-row-actions">
-          {editingId === item.id ? (
-            <ItemForm
-              initial={item}
-              submitLabel={S.form.save}
-              onSubmit={(values) => handleEdit(item.id, values)}
-              onCancel={() => setEditingId(null)}
-            />
-          ) : (
+          </>
+        }
+        below={
+          showTrend && stats ? (
             <>
-              {item.url && onRefresh && (
-                <button className="secondary" onClick={() => void onRefresh(item.id)}>
-                  {S.item.recheckPrice}
-                </button>
-              )}
-              {onEdit && (
-                <button className="secondary" onClick={() => setEditingId(item.id)}>
-                  {S.item.edit}
-                </button>
-              )}
-              {onResetPurchased && (
-                <button className="secondary" onClick={() => void handleResetPurchased()}>
-                  {S.share.resetPurchased}
-                </button>
-              )}
-              {onDelete && (
-                <button className="danger" onClick={() => void handleDelete(item as OwnedItem)}>
-                  {S.item.delete}
-                </button>
+              <TrendBlock
+                window={trendWindow}
+                onWindow={chooseWindow}
+                values={trendValues}
+                advice={stats.trend ? adviceLabel(stats.trend.advice) : null}
+              />
+              {viewerIsOwner && onCheckPrices && (
+                <HintsBlock
+                  itemId={item.id}
+                  open={hintsOpen}
+                  onToggle={() => void toggleHints()}
+                  hintState={hintState}
+                />
               )}
             </>
-          )}
-        </div>
-      ) : (
-        <div className="item-row-actions">
-          {!publicItem.claimed && onClaim && (
-            <button onClick={() => void onClaim(publicItem.id)}>{S.claims.claim}</button>
-          )}
-          {publicItem.claimed && !publicItem.claimedByYou && (
-            <span className="muted">{S.claims.claimedBySomeone}</span>
-          )}
-          {publicItem.claimedByYou && (
-            <span className="claimed-badge">
-              {S.claims.claimedByYou}
-              {onUnclaim && (
-                <button className="secondary" onClick={() => void onUnclaim(publicItem.id)}>
-                  {S.claims.unclaim}
-                </button>
-              )}
-            </span>
-          )}
-        </div>
+          ) : viewerIsOwner && onCheckPrices ? (
+            <HintsBlock
+              itemId={item.id}
+              open={hintsOpen}
+              onToggle={() => void toggleHints()}
+              hintState={hintState}
+            />
+          ) : undefined
+        }
+      />
+      {viewerIsOwner && onEdit && (
+        <Sheet open={editing} onClose={() => setEditing(false)} ariaLabel={S.item.edit}>
+          <h2>{S.item.edit}</h2>
+          <ItemForm
+            initial={item}
+            submitLabel={S.form.save}
+            onSubmit={(values) => handleEdit(item.id, values)}
+            onCancel={() => setEditing(false)}
+          />
+        </Sheet>
       )}
-    </li>
+    </>
   );
 }
 
@@ -336,10 +337,6 @@ function priceDelta(
   const amount = formatPrice(centsToDecimal(Math.abs(current - atAdd)), currentCurrency);
   return current < atAdd ? S.item.downSinceAdd(amount) : S.item.upSinceAdd(amount);
 }
-
-/** Sparkline window chip state. Display-only (it never changes what the
- *  server tracks), so localStorage is the right home — no server round-trip. */
-export type TrendWindow = "30d" | "90d";
 
 const TREND_WINDOW_KEY = "sugarplum.trend-window";
 

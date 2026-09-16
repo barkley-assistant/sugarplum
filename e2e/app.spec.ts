@@ -67,7 +67,8 @@ test("4: editing an item persists after reload", async ({ page }) => {
   const card = page.locator(".item-card", {
     has: page.getByRole("heading", { name: "Manual mug" }),
   });
-  await card.getByRole("button", { name: "Edit" }).click();
+  await card.getByRole("button", { name: "More actions" }).click();
+  await page.getByRole("menuitem", { name: "Edit" }).click();
   await page.getByLabel("Title").fill("Manual mug v2");
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByRole("heading", { name: "Manual mug v2" })).toBeVisible();
@@ -188,8 +189,15 @@ test("8: share-target GET prefills and creates the item", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Share test" })).toBeVisible();
 });
 
-test("9: no horizontal overflow at 360/390/430px", async ({ page }) => {
-  for (const width of [360, 390, 430]) {
+test("9: no horizontal overflow at 360/390/430px (and 1280px rail)", async ({ page }) => {
+  // Seed one item so the owner rail renders at desktop width even when
+  // this test runs in isolation against a fresh server.
+  const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Overflow probe" },
+  });
+  expect(seeded.status()).toBe(201);
+
+  for (const width of [360, 390, 430, 1280]) {
     await page.setViewportSize({ width, height: 800 });
     await page.reload();
     const probe = await page.evaluate(() => {
@@ -231,6 +239,11 @@ test("9: no horizontal overflow at 360/390/430px", async ({ page }) => {
     expect(probe.docOverflow, `document overflow at ${width}px`).toBe(false);
     expect(probe.offenders, `true escapes at ${width}px`).toEqual([]);
   }
+
+  // Desktop: the owner rail is visible alongside the feed at 1280px.
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.reload();
+  await expect(page.locator(".list-rail")).toBeVisible();
 });
 
 test("10: dark mode flips the surface tokens", async ({ page }) => {
@@ -392,7 +405,8 @@ test("15: share link — owner creates, anonymous marks purchased, owner sees no
     const card = anonPage.locator(".item-card", {
       has: anonPage.getByRole("heading", { name: "Gift for the admin" }),
     });
-    await card.getByRole("button", { name: "Mark as purchased" }).click();
+    await card.getByRole("button", { name: "More actions" }).click();
+    await anonPage.getByRole("menuitem", { name: "Mark as purchased" }).click();
     // Confirm dialog — same label as the row button, so scope to the dialog.
     const dialog = anonPage.getByRole("alertdialog");
     await expect(dialog).toBeVisible();
