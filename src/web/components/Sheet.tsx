@@ -29,7 +29,9 @@ export function Sheet({
   const boxRef = useRef<HTMLDivElement | null>(null);
   const openerRef = useRef<Element | null>(null);
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!open) return;

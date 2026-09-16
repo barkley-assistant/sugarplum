@@ -1579,13 +1579,6 @@ a.brand:hover {
   min-width: 0;
 }
 
-/* Slim the drag handle inside the compact row (keeps the 44px target). */
-.product-row-grid .drag-handle {
-  width: 32px;
-  margin-left: -8px;
-  color: var(--text-3);
-}
-
 .product-img {
   width: var(--row-thumb);
   height: var(--row-thumb);

@@ -4,17 +4,14 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Accessible name (also the tooltip). Icon-only buttons carry no text. */
   label: string;
   children: ReactNode;
-  /** Callback ref for the underlying button (overflow-menu focus return). */
-  triggerRef?: (el: HTMLButtonElement | null) => void;
 }
 
 /** Compact 44px icon button: transparent until hovered, focus-visible ring.
  *  The SVG icon is decorative (aria-hidden); the name comes from `label`. */
-export function IconButton({ label, children, className, triggerRef, type = "button", ...rest }: IconButtonProps) {
+export function IconButton({ label, children, className, type = "button", ...rest }: IconButtonProps) {
   return (
     <button
       type={type}
-      ref={triggerRef}
       className={className ? `icon-btn ${className}` : "icon-btn"}
       aria-label={label}
       title={label}

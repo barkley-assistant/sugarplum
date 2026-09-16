@@ -22,10 +22,11 @@ import {
 import { EmptyState } from "./EmptyState";
 import { FilterChips } from "./FilterChips";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
-import { ItemList, ListHeading, type OwnerRef } from "./ItemList";
+import { ItemList, type OwnerRef } from "./ItemList";
 import { SharePanel } from "./SharePanel";
 import { Sheet } from "./Sheet";
-import { SkeletonList } from "./SkeletonList";
+import { AppShell, AppShellLoading, PageHeader } from "./AppShell";
+import { IconButton, PlusIcon, ShareIcon } from "./IconButton";
 import { UserMenu } from "./UserMenu";
 
 export function AppPage() {
@@ -45,6 +46,7 @@ export function AppPage() {
   const toast = useToast();
   const reorder = useDragReorder(ownItems, onReorder);
   const install = useInstallPrompt();
+  const wide = useDesktopRail();
 
   useEffect(() => {
     void boot();
@@ -325,19 +327,7 @@ export function AppPage() {
   }
 
   if (!booted || !me) {
-    return (
-      <main className="app-shell">
-        <header className="topbar">
-          <div className="brand">
-            <img className="brand-mark" src="/assets/brand/pwa/favicon-32.png" alt="" />
-            <h1 className="brand-name">{S.app.name}</h1>
-          </div>
-        </header>
-        <div className="app-main">
-          <SkeletonList />
-        </div>
-      </main>
-    );
+    return <AppShellLoading />;
   }
 
   const others = summary.filter((row) => row.userId !== me.id);
@@ -435,93 +425,117 @@ export function AppPage() {
     );
   }
 
+  const showOwnerActions = !viewing && ownItems.length > 0;
+  const ownerActions = showOwnerActions ? (
+    <>
+      <IconButton label={S.list.addItem} onClick={() => setAddOpen(true)}>
+        <PlusIcon />
+      </IconButton>
+      <IconButton label={S.share.shareList} onClick={() => setShareOpen((v) => !v)} aria-expanded={shareOpen}>
+        <ShareIcon />
+      </IconButton>
+    </>
+  ) : null;
+
+  const userMenu = (
+    <UserMenu
+      displayName={me.displayName || me.username}
+      onLogout={logout}
+      onSettings={goToSettings}
+      extra={
+        install.canInstall ? (
+          <button
+            type="button"
+            className="menu-item"
+            role="menuitem"
+            onClick={install.promptInstall}
+          >
+            {S.pwa.install}
+          </button>
+        ) : undefined
+      }
+    />
+  );
+
   return (
-    <main className="app-shell">
-      {refreshing && <div className="progress-hairline" aria-hidden="true" />}
-      <header className="topbar">
-        <div className="brand">
-          <img className="brand-mark" src="/assets/brand/pwa/favicon-32.png" alt="" />
-          <h1 className="brand-name">{S.app.name}</h1>
-        </div>
-        <div className="topbar-right">
-          <UserMenu
-            displayName={me.displayName || me.username}
-            onLogout={logout}
-            onSettings={goToSettings}
-            extra={
-              install.canInstall ? (
-                <button
-                  type="button"
-                  className="menu-item"
-                  role="menuitem"
-                  onClick={install.promptInstall}
-                >
-                  {S.pwa.install}
-                </button>
-              ) : undefined
-            }
-          />
-        </div>
-      </header>
+    <AppShell
+      refreshing={refreshing}
+      headerActions={!wide ? ownerActions : null}
+      headerRight={userMenu}
+    >
+      {error && <p className="error" role="alert">{error}</p>}
 
-      <div className="app-main">
-        {error && <p className="error" role="alert">{error}</p>}
+      <nav className="user-switcher" aria-label={S.list.heading(me.username)}>
+        {others.map((row) => (
+          <button
+            key={row.userId}
+            className={viewing === row.userId ? "chip active" : "chip"}
+            onClick={() => void viewList(row.userId)}
+          >
+            {S.list.viewList(row.displayName)}
+          </button>
+        ))}
+        {viewing && (
+          <button className="chip" onClick={backToOwnList}>
+            {S.list.backToMyList}
+          </button>
+        )}
+      </nav>
 
-        <nav className="user-switcher" aria-label={S.list.heading(me.username)}>
-          {others.map((row) => (
-            <button
-              key={row.userId}
-              className={viewing === row.userId ? "chip active" : "chip"}
-              onClick={() => void viewList(row.userId)}
-            >
-              {S.list.viewList(row.displayName)}
-            </button>
-          ))}
-          {viewing && (
-            <button className="chip" onClick={backToOwnList}>
-              {S.list.backToMyList}
-            </button>
-          )}
-        </nav>
-
+      <div className={`list-layout${!viewing ? " has-rail" : ""}`}>
         <section className="list-section">
-          <ListHeading owner={viewing ? ownerRefFor(viewing) : ownRef} count={viewing ? otherItems.length : ownItems.length} />
-          {!viewing && !addOpen && ownItems.length > 0 && (
-            <div className="list-actions">
-              <button className="primary" onClick={() => setAddOpen(true)}>
-                {S.list.addItem}
-              </button>
-              <button className="secondary" onClick={() => setShareOpen((v) => !v)}>
-                {S.share.shareList}
-              </button>
-            </div>
-          )}
-          {!viewing && shareOpen && <SharePanel />}
-          {!viewing && ownItems.length > 0 && (
-            <FilterChips
-              tags={allTags}
-              counts={tagCounts}
-              active={activeTag}
-              onSelect={setActiveTag}
-            />
-          )}
+          <PageHeader
+            title={S.list.heading(viewing ? ownerRefFor(viewing).displayName : ownRef.displayName)}
+            count={viewing ? otherItems.length : ownItems.length}
+          />
           {renderList()}
         </section>
 
-        {!viewing && (
-          <Sheet open={addOpen} onClose={() => setAddOpen(false)} ariaLabel={S.list.addItem}>
-            <h2>{S.list.addItem}</h2>
-            <ItemForm
-              submitLabel={S.list.addItem}
-              initialValues={prefill}
-              onSubmit={createItem}
-              onCancel={() => setAddOpen(false)}
-              autoFocusUrl
-            />
-          </Sheet>
+        {!viewing && showOwnerActions && (
+          <aside className="list-rail">
+            <div className="list-rail-card">
+              {wide && <div className="topbar-actions">{ownerActions}</div>}
+              {shareOpen && <SharePanel />}
+              {ownItems.length > 0 && (
+                <FilterChips
+                  tags={allTags}
+                  counts={tagCounts}
+                  active={activeTag}
+                  onSelect={setActiveTag}
+                />
+              )}
+            </div>
+          </aside>
         )}
-
       </div>
-    </main>
+
+      {!viewing && (
+        <Sheet open={addOpen} onClose={() => setAddOpen(false)} ariaLabel={S.list.addItem}>
+          <h2>{S.list.addItem}</h2>
+          <ItemForm
+            submitLabel={S.list.addItem}
+            initialValues={prefill}
+            onSubmit={createItem}
+            onCancel={() => setAddOpen(false)}
+            autoFocusUrl
+          />
+        </Sheet>
+      )}
+    </AppShell>
   );
+}
+
+/** Desktop rail switch: the owner's own list gets the sticky right rail at
+ *  >= 1024px; every other surface stays single-column fluid. */
+function useDesktopRail(): boolean {
+  const [wide, setWide] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(min-width: 1024px)").matches : false,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const onChange = () => setWide(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return wide;
 }

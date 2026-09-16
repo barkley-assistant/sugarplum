@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import type { OwnedItem, PriceHintState, PublicItem } from "../../shared/types";
-import { S } from "../strings";
 import { ItemCard } from "./ItemCard";
 import type { ItemFormValues } from "./ItemForm";
 
@@ -67,14 +66,5 @@ export function ItemList({
         />
       ))}
     </ul>
-  );
-}
-
-export function ListHeading({ owner, count }: { owner: OwnerRef; count: number }) {
-  return (
-    <div className="list-heading">
-      <h2>{S.list.heading(owner.displayName)}</h2>
-      <span className="count">{S.list.itemCount(count)}</span>
-    </div>
   );
 }

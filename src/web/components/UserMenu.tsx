@@ -34,20 +34,10 @@ export function UserMenu({ displayName, onLogout, onSettings, extra }: UserMenuP
   return (
     <div className="user-menu">
       <OverflowMenu
+        triggerLabel={displayName}
+        triggerClassName="user-menu-button"
         menuLabel={displayName}
         extra={extra}
-        renderTrigger={({ open, toggle, triggerRef }) => (
-          <button
-            type="button"
-            ref={triggerRef}
-            className="user-menu-button"
-            aria-expanded={open}
-            aria-haspopup="menu"
-            onClick={toggle}
-          >
-            {displayName}
-          </button>
-        )}
         items={items}
       />
     </div>

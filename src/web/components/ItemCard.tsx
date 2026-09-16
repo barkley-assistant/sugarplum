@@ -6,7 +6,7 @@ import { useConfirm } from "../confirm";
 import { useToast } from "../toast";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { ItemLink } from "./ItemLink";
-import { DotsIcon, IconButton } from "./IconButton";
+import { DotsIcon } from "./IconButton";
 import { OverflowMenu, type OverflowItem } from "./OverflowMenu";
 import { PriceCluster, TrendBlock, HintsBlock, type TrendWindow } from "./PriceCluster";
 import { ProductImage } from "./ProductImage";
@@ -178,12 +178,9 @@ export function ItemCard({
   const ownerActions =
     viewerIsOwner && ownerMenuItems().length > 0 ? (
       <OverflowMenu
+        triggerLabel={S.item.moreActions}
+        triggerIcon={<DotsIcon />}
         menuLabel={S.item.moreActions}
-        renderTrigger={({ open, toggle, triggerRef }) => (
-          <IconButton label={S.item.moreActions} aria-expanded={open} aria-haspopup="menu" onClick={toggle} triggerRef={triggerRef}>
-            <DotsIcon />
-          </IconButton>
-        )}
         items={ownerMenuItems()}
       />
     ) : undefined;

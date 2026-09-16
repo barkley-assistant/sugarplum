@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { S } from "../strings";
 import { Sheet } from "./Sheet";
 
@@ -11,16 +11,15 @@ export interface OverflowItem {
   disabled?: boolean;
 }
 
-interface TriggerApi {
-  open: boolean;
-  toggle: () => void;
-  triggerRef: (el: HTMLButtonElement | null) => void;
-}
-
 interface OverflowMenuProps {
-  /** Renders the trigger (an IconButton or a label button like the user
-   *  chip). Receives open state, a toggle and a ref for focus return. */
-  renderTrigger: (api: TriggerApi) => ReactNode;
+  /** Trigger button content: an icon (row overflow) or a text label (the
+   *  header user chip). The accessible name is always `triggerLabel`. */
+  triggerLabel: string;
+  triggerIcon?: ReactNode;
+  /** Defaults to "icon-btn"; the header menu passes "user-menu-button". */
+  triggerClassName?: string;
+  /** Disables the trigger (e.g. while a share purchase is in flight). */
+  triggerDisabled?: boolean;
   items: OverflowItem[];
   /** Accessible name for the menu (defaults to the overflow label). */
   menuLabel?: string;
@@ -34,7 +33,7 @@ interface OverflowMenuProps {
  *  separated, Cancel row); at >= 640px an anchored popover reusing the
  *  menu-sheet look. Both share the items array, arrow-key navigation,
  *  Home/End, Escape and focus return to the trigger. */
-export function OverflowMenu({ renderTrigger, items, menuLabel, extra }: OverflowMenuProps) {
+export function OverflowMenu({ triggerLabel, triggerIcon, triggerClassName, triggerDisabled, items, menuLabel, extra }: OverflowMenuProps) {
   const [open, setOpen] = useState(false);
   const [desktop, setDesktop] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia("(min-width: 640px)").matches : true,
@@ -88,14 +87,14 @@ export function OverflowMenu({ renderTrigger, items, menuLabel, extra }: Overflo
     setOpen(false);
     // Let the menu unmount before the action opens its own Sheet/confirm,
     // so focus return lands sanely and overlays never stack.
-    queueMicrotask(() => {
+    setTimeout(() => {
       triggerEl.current?.focus();
       void item.onSelect();
-    });
+    }, 0);
   }
 
   /** Arrow-key navigation shared by both containers. */
-  function onMenuKeyDown(e: React.KeyboardEvent) {
+  function onMenuKeyDown(e: ReactKeyboardEvent) {
     const rows = menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([aria-disabled="true"])');
     if (!rows || rows.length === 0) return;
     const current = Array.from(rows).indexOf(document.activeElement as HTMLElement);
@@ -146,17 +145,27 @@ export function OverflowMenu({ renderTrigger, items, menuLabel, extra }: Overflo
     return rows;
   }
 
-  const api: TriggerApi = {
-    open,
-    toggle: () => setOpen((v) => !v),
-    triggerRef: (el) => {
-      triggerEl.current = el;
-    },
-  };
+  const setTriggerRef = useCallback((el: HTMLButtonElement | null) => {
+    triggerEl.current = el;
+  }, []);
+
+  const iconOnly = triggerIcon !== undefined;
 
   return (
     <>
-      {renderTrigger(api)}
+      <button
+        type="button"
+        ref={setTriggerRef}
+        className={triggerClassName ?? "icon-btn"}
+        aria-label={iconOnly ? triggerLabel : undefined}
+        title={iconOnly ? triggerLabel : undefined}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        disabled={triggerDisabled}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {triggerIcon ?? triggerLabel}
+      </button>
       {open &&
         (desktop ? (
           <div
