@@ -48,6 +48,18 @@ export function AppPage() {
   const install = useInstallPrompt();
   const wide = useDesktopRail();
 
+  // Mobile scrolled-state fix (velvet #26 round 2): the share icon lives in
+  // the sticky topbar, so it is tappable at any scrollY, but the rail sits at
+  // page-y ~101. Without this, opening from scrollY > ~100 renders the panel
+  // entirely above the viewport with zero feedback. Scroll to top on open so
+  // the panel lands in view. Guarded by !wide: desktop keeps its sticky rail.
+  // Instant ("auto") scroll: deterministic for verification and safe under
+  // prefers-reduced-motion (no smooth animation).
+  useEffect(() => {
+    if (!shareOpen || wide) return;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [shareOpen, wide]);
+
   useEffect(() => {
     void boot();
     // eslint-disable-next-line react-hooks/exhaustive-deps
