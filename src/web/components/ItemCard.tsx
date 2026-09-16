@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
-import type { OwnedItem, PublicItem } from "../../shared/types";
-import { formatPrice } from "../format";
+import type { OwnedItem, PriceHintState, PriceStats, PublicItem } from "../../shared/types";
+import { centsToDecimal, formatPrice, toCents, urlHost } from "../format";
 import { S } from "../strings";
 import { useConfirm } from "../confirm";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
@@ -13,6 +13,10 @@ interface ItemCardProps {
   onClaim?: (id: string) => void | Promise<void>;
   onUnclaim?: (id: string) => void | Promise<void>;
   onRefresh?: (id: string) => void | Promise<void>;
+  /** Owner-only: run the on-demand "prices seen elsewhere" lookup. */
+  onCheckPrices?: (id: string) => void | Promise<void>;
+  /** Owner-only: the last candidates result for this item, when a lookup ran. */
+  hintState?: PriceHintState;
   /** Drag handle slot (pointer state machine wired by AppPage). */
   dragHandle?: ReactNode;
   /** True while this card is lifted by the drag state machine. */
@@ -27,10 +31,13 @@ export function ItemCard({
   onClaim,
   onUnclaim,
   onRefresh,
+  onCheckPrices,
+  hintState,
   dragHandle,
   dragging = false,
 }: ItemCardProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [hintsOpen, setHintsOpen] = useState(false);
   const confirm = useConfirm();
 
   async function handleEdit(id: string, values: ItemFormValues) {
@@ -49,10 +56,21 @@ export function ItemCard({
     if (ok) await onDelete(item.id);
   }
 
+  /** Fetch on each open: the whole point is fresh evidence, and the route is
+   *  display-only. */
+  async function toggleHints() {
+    const next = !hintsOpen;
+    setHintsOpen(next);
+    if (next && onCheckPrices) await onCheckPrices(item.id);
+  }
+
+  const ownerItem = item as OwnedItem;
   const price = formatPrice(item.priceCents, item.currency);
   const hintPrice = viewerIsOwner
-    ? formatPrice((item as OwnedItem).hintPriceCents, (item as OwnedItem).hintCurrency)
+    ? formatPrice(ownerItem.hintPriceCents, ownerItem.hintCurrency)
     : "";
+  const stats = viewerIsOwner ? ownerItem.priceStats : null;
+  const delta = priceDelta(item.priceCents, item.currency, stats);
   const publicItem = item as PublicItem;
 
   return (
@@ -80,6 +98,16 @@ export function ItemCard({
               <a className="item-link" href={item.url} target="_blank" rel="noreferrer">
                 {item.url}
               </a>
+            )}
+            {/* The owner's own "found it cheaper at" note: a link they saved,
+                carrying no automatic price claim. */}
+            {viewerIsOwner && ownerItem.cheaperUrl && (
+              <p className="item-cheaper">
+                {S.item.cheaperFound}{" "}
+                <a href={ownerItem.cheaperUrl} target="_blank" rel="noreferrer">
+                  {urlHost(ownerItem.cheaperUrl)}
+                </a>
+              </p>
             )}
             {item.notes && <p className="item-notes">{item.notes}</p>}
             {item.tags.length > 0 && (
@@ -117,9 +145,60 @@ export function ItemCard({
                 </span>
               )
             )}
+            {stats && (
+              <span className="price-meta">
+                {S.item.lowestSeen(formatPrice(stats.lowestCents, stats.lowestCurrency))}
+                {stats.atAddCents !== null && (
+                  <> · {S.item.atAddPrice(formatPrice(stats.atAddCents, stats.atAddCurrency))}</>
+                )}
+              </span>
+            )}
+            {delta && <span className="price-delta">{delta}</span>}
           </div>
         </div>
       </div>
+
+      {viewerIsOwner && onCheckPrices && (
+        <div className="hint-block">
+          <button
+            type="button"
+            className="secondary hints-toggle"
+            aria-expanded={hintsOpen}
+            aria-controls={`hints-${item.id}`}
+            onClick={() => void toggleHints()}
+          >
+            {S.item.pricesElsewhere}
+          </button>
+          {hintsOpen && (
+            <div className="hint-candidates" id={`hints-${item.id}`}>
+              {(!hintState || hintState.status === "loading") && (
+                <p className="muted">{S.item.checkingPrices}</p>
+              )}
+              {hintState?.status === "error" && <p className="muted">{S.errors.checkPrices}</p>}
+              {hintState?.status === "done" && hintState.disabled && (
+                <p className="muted">{S.item.hintsDisabled}</p>
+              )}
+              {hintState?.status === "done" && !hintState.disabled && hintState.hints.length === 0 && (
+                <p className="muted">{S.item.hintsNone}</p>
+              )}
+              {hintState?.status === "done" && !hintState.disabled && hintState.hints.length > 0 && (
+                <ul className="hint-list">
+                  {hintState.hints.map((candidate) => (
+                    <li key={candidate.sourceUrl}>
+                      <a href={candidate.sourceUrl} target="_blank" rel="noreferrer">
+                        {formatPrice(candidate.priceCents, candidate.currency)} at{" "}
+                        {urlHost(candidate.sourceUrl)}
+                      </a>
+                      <span className="hint-note"> — {S.item.hintCandidateNote}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="hint-footnote">{S.item.hintsFootnote}</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {viewerIsOwner ? (
         <div className="item-row-actions">
@@ -132,6 +211,11 @@ export function ItemCard({
             />
           ) : (
             <>
+              {item.url && onRefresh && (
+                <button className="secondary" onClick={() => void onRefresh(item.id)}>
+                  {S.item.recheckPrice}
+                </button>
+              )}
               {onEdit && (
                 <button className="secondary" onClick={() => setEditingId(item.id)}>
                   {S.item.edit}
@@ -167,4 +251,24 @@ export function ItemCard({
       )}
     </li>
   );
+}
+
+/** "Down £2.50 since added" / "Up £2.50 since added", or null when there is
+ *  nothing honest to say: no history, no current price, no change, or a
+ *  currency mismatch (mixed-currency deltas are not computed). Integer cents
+ *  only — no float money arithmetic. */
+function priceDelta(
+  currentDecimal: string | null,
+  currentCurrency: string | null,
+  stats: PriceStats | null,
+): string | null {
+  if (!stats || stats.atAddCents === null || currentDecimal === null) return null;
+  const current = toCents(currentDecimal);
+  const atAdd = toCents(stats.atAddCents);
+  if (current === null || atAdd === null || current === atAdd) return null;
+  if ((currentCurrency ?? "").trim().toUpperCase() !== (stats.atAddCurrency ?? "").trim().toUpperCase()) {
+    return null;
+  }
+  const amount = formatPrice(centsToDecimal(Math.abs(current - atAdd)), currentCurrency);
+  return current < atAdd ? S.item.downSinceAdd(amount) : S.item.upSinceAdd(amount);
 }

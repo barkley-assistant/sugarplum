@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { formatPrice, formatRelativeTime, parseShareTarget } from "../src/web/format";
+import { centsToDecimal, formatPrice, formatRelativeTime, parseShareTarget, toCents, urlHost } from "../src/web/format";
 
 describe("formatPrice", () => {
   test("GBP 24.99 → £24.99", () => {
@@ -36,6 +36,40 @@ describe("formatPrice", () => {
 
   test("single-decimal input pads to two places", () => {
     expect(formatPrice("12.5", "GBP")).toBe("£12.50");
+  });
+});
+
+describe("toCents / centsToDecimal", () => {
+  test("decimal string → integer cents, no float drift", () => {
+    expect(toCents("24.99")).toBe(2499);
+    expect(toCents("12.50")).toBe(1250);
+    expect(toCents("12.5")).toBe(1250);
+    expect(toCents("0.05")).toBe(5);
+    expect(toCents("1234.56")).toBe(123456);
+    expect(toCents(null)).toBeNull();
+    expect(toCents("")).toBeNull();
+    expect(toCents("abc")).toBeNull();
+  });
+
+  test("cents → decimal string round-trips small deltas exactly", () => {
+    expect(centsToDecimal(2499)).toBe("24.99");
+    expect(centsToDecimal(5)).toBe("0.05");
+    expect(centsToDecimal(123456)).toBe("1234.56");
+    expect(centsToDecimal(0)).toBe("0.00");
+    // 1250 - 1000 = 250 → "2.50": the ItemCard delta path.
+    expect(centsToDecimal(Math.abs(1250 - 1000))).toBe("2.50");
+    expect(toCents(centsToDecimal(2499))).toBe(2499);
+  });
+});
+
+describe("urlHost", () => {
+  test("strips www. and returns the host", () => {
+    expect(urlHost("https://www.johnlewis.example.com/p/1")).toBe("johnlewis.example.com");
+    expect(urlHost("https://a.example.com/x")).toBe("a.example.com");
+  });
+
+  test("unparseable input is returned unchanged", () => {
+    expect(urlHost("not a url")).toBe("not a url");
   });
 });
 

@@ -37,7 +37,12 @@ test("2: manual add shows a card with a formatted price", async ({ page }) => {
   await sheet.getByLabel("Price").fill("12.50");
   await sheet.getByRole("button", { name: "Add item" }).click();
   await expect(page.getByRole("heading", { name: "Manual mug" })).toBeVisible();
-  await expect(page.getByText("£12.50")).toBeVisible();
+  // Scoped to the card: the price text also appears in the history meta line
+  // ("Lowest £12.50 · At add £12.50") since wave 5.
+  const card = page.locator(".item-card", {
+    has: page.getByRole("heading", { name: "Manual mug" }),
+  });
+  await expect(card.locator(".price")).toHaveText("£12.50");
 });
 
 test("3: paste-link add scrapes a local fixture and resolves", async ({ page }) => {
@@ -68,6 +73,31 @@ test("4: editing an item persists after reload", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Manual mug v2" })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("heading", { name: "Manual mug v2" })).toBeVisible();
+});
+
+test("4b: price history shows the lowest price and the delta since added", async ({ page }) => {
+  // A manual item with a price, then a price drop (same API the form uses).
+  const created = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "History probe", priceCents: "12.50", currency: "GBP" },
+  });
+  expect(created.status()).toBe(201);
+  const item = (await created.json()) as { id: string };
+
+  const patched = await page.request.patch(`${BASE}/api/wishlist/items/${item.id}`, {
+    data: { priceCents: "10.00" },
+  });
+  expect(patched.status()).toBe(200);
+
+  await page.reload();
+  const card = page.locator(".item-card", {
+    has: page.getByRole("heading", { name: "History probe" }),
+  });
+  await expect(card.locator(".price")).toHaveText("£10.00");
+  await expect(card.locator(".price-meta")).toHaveText("Lowest £10.00 · At add £12.50");
+  await expect(card.locator(".price-delta")).toHaveText("Down £2.50 since added");
+  await expect(card.getByRole("button", { name: "Re-check price" })).toHaveCount(0); // no URL
+  // The unverified-hints surface is present and labelled as such.
+  await expect(card.getByRole("button", { name: "Prices seen elsewhere (unverified)" })).toBeVisible();
 });
 
 test("5: drag reorder persists after reload", async ({ page }) => {

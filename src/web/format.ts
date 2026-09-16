@@ -53,6 +53,34 @@ export function formatRelativeTime(iso: string, now: number = Date.now()): strin
   return `${days}d ago`;
 }
 
+/** Decimal price string ("12.50") → integer cents (1250); null when the input
+ *  is not a plain decimal. Integer cents only — never float money math. */
+export function toCents(decimal: string | null): number | null {
+  if (decimal === null) return null;
+  const trimmed = decimal.trim();
+  const match = /^(-?)(\d+)(?:\.(\d{1,2}))?$/.exec(trimmed);
+  if (!match) return null;
+  const sign = match[1] === "-" ? -1 : 1;
+  const cents = Number(match[2]) * 100 + Number((match[3] ?? "").padEnd(2, "0"));
+  return sign * cents;
+}
+
+/** Integer cents (1250) → decimal string ("12.50"). */
+export function centsToDecimal(cents: number): string {
+  const sign = cents < 0 ? "-" : "";
+  const abs = Math.abs(cents);
+  return `${sign}${Math.floor(abs / 100)}.${String(abs % 100).padStart(2, "0")}`;
+}
+
+/** Hostname of a URL without the leading www., for compact link labels. */
+export function urlHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
 export interface ShareTargetValues {
   url: string;
   title: string;

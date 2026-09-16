@@ -9,10 +9,11 @@ export interface ItemFormValues {
   currency: string;
   notes: string;
   tags: string[];
+  cheaperUrl: string;
 }
 
 interface ItemFormProps {
-  initial?: CommonItem;
+  initial?: CommonItem & { cheaperUrl?: string | null };
   /** Partial values for the add flow (e.g. the share-target prefill). */
   initialValues?: Partial<ItemFormValues>;
   submitLabel: string;
@@ -39,6 +40,7 @@ export function ItemForm({
   const [otherCurrency, setOtherCurrency] = useState("");
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [tags, setTags] = useState((initial?.tags ?? []).join(", "));
+  const [cheaperUrl, setCheaperUrl] = useState(initial?.cheaperUrl ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,6 +66,7 @@ export function ItemForm({
           .split(",")
           .map((t) => t.trim())
           .filter(Boolean),
+        cheaperUrl: cheaperUrl.trim(),
       });
     } catch {
       setError(S.errors.generic);
@@ -157,6 +160,18 @@ export function ItemForm({
           rows={2}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
+        />
+      </div>
+
+      <div className="field">
+        <label htmlFor="item-cheaper-url">{S.form.cheaperLink}</label>
+        <input
+          id="item-cheaper-url"
+          type="text"
+          inputMode="url"
+          placeholder={S.form.cheaperLinkPlaceholder}
+          value={cheaperUrl}
+          onChange={(e) => setCheaperUrl(e.target.value)}
         />
       </div>
 
