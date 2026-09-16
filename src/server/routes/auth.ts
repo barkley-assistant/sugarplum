@@ -1,11 +1,12 @@
 import { Database } from "bun:sqlite";
 import { jsonError, jsonOk, requireSession, type RouteRequest, type RouteServer } from "../auth/middleware";
-import { verifyDummyPassword, verifyPassword } from "../auth/passwords";
+import { hashPassword, verifyDummyPassword, verifyPassword } from "../auth/passwords";
 import { RateLimiter } from "../auth/rate-limit";
 import {
   clearSessionCookie,
   createSession,
   deleteSession,
+  deleteUserSessions,
   sessionCookie,
   sweepExpiredSessions,
   type SessionUser,
@@ -137,6 +138,58 @@ export function authRoutes(db: Database, config: Config, limiter: RateLimiter) {
         }
         db.run("UPDATE users SET hints_enabled = ? WHERE id = ?", [body.hintsEnabled ? 1 : 0, user.id]);
         return jsonOk(meOf({ ...user, hintsEnabled: body.hintsEnabled }));
+      }),
+    },
+    "/api/auth/me/profile": {
+      /** Self-only display name. Same validation as the admin PATCH
+       *  displayName branch; scoped to the session user, never the body. */
+      PUT: requireSession(db, async (req, user) => {
+        let body: { displayName?: unknown };
+        try {
+          body = (await req.json()) as { displayName?: unknown };
+        } catch {
+          return jsonError(400, "Invalid JSON body");
+        }
+        if (typeof body.displayName !== "string" || !body.displayName.trim()) {
+          return jsonError(400, "displayName must be a non-empty string");
+        }
+        const displayName = body.displayName.trim();
+        db.run("UPDATE users SET display_name = ? WHERE id = ?", [displayName, user.id]);
+        return jsonOk(meOf({ ...user, displayName }));
+      }),
+    },
+    "/api/auth/me/password": {
+      /** Self-only password change. Verifies the current password (same
+       *  constant-time path as login), then clears ALL of the user's
+       *  sessions — including the caller's — so the UI redirects to /login.
+       *  Mirrors the admin reset-password session behavior. */
+      PUT: requireSession(db, async (req, user) => {
+        let body: { currentPassword?: unknown; newPassword?: unknown };
+        try {
+          body = (await req.json()) as { currentPassword?: unknown; newPassword?: unknown };
+        } catch {
+          return jsonError(400, "Invalid JSON body");
+        }
+        const currentPassword = typeof body.currentPassword === "string" ? body.currentPassword : "";
+        const newPassword = typeof body.newPassword === "string" ? body.newPassword : "";
+        if (!newPassword) return jsonError(400, "Password is required");
+
+        const row = db
+          .query("SELECT password_hash FROM users WHERE id = ?")
+          .get(user.id) as { password_hash: string } | undefined;
+        if (!row || !verifyPassword(currentPassword, row.password_hash)) {
+          return jsonError(401, "Current password is incorrect");
+        }
+
+        db.run("UPDATE users SET password_hash = ? WHERE id = ?", [hashPassword(newPassword), user.id]);
+        deleteUserSessions(db, user.id);
+        return new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Set-Cookie": clearSessionCookie(),
+          },
+        });
       }),
     },
   };
