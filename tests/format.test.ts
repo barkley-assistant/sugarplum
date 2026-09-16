@@ -1,5 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { centsToDecimal, formatPrice, formatRelativeTime, parseShareTarget, toCents, urlHost } from "../src/web/format";
+import {
+  centsToDecimal,
+  displayUrl,
+  formatPrice,
+  formatRelativeTime,
+  parseShareTarget,
+  toCents,
+  urlHost,
+} from "../src/web/format";
 
 describe("formatPrice", () => {
   test("GBP 24.99 → £24.99", () => {
@@ -139,5 +147,50 @@ describe("parseShareTarget", () => {
 
   test("no params → both empty", () => {
     expect(parseShareTarget(new URLSearchParams())).toEqual({ url: "", title: "" });
+  });
+});
+
+describe("displayUrl", () => {
+  test("scheme and www. stripped; root URL → bare host", () => {
+    expect(displayUrl("https://www.example.com/")).toBe("example.com");
+    expect(displayUrl("http://example.com")).toBe("example.com");
+  });
+
+  test("trailing slash stripped, subdomains preserved", () => {
+    expect(displayUrl("https://example.com/p/")).toBe("example.com/p");
+    expect(displayUrl("https://a.example.com/x")).toBe("a.example.com/x");
+  });
+
+  test("Amazon monster URL: query, hash and ref= path segment dropped", () => {
+    const monster =
+      "https://www.amazon.co.uk/Fresh-Kiss-Trio/dp/B0EXAMPLE123/ref=sxin_15_pb" +
+      "?pd_rd_w=2xY4h&pf_rd_p=abc&ref_=nav_signin&th=1#reviews";
+    expect(displayUrl(monster)).toBe("amazon.co.uk/Fresh-Kiss-Trio/dp/B0EXAMPLE123");
+  });
+
+  test("query kept only when the path is empty", () => {
+    expect(displayUrl("https://example.com?id=12345")).toBe("example.com?id=12345");
+    expect(displayUrl("https://example.com/product?id=12345")).toBe("example.com/product");
+  });
+
+  test("long text is head-truncated with an ellipsis at maxLen", () => {
+    const long = "https://example.com/" + "a".repeat(80);
+    const out = displayUrl(long);
+    expect(out.length).toBe(48);
+    expect(out.endsWith("…")).toBe(true);
+    expect(displayUrl(long, 20).length).toBe(20);
+  });
+
+  test("at or under maxLen is unchanged", () => {
+    expect(displayUrl("https://example.com/dp/B01", 48)).toBe("example.com/dp/B01");
+  });
+
+  test("percent-encoding is decoded; malformed escapes kept raw", () => {
+    expect(displayUrl("https://www.example.com/caf%C3%A9-menu")).toBe("example.com/café-menu");
+    expect(displayUrl("https://example.com/50%off-sale")).toBe("example.com/50%off-sale");
+  });
+
+  test("unparseable input (loose PATCH validation) is returned unchanged", () => {
+    expect(displayUrl("not a url")).toBe("not a url");
   });
 });

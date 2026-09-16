@@ -81,6 +81,44 @@ export function urlHost(url: string): string {
   }
 }
 
+/** Clean, human-friendly display text for a product URL: scheme and
+ *  leading www. stripped, trailing slash stripped, hash and query
+ *  dropped as tracking noise (the query is kept only when the path is
+ *  empty — the rare query-carries-the-product page), Amazon-style ref=
+ *  path segments and percent-encoding decoded, then head-truncated
+ *  with an ellipsis at maxLen. The href keeps the full URL — this is
+ *  presentation only. Unparseable input (the PATCH route stores url as
+ *  an arbitrary string) is returned unchanged, and malformed
+ *  percent-escapes fall back to the raw segment: this never throws. */
+export function displayUrl(raw: string, maxLen: number = 48): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return raw;
+  }
+  const host = parsed.hostname.replace(/^www\./, "");
+  const path = parsed.pathname.replace(/\/+$/, "");
+  const segments = path
+    .split("/")
+    .filter((segment) => segment !== "" && !segment.startsWith("ref="))
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment);
+      } catch {
+        return segment;
+      }
+    });
+  let text = segments.length > 0 ? `${host}/${segments.join("/")}` : host;
+  if (!path && parsed.search) {
+    text += parsed.search;
+  }
+  if (text.length > maxLen) {
+    text = text.slice(0, maxLen - 1) + "…";
+  }
+  return text;
+}
+
 export interface ShareTargetValues {
   url: string;
   title: string;
