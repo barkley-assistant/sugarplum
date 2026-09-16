@@ -9,7 +9,7 @@ import { useConfirm } from "../confirm";
  *  path) because only the client knows the public origin. */
 export function SharePanel() {
   const [link, setLink] = useState<ShareLinkResponse | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busyOp, setBusyOp] = useState<"create" | "revoke" | null>(null);
   const [copied, setCopied] = useState(false);
   const toast = useToast();
   const confirm = useConfirm();
@@ -35,7 +35,7 @@ export function SharePanel() {
       });
       if (!ok) return;
     }
-    setBusy(true);
+    setBusyOp("create");
     try {
       const res = await fetch("/api/share", { method: "POST" });
       if (!res.ok) throw new Error();
@@ -44,7 +44,7 @@ export function SharePanel() {
     } catch {
       toast(S.errors.generic, "danger");
     } finally {
-      setBusy(false);
+      setBusyOp(null);
     }
   }
 
@@ -55,7 +55,7 @@ export function SharePanel() {
       confirmLabel: S.share.revoke,
     });
     if (!ok) return;
-    setBusy(true);
+    setBusyOp("revoke");
     try {
       const res = await fetch("/api/share", { method: "DELETE" });
       if (!res.ok && res.status !== 204) throw new Error();
@@ -63,7 +63,7 @@ export function SharePanel() {
     } catch {
       toast(S.errors.generic, "danger");
     } finally {
-      setBusy(false);
+      setBusyOp(null);
     }
   }
 
@@ -81,9 +81,10 @@ export function SharePanel() {
   }
 
   const hasLink = link?.token != null;
+  const busy = busyOp !== null;
   const url = `${location.origin}${link?.path ?? ""}`;
   return (
-    <div className="card share-panel">
+    <div className="share-panel">
       <h3>{S.share.shareTitle}</h3>
       <p className="muted">{S.share.shareIntro}</p>
       {hasLink && (
@@ -95,12 +96,12 @@ export function SharePanel() {
         </div>
       )}
       <div className="share-actions">
-        <button className="primary" onClick={() => void create()} disabled={busy}>
-          {hasLink ? S.share.regenerate : S.share.createLink}
+        <button className={busy ? "primary is-busy" : "primary"} onClick={() => void create()} disabled={busy}>
+          {busyOp === "create" ? S.share.creating : hasLink ? S.share.regenerate : S.share.createLink}
         </button>
         {hasLink && (
-          <button className="danger" onClick={() => void revoke()} disabled={busy}>
-            {S.share.revoke}
+          <button className={busy ? "danger is-busy" : "danger"} onClick={() => void revoke()} disabled={busy}>
+            {busyOp === "revoke" ? S.share.revoking : S.share.revoke}
           </button>
         )}
       </div>

@@ -16,6 +16,7 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [resettingId, setResettingId] = useState<string | null>(null);
   const [resetPassword, setResetPassword] = useState("");
   const confirm = useConfirm();
@@ -64,10 +65,19 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
     return true;
   }
 
+  async function actFor(userId: string, path: string, method = "POST", body?: unknown) {
+    setBusyId(userId);
+    try {
+      return await act(path, method, body);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function submitReset(e: FormEvent, userId: string) {
     e.preventDefault();
     if (!resetPassword.trim()) return;
-    const ok = await act(`/api/users/${userId}/reset-password`, "POST", { password: resetPassword });
+    const ok = await actFor(userId, `/api/users/${userId}/reset-password`, "POST", { password: resetPassword });
     if (ok) {
       toast(S.admin.passwordReset);
       setResettingId(null);
@@ -81,13 +91,13 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
       body: S.admin.deleteUserBody,
     });
     if (ok) {
-      const done = await act(`/api/users/${user.id}`, "DELETE");
+      const done = await actFor(user.id, `/api/users/${user.id}`, "DELETE");
       if (done) toast(S.admin.userDeleted);
     }
   }
 
   return (
-    <section className="card admin-panel">
+    <section className="admin-panel">
       <h2>{S.admin.users}</h2>
 
       <div className="admin-table-wrap">
@@ -112,15 +122,17 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
                 <td className="admin-actions">
                   {user.isActive ? (
                     <button
-                      className="secondary"
-                      onClick={() => void act(`/api/users/${user.id}/deactivate`)}
+                      className={busyId === user.id ? "secondary is-busy" : "secondary"}
+                      disabled={busyId === user.id}
+                      onClick={() => void actFor(user.id, `/api/users/${user.id}/deactivate`)}
                     >
                       {S.admin.deactivate}
                     </button>
                   ) : (
                     <button
-                      className="secondary"
-                      onClick={() => void act(`/api/users/${user.id}/activate`)}
+                      className={busyId === user.id ? "secondary is-busy" : "secondary"}
+                      disabled={busyId === user.id}
+                      onClick={() => void actFor(user.id, `/api/users/${user.id}/activate`)}
                     >
                       {S.admin.activate}
                     </button>
@@ -134,7 +146,11 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
                   >
                     {S.admin.resetPassword}
                   </button>
-                  <button className="danger" onClick={() => void deleteUser(user)}>
+                  <button
+                    className={busyId === user.id ? "danger is-busy" : "danger"}
+                    disabled={busyId === user.id}
+                    onClick={() => void deleteUser(user)}
+                  >
                     {S.admin.delete}
                   </button>
                 </td>
