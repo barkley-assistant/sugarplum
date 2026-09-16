@@ -63,7 +63,7 @@ export function Login() {
     <main className="auth-page">
       <form className="card auth-card" onSubmit={submit}>
         <div className="auth-lockup">
-          <img src="/assets/brand/icon.png" alt="" />
+          <img src="/assets/brand/sugarplum-icon.png" alt="" />
           <h1>{S.app.name}</h1>
           <p className="muted">{S.app.tagline}</p>
         </div>
