@@ -263,6 +263,17 @@ export function AppPage() {
     }
   }
 
+  /** Blind purchased reset (owner-only route, 204 with no body): the owner
+   *  never learns whether a mark existed, when, or who set it. */
+  async function resetPurchased(id: string) {
+    const res = await fetch(`/api/wishlist/items/${id}/purchased`, { method: "DELETE" });
+    if (res.status !== 204) {
+      toast(S.errors.generic, "danger");
+      return;
+    }
+    if (me) await refreshOwnList(me.id);
+  }
+
   /** Optimistic reorder commit: PUT the full ordered id array. On failure,
    *  restore the pre-drag order and surface a danger toast. */
   async function onReorder(ids: string[]) {
@@ -482,6 +493,7 @@ export function AppPage() {
         onDelete={deleteItem}
         onRefresh={refreshItem}
         onCheckPrices={checkPrices}
+        onResetPurchased={resetPurchased}
         hintStates={hintStates}
         draggingId={reorder.draggingId}
         renderDragHandle={(id) => (
