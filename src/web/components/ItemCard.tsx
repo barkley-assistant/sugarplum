@@ -4,6 +4,7 @@ import { centsToDecimal, formatPrice, toCents, urlHost } from "../format";
 import { S } from "../strings";
 import { useConfirm } from "../confirm";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
+import { ItemLink } from "./ItemLink";
 
 interface ItemCardProps {
   item: OwnedItem | PublicItem;
@@ -110,11 +111,7 @@ export function ItemCard({
             {viewerIsOwner && item.imageSource === "search" && (
               <span className="item-image-source">{S.item.imageViaSearch}</span>
             )}
-            {item.url && (
-              <a className="item-link" href={item.url} target="_blank" rel="noreferrer">
-                {item.url}
-              </a>
-            )}
+            {item.url && <ItemLink url={item.url} />}
             {/* The owner's own "found it cheaper at" note: a link they saved,
                 carrying no automatic price claim. */}
             {viewerIsOwner && ownerItem.cheaperUrl && (
