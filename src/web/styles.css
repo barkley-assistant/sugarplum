@@ -1673,6 +1673,10 @@ a.brand:hover {
   min-width: 0;
 }
 
+.list-layout .list-rail {
+  order: -1; /* mobile: share panel + filters above the list, as pre-velvet */
+}
+
 .list-rail-card {
   display: flex;
   flex-direction: column;
@@ -1691,6 +1695,7 @@ a.brand:hover {
   .list-layout.has-rail .list-rail {
     position: sticky;
     top: var(--app-rail-sticky-top);
+    order: 0;
   }
 
   .list-rail-card {
