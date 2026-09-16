@@ -36,6 +36,10 @@ done in the app's admin panel.
 | `SUGARPLUM_STEALTH_TIMEOUT_MS` | `60000` | Whole-scrape budget for the stealth-browser strategy |
 | `SUGARPLUM_STEALTH_PROFILES_DIR` | `./data/stealth-profiles` | Per-host Firefox profile dirs (gitignored; self-healing) |
 | `SUGARPLUM_STEALTH_VENV_PY` | `<repo>/../.stealth-venv/bin/python` | Path to the stealth venv python (deploy.sh provisions it) |
+| `SUGARPLUM_TRACK_INTERVAL_MS` | `86400000` | Daily tracking pass interval (24h) |
+| `SUGARPLUM_TRACK_INITIAL_DELAY_MS` | `60000` | Delay before the first tracking pass after boot |
+| `SUGARPLUM_TRACK_STAGGER_MS` | `900000` | Stagger between items in a tracking pass (15min) |
+| `SUGARPLUM_TRACK_SERIES_CAP` | `90` | Max observations in the 90-day price series (clamped 1..365) |
 
 ## Paste-a-link
 
@@ -84,6 +88,17 @@ delta lines are only drawn when both observations share a currency.
 - **Show unverified price hints** in the user menu is the honesty gate. With
   it off, no price hints are fetched or attached at all (the image fallback
   is a separate feature and keeps working).
+- **Daily tracking** re-checks each tracked item once a day (staggered across
+  the day so bot-walled shops are never hammered) and appends a snapshot to
+  the same history. Items are skipped when they have no link, are already
+  being fetched, or were tracked in the last 24 hours. A failed re-check
+  leaves the last known price untouched.
+- **Trend sparkline + buy-time label**: items with at least two same-currency
+  observations show a 30/90-day sparkline with an honest label (Below 30-day
+  average, Trending down — could wait, At 30-day low, Near 30-day high).
+  Informational only — never a recommendation to buy now.
+- **Track prices daily** in Settings opts out of the background pass. The
+  history already collected stays visible.
 
 If a fetch is interrupted (restart, crash), an item that has no data yet is
 marked failed and can be retried from the app; an item that already has data

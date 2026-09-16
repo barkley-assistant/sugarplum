@@ -3,12 +3,15 @@ import { randomUUID } from "node:crypto";
 import { jsonError, jsonOk, requireSession, type RouteRequest } from "../auth/middleware";
 import { deleteItemFile } from "../images";
 import type { EnrichmentQueue } from "../jobs/enrich";
+import { deriveTrend } from "../price/trend";
 import { searchPriceCandidates } from "../searxng";
 import type {
   CommonItem,
   OwnedItem,
   PriceHintsResponse,
+  PricePoint,
   PriceStats,
+  PriceTrend,
   PublicItem,
   WishlistSummaryRow,
 } from "../../shared/types";
@@ -92,7 +95,7 @@ function commonItem(row: ItemRow): CommonItem {
 }
 
 /** Owner view: NO claim fields, ever. Hint fields are owner data. */
-function toOwnedItem(db: Database, row: ItemRow): OwnedItem {
+function toOwnedItem(db: Database, row: ItemRow, seriesCap: number): OwnedItem {
   return {
     ...commonItem(row),
     updatedAt: row.updated_at,
@@ -101,15 +104,19 @@ function toOwnedItem(db: Database, row: ItemRow): OwnedItem {
     hintSourceUrl: row.hint_source_url,
     priceSource: row.price_source,
     cheaperUrl: row.cheaper_url,
-    priceStats: priceStatsFor(db, row.id),
+    priceStats: priceStatsFor(db, row.id, seriesCap),
   };
 }
 
-/** Lowest + earliest price observation for one item. Two tiny indexed reads
- *  per item: the ledger is append-only and per-item rows are few. Null when
- *  the item has no history at all (a freshly added manual item with no
- *  price). */
-export function priceStatsFor(db: Database, itemId: string): PriceStats | null {
+/** Default cap for the 90-day series when the route is constructed without
+ *  one (matches the production config default). */
+export const DEFAULT_SERIES_CAP = 90;
+
+/** Lowest + earliest price observation for one item, plus the capped 90-day
+ *  series and the server-derived trend. Three tiny indexed reads per item:
+ *  the ledger is append-only and per-item rows are few. Null when the item
+ *  has no history at all (a freshly added manual item with no price). */
+export function priceStatsFor(db: Database, itemId: string, seriesCap: number = DEFAULT_SERIES_CAP): PriceStats | null {
   const lowest = db
     .query(
       `SELECT price_cents, currency, observed_at FROM price_history WHERE item_id = ?
@@ -125,12 +132,49 @@ export function priceStatsFor(db: Database, itemId: string): PriceStats | null {
     )
     .get(itemId) as { price_cents: number; currency: string | null } | undefined;
 
+  const since90d = new Date(Date.now() - 90 * 86_400_000).toISOString();
+  const rows = db
+    .query(
+      `SELECT observed_at, price_cents, currency FROM price_history
+       WHERE item_id = ? AND observed_at >= ?
+       ORDER BY observed_at ASC, rowid ASC LIMIT ?`,
+    )
+    .all(itemId, since90d, Math.max(1, Math.floor(seriesCap))) as {
+    observed_at: string;
+    price_cents: number;
+    currency: string | null;
+  }[];
+
+  const series: PricePoint[] = rows.map((r) => ({
+    observedAt: r.observed_at,
+    priceCents: formatPrice(r.price_cents),
+    currency: r.currency,
+  }));
+
+  // A mixed-currency series is not a comparable series: return the shape for
+  // the sparkline but no signal (same rule as priceDelta on the client).
+  // deltaFromAvgCents stays server-side: the client renders the advice
+  // label, not the number.
+  const currencies = new Set(rows.map((r) => (r.currency ?? "").trim().toUpperCase()));
+  const derived =
+    currencies.size > 1
+      ? null
+      : deriveTrend(
+          rows.map((r) => ({ observedAt: r.observed_at, priceCents: r.price_cents })),
+          new Date(),
+        );
+  const trend: PriceTrend | null = derived
+    ? { direction: derived.direction, advice: derived.advice, daysSinceDrop: derived.daysSinceDrop }
+    : null;
+
   return {
     lowestCents: formatPrice(lowest.price_cents),
     lowestCurrency: lowest.currency,
     lowestSeenAt: lowest.observed_at,
     atAddCents: earliest ? formatPrice(earliest.price_cents) : null,
     atAddCurrency: earliest?.currency ?? null,
+    series,
+    trend,
   };
 }
 
@@ -194,6 +238,8 @@ function parseTagsInput(value: unknown): { ok: true; tags: string[] } | { ok: fa
 export interface PriceHintsConfig {
   /** SearXNG base URL; unset → the on-demand candidates route reports 503. */
   searxngUrl?: string;
+  /** Max observations in the 90-day series on the owned item; default 90. */
+  seriesCap?: number;
 }
 
 export function wishlistRoutes(
@@ -202,6 +248,7 @@ export function wishlistRoutes(
   queue: EnrichmentQueue,
   hints: PriceHintsConfig = {},
 ) {
+  const seriesCap = hints.seriesCap ?? DEFAULT_SERIES_CAP;
   return {
     "/api/users/:id/wishlist": {
       GET: requireSession(db, (req, viewer) => {
@@ -218,7 +265,7 @@ export function wishlistRoutes(
         // projected OUT (OwnedItem has no claim fields at all). Price history
         // stats and the cheaper link are owner data too.
         if (viewer.id === req.params.id) {
-          return jsonOk(rows.map((row) => toOwnedItem(db, row)));
+          return jsonOk(rows.map((row) => toOwnedItem(db, row, seriesCap)));
         }
         return jsonOk(rows.map((row) => toPublicItem(row, viewer.id)));
       }),
@@ -257,7 +304,7 @@ export function wishlistRoutes(
           recordManualPrice(db, id, parsed.priceCents, parsed.currency);
         }
         if (parsed.hasUrl) queue.enqueue(id);
-        return jsonOk(toOwnedItem(db, getItem(db, id) as ItemRow), 201);
+        return jsonOk(toOwnedItem(db, getItem(db, id) as ItemRow, seriesCap), 201);
       }),
     },
     "/api/wishlist/order": {
@@ -389,7 +436,7 @@ export function wishlistRoutes(
         if (body.priceCents !== undefined && updated.price_cents !== null) {
           recordManualPrice(db, item.id, updated.price_cents, updated.currency);
         }
-        return jsonOk(toOwnedItem(db, getItem(db, item.id) as ItemRow));
+        return jsonOk(toOwnedItem(db, getItem(db, item.id) as ItemRow, seriesCap));
       }),
       DELETE: requireSession(db, (req, viewer) => {
         const item = getItem(db, req.params.id);
@@ -430,7 +477,7 @@ export function wishlistRoutes(
           [new Date().toISOString(), item.id],
         );
         queue.enqueue(item.id);
-        return jsonOk(toOwnedItem(db, getItem(db, item.id) as ItemRow), 202);
+        return jsonOk(toOwnedItem(db, getItem(db, item.id) as ItemRow, seriesCap), 202);
       }),
     },
     "/api/wishlist/items/:id/hints": {

@@ -622,22 +622,94 @@ describe("price history", () => {
     const { jar, id } = await newIsolatedUser("price-stats");
     const item = await createItem(jar, "Stats probe");
 
+    const day = 86_400_000;
+    const d10 = new Date(Date.now() - 10 * day).toISOString();
+    const d5 = new Date(Date.now() - 5 * day).toISOString();
+    const d1 = new Date(Date.now() - 1 * day).toISOString();
     const insert = app.app.db.query(
       `INSERT INTO price_history (id, item_id, price_cents, currency, source, observed_at)
        VALUES (?, ?, ?, ?, 'scrape', ?)`,
     );
-    insert.run(crypto.randomUUID(), item.id, 1200, "GBP", "2026-01-01T00:00:00.000Z");
-    insert.run(crypto.randomUUID(), item.id, 1000, "GBP", "2026-02-01T00:00:00.000Z");
-    insert.run(crypto.randomUUID(), item.id, 1500, "GBP", "2026-03-01T00:00:00.000Z");
+    insert.run(crypto.randomUUID(), item.id, 1200, "GBP", d10);
+    insert.run(crypto.randomUUID(), item.id, 1000, "GBP", d5);
+    insert.run(crypto.randomUUID(), item.id, 1500, "GBP", d1);
 
     const fromList = await listItem(jar, id, item.id);
     expect(fromList.priceStats).toEqual({
       lowestCents: "10.00",
       lowestCurrency: "GBP",
-      lowestSeenAt: "2026-02-01T00:00:00.000Z",
+      lowestSeenAt: d5,
       atAddCents: "12.00",
       atAddCurrency: "GBP",
+      series: [
+        { observedAt: d10, priceCents: "12.00", currency: "GBP" },
+        { observedAt: d5, priceCents: "10.00", currency: "GBP" },
+        { observedAt: d1, priceCents: "15.00", currency: "GBP" },
+      ],
+      trend: {
+        direction: "rising",
+        advice: "near-30d-high",
+        daysSinceDrop: 5,
+      },
     });
+  });
+
+  test("priceStats series: one observation → insufficient trend; none → null", async () => {
+    const { jar, id } = await newIsolatedUser("price-series");
+    const item = await createItem(jar, "Series probe", {
+      priceCents: "12.50",
+      currency: "GBP",
+    });
+
+    const fromList = await listItem(jar, id, item.id);
+    expect(fromList.priceStats?.series).toHaveLength(1);
+    expect(fromList.priceStats?.trend).toEqual({
+      direction: "stable",
+      advice: "insufficient",
+      daysSinceDrop: null,
+    });
+  });
+
+  test("priceStats series: mixed currencies → series kept, trend null", async () => {
+    const { jar, id } = await newIsolatedUser("price-mixed");
+    const item = await createItem(jar, "Mixed probe", {
+      priceCents: "12.50",
+      currency: "GBP",
+    });
+    const insert = app.app.db.query(
+      `INSERT INTO price_history (id, item_id, price_cents, currency, source, observed_at)
+       VALUES (?, ?, ?, ?, 'scrape', ?)`,
+    );
+    insert.run(
+      crypto.randomUUID(),
+      item.id,
+      1400,
+      "USD",
+      new Date(Date.now() - 86_400_000).toISOString(),
+    );
+
+    const fromList = await listItem(jar, id, item.id);
+    expect(fromList.priceStats?.series).toHaveLength(2);
+    expect(fromList.priceStats?.trend).toBeNull();
+  });
+
+  test("priceStats series is history, not the scheduler: present for opted-out users", async () => {
+    const { jar, id } = await newIsolatedUser("price-optout");
+    const item = await createItem(jar, "Opt-out probe", {
+      priceCents: "9.99",
+      currency: "GBP",
+    });
+    const off = await jar.request("PUT", "/api/auth/me/settings", {
+      hintsEnabled: true,
+      priceTrackingEnabled: false,
+    });
+    expect(off.status).toBe(200);
+
+    // The toggle gates the scheduler pass, not the read: past observations
+    // (manual edits, re-checks) are still returned.
+    const fromList = await listItem(jar, id, item.id);
+    expect(fromList.priceStats?.series).toHaveLength(1);
+    expect(fromList.priceStats?.trend?.advice).toBe("insufficient");
   });
 
   test("an item with no price observations → priceStats null", async () => {
@@ -722,6 +794,39 @@ describe("price history", () => {
     const stranger = app.newJar();
     const unauth = await stranger.request("PUT", "/api/auth/me/settings", { hintsEnabled: false });
     expect(unauth.status).toBe(401);
+  });
+
+  test("settings: PUT /api/auth/me/settings toggles daily price tracking", async () => {
+    const { jar } = await newIsolatedUser("price-tracking-settings");
+
+    const me = await jar.request("GET", "/api/auth/me");
+    expect(((await me.json()) as Me).priceTrackingEnabled).toBe(true); // default ON
+
+    const off = await jar.request("PUT", "/api/auth/me/settings", { priceTrackingEnabled: false });
+    expect(off.status).toBe(200);
+    const offBody = (await off.json()) as Me;
+    expect(offBody.priceTrackingEnabled).toBe(false);
+    expect(offBody.hintsEnabled).toBe(true); // untouched knob keeps its value
+
+    const afterOff = await jar.request("GET", "/api/auth/me");
+    expect(((await afterOff.json()) as Me).priceTrackingEnabled).toBe(false);
+
+    const both = await jar.request("PUT", "/api/auth/me/settings", {
+      hintsEnabled: false,
+      priceTrackingEnabled: true,
+    });
+    expect(both.status).toBe(200);
+    const bothBody = (await both.json()) as Me;
+    expect(bothBody.hintsEnabled).toBe(false);
+    expect(bothBody.priceTrackingEnabled).toBe(true);
+
+    const invalid = await jar.request("PUT", "/api/auth/me/settings", {
+      priceTrackingEnabled: "yes",
+    });
+    expect(invalid.status).toBe(400);
+
+    const empty = await jar.request("PUT", "/api/auth/me/settings", {});
+    expect(empty.status).toBe(400);
   });
 });
 

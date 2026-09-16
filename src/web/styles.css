@@ -684,6 +684,70 @@ a.brand:hover {
   font-weight: 600;
 }
 
+/* Price trend (wave 25): full-width glance under the item row — a hand-rolled
+   SVG sparkline, a 30d/90d window chip, and an honest advice label. Muted,
+   never red/green: this is information, not buy/sell signaling. The wrap is
+   width-bounded with hidden overflow so the SVG can never cause horizontal
+   scroll at 360px. */
+.price-trend {
+  margin: 0 0 var(--sp-2);
+  width: 100%;
+  max-width: 100%;
+}
+
+.window-chip {
+  display: inline-flex;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-1);
+}
+
+.window-chip button {
+  min-height: 0;
+  padding: 2px 8px;
+  font-size: var(--text-xs);
+  color: var(--text-3);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+}
+
+.window-chip button.active {
+  color: var(--text-2);
+  border-color: var(--border-2);
+}
+
+.sparkline-wrap {
+  width: 100%;
+  max-width: 100%;
+  height: 48px;
+  overflow: hidden;
+}
+
+.sparkline {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.sparkline-line {
+  fill: none;
+  stroke: var(--text-2);
+  stroke-width: 1.5;
+}
+
+.sparkline-low,
+.sparkline-dot {
+  fill: var(--text-2);
+}
+
+.advice-label {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--text-3);
+  margin-top: 2px;
+  text-align: right;
+}
+
 /* "Prices seen elsewhere (unverified)" disclosure: an on-demand list of
    search candidates. Display-only evidence — never a price comparison. */
 .hint-block {

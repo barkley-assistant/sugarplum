@@ -83,16 +83,16 @@ export function SettingsPage() {
     }
   }
 
-  async function setHints(enabled: boolean) {
+  async function setSetting(key: "hintsEnabled" | "priceTrackingEnabled", value: boolean) {
     if (!me) return;
     try {
       const res = await fetch("/api/auth/me/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ hintsEnabled: enabled }),
+        body: JSON.stringify({ [key]: value }),
       });
       if (!res.ok) throw new Error();
-      const updated = { ...me, hintsEnabled: enabled };
+      const updated = { ...me, [key]: value };
       setMe(updated);
       writeStoredMe(updated);
     } catch {
@@ -285,10 +285,21 @@ export function SettingsPage() {
             className="menu-item"
             role="menuitemcheckbox"
             aria-checked={me.hintsEnabled}
-            onClick={() => void setHints(!me.hintsEnabled)}
+            onClick={() => void setSetting("hintsEnabled", !me.hintsEnabled)}
           >
             <span>{S.settings.hintsToggle}</span>
             <span className="menu-item-state">{me.hintsEnabled ? S.settings.on : S.settings.off}</span>
+          </button>
+
+          <button
+            type="button"
+            className="menu-item"
+            role="menuitemcheckbox"
+            aria-checked={me.priceTrackingEnabled}
+            onClick={() => void setSetting("priceTrackingEnabled", !me.priceTrackingEnabled)}
+          >
+            <span>{S.settings.trackToggle}</span>
+            <span className="menu-item-state">{me.priceTrackingEnabled ? S.settings.on : S.settings.off}</span>
           </button>
         </section>
 

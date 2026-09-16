@@ -13,6 +13,7 @@ import { shareRoutes } from "./routes/share";
 import { userRoutes } from "./routes/users";
 import { wishlistRoutes } from "./routes/wishlist";
 import { createEnrichmentQueue } from "./jobs/enrich";
+import { createTracker } from "./jobs/track";
 import { createStealthDeps } from "./scraper/stealth";
 
 const PUBLIC_DIR = join(import.meta.dir, "..", "..", "dist", "public");
@@ -72,7 +73,10 @@ export function createApp(config: Config): App {
     routes: {
       ...authRoutes(db, config, limiter),
       ...userRoutes(db),
-      ...wishlistRoutes(db, config.imagesDir, queue, { searxngUrl: config.searxngUrl }),
+      ...wishlistRoutes(db, config.imagesDir, queue, {
+        searxngUrl: config.searxngUrl,
+        seriesCap: config.trackSeriesCap,
+      }),
       ...shareRoutes(db, shareLimiter, { imagesDir: config.imagesDir }),
       ...imageRoutes(db, config.imagesDir),
       ...healthRoutes(),
@@ -80,11 +84,23 @@ export function createApp(config: Config): App {
     fetch: (req) => handleNonApiRequest(req),
   });
 
+  // Daily price tracking: staggered re-checks through the enrichment queue.
+  // Started after the server so the boot sweep settles first; stopped before
+  // the queue drains so no new passes are scheduled during shutdown.
+  const tracker = createTracker({
+    db,
+    queue,
+    intervalMs: config.trackIntervalMs,
+    initialDelayMs: config.trackInitialDelayMs,
+    staggerMs: config.trackStaggerMs,
+  });
+
   return {
     server,
     db,
     config,
     async stop() {
+      tracker.stop();
       queue.stop();
       await server.stop(true);
       db.close();

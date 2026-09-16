@@ -125,6 +125,17 @@ CREATE TABLE share_tokens (
 CREATE INDEX idx_share_tokens_user ON share_tokens(user_id);
 `,
   },
+  {
+    version: 6,
+    sql: `
+-- Wave 25: daily price tracking. last_tracked_at is stamped ONLY by the
+-- daily scheduler (never by manual re-checks), so the dedupe is specific
+-- to the scheduler pass. No backfill: pre-v6 rows stay NULL and read as
+-- "never tracked" (the first pass picks them up).
+ALTER TABLE wishlist_items ADD COLUMN last_tracked_at TEXT;
+ALTER TABLE users ADD COLUMN price_tracking_enabled INTEGER NOT NULL DEFAULT 1;
+`,
+  },
 ];
 
 export function runMigrations(db: Database): void {

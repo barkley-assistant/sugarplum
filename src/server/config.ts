@@ -32,6 +32,14 @@ export interface Config {
   /** Raw env value when SUGARPLUM_STEALTH_VENV_PY is set; resolution to an
    *  absolute path lives in createStealthDeps (stealth.ts). */
   stealthVenvPython?: string;
+  /** Daily tracking pass interval in ms (default 24h). */
+  trackIntervalMs: number;
+  /** Delay before the first pass after boot (default 60s). */
+  trackInitialDelayMs: number;
+  /** Stagger between items in a daily pass (default 15min). */
+  trackStaggerMs: number;
+  /** Max observations returned in the 90-day series (default 90). */
+  trackSeriesCap: number;
 }
 
 export class ConfigError extends Error {
@@ -66,6 +74,25 @@ export function readConfig(env: Record<string, string | undefined> = process.env
     ? rawStealthTimeout
     : 60000;
 
+  // Daily tracking knobs (wave 25). Millisecond values below 1000ms are
+  // operator error, not intent — fall back to the default. The series cap
+  // is a row count, clamped to [1, 365].
+  const rawTrackInterval = Number(env.SUGARPLUM_TRACK_INTERVAL_MS ?? "86400000");
+  const trackIntervalMs =
+    Number.isFinite(rawTrackInterval) && rawTrackInterval >= 1000 ? rawTrackInterval : 86400000;
+  const rawTrackInitialDelay = Number(env.SUGARPLUM_TRACK_INITIAL_DELAY_MS ?? "60000");
+  const trackInitialDelayMs =
+    Number.isFinite(rawTrackInitialDelay) && rawTrackInitialDelay >= 1000
+      ? rawTrackInitialDelay
+      : 60000;
+  const rawTrackStagger = Number(env.SUGARPLUM_TRACK_STAGGER_MS ?? "900000");
+  const trackStaggerMs =
+    Number.isFinite(rawTrackStagger) && rawTrackStagger >= 1000 ? rawTrackStagger : 900000;
+  const rawSeriesCap = Number(env.SUGARPLUM_TRACK_SERIES_CAP ?? "90");
+  const trackSeriesCap = Number.isFinite(rawSeriesCap)
+    ? Math.min(365, Math.max(1, Math.floor(rawSeriesCap)))
+    : 90;
+
   return {
     port: Number(env.SUGARPLUM_PORT ?? "3499"),
     host: env.SUGARPLUM_HOST ?? "127.0.0.1",
@@ -91,5 +118,9 @@ export function readConfig(env: Record<string, string | undefined> = process.env
     stealthTimeoutMs,
     stealthProfilesDir: env.SUGARPLUM_STEALTH_PROFILES_DIR ?? "./data/stealth-profiles",
     stealthVenvPython: env.SUGARPLUM_STEALTH_VENV_PY,
+    trackIntervalMs,
+    trackInitialDelayMs,
+    trackStaggerMs,
+    trackSeriesCap,
   };
 }

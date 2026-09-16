@@ -56,6 +56,10 @@ export function makeTestConfig(overrides: Partial<Config> = {}): { config: Confi
     stealthTimeoutMs: 1000,
     stealthProfilesDir: join(dir, "stealth-profiles"),
     stealthVenvPython: "/nonexistent/stealth-python",
+    trackIntervalMs: 86400000,
+    trackInitialDelayMs: 60000,
+    trackStaggerMs: 900000,
+    trackSeriesCap: 90,
     ...overrides,
   };
   return { config, dir };

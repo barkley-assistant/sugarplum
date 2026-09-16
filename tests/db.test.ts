@@ -24,18 +24,18 @@ afterAll(() => {
 describe("db migrations", () => {
   test("migrations are idempotent", () => {
     const version = db.query("PRAGMA user_version").get() as { user_version: number };
-    expect(version.user_version).toBe(5);
+    expect(version.user_version).toBe(6);
 
     // Re-run migrations on the same connection (and a second open) — no-op.
     runMigrations(db);
     const again = openDatabase(dbPath);
-    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 5 });
+    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 6 });
     again.close();
   });
 
-  test("v2 (enrichment state) + v3 (image provenance) + v4 (price provenance) + v5 (share) columns exist on an upgraded db", () => {
+  test("v2 (enrichment state) + v3 (image provenance) + v4 (price provenance) + v5 (share) + v6 (tracking) columns exist on an upgraded db", () => {
     const v = db.query("PRAGMA user_version").get() as { user_version: number };
-    expect(v.user_version).toBe(5);
+    expect(v.user_version).toBe(6);
     const cols = db.query("PRAGMA table_info(wishlist_items)").all() as { name: string }[];
     for (const c of [
       "fetch_state",
@@ -49,6 +49,7 @@ describe("db migrations", () => {
       "cheaper_url",
       "purchased",
       "purchased_at",
+      "last_tracked_at",
     ]) {
       expect(cols.some((x) => x.name === c)).toBe(true);
     }
@@ -57,6 +58,10 @@ describe("db migrations", () => {
     expect(hintsCol).toBeDefined();
     // Default ON: the feature is discoverable, and the gate is opt-out.
     expect(hintsCol?.dflt_value).toBe("1");
+    const trackCol = userCols.find((c) => c.name === "price_tracking_enabled");
+    expect(trackCol).toBeDefined();
+    // Default ON: daily tracking runs unless the user opts out.
+    expect(trackCol?.dflt_value).toBe("1");
 
     // A row created under the v1 schema (before v2-v4 ran) reads 'complete'
     // with NULL provenance — the DEFAULT guarantees zero data migration.
@@ -79,7 +84,7 @@ describe("db migrations", () => {
         "Old item",
       ]);
       runMigrations(fresh);
-      expect((fresh.query("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(5);
+      expect((fresh.query("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(6);
       const row = fresh
         .query(
           `SELECT fetch_state, site_name, hint_price_cents, image_source, price_source, cheaper_url
@@ -123,6 +128,17 @@ describe("db migrations", () => {
       for (const c of ["token", "user_id", "created_at", "revoked_at"]) {
         expect(tokenCols.some((x) => x.name === c)).toBe(true);
       }
+
+      // v6: no backfill — the pre-existing item reads "never tracked" and the
+      // pre-existing user gains daily tracking switched ON, not NULL.
+      const tracked = fresh
+        .query("SELECT last_tracked_at FROM wishlist_items WHERE id = ?")
+        .get("v2-upgrade-item") as { last_tracked_at: string | null };
+      expect(tracked.last_tracked_at).toBeNull();
+      const trackedUser = fresh.query("SELECT price_tracking_enabled FROM users WHERE id = ?").get(
+        "v2-upgrade-user",
+      ) as { price_tracking_enabled: number };
+      expect(trackedUser.price_tracking_enabled).toBe(1);
     } finally {
       fresh.close();
       rmSync(freshPath, { force: true });
