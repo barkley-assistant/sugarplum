@@ -124,6 +124,8 @@ export const S = {
     copyLink: "Copy link",
     copied: "Copied",
     createLink: "Create link",
+    creating: "Creating…",
+    revoking: "Revoking…",
     regenerate: "New link",
     revoke: "Revoke link",
     regenerateConfirmTitle: "Create a new link?",

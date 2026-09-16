@@ -5,7 +5,7 @@ import { useToast } from "../toast";
 import { useInstallPrompt } from "../pwa/install";
 import { clearStoredIdentity, readStoredMe, writeStoredMe } from "../me-store";
 import { AdminPanel } from "./AdminPanel";
-import { AppShell, AppShellLoading } from "./AppShell";
+import { AppShell, AppShellLoading, PageHeader } from "./AppShell";
 import { UserMenu } from "./UserMenu";
 
 /** Dedicated settings surface: every user gets the Account section
@@ -197,9 +197,10 @@ export function SettingsPage() {
 
   return (
     <AppShell brandHref="/" headerRight={userMenu}>
-      <h2 className="page-title">{S.settings.title}</h2>
+      <PageHeader title={S.settings.title} />
 
-        <section className="card" aria-label={S.settings.account}>
+      <div className="settings-stack">
+        <section className="settings-section" aria-label={S.settings.account}>
           <h3>{S.settings.account}</h3>
           <form className="item-form" onSubmit={saveProfile}>
             <div className="field">
@@ -217,9 +218,11 @@ export function SettingsPage() {
               {profileBusy ? S.form.saving : S.settings.saveProfile}
             </button>
           </form>
+        </section>
 
+        <section className="settings-section" aria-label={S.settings.changePassword}>
+          <h3>{S.settings.changePassword}</h3>
           <form className="item-form" onSubmit={changePassword}>
-            <h3>{S.settings.changePassword}</h3>
             <div className="field">
               <label htmlFor="settings-current-password">{S.settings.currentPassword}</label>
               <input
@@ -260,7 +263,9 @@ export function SettingsPage() {
               {passwordBusy ? S.form.saving : S.settings.setPassword}
             </button>
           </form>
+        </section>
 
+        <section className="settings-section" aria-label="Preferences">
           <button
             type="button"
             className="menu-item"
@@ -285,11 +290,12 @@ export function SettingsPage() {
         </section>
 
         {me.isAdmin && (
-          <section aria-label={S.settings.usersSection}>
+          <section className="settings-section" aria-label={S.settings.usersSection}>
             {usersError && <p className="error" role="alert">{usersError}</p>}
             <AdminPanel users={users} onChanged={refreshUsers} />
           </section>
         )}
+      </div>
     </AppShell>
   );
 }
