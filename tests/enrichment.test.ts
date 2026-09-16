@@ -66,6 +66,38 @@ function serveShopifyPage(): ReturnType<typeof serve> {
   });
 }
 
+/** A local product page whose HTML can be swapped mid-test: a re-check must
+ *  find new evidence on the SAME url (that is what a re-check means). */
+function serveSwitchablePage(): {
+  server: ReturnType<typeof serve>;
+  show: (fixture: string) => Promise<void>;
+  stall: () => void;
+} {
+  let html = "";
+  let stalled = false;
+  const server = serve({
+    port: 0,
+    fetch: async (req) => {
+      const url = new URL(req.url);
+      if (url.pathname === "/img/trio.jpg") {
+        return new Response(JPEG_BYTES, { headers: { "Content-Type": "image/jpeg" } });
+      }
+      if (stalled) await new Promise(() => {});
+      return new Response(html);
+    },
+  });
+  return {
+    server,
+    show: async (fixture: string) => {
+      html = await Bun.file(join(FIXTURES, fixture)).text();
+      stalled = false;
+    },
+    stall: () => {
+      stalled = true;
+    },
+  };
+}
+
 const AMAZON_HIRES = "https://m.media-amazon.com/images/I/91Mzr09ls6L._AC_SL1500_.jpg";
 
 /** The amazon-dp-nooffer fixture over a LOCAL server: its media-amazon image
@@ -315,6 +347,283 @@ describe("async enrichment", () => {
     }
   });
 
+  test("re-check overwrites a machine-written price and appends a second snapshot", async () => {
+    await login(admin, "admin", "admin-password");
+    const userId = await myId(admin);
+    const shop = serveSwitchablePage();
+    try {
+      await shop.show("shopify-local.html");
+      const res = await admin.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${shop.server.port}/product`,
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+      expect(await waitForFetchState(admin, userId, item.id, "complete")).toBe(true);
+
+      const first = app.app.db
+        .query("SELECT price_cents, price_source FROM wishlist_items WHERE id = ?")
+        .get(item.id) as { price_cents: number; price_source: string };
+      expect(first.price_cents).toBe(2500);
+      expect(first.price_source).toBe("scrape");
+
+      // The shop drops the price; the owner hits Re-check.
+      await shop.show("shopify-local-v2.html");
+      const refresh = await admin.request("POST", `/api/wishlist/items/${item.id}/refresh`);
+      expect(refresh.status).toBe(202);
+
+      expect(
+        await waitFor(async () => {
+          const r = app.app.db
+            .query("SELECT price_cents FROM wishlist_items WHERE id = ?")
+            .get(item.id) as { price_cents: number | null };
+          return r.price_cents === 1999;
+        }),
+      ).toBe(true);
+
+      const row = app.app.db
+        .query("SELECT price_cents, currency, price_source, fetch_state FROM wishlist_items WHERE id = ?")
+        .get(item.id) as {
+        price_cents: number;
+        currency: string;
+        price_source: string;
+        fetch_state: string;
+      };
+      expect(row.price_source).toBe("scrape");
+      expect(row.currency).toBe("USD");
+      expect(row.fetch_state).toBe("complete");
+
+      // Append-only: both observations survive, oldest first.
+      const history = app.app.db
+        .query("SELECT price_cents, source FROM price_history WHERE item_id = ? ORDER BY rowid")
+        .all(item.id) as { price_cents: number; source: string }[];
+      expect(history).toEqual([
+        { price_cents: 2500, source: "scrape" },
+        { price_cents: 1999, source: "scrape" },
+      ]);
+
+      const list = await admin.request("GET", `/api/users/${userId}/wishlist`);
+      const items = (await list.json()) as OwnedItem[];
+      const dto = items.find((i) => i.id === item.id) as OwnedItem;
+      expect(dto.priceCents).toBe("19.99");
+      expect(dto.priceStats?.lowestCents).toBe("19.99");
+      expect(dto.priceStats?.atAddCents).toBe("25.00");
+    } finally {
+      shop.server.stop(true);
+    }
+  }, 20_000);
+
+  test("re-check never overwrites a manually-authored price (the scrape is still snapshotted)", async () => {
+    await login(admin, "admin", "admin-password");
+    const userId = await myId(admin);
+    const shop = serveSwitchablePage();
+    try {
+      await shop.show("shopify-local.html");
+      const res = await admin.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${shop.server.port}/product`,
+        title: "My own title",
+        priceCents: "5.00",
+        currency: "GBP",
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+      expect(await waitForFetchState(admin, userId, item.id, "complete")).toBe(true);
+
+      const refresh = await admin.request("POST", `/api/wishlist/items/${item.id}/refresh`);
+      expect(refresh.status).toBe(202);
+      // The second scrape observation lands; the stored price must not move.
+      expect(
+        await waitFor(async () => {
+          const rows = app.app.db
+            .query("SELECT COUNT(*) AS n FROM price_history WHERE item_id = ?")
+            .get(item.id) as { n: number };
+          return rows.n >= 2;
+        }),
+      ).toBe(true);
+
+      const row = app.app.db
+        .query("SELECT price_cents, currency, price_source FROM wishlist_items WHERE id = ?")
+        .get(item.id) as { price_cents: number; currency: string; price_source: string };
+      expect(row.price_cents).toBe(500);
+      expect(row.currency).toBe("GBP"); // the scraped USD never lands on a manual price
+      expect(row.price_source).toBe("manual");
+
+      const history = app.app.db
+        .query("SELECT price_cents, source FROM price_history WHERE item_id = ? ORDER BY rowid")
+        .all(item.id) as { price_cents: number; source: string }[];
+      expect(history[0]).toEqual({ price_cents: 500, source: "manual" });
+      expect(history.some((h) => h.price_cents === 2500 && h.source === "scrape")).toBe(true);
+    } finally {
+      shop.server.stop(true);
+    }
+  }, 20_000);
+
+  test("re-check replaces a hint-derived price with the page's own price", async () => {
+    const botwall = await Bun.file(join(FIXTURES, "botwall-captcha.html")).text();
+    const good = await Bun.file(join(FIXTURES, "shopify-local.html")).text();
+    let html = botwall;
+    const flip = serve({
+      port: 0,
+      fetch: async (req) => {
+        const url = new URL(req.url);
+        if (url.pathname === "/img/trio.jpg") {
+          return new Response(JPEG_BYTES, { headers: { "Content-Type": "image/jpeg" } });
+        }
+        return new Response(html);
+      },
+    });
+    const searx = serve({
+      port: 0,
+      fetch: () =>
+        new Response(
+          JSON.stringify({
+            results: [
+              {
+                title: "Fresh Kiss Trio — Reseller",
+                url: "https://reseller.example.com/p/1",
+                content: "Only £25.00 today",
+              },
+            ],
+          }),
+        ),
+    });
+    const hintApp = createTestApp({ searxngUrl: `http://127.0.0.1:${searx.port}` });
+    const jar = hintApp.newJar();
+    await login(jar, "admin", "admin-password");
+    const userId = await myId(jar);
+    try {
+      const res = await jar.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${flip.port}/product`,
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+      expect(await waitForFetchState(jar, userId, item.id, "complete")).toBe(true);
+
+      // First pass: bot-walled, rescued by the labelled hint — no direct price.
+      const hinted = hintApp.app.db
+        .query("SELECT price_cents, price_source, hint_price_cents FROM wishlist_items WHERE id = ?")
+        .get(item.id) as { price_cents: number | null; price_source: string | null; hint_price_cents: number };
+      expect(hinted.price_cents).toBeNull();
+      expect(hinted.price_source).toBeNull();
+      expect(hinted.hint_price_cents).toBe(2500);
+
+      // The site opens up; the re-check now has a real page price.
+      html = good;
+      const refresh = await jar.request("POST", `/api/wishlist/items/${item.id}/refresh`);
+      expect(refresh.status).toBe(202);
+      expect(
+        await waitFor(async () => {
+          const r = hintApp.app.db
+            .query("SELECT price_cents FROM wishlist_items WHERE id = ?")
+            .get(item.id) as { price_cents: number | null };
+          return r.price_cents === 2500;
+        }),
+      ).toBe(true);
+
+      const row = hintApp.app.db
+        .query("SELECT price_cents, price_source, hint_price_cents, hint_source_url FROM wishlist_items WHERE id = ?")
+        .get(item.id) as {
+        price_cents: number;
+        price_source: string;
+        hint_price_cents: number;
+        hint_source_url: string;
+      };
+      expect(row.price_source).toBe("scrape");
+      // Hints are kept until new evidence replaces them (unchanged behaviour).
+      expect(row.hint_price_cents).toBe(2500);
+      expect(row.hint_source_url).toBe("https://reseller.example.com/p/1");
+    } finally {
+      flip.stop(true);
+      searx.stop(true);
+      await hintApp.cleanup();
+    }
+  }, 20_000);
+
+  test("hints off in settings → enrichment skips the price hint (image fallback unaffected)", async () => {
+    let priceQueries = 0;
+    let imageQueries = 0;
+    const imgHost = serve({
+      port: 0,
+      fetch: () => new Response(JPEG_BYTES, { headers: { "Content-Type": "image/jpeg" } }),
+    });
+    const searx = serve({
+      port: 0,
+      fetch: (req) => {
+        if (req.url.includes("categories=images")) {
+          imageQueries++;
+          return new Response(
+            JSON.stringify({
+              results: [
+                { title: "Widget 9000", url: "https://a.example.com/x", img_src: `${imgHost.url}search.jpg` },
+              ],
+            }),
+          );
+        }
+        priceQueries++;
+        return new Response(
+          JSON.stringify({
+            results: [
+              { title: "Widget 9000 — Reseller", url: "https://reseller.example.com/p/1", content: "£25.00" },
+            ],
+          }),
+        );
+      },
+    });
+    const offApp = createTestApp({ searxngUrl: `http://127.0.0.1:${searx.port}` });
+    const jar = offApp.newJar();
+    await login(jar, "admin", "admin-password");
+    const userId = await myId(jar);
+    // Title-only page: extractable, but no price and no image anywhere.
+    const textOnly = serve({
+      port: 0,
+      fetch: () =>
+        new Response(
+          "<!DOCTYPE html><html><head><title>Widget 9000</title></head><body><h1>Widget 9000</h1></body></html>",
+        ),
+    });
+    try {
+      const off = await jar.request("PUT", "/api/auth/me/settings", { hintsEnabled: false });
+      expect(off.status).toBe(200);
+
+      const res = await jar.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${textOnly.port}/products/widget-9000`,
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+      expect(await waitForFetchState(jar, userId, item.id, "complete")).toBe(true);
+      expect(
+        await waitFor(async () => {
+          const r = offApp.app.db
+            .query("SELECT image_path FROM wishlist_items WHERE id = ?")
+            .get(item.id) as { image_path: string | null };
+          return r.image_path !== null;
+        }),
+      ).toBe(true);
+
+      const row = offApp.app.db
+        .query("SELECT price_cents, price_source, hint_price_cents, image_path, image_source FROM wishlist_items WHERE id = ?")
+        .get(item.id) as {
+        price_cents: number | null;
+        price_source: string | null;
+        hint_price_cents: number | null;
+        image_path: string | null;
+        image_source: string | null;
+      };
+      expect(row.price_cents).toBeNull();
+      expect(row.hint_price_cents).toBeNull(); // no price hint was even fetched
+      expect(row.price_source).toBeNull();
+      // The image fallback is a separate feature: still attached, still labelled.
+      expect(row.image_path).toBe(`${item.id}.jpg`);
+      expect(row.image_source).toBe("search");
+      expect(priceQueries).toBe(0);
+      expect(imageQueries).toBeGreaterThan(0);
+    } finally {
+      textOnly.stop(true);
+      imgHost.stop(true);
+      searx.stop(true);
+      await offApp.cleanup();
+    }
+  }, 20_000);
+
   test("concurrency cap: 3 enqueues against a 300ms-stalling server → max in-flight ≤ 2 (server-side counter)", async () => {
     await login(admin, "admin", "admin-password");
     const userId = await myId(admin);
@@ -458,6 +767,75 @@ describe("async enrichment", () => {
       rmSync(dirname(dbPath), { recursive: true, force: true });
     }
   });
+
+  test("crash sweep keeps an already-enriched item 'complete' (re-check interrupted by restart)", async () => {
+    const shop = serveSwitchablePage();
+    await shop.show("shopify-local.html");
+    const stall = serve({
+      port: 0,
+      fetch: async () => {
+        await new Promise(() => {});
+        return new Response("never");
+      },
+    });
+
+    const app1 = createTestApp();
+    const jar1 = app1.newJar();
+    await login(jar1, "admin", "admin-password");
+    const userId = await myId(jar1);
+    const dbPath = app1.app.config.dbPath;
+
+    /** Enrich, then leave the row 'pending' under a re-check, then crash. */
+    async function interruptedRecheck(): Promise<string> {
+      try {
+        const res = await jar1.request("POST", "/api/wishlist/items", {
+          url: `http://127.0.0.1:${shop.server.port}/product`,
+        });
+        const item = (await res.json()) as OwnedItem;
+        expect(await waitForFetchState(jar1, userId, item.id, "complete")).toBe(true);
+
+        // Re-check against a URL that never answers → the row is left 'pending'.
+        const patch = await jar1.request("PATCH", `/api/wishlist/items/${item.id}`, {
+          url: `http://127.0.0.1:${stall.port}/hang`,
+        });
+        expect(patch.status).toBe(200);
+        const refresh = await jar1.request("POST", `/api/wishlist/items/${item.id}/refresh`);
+        expect(refresh.status).toBe(202);
+
+        const before = app1.app.db
+          .query("SELECT fetch_state, price_cents FROM wishlist_items WHERE id = ?")
+          .get(item.id) as { fetch_state: string; price_cents: number };
+        expect(before.fetch_state).toBe("pending");
+        expect(before.price_cents).toBe(2500);
+
+        // Crash: stop without deleting the DB file.
+        await app1.app.stop();
+        return item.id;
+      } finally {
+        stall.stop(true);
+        shop.server.stop(true);
+      }
+    }
+
+    const itemId = await interruptedRecheck();
+
+    try {
+      const app2 = createTestApp({ dbPath });
+      try {
+        const row = app2.app.db
+          .query("SELECT fetch_state, last_fetch_error, price_cents FROM wishlist_items WHERE id = ?")
+          .get(itemId) as { fetch_state: string; last_fetch_error: string | null; price_cents: number };
+        // The item still has usable data → a restart must not degrade it.
+        expect(row.fetch_state).toBe("complete");
+        expect(row.last_fetch_error).toBeNull();
+        expect(row.price_cents).toBe(2500);
+      } finally {
+        await app2.cleanup();
+      }
+    } finally {
+      rmSync(dirname(dbPath), { recursive: true, force: true });
+    }
+  }, 20_000);
 
   test("private-IP URL with the SSRF guard enabled → fetchState 'failed' + last_fetch_error 'private-ip' (guard applies through the real pipeline when the test opt-in is OFF)", async () => {
     // The default createTestApp opts out of the private-range guard (local

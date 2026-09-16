@@ -12,12 +12,13 @@ import {
 } from "../auth/sessions";
 import type { Config } from "../config";
 
-export function meOf(user: Pick<SessionUser, "id" | "username" | "displayName" | "isAdmin">) {
+export function meOf(user: Pick<SessionUser, "id" | "username" | "displayName" | "isAdmin" | "hintsEnabled">) {
   return {
     id: user.id,
     username: user.username,
     displayName: user.displayName,
     isAdmin: user.isAdmin,
+    hintsEnabled: user.hintsEnabled,
   };
 }
 
@@ -28,6 +29,7 @@ interface UserRow {
   password_hash: string;
   is_admin: number;
   is_active: number;
+  hints_enabled: number;
 }
 
 export function authRoutes(db: Database, config: Config, limiter: RateLimiter) {
@@ -63,7 +65,7 @@ export function authRoutes(db: Database, config: Config, limiter: RateLimiter) {
 
         const user = db
           .query(
-            `SELECT id, username, display_name, password_hash, is_admin, is_active
+            `SELECT id, username, display_name, password_hash, is_admin, is_active, hints_enabled
              FROM users WHERE username = ?`,
           )
           .get(username) as UserRow | undefined;
@@ -88,7 +90,13 @@ export function authRoutes(db: Database, config: Config, limiter: RateLimiter) {
         const { token } = createSession(db, user.id, config.sessionTtlDays);
         return new Response(
           JSON.stringify(
-            meOf({ id: user.id, username: user.username, displayName: user.display_name, isAdmin: user.is_admin === 1 }),
+            meOf({
+              id: user.id,
+              username: user.username,
+              displayName: user.display_name,
+              isAdmin: user.is_admin === 1,
+              hintsEnabled: user.hints_enabled === 1,
+            }),
           ),
           {
             status: 200,
@@ -113,6 +121,23 @@ export function authRoutes(db: Database, config: Config, limiter: RateLimiter) {
     },
     "/api/auth/me": {
       GET: requireSession(db, (_req, user) => jsonOk(meOf(user))),
+    },
+    "/api/auth/me/settings": {
+      /** Self-only settings. The only knob today is the price-hint honesty
+       *  gate; it must hold across devices, so it lives in the users row. */
+      PUT: requireSession(db, async (req, user) => {
+        let body: { hintsEnabled?: unknown };
+        try {
+          body = (await req.json()) as { hintsEnabled?: unknown };
+        } catch {
+          return jsonError(400, "Invalid JSON body");
+        }
+        if (typeof body.hintsEnabled !== "boolean") {
+          return jsonError(400, "hintsEnabled must be a boolean");
+        }
+        db.run("UPDATE users SET hints_enabled = ? WHERE id = ?", [body.hintsEnabled ? 1 : 0, user.id]);
+        return jsonOk(meOf({ ...user, hintsEnabled: body.hintsEnabled }));
+      }),
     },
   };
 }

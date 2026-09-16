@@ -29,11 +29,23 @@ export function createApp(config: Config): App {
   sweepExpiredSessions(db);
 
   // Crash sweep: anything left 'pending' by a previous process (kill -9,
-  // reboot mid-enrichment) degrades to 'failed' so it is visibly incomplete
-  // rather than stuck; the owner refresh route re-drives it.
+  // reboot mid-enrichment) is resolved on boot. A row with NO usable data
+  // (URL-only add interrupted) degrades to 'failed' so it is visibly
+  // incomplete; a row that already has data (price, hint or image — the state
+  // a re-check leaves behind) is restored to 'complete' rather than being
+  // demoted by a restart it had nothing to do with. The owner refresh route
+  // re-drives anything that needs re-fetching.
   db.run(
-    `UPDATE wishlist_items SET fetch_state = 'failed',
-            last_fetch_error = 'Interrupted by restart' WHERE fetch_state = 'pending'`,
+    `UPDATE wishlist_items
+        SET fetch_state = CASE
+              WHEN price_cents IS NULL AND hint_price_cents IS NULL AND image_path IS NULL
+                THEN 'failed'
+              ELSE 'complete' END,
+            last_fetch_error = CASE
+              WHEN price_cents IS NULL AND hint_price_cents IS NULL AND image_path IS NULL
+                THEN 'Interrupted by restart'
+              ELSE NULL END
+      WHERE fetch_state = 'pending'`,
   );
 
   const limiter = new RateLimiter();
@@ -56,7 +68,7 @@ export function createApp(config: Config): App {
     routes: {
       ...authRoutes(db, config, limiter),
       ...userRoutes(db),
-      ...wishlistRoutes(db, config.imagesDir, queue),
+      ...wishlistRoutes(db, config.imagesDir, queue, { searxngUrl: config.searxngUrl }),
       ...imageRoutes(db, config.imagesDir),
       ...healthRoutes(),
     },

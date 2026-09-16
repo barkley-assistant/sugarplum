@@ -9,6 +9,8 @@ export interface SessionUser {
   displayName: string;
   isAdmin: boolean;
   isActive: boolean;
+  /** Honesty gate for automated price hints (users.hints_enabled). */
+  hintsEnabled: boolean;
 }
 
 export function newSessionToken(): string {
@@ -37,7 +39,7 @@ export function getSessionUser(db: Database, token: string): SessionUser | null 
     .query(
       `SELECT s.expires_at AS expires_at,
               u.id AS id, u.username AS username, u.display_name AS display_name,
-              u.is_admin AS is_admin, u.is_active AS is_active
+              u.is_admin AS is_admin, u.is_active AS is_active, u.hints_enabled AS hints_enabled
        FROM sessions s JOIN users u ON u.id = s.user_id
        WHERE s.token = ?`,
     )
@@ -49,6 +51,7 @@ export function getSessionUser(db: Database, token: string): SessionUser | null 
         display_name: string;
         is_admin: number;
         is_active: number;
+        hints_enabled: number;
       }
     | undefined;
 
@@ -64,6 +67,7 @@ export function getSessionUser(db: Database, token: string): SessionUser | null 
     displayName: row.display_name,
     isAdmin: row.is_admin === 1,
     isActive: row.is_active === 1,
+    hintsEnabled: row.hints_enabled === 1,
   };
 }
 

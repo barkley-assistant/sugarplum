@@ -1,6 +1,13 @@
 // tests/searxng.test.ts — fetcher ALWAYS injected; zero network
 import { describe, expect, test } from "bun:test";
-import { buildSearchQuery, searchImageHint, searchPriceHint, type SearxngFetch } from "../src/server/searxng";
+import {
+  buildSearchQuery,
+  buildTitleQuery,
+  searchImageHint,
+  searchPriceCandidates,
+  searchPriceHint,
+  type SearxngFetch,
+} from "../src/server/searxng";
 
 describe("searchPriceHint", () => {
   test("happy path: first result with a parseable price wins", async () => {
@@ -107,6 +114,97 @@ describe("buildSearchQuery", () => {
     expect(buildSearchQuery("https://www.coolshop.co.uk/products/fresh-kiss-trio?ref=x")).toBe(
       "coolshop.co.uk fresh kiss trio buy",
     );
+  });
+});
+
+describe("buildTitleQuery", () => {
+  test("title terms deduped, capped at 6, 'buy' appended", () => {
+    expect(buildTitleQuery("LEGO Architecture 21042 Statue of Liberty")).toBe(
+      "LEGO Architecture 21042 Statue of Liberty buy",
+    );
+    expect(buildTitleQuery("Mug mug MUG short")).toBe("Mug short buy");
+    expect(buildTitleQuery("one two three four five six seven eight")).toBe(
+      "one two three four five six buy",
+    );
+    expect(buildTitleQuery("   ")).toBe("");
+  });
+});
+
+describe("searchPriceCandidates", () => {
+  test("up to 3 candidates; own domain, duplicate URLs and price-less noise skipped", async () => {
+    const fake: SearxngFetch = async (input) => {
+      // Title-derived query, format locked — the URL's path plays no part.
+      expect(String(input)).toContain(encodeURIComponent("Statue of Liberty buy"));
+      expect(String(input)).toContain("format=json");
+      return new Response(
+        JSON.stringify({
+          results: [
+            // Own shop (the item's domain) — excluded from candidates.
+            {
+              title: "LEGO Architecture 21042 Statue of Liberty — John Lewis",
+              url: "https://www.johnlewis.example.com/p/1",
+              content: "£50.00",
+            },
+            { title: "Elsewhere", url: "https://a.example.com/p/1", content: "£44.99" },
+            { title: "Elsewhere", url: "https://a.example.com/p/1", content: "£44.99" },
+            { title: "Review", url: "https://review.example.com/x", content: "no price here" },
+            { title: "Reseller b", url: "https://b.example.com/p/1", content: "Only £42.00" },
+            { title: "Reseller c", url: "https://c.example.com/p/1", content: "€39,50" },
+            { title: "Reseller d", url: "https://d.example.com/p/1", content: "£38.00" },
+          ],
+        }),
+      );
+    };
+    const candidates = await searchPriceCandidates("Statue of Liberty", "johnlewis.example.com", {
+      baseUrl: "http://searx.example",
+      fetchImpl: fake,
+    });
+    expect(candidates.map((c) => c.sourceUrl)).toEqual([
+      "https://a.example.com/p/1",
+      "https://b.example.com/p/1",
+      "https://c.example.com/p/1",
+    ]);
+    expect(candidates[0]).toEqual({
+      priceCents: 4499,
+      currency: "GBP",
+      sourceUrl: "https://a.example.com/p/1",
+      sourceTitle: "Elsewhere",
+    });
+    expect(candidates[2].priceCents).toBe(3950); // comma-decimal guard
+  });
+
+  test("empty title / no results / bad JSON / fetch throw / non-ok → [] (never throws)", async () => {
+    const none = await searchPriceCandidates("", null, {
+      baseUrl: "http://searx.example",
+      fetchImpl: async () => new Response(JSON.stringify({ results: [] })),
+    });
+    expect(none).toEqual([]);
+
+    const empty = await searchPriceCandidates("t", null, {
+      baseUrl: "http://searx.example",
+      fetchImpl: async () => new Response(JSON.stringify({ results: [] })),
+    });
+    expect(empty).toEqual([]);
+
+    const badJson = await searchPriceCandidates("t", null, {
+      baseUrl: "http://searx.example",
+      fetchImpl: async () => new Response("not json"),
+    });
+    expect(badJson).toEqual([]);
+
+    const notOk = await searchPriceCandidates("t", null, {
+      baseUrl: "http://searx.example",
+      fetchImpl: async () => new Response("nope", { status: 500 }),
+    });
+    expect(notOk).toEqual([]);
+
+    const throws = await searchPriceCandidates("t", null, {
+      baseUrl: "http://searx.example",
+      fetchImpl: async () => {
+        throw new Error("boom");
+      },
+    });
+    expect(throws).toEqual([]);
   });
 });
 

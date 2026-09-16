@@ -39,6 +39,10 @@ interface ItemRowForEnrich {
   site_name: string | null;
   fetch_state: string;
   image_path: string | null;
+  /** Who wrote price_cents ('scrape' | 'searxng-hint' | 'manual' | null). */
+  price_source: string | null;
+  /** The item owner's honesty gate; 0 → never attach price hints. */
+  hints_enabled: number;
 }
 
 export function createEnrichmentQueue(deps: EnrichmentDeps): EnrichmentQueue {
@@ -70,8 +74,10 @@ export function createEnrichmentQueue(deps: EnrichmentDeps): EnrichmentQueue {
   async function runItem(itemId: string): Promise<void> {
     const row = deps.db
       .query(
-        `SELECT id, url, title, price_cents, currency, site_name, fetch_state, image_path
-         FROM wishlist_items WHERE id = ?`,
+        `SELECT i.id, i.url, i.title, i.price_cents, i.currency, i.site_name, i.fetch_state,
+                i.image_path, i.price_source, u.hints_enabled
+         FROM wishlist_items i JOIN users u ON u.id = i.user_id
+         WHERE i.id = ?`,
       )
       .get(itemId) as ItemRowForEnrich | undefined;
 
@@ -121,8 +127,10 @@ interface ParsedLike {
 }
 
 /** Fill-nulls/sentinel rules: title is overwritten only when it still IS the
- *  provisional hostname sentinel; price/currency/site_name fill NULLs only.
- *  A user who typed a title or price never gets clobbered. */
+ *  provisional hostname sentinel; price/currency are fill-nulls EXCEPT when
+ *  the stored price was written by a machine (scrape/hint), which a re-check
+ *  may replace. A price the user typed ('manual'), or that predates the
+ *  provenance column (NULL), is never clobbered. */
 async function applyScrape(
   deps: EnrichmentDeps,
   row: ItemRowForEnrich,
@@ -136,13 +144,18 @@ async function applyScrape(
     sets.push("title = ?");
     values.push(product.title);
   }
-  if (row.price_cents === null && product.priceCents !== null) {
+
+  // The price is ours to move when we wrote it last (or nobody did). The
+  // currency follows the price and is never written alone onto a manual value.
+  const mayWritePrice = row.price_cents === null || machineWrittenPrice(row.price_source);
+  if (mayWritePrice && product.priceCents !== null) {
     sets.push("price_cents = ?");
     values.push(product.priceCents);
-  }
-  if (row.currency === null && product.currency !== null) {
-    sets.push("currency = ?");
-    values.push(product.currency);
+    sets.push("price_source = 'scrape'");
+    if (product.currency !== null) {
+      sets.push("currency = ?");
+      values.push(product.currency);
+    }
   }
   if (row.site_name === null && product.siteName !== null) {
     sets.push("site_name = ?");
@@ -186,12 +199,15 @@ async function applyScrape(
   // image empty — the item is STILL a success (a title alone is usable), so
   // fetch_state stays 'complete'. searxng gets one chance to attach LABELLED
   // hint data (hint_* columns / image_source='search'); it never writes to the
-  // direct price_cents or overwrites a direct image.
+  // direct price_cents or overwrites a direct image. The price-hint leg is
+  // skipped entirely when the owner turned hints off (the image fallback is a
+  // separate feature and stays).
   const searxngUrl = deps.searxngUrl;
   if (!searxngUrl || !row.url) return;
   const query = buildSearchQuery(row.url);
+  const priceHintsEnabled = row.hints_enabled !== 0;
 
-  if (row.price_cents === null && product.priceCents === null) {
+  if (priceHintsEnabled && row.price_cents === null && product.priceCents === null) {
     const hint = await searchPriceHint(query, { baseUrl: searxngUrl, fetchImpl: deps.fetchImpl });
     if (hint) persistPriceHint(deps, row.id, hint);
   }
@@ -237,7 +253,7 @@ async function applyFailure(
   row: ItemRowForEnrich,
   failure: { reason: string; heuristic?: string },
 ): Promise<void> {
-  if (deps.searxngUrl && row.url) {
+  if (deps.searxngUrl && row.url && row.hints_enabled !== 0) {
     const hint = await searchPriceHint(buildSearchQuery(row.url), {
       baseUrl: deps.searxngUrl,
       fetchImpl: deps.fetchImpl,
@@ -268,4 +284,10 @@ function provisionalTitle(url: string): string {
   } catch {
     return url;
   }
+}
+
+/** True when the stored price came from an automated fetch, i.e. a re-check is
+ *  allowed to move it. 'manual' and NULL (pre-wave-5 rows) are off limits. */
+function machineWrittenPrice(priceSource: string | null): boolean {
+  return priceSource === "scrape" || priceSource === "searxng-hint";
 }
