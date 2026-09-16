@@ -37,6 +37,9 @@ body {
   --success: #16a34a;
   --danger: #dc2626;
   --danger-surface: #fef2f2;
+  /* Purchased badge on a shared list — distinct from the green claim badge
+     and legible on both themes (dark override below). */
+  --share-accent: #6d28d9;
   --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.12);
 
   --text-xs: 0.75rem;
@@ -81,6 +84,7 @@ body {
     --success: #4ade80;
     --danger: #f87171;
     --danger-surface: #2b1517;
+    --share-accent: #c4b5fd;
     --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.5);
   }
 }
@@ -1162,4 +1166,57 @@ label {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+}
+
+/* ---------- Share links (wave 10) ---------- */
+/* Anonymous share page: invalid-link card. */
+.share-card {
+  max-width: 480px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.share-note {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+/* Accent on top of .claimed-badge: "Purchased" on a shared list. */
+.share-purchased-badge {
+  color: var(--share-accent);
+}
+
+/* Owner-side link manager. */
+.share-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.share-panel h3,
+.share-panel p {
+  margin: 0;
+}
+
+.share-link-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.share-link-row input {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+
+.share-link-row button {
+  flex-shrink: 0;
+}
+
+.share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }

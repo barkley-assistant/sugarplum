@@ -82,6 +82,36 @@ export const S = {
     claimedByYou: "Claimed by you",
     claimedBySomeone: "Claimed by someone",
   },
+  share: {
+    shareList: "Share my list",
+    shareTitle: "Share your wishlist",
+    shareIntro:
+      "Anyone with this link can view your list and mark items as purchased. Purchased marks are never shown to you.",
+    copyLink: "Copy link",
+    copied: "Copied",
+    createLink: "Create link",
+    regenerate: "New link",
+    revoke: "Revoke link",
+    regenerateConfirmTitle: "Create a new link?",
+    regenerateConfirmBody:
+      "The current link stops working immediately. Anyone you already sent it to will need the new one.",
+    revokeConfirmTitle: "Revoke this link?",
+    revokeConfirmBody: "Anyone with the link will no longer be able to view your list.",
+    sharedByNote: "Shared list — no account needed",
+    markPurchased: "Mark as purchased",
+    markPurchasedTitle: "Mark as purchased?",
+    markPurchasedBody:
+      "This tells other viewers the item is already bought. It will not be shown to the list owner.",
+    purchasedBadge: "Purchased",
+    invalidLink: "This link is not valid or has been revoked.",
+    retryLater: "Too many attempts. Try again later.",
+    markFailed: "Could not mark that item.",
+    resetPurchased: "Reset purchased mark",
+    resetConfirmTitle: "Reset the purchased mark?",
+    resetConfirmBody:
+      "Purchased marks are anonymous. This clears the mark without telling you who set it.",
+    ownerViewingOwn: "You are viewing your own shared list. Purchased marks are hidden from you.",
+  },
   admin: {
     users: "Users",
     name: "Name",
