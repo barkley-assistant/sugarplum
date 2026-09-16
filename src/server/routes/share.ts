@@ -1,12 +1,13 @@
 import { Database } from "bun:sqlite";
 import { randomBytes } from "node:crypto";
-import type { ShareItem, ShareView } from "../../shared/types";
+import type { PurchaseResponse, ShareItem, ShareView } from "../../shared/types";
 import {
   jsonError,
   jsonOk,
   parseCookies,
   requireSession,
   type RouteRequest,
+  type RouteServer,
 } from "../auth/middleware";
 import { RateLimiter } from "../auth/rate-limit";
 import { SESSION_COOKIE, getSessionUser, type SessionUser } from "../auth/sessions";
@@ -166,6 +167,62 @@ export function shareRoutes(db: Database, limiter: RateLimiter, _cfg: ShareRoute
           viewerIsOwner,
           items: rows.map((row) => toShareItem(row, viewerIsOwner)),
         } satisfies ShareView);
+      },
+    },
+    "/api/share/:token/items/:id/purchase": {
+      /** Anonymous "I bought this". Check ORDER is the contract:
+       *  404 (token) → 404 (item, cross-token included) → 400 (confirm) →
+       *  429 (rate limit) → 400 (owner) → 200 idempotent → mutate + record.
+       *  The token and item checks precede the body parse so a junk-body probe
+       *  against a dead token still gets 404 — no oracle. Only the
+       *  mutation-reaching path records against the limiter, so failed taps
+       *  never burn a real buyer's budget. */
+      POST: async (req: RouteRequest, server: RouteServer) => {
+        const owner = shareOwner(db, req.params.token);
+        if (!owner) return jsonError(404, "Share link not found");
+
+        const item = db
+          .query(`${SHARE_ITEM_SELECT} WHERE id = ? AND user_id = ?`)
+          .get(req.params.id, owner.user_id) as ShareItemRow | undefined;
+        if (!item) return jsonError(404, "Item not found");
+
+        let body: Record<string, unknown>;
+        try {
+          body = (await req.json()) as Record<string, unknown>;
+        } catch {
+          return jsonError(400, "Invalid JSON body");
+        }
+        if (body.confirm !== true) return jsonError(400, "confirm must be true");
+
+        const ip = server.requestIP(req)?.address ?? "unknown";
+        const key = `${req.params.token}|${ip}`;
+        if (limiter.isBlocked(key)) {
+          return new Response(JSON.stringify({ error: "Too many attempts. Try again later." }), {
+            status: 429,
+            headers: {
+              "Content-Type": "application/json",
+              "Retry-After": String(Math.ceil(limiter.retryAfterMs(key) / 1000)),
+            },
+          });
+        }
+
+        // A logged-in owner clicking their own link must not be able to mutate
+        // it (their view is already projected).
+        const viewer = optionalSessionUser(db, req);
+        if (viewer?.id === owner.user_id) {
+          return jsonError(400, "Cannot mark your own item as purchased");
+        }
+
+        if (item.purchased === 1) {
+          return jsonOk({ id: item.id, purchased: true } satisfies PurchaseResponse);
+        }
+
+        db.run(
+          `UPDATE wishlist_items SET purchased = 1, purchased_at = ? WHERE id = ? AND purchased = 0`,
+          [new Date().toISOString(), item.id],
+        );
+        limiter.recordFailure(key);
+        return jsonOk({ id: item.id, purchased: true } satisfies PurchaseResponse);
       },
     },
   };

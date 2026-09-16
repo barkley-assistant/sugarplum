@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { createTestApp, type Jar, type TestAppHandle } from "./helpers";
+import { createTestApp, type Jar, type TestAppHandle, type TestResponse } from "./helpers";
 import type { OwnedItem, ShareLinkResponse, ShareView } from "../src/shared/types";
 
 let app: TestAppHandle;
@@ -232,5 +232,181 @@ describe("anonymous share view", () => {
     // Reactivation restores the link: it was never revoked, only dark.
     expect((await admin.request("POST", `/api/users/${friendId}/activate`)).status).toBe(200);
     expect((await stranger.request("GET", `/api/share/${fToken}`)).status).toBe(200);
+  });
+});
+
+async function purchase(
+  token: string,
+  itemId: string,
+  body?: Record<string, unknown>,
+): Promise<TestResponse> {
+  return app.request(
+    "POST",
+    `/api/share/${token}/items/${itemId}/purchase`,
+    body ?? { confirm: true },
+  );
+}
+
+describe("anonymous purchased marking", () => {
+  test("confirm field required: absent/false → 400, no state change", async () => {
+    await loginAsAdmin();
+    const item = await seedItem("Puzzle");
+    const token = await activeToken();
+
+    const noBody = await purchase(token, item.id, {});
+    expect(noBody.status).toBe(400);
+    const falseBody = await purchase(token, item.id, { confirm: false });
+    expect(falseBody.status).toBe(400);
+    const row = app.app.db
+      .query("SELECT purchased FROM wishlist_items WHERE id = ?")
+      .get(item.id) as { purchased: number };
+    expect(row.purchased).toBe(0);
+  });
+
+  test("purchase marks the row; visible to a second anonymous viewer", async () => {
+    await loginAsAdmin();
+    const item = await seedItem("Board game");
+    const token = await activeToken();
+
+    const first = await purchase(token, item.id);
+    expect(first.status).toBe(200);
+    expect(await first.json()).toEqual({ id: item.id, purchased: true });
+
+    const secondViewer = app.newJar();
+    const view = (await (
+      await secondViewer.request("GET", `/api/share/${token}`)
+    ).json()) as ShareView;
+    expect(view.items[0].purchased).toBe(true); // double-gift prevention
+  });
+
+  test("re-mark is idempotent (200, purchased_at unchanged)", async () => {
+    await loginAsAdmin();
+    const item = await seedItem("Socks");
+    const token = await activeToken();
+    await purchase(token, item.id);
+    const before = app.app.db
+      .query("SELECT purchased_at FROM wishlist_items WHERE id = ?")
+      .get(item.id) as { purchased_at: string };
+    const again = await purchase(token, item.id);
+    expect(again.status).toBe(200);
+    const after = app.app.db
+      .query("SELECT purchased_at FROM wishlist_items WHERE id = ?")
+      .get(item.id) as { purchased_at: string };
+    expect(after.purchased_at).toBe(before.purchased_at);
+  });
+
+  test("THE INVARIANT: owner never receives purchased on any surface", async () => {
+    await loginAsAdmin();
+    const create = await admin.request("POST", "/api/users", {
+      username: "giftee",
+      password: "giftee-pass",
+      displayName: "Giftee",
+    });
+    expect(create.status).toBe(201);
+    const gifteeId = ((await create.json()) as { id: string }).id;
+
+    const giftee = app.newJar();
+    expect(
+      (await giftee.request("POST", "/api/auth/login", { username: "giftee", password: "giftee-pass" }))
+        .status,
+    ).toBe(200);
+    const itemRes = await giftee.request("POST", "/api/wishlist/items", { title: "Surprise" });
+    expect(itemRes.status).toBe(201);
+    const item = (await itemRes.json()) as OwnedItem;
+    const tokenRes = await giftee.request("POST", "/api/share");
+    expect(tokenRes.status).toBe(201);
+    const token = ((await tokenRes.json()) as ShareLinkResponse).token as string;
+
+    // An anonymous friend marks it purchased.
+    const marked = await purchase(token, item.id);
+    expect(marked.status).toBe(200);
+    const row = app.app.db
+      .query("SELECT purchased FROM wishlist_items WHERE id = ?")
+      .get(item.id) as { purchased: number };
+    expect(row.purchased).toBe(1); // it IS in the DB…
+
+    // …and the owner sees NOTHING, anywhere:
+
+    // 1. Their own list (OwnedItem must not even carry the field).
+    const ownList = (await (
+      await giftee.request("GET", `/api/users/${gifteeId}/wishlist`)
+    ).json()) as OwnedItem[];
+    const ownPayload = JSON.stringify(ownList);
+    expect(ownPayload).not.toContain("purchased");
+    expect(ownPayload).not.toContain("Purchased");
+
+    // 2. Another registered user's PublicItem view (claims only, never purchase).
+    const otherView = (await (
+      await admin.request("GET", `/api/users/${gifteeId}/wishlist`)
+    ).json()) as unknown[];
+    expect(JSON.stringify(otherView)).not.toContain("purchased");
+
+    // 3. The share view fetched WITH the owner's session cookie.
+    const ownShare = await giftee.request("GET", `/api/share/${token}`);
+    expect(ownShare.status).toBe(200);
+    const shareView = (await ownShare.json()) as ShareView;
+    expect(shareView.viewerIsOwner).toBe(true);
+    expect(shareView.items[0].purchased).toBe(false); // projected out server-side
+
+    // 4. The summary route (counts claims only).
+    const summary = (await (await admin.request("GET", "/api/wishlist/summary")).json()) as {
+      claimedCount: number;
+    }[];
+    expect(JSON.stringify(summary)).not.toContain("purchased");
+
+    // But a fresh anonymous viewer DOES see it:
+    const anonView = (await (
+      await app.newJar().request("GET", `/api/share/${token}`)
+    ).json()) as ShareView;
+    expect(anonView.items[0].purchased).toBe(true);
+  });
+
+  test("owner cannot mark via own link: 400, no state change; unknown item → 404", async () => {
+    await loginAsAdmin();
+    const item = await seedItem("Own thing");
+    const token = await activeToken();
+
+    const res = await admin.request("POST", `/api/share/${token}/items/${item.id}/purchase`, {
+      confirm: true,
+    });
+    expect(res.status).toBe(400);
+    const row = app.app.db
+      .query("SELECT purchased FROM wishlist_items WHERE id = ?")
+      .get(item.id) as { purchased: number };
+    expect(row.purchased).toBe(0);
+
+    // Cross-token item: the token owner has no item with this id →
+    // indistinguishable 404 (never 403 — no existence leak).
+    const ghost = await purchase(token, crypto.randomUUID());
+    expect(ghost.status).toBe(404);
+  });
+
+  test("rate limit: 6th purchase attempt in the window → 429 with Retry-After", async () => {
+    await loginAsAdmin();
+    const token = await activeToken();
+    for (let i = 0; i < 5; i++) {
+      const item = await seedItem(`Gift ${i}`);
+      const res = await purchase(token, item.id);
+      expect(res.status).toBe(200);
+    }
+    const sixth = await seedItem("Gift 5");
+    const blocked = await purchase(token, sixth.id);
+    expect(blocked.status).toBe(429);
+    expect(blocked.headers.get("Retry-After")).toBeTruthy();
+    const body = (await blocked.json()) as { error?: string };
+    expect(body.error).toBeTruthy();
+    // No mutation snuck through with the 429.
+    const row = app.app.db
+      .query("SELECT purchased FROM wishlist_items WHERE id = ?")
+      .get(sixth.id) as { purchased: number };
+    expect(row.purchased).toBe(0);
+  });
+
+  test("revoked token: purchase → 404", async () => {
+    await loginAsAdmin();
+    const item = await seedItem("Poster");
+    const token = await activeToken();
+    expect((await admin.request("DELETE", "/api/share")).status).toBe(204);
+    expect((await purchase(token, item.id)).status).toBe(404);
   });
 });
