@@ -24,18 +24,18 @@ afterAll(() => {
 describe("db migrations", () => {
   test("migrations are idempotent", () => {
     const version = db.query("PRAGMA user_version").get() as { user_version: number };
-    expect(version.user_version).toBe(3);
+    expect(version.user_version).toBe(4);
 
     // Re-run migrations on the same connection (and a second open) — no-op.
     runMigrations(db);
     const again = openDatabase(dbPath);
-    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 3 });
+    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 4 });
     again.close();
   });
 
-  test("v2 (enrichment state) + v3 (image provenance) columns exist on an upgraded db", () => {
+  test("v2 (enrichment state) + v3 (image provenance) + v4 (price provenance) columns exist on an upgraded db", () => {
     const v = db.query("PRAGMA user_version").get() as { user_version: number };
-    expect(v.user_version).toBe(3);
+    expect(v.user_version).toBe(4);
     const cols = db.query("PRAGMA table_info(wishlist_items)").all() as { name: string }[];
     for (const c of [
       "fetch_state",
@@ -45,11 +45,18 @@ describe("db migrations", () => {
       "hint_currency",
       "hint_source_url",
       "image_source",
+      "price_source",
+      "cheaper_url",
     ]) {
       expect(cols.some((x) => x.name === c)).toBe(true);
     }
+    const userCols = db.query("PRAGMA table_info(users)").all() as { name: string; dflt_value: string | null }[];
+    const hintsCol = userCols.find((c) => c.name === "hints_enabled");
+    expect(hintsCol).toBeDefined();
+    // Default ON: the feature is discoverable, and the gate is opt-out.
+    expect(hintsCol?.dflt_value).toBe("1");
 
-    // A row created under the v1 schema (before v2/v3 ran) reads 'complete'
+    // A row created under the v1 schema (before v2-v4 ran) reads 'complete'
     // with NULL provenance — the DEFAULT guarantees zero data migration.
     const freshPath = join(dir, "v2-upgrade.sqlite");
     const fresh = new Database(freshPath);
@@ -70,19 +77,32 @@ describe("db migrations", () => {
         "Old item",
       ]);
       runMigrations(fresh);
-      expect((fresh.query("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(3);
+      expect((fresh.query("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(4);
       const row = fresh
-        .query("SELECT fetch_state, site_name, hint_price_cents, image_source FROM wishlist_items WHERE id = ?")
+        .query(
+          `SELECT fetch_state, site_name, hint_price_cents, image_source, price_source, cheaper_url
+           FROM wishlist_items WHERE id = ?`,
+        )
         .get("v2-upgrade-item") as {
         fetch_state: string;
         site_name: string | null;
         hint_price_cents: number | null;
         image_source: string | null;
+        price_source: string | null;
+        cheaper_url: string | null;
       };
       expect(row.fetch_state).toBe("complete");
       expect(row.site_name).toBeNull();
       expect(row.hint_price_cents).toBeNull();
       expect(row.image_source).toBeNull(); // no backfill: reads as 'direct'
+      expect(row.price_source).toBeNull(); // no backfill: reads as user-authored
+      expect(row.cheaper_url).toBeNull();
+
+      // The pre-existing user gains the gate switched ON, not NULL.
+      const user = fresh.query("SELECT hints_enabled FROM users WHERE id = ?").get("v2-upgrade-user") as {
+        hints_enabled: number;
+      };
+      expect(user.hints_enabled).toBe(1);
     } finally {
       fresh.close();
       rmSync(freshPath, { force: true });

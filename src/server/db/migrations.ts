@@ -89,6 +89,19 @@ ALTER TABLE wishlist_items ADD COLUMN hint_source_url TEXT;
 ALTER TABLE wishlist_items ADD COLUMN image_source TEXT;
 `,
   },
+  {
+    version: 4,
+    sql: `
+-- Wave 5: price provenance, the owner's manual "found it cheaper" link, and
+-- the per-user price-hint honesty gate.
+-- price_source records WHO wrote price_cents: 'scrape' | 'searxng-hint' |
+-- 'manual'. No backfill: pre-v4 rows stay NULL, which the UI reads as
+-- user-authored, so a re-check never overwrites a legacy value.
+ALTER TABLE wishlist_items ADD COLUMN price_source TEXT;
+ALTER TABLE wishlist_items ADD COLUMN cheaper_url TEXT;
+ALTER TABLE users ADD COLUMN hints_enabled INTEGER NOT NULL DEFAULT 1;
+`,
+  },
 ];
 
 export function runMigrations(db: Database): void {

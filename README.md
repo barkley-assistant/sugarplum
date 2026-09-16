@@ -63,10 +63,31 @@ What gets extracted depends on the shop:
   one is a single reviewed entry in `src/server/scraper/overrides.ts` (no
   core-scraper edits).
 
-Price snapshots are recorded to the item's price history whenever a scrape or
-a hint succeeds; a history UI ships in a later wave. If a fetch is interrupted
-(restart, crash), the item is marked failed on the next boot and can be
-retried from the app.
+## Prices
+
+Every price observation is appended to the item's history: scraped prices, the
+best-effort search hint, and prices you type yourself (marked as your own).
+The card shows the current price with the lowest seen and the price the item
+was added at, plus a plain "Down £2.50 since added" line when it moved —
+delta lines are only drawn when both observations share a currency.
+
+- **Re-check price** re-fetches the item's link. A re-check may replace a
+  price the app fetched; it never overwrites a price you typed, and every
+  observation is kept.
+- **Prices seen elsewhere (unverified)** runs an on-demand SearXNG lookup for
+  up to three candidate prices derived from the item's title. These are raw
+  search snippets — different editions, resellers and currencies mixed
+  together — so the UI labels them unverified and never calls anything
+  "cheapest". Nothing is stored.
+- **Found it cheaper at** is your own link: the page you found is the
+  evidence, so no automatic price is claimed for it.
+- **Show unverified price hints** in the user menu is the honesty gate. With
+  it off, no price hints are fetched or attached at all (the image fallback
+  is a separate feature and keeps working).
+
+If a fetch is interrupted (restart, crash), an item that has no data yet is
+marked failed and can be retried from the app; an item that already has data
+stays usable.
 
 ## Gates
 

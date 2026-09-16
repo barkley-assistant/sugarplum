@@ -608,6 +608,76 @@ label {
   margin: 0 0 var(--sp-1);
 }
 
+/* Owner-only manual "found it cheaper at" link. */
+.item-cheaper {
+  font-size: var(--text-sm);
+  color: var(--text-2);
+  margin: 0 0 var(--sp-2);
+  overflow-wrap: anywhere;
+}
+
+/* Price history meta under the current price: the lowest price seen so far,
+   the price the item was added at, and the delta between them. Muted, wraps,
+   and stays right-aligned with the price column. */
+.price-meta,
+.price-delta {
+  font-size: var(--text-xs);
+  color: var(--text-3);
+  white-space: normal;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  max-width: 100%;
+}
+
+.price-delta {
+  font-weight: 600;
+}
+
+/* "Prices seen elsewhere (unverified)" disclosure: an on-demand list of
+   search candidates. Display-only evidence — never a price comparison. */
+.hint-block {
+  margin: 0 0 var(--sp-2);
+}
+
+.hints-toggle {
+  min-height: 36px;
+  padding: 0.25rem 0.7rem;
+  font-size: var(--text-sm);
+  white-space: normal;
+  text-align: left;
+}
+
+.hint-candidates {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface-2);
+  border-radius: var(--r-md);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.hint-list {
+  margin: 0 0 var(--sp-2);
+  padding-left: 1.1rem;
+}
+
+.hint-list li {
+  margin-bottom: var(--sp-1);
+}
+
+.hint-footnote {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-3);
+}
+
+/* User-menu toggle row: label left, On/Off state right. */
+.menu-item-state {
+  margin-left: auto;
+  color: var(--text-3);
+  font-size: var(--text-xs);
+}
+
 .tags {
   display: flex;
   flex-wrap: wrap;

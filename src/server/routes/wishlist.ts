@@ -3,7 +3,15 @@ import { randomUUID } from "node:crypto";
 import { jsonError, jsonOk, requireSession, type RouteRequest } from "../auth/middleware";
 import { deleteItemFile } from "../images";
 import type { EnrichmentQueue } from "../jobs/enrich";
-import type { CommonItem, OwnedItem, PublicItem, WishlistSummaryRow } from "../../shared/types";
+import { searchPriceCandidates } from "../searxng";
+import type {
+  CommonItem,
+  OwnedItem,
+  PriceHintsResponse,
+  PriceStats,
+  PublicItem,
+  WishlistSummaryRow,
+} from "../../shared/types";
 
 interface ItemRow {
   id: string;
@@ -27,6 +35,8 @@ interface ItemRow {
   hint_price_cents: number | null;
   hint_currency: string | null;
   hint_source_url: string | null;
+  price_source: string | null;
+  cheaper_url: string | null;
 }
 
 interface SummaryRow {
@@ -82,14 +92,77 @@ function commonItem(row: ItemRow): CommonItem {
 }
 
 /** Owner view: NO claim fields, ever. Hint fields are owner data. */
-function toOwnedItem(row: ItemRow): OwnedItem {
+function toOwnedItem(db: Database, row: ItemRow): OwnedItem {
   return {
     ...commonItem(row),
     updatedAt: row.updated_at,
     hintPriceCents: row.hint_price_cents === null ? null : formatPrice(row.hint_price_cents),
     hintCurrency: row.hint_currency,
     hintSourceUrl: row.hint_source_url,
+    priceSource: row.price_source,
+    cheaperUrl: row.cheaper_url,
+    priceStats: priceStatsFor(db, row.id),
   };
+}
+
+/** Lowest + earliest price observation for one item. Two tiny indexed reads
+ *  per item: the ledger is append-only and per-item rows are few. Null when
+ *  the item has no history at all (a freshly added manual item with no
+ *  price). */
+export function priceStatsFor(db: Database, itemId: string): PriceStats | null {
+  const lowest = db
+    .query(
+      `SELECT price_cents, currency, observed_at FROM price_history WHERE item_id = ?
+       ORDER BY price_cents ASC, observed_at ASC, rowid ASC LIMIT 1`,
+    )
+    .get(itemId) as { price_cents: number; currency: string | null; observed_at: string } | undefined;
+  if (!lowest) return null;
+
+  const earliest = db
+    .query(
+      `SELECT price_cents, currency FROM price_history WHERE item_id = ?
+       ORDER BY observed_at ASC, rowid ASC LIMIT 1`,
+    )
+    .get(itemId) as { price_cents: number; currency: string | null } | undefined;
+
+  return {
+    lowestCents: formatPrice(lowest.price_cents),
+    lowestCurrency: lowest.currency,
+    lowestSeenAt: lowest.observed_at,
+    atAddCents: earliest ? formatPrice(earliest.price_cents) : null,
+    atAddCurrency: earliest?.currency ?? null,
+  };
+}
+
+/** A user-entered price is recorded twice: as the item's provenance
+ *  ('manual') and as an append-only history observation. Manual prices are
+ *  never overwritten by a re-check (enrich.ts owns that rule). */
+function recordManualPrice(db: Database, itemId: string, cents: number, currency: string | null): void {
+  db.run("UPDATE wishlist_items SET price_source = 'manual' WHERE id = ?", [itemId]);
+  db.run(
+    `INSERT INTO price_history (id, item_id, price_cents, currency, source, observed_at)
+     VALUES (?, ?, ?, ?, 'manual', ?)`,
+    [randomUUID(), itemId, cents, currency, new Date().toISOString()],
+  );
+}
+
+/** Hostname slug used to skip a candidate on the item's own site (the
+ *  searxng module's exclusion rule, mirrored for the route's input). */
+function hostOf(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+/** The viewer's honesty gate (users.hints_enabled). Missing row/value = on. */
+function hintsDisabledFor(db: Database, userId: string): boolean {
+  const row = db.query("SELECT hints_enabled FROM users WHERE id = ?").get(userId) as
+    | { hints_enabled: number }
+    | undefined;
+  return row ? row.hints_enabled === 0 : false;
 }
 
 /** Non-owner view: booleans only; claimant identity is never exposed. */
@@ -104,7 +177,8 @@ function toPublicItem(row: ItemRow, viewerId: string): PublicItem {
 const ITEM_SELECT = `
   SELECT id, user_id, title, url, image_path, image_source, price_cents, currency, notes, tags,
          sort_order, created_at, updated_at, claimed_by, claimed_at,
-         fetch_state, last_fetch_error, site_name, hint_price_cents, hint_currency, hint_source_url
+         fetch_state, last_fetch_error, site_name, hint_price_cents, hint_currency, hint_source_url,
+         price_source, cheaper_url
   FROM wishlist_items`;
 
 function getItem(db: Database, id: string): ItemRow | undefined {
@@ -117,7 +191,17 @@ function parseTagsInput(value: unknown): { ok: true; tags: string[] } | { ok: fa
   return { ok: true, tags: value };
 }
 
-export function wishlistRoutes(db: Database, imagesDir: string, queue: EnrichmentQueue) {
+export interface PriceHintsConfig {
+  /** SearXNG base URL; unset → the on-demand candidates route reports 503. */
+  searxngUrl?: string;
+}
+
+export function wishlistRoutes(
+  db: Database,
+  imagesDir: string,
+  queue: EnrichmentQueue,
+  hints: PriceHintsConfig = {},
+) {
   return {
     "/api/users/:id/wishlist": {
       GET: requireSession(db, (req, viewer) => {
@@ -131,9 +215,10 @@ export function wishlistRoutes(db: Database, imagesDir: string, queue: Enrichmen
           .all(req.params.id) as ItemRow[];
 
         // The invariant: when the viewer IS the owner, claim fields are
-        // projected OUT (OwnedItem has no claim fields at all).
+        // projected OUT (OwnedItem has no claim fields at all). Price history
+        // stats and the cheaper link are owner data too.
         if (viewer.id === req.params.id) {
-          return jsonOk(rows.map(toOwnedItem));
+          return jsonOk(rows.map((row) => toOwnedItem(db, row)));
         }
         return jsonOk(rows.map((row) => toPublicItem(row, viewer.id)));
       }),
@@ -149,8 +234,8 @@ export function wishlistRoutes(db: Database, imagesDir: string, queue: Enrichmen
         // same value under WAL.
         db.run(
           `INSERT INTO wishlist_items
-             (id, user_id, title, url, price_cents, currency, notes, tags, fetch_state, sort_order)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,
+             (id, user_id, title, url, price_cents, currency, cheaper_url, notes, tags, fetch_state, sort_order)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
              (SELECT COALESCE(MAX(sort_order), 0) + 10 FROM wishlist_items WHERE user_id = ?))`,
           [
             id,
@@ -159,14 +244,20 @@ export function wishlistRoutes(db: Database, imagesDir: string, queue: Enrichmen
             parsed.url,
             parsed.priceCents,
             parsed.currency,
+            parsed.cheaperUrl,
             parsed.notes,
             parsed.tags.length ? JSON.stringify(parsed.tags) : null,
             parsed.hasUrl ? "pending" : "complete",
             viewer.id,
           ],
         );
+        // A price the user typed is a 'manual' observation: it is snapshotted
+        // and never overwritten by a re-check.
+        if (parsed.priceCents !== null) {
+          recordManualPrice(db, id, parsed.priceCents, parsed.currency);
+        }
         if (parsed.hasUrl) queue.enqueue(id);
-        return jsonOk(toOwnedItem(getItem(db, id) as ItemRow), 201);
+        return jsonOk(toOwnedItem(db, getItem(db, id) as ItemRow), 201);
       }),
     },
     "/api/wishlist/order": {
@@ -256,6 +347,16 @@ export function wishlistRoutes(db: Database, imagesDir: string, queue: Enrichmen
           sets.push("currency = ?");
           values.push(body.currency === null ? null : body.currency.trim().toUpperCase());
         }
+        if (body.cheaperUrl !== undefined) {
+          if (body.cheaperUrl !== null && typeof body.cheaperUrl !== "string") {
+            return jsonError(400, "cheaperUrl must be a string or null");
+          }
+          const parsedCheaper =
+            body.cheaperUrl === null ? { ok: true as const, url: null } : parseUrlInput(body.cheaperUrl, "cheaperUrl");
+          if (!parsedCheaper.ok) return parsedCheaper.error;
+          sets.push("cheaper_url = ?");
+          values.push(parsedCheaper.url);
+        }
         if (body.notes !== undefined) {
           if (body.notes !== null && typeof body.notes !== "string") {
             return jsonError(400, "notes must be a string or null");
@@ -282,7 +383,13 @@ export function wishlistRoutes(db: Database, imagesDir: string, queue: Enrichmen
           values.push(new Date().toISOString());
           db.run(`UPDATE wishlist_items SET ${sets.join(", ")} WHERE id = ?`, [...values, item.id]);
         }
-        return jsonOk(toOwnedItem(getItem(db, item.id) as ItemRow));
+        // A PATCHed price is a new manual observation: snapshot it (with the
+        // currency the row now carries — the ledger must match the item).
+        const updated = getItem(db, item.id) as ItemRow;
+        if (body.priceCents !== undefined && updated.price_cents !== null) {
+          recordManualPrice(db, item.id, updated.price_cents, updated.currency);
+        }
+        return jsonOk(toOwnedItem(db, getItem(db, item.id) as ItemRow));
       }),
       DELETE: requireSession(db, (req, viewer) => {
         const item = getItem(db, req.params.id);
@@ -306,7 +413,38 @@ export function wishlistRoutes(db: Database, imagesDir: string, queue: Enrichmen
           [new Date().toISOString(), item.id],
         );
         queue.enqueue(item.id);
-        return jsonOk(toOwnedItem(getItem(db, item.id) as ItemRow), 202);
+        return jsonOk(toOwnedItem(db, getItem(db, item.id) as ItemRow), 202);
+      }),
+    },
+    "/api/wishlist/items/:id/hints": {
+      /** On-demand, owner-only, display-only: up to 3 title-derived price
+       *  candidates from SearXNG. Nothing is persisted and nothing here is
+       *  verified — the UI labels every row as unverified. */
+      POST: requireSession(db, async (req, viewer) => {
+        const item = getItem(db, req.params.id);
+        if (!item) return jsonError(404, "Item not found");
+        if (item.user_id !== viewer.id) return jsonError(403, "Only the owner can check prices");
+
+        const disabled = hintsDisabledFor(db, viewer.id);
+        if (!hints.searxngUrl) {
+          if (disabled) return jsonOk({ hints: [], disabled: true } satisfies PriceHintsResponse);
+          return jsonError(503, "Price search is not configured");
+        }
+        if (disabled) return jsonOk({ hints: [], disabled: true } satisfies PriceHintsResponse);
+
+        const candidates = await searchPriceCandidates(item.title, hostOf(item.url), {
+          baseUrl: hints.searxngUrl,
+        });
+        const body: PriceHintsResponse = {
+          hints: candidates.map((c) => ({
+            priceCents: formatPrice(c.priceCents),
+            currency: c.currency,
+            sourceUrl: c.sourceUrl,
+            sourceTitle: c.sourceTitle,
+          })),
+          disabled: false,
+        };
+        return jsonOk(body);
       }),
     },
     "/api/wishlist/items/:id/claim": {
@@ -364,7 +502,7 @@ export function wishlistRoutes(db: Database, imagesDir: string, queue: Enrichmen
 async function parseItemBody(
   req: RouteRequest,
 ): Promise<
-  | { ok: true; title: string; url: string | null; hasUrl: boolean; priceCents: number | null; currency: string | null; notes: string | null; tags: string[] }
+  | { ok: true; title: string; url: string | null; hasUrl: boolean; priceCents: number | null; currency: string | null; cheaperUrl: string | null; notes: string | null; tags: string[] }
   | { ok: false; error: Response }
 > {
   let body: Record<string, unknown>;
@@ -389,23 +527,30 @@ async function parseItemBody(
   return finalizeItemBody(body, title, url, hasUrl);
 }
 
-function parseUrlInput(value: unknown): { ok: true; url: string | null } | { ok: false; error: Response } {
+function parseUrlInput(
+  value: unknown,
+  field = "url",
+): { ok: true; url: string | null } | { ok: false; error: Response } {
   if (value === undefined || value === null) return { ok: true, url: null };
-  if (typeof value !== "string") return { ok: false, error: jsonError(400, "url must be a string or null") };
+  if (typeof value !== "string") {
+    return { ok: false, error: jsonError(400, `${field} must be a string or null`) };
+  }
   const url = value.trim();
   if (!url) return { ok: true, url: null };
-  if (url.length > 2048) return { ok: false, error: jsonError(400, "url is too long (max 2048 characters)") };
+  if (url.length > 2048) {
+    return { ok: false, error: jsonError(400, `${field} is too long (max 2048 characters)`) };
+  }
   let parsed: URL;
   try {
     parsed = new URL(url);
   } catch {
-    return { ok: false, error: jsonError(400, "url must be a valid http(s) URL") };
+    return { ok: false, error: jsonError(400, `${field} must be a valid http(s) URL`) };
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    return { ok: false, error: jsonError(400, "url must be http(s)") };
+    return { ok: false, error: jsonError(400, `${field} must be http(s)`) };
   }
   if (!parsed.hostname.includes(".")) {
-    return { ok: false, error: jsonError(400, "url must have a valid hostname") };
+    return { ok: false, error: jsonError(400, `${field} must have a valid hostname`) };
   }
   return { ok: true, url };
 }
@@ -424,7 +569,7 @@ function finalizeItemBody(
   url: string | null,
   hasUrl: boolean,
 ):
-  | { ok: true; title: string; url: string | null; hasUrl: boolean; priceCents: number | null; currency: string | null; notes: string | null; tags: string[] }
+  | { ok: true; title: string; url: string | null; hasUrl: boolean; priceCents: number | null; currency: string | null; cheaperUrl: string | null; notes: string | null; tags: string[] }
   | { ok: false; error: Response } {
   let priceCents: number | null = null;
   if (body.priceCents !== undefined && body.priceCents !== null) {
@@ -442,6 +587,10 @@ function finalizeItemBody(
   }
   const currency = typeof body.currency === "string" ? body.currency.trim().toUpperCase() : null;
 
+  // Same validation as the item's own link: http(s), dotted hostname, ≤2048.
+  const cheaperParsed = parseUrlInput(body.cheaperUrl, "cheaperUrl");
+  if (!cheaperParsed.ok) return cheaperParsed;
+
   if (body.notes !== undefined && body.notes !== null && typeof body.notes !== "string") {
     return { ok: false, error: jsonError(400, "notes must be a string or null") };
   }
@@ -450,5 +599,15 @@ function finalizeItemBody(
   const tagsParsed = parseTagsInput(body.tags);
   if (!tagsParsed.ok) return { ok: false, error: jsonError(400, "tags must be an array of strings") };
 
-  return { ok: true, title, url, hasUrl, priceCents, currency, notes, tags: tagsParsed.tags };
+  return {
+    ok: true,
+    title,
+    url,
+    hasUrl,
+    priceCents,
+    currency,
+    cheaperUrl: cheaperParsed.url,
+    notes,
+    tags: tagsParsed.tags,
+  };
 }

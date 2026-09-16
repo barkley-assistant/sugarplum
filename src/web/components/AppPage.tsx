@@ -3,6 +3,8 @@ import type {
   AdminUser,
   Me,
   OwnedItem,
+  PriceHintState,
+  PriceHintsResponse,
   PublicItem,
   WishlistSummaryRow,
 } from "../../shared/types";
@@ -36,6 +38,9 @@ function readStoredMe(): Me | null {
         username: parsed.username ?? "",
         displayName: parsed.displayName ?? "",
         isAdmin: Boolean(parsed.isAdmin),
+        // Older cached payloads predate the field; default to hints ON (the
+        // server default) so the offline shell matches a fresh session.
+        hintsEnabled: parsed.hintsEnabled !== false,
       };
     }
   } catch {
@@ -85,6 +90,7 @@ export function AppPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [hintStates, setHintStates] = useState<Record<string, PriceHintState>>({});
   const toast = useToast();
   const reorder = useDragReorder(ownItems, onReorder);
   const install = useInstallPrompt();
@@ -208,6 +214,7 @@ export function AppPage() {
     if (values.currency) payload.currency = values.currency;
     if (values.notes) payload.notes = values.notes;
     if (values.tags.length) payload.tags = values.tags;
+    if (values.cheaperUrl) payload.cheaperUrl = values.cheaperUrl;
 
     const res = await fetch("/api/wishlist/items", {
       method: "POST",
@@ -231,6 +238,8 @@ export function AppPage() {
     if (values.currency) payload.currency = values.currency;
     if (values.notes) payload.notes = values.notes;
     if (values.tags.length) payload.tags = values.tags;
+    // An emptied field clears the stored link (null), never a stale value.
+    payload.cheaperUrl = values.cheaperUrl || null;
 
     const res = await fetch(`/api/wishlist/items/${id}`, {
       method: "PATCH",
@@ -276,7 +285,53 @@ export function AppPage() {
       toast(S.errors.retryItem, "danger");
       return;
     }
-    if (me) await refreshOwnList(me.id);
+    if (me) {
+      await refreshOwnList(me.id);
+      // The 202 means "queued": poll so a moved price and the new snapshot
+      // render without a manual reload.
+      void pollAfterCreate(me.id);
+    }
+  }
+
+  /** On-demand, display-only candidate hints for one item (owner-only route).
+   *  Nothing here is persisted or verified. */
+  async function checkPrices(id: string) {
+    setHintStates((prev) => ({ ...prev, [id]: { status: "loading", hints: [], disabled: false } }));
+    let res: Response;
+    try {
+      res = await fetch(`/api/wishlist/items/${id}/hints`, { method: "POST" });
+    } catch {
+      setHintStates((prev) => ({ ...prev, [id]: { status: "error", hints: [], disabled: false } }));
+      toast(S.errors.checkPrices, "danger");
+      return;
+    }
+    if (!res.ok) {
+      setHintStates((prev) => ({ ...prev, [id]: { status: "error", hints: [], disabled: false } }));
+      toast(S.errors.checkPrices, "danger");
+      return;
+    }
+    const body = (await res.json()) as PriceHintsResponse;
+    setHintStates((prev) => ({
+      ...prev,
+      [id]: { status: "done", hints: body.hints, disabled: body.disabled },
+    }));
+  }
+
+  async function setHints(enabled: boolean) {
+    if (!me) return;
+    try {
+      const res = await fetch("/api/auth/me/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hintsEnabled: enabled }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = { ...me, hintsEnabled: enabled };
+      setMe(updated);
+      writeStoredMe(updated);
+    } catch {
+      toast(S.errors.changeSettings, "danger");
+    }
   }
 
   /** After a URL-only add, poll the list a few times so "Fetching details…"
@@ -424,6 +479,8 @@ export function AppPage() {
         onEdit={editItem}
         onDelete={deleteItem}
         onRefresh={refreshItem}
+        onCheckPrices={checkPrices}
+        hintStates={hintStates}
         draggingId={reorder.draggingId}
         renderDragHandle={(id) => (
           <button type="button" {...reorder.getHandleProps(id)}>
@@ -462,16 +519,28 @@ export function AppPage() {
             onLogout={logout}
             onAdmin={scrollToAdmin}
             extra={
-              install.canInstall ? (
+              <>
                 <button
                   type="button"
                   className="menu-item"
-                  role="menuitem"
-                  onClick={install.promptInstall}
+                  role="menuitemcheckbox"
+                  aria-checked={me.hintsEnabled}
+                  onClick={() => void setHints(!me.hintsEnabled)}
                 >
-                  {S.pwa.install}
+                  <span>{S.settings.hintsToggle}</span>
+                  <span className="menu-item-state">{me.hintsEnabled ? S.settings.on : S.settings.off}</span>
                 </button>
-              ) : undefined
+                {install.canInstall && (
+                  <button
+                    type="button"
+                    className="menu-item"
+                    role="menuitem"
+                    onClick={install.promptInstall}
+                  >
+                    {S.pwa.install}
+                  </button>
+                )}
+              </>
             }
           />
         </div>

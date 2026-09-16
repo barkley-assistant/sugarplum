@@ -6,6 +6,9 @@ export interface Me {
   username: string;
   displayName: string;
   isAdmin: boolean;
+  /** Honesty gate: when false the UI hides automated price-search hints and
+   *  the server skips attaching them during enrichment. */
+  hintsEnabled: boolean;
 }
 
 export interface AdminUser {
@@ -47,6 +50,49 @@ export interface OwnedItem extends CommonItem {
   hintPriceCents: string | null;
   hintCurrency: string | null;
   hintSourceUrl: string | null;
+  /** Who wrote priceCents: 'scrape' | 'searxng-hint' | 'manual', or null for
+   *  rows that predate the column (read as user-authored). */
+  priceSource: string | null;
+  /** The owner's manual "found it cheaper at" link. Never a public field. */
+  cheaperUrl: string | null;
+  /** Lowest + earliest price observation from price_history; null when the
+   *  item has no history rows at all. */
+  priceStats: PriceStats | null;
+}
+
+/** Derived summary of an item's price_history ledger. Every money value is a
+ *  decimal string, like the rest of the API. */
+export interface PriceStats {
+  lowestCents: string;
+  lowestCurrency: string | null;
+  /** ISO timestamp of the first observation of the lowest price. */
+  lowestSeenAt: string | null;
+  /** The earliest observation — the price the item was added at. */
+  atAddCents: string | null;
+  atAddCurrency: string | null;
+}
+
+/** One automated "prices seen elsewhere" candidate. Display-only: never
+ *  persisted, never presented as a verified comparison. */
+export interface PriceCandidate {
+  priceCents: string;
+  currency: string;
+  sourceUrl: string;
+  sourceTitle: string;
+}
+
+/** POST /api/wishlist/items/:id/hints response. `disabled` means the viewer
+ *  turned price hints off in settings — not that the search found nothing. */
+export interface PriceHintsResponse {
+  hints: PriceCandidate[];
+  disabled: boolean;
+}
+
+/** Client-side state of one on-demand candidates lookup. */
+export interface PriceHintState {
+  status: "loading" | "done" | "error";
+  hints: PriceCandidate[];
+  disabled: boolean;
 }
 
 /** Viewer is not the owner: only booleans, never claimant identity. */
@@ -69,6 +115,7 @@ export interface CreateItemInput {
   currency?: string;
   notes?: string;
   tags?: string[];
+  cheaperUrl?: string;
 }
 
 export interface UpdateItemInput {
@@ -79,6 +126,8 @@ export interface UpdateItemInput {
   notes?: string;
   tags?: string[];
   sortOrder?: number;
+  /** Cleared with null (or an empty string). */
+  cheaperUrl?: string | null;
 }
 
 /** PUT /api/wishlist/order body: the FULL ordered list of the viewer's item

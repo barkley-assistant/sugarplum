@@ -14,6 +14,19 @@ export interface PriceHint {
   title: string;
 }
 
+/** One "prices seen elsewhere" candidate. Display-only: a snippet price is
+ *  NOT a verified comparison (research §Q2c), so nothing here may be
+ *  persisted as truth. */
+export interface PriceCandidate {
+  priceCents: number;
+  currency: string;
+  sourceUrl: string;
+  sourceTitle: string;
+}
+
+/** Hard cap on the candidates returned for one lookup. */
+export const PRICE_CANDIDATE_LIMIT = 3;
+
 export interface SearxngDeps {
   baseUrl: string;
   fetchImpl?: SearxngFetch;
@@ -49,6 +62,25 @@ export function buildSearchQuery(url: string): string {
   return joined.length > 120 ? joined.slice(0, 120) : joined;
 }
 
+/** Title-derived query for the on-demand candidates lookup: the scraped
+ *  title's terms (deduped, ≤ 6) plus "buy", capped like buildSearchQuery. */
+export function buildTitleQuery(title: string): string {
+  const terms: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of title.split(/\s+/)) {
+    const term = raw.trim();
+    if (!term) continue;
+    const key = term.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    terms.push(term);
+    if (terms.length >= 6) break;
+  }
+  if (terms.length === 0) return "";
+  const joined = [...terms, "buy"].join(" ");
+  return joined.length > 120 ? joined.slice(0, 120) : joined;
+}
+
 export async function searchPriceHint(query: string, deps: SearxngDeps): Promise<PriceHint | null> {
   const fetchImpl = deps.fetchImpl ?? fetch;
   const own = ownHost(query);
@@ -80,11 +112,7 @@ export async function searchPriceHint(query: string, deps: SearxngDeps): Promise
     const resultHost = hostOf(result.url);
     if (resultHost && own && resultHost === own) continue;
 
-    const content = typeof result.content === "string" ? result.content : "";
-    const source = `${result.title} ${content}`;
-    const match = PRICE_RE.exec(source);
-    if (!match) continue;
-    const parsed = parseSnippetPrice(source, match);
+    const parsed = priceFromResult(result);
     if (!parsed) continue;
 
     return {
@@ -95,6 +123,74 @@ export async function searchPriceHint(query: string, deps: SearxngDeps): Promise
     };
   }
   return null;
+}
+
+/** On-demand "prices seen elsewhere": up to PRICE_CANDIDATE_LIMIT snippet
+ *  prices for a title, same wire contract as searchPriceHint (one request,
+ *  never throws, [] on any failure). Results on `excludeHost` (the item's own
+ *  shop) are skipped, as are duplicate URLs. Nothing is persisted. */
+export async function searchPriceCandidates(
+  title: string,
+  excludeHost: string | null,
+  deps: SearxngDeps,
+): Promise<PriceCandidate[]> {
+  const query = buildTitleQuery(title);
+  if (!query) return [];
+
+  const fetchImpl = deps.fetchImpl ?? fetch;
+
+  let res: Response;
+  try {
+    res = await fetchImpl(`${deps.baseUrl}/search?q=${encodeURIComponent(query)}&format=json`, {
+      signal: AbortSignal.timeout(deps.timeoutMs ?? 5_000),
+    });
+  } catch {
+    return [];
+  }
+  if (!res.ok) return [];
+
+  let payload: { results?: unknown[] };
+  try {
+    payload = (await res.json()) as { results?: unknown[] };
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(payload.results)) return [];
+
+  const candidates: PriceCandidate[] = [];
+  const seenUrls = new Set<string>();
+  for (const raw of payload.results) {
+    if (candidates.length >= PRICE_CANDIDATE_LIMIT) break;
+    if (typeof raw !== "object" || raw === null) continue;
+    const result = raw as Record<string, unknown>;
+    if (typeof result.url !== "string" || typeof result.title !== "string") continue;
+    if (seenUrls.has(result.url)) continue;
+
+    const resultHost = hostOf(result.url);
+    if (resultHost && excludeHost && resultHost === excludeHost.toLowerCase()) continue;
+
+    const parsed = priceFromResult(result);
+    if (!parsed) continue;
+
+    seenUrls.add(result.url);
+    candidates.push({
+      priceCents: parsed.cents,
+      currency: parsed.currency,
+      sourceUrl: result.url,
+      sourceTitle: result.title,
+    });
+  }
+  return candidates;
+}
+
+/** The shared snippet rule for both hint shapes: one PRICE_RE hit over
+ *  title + content, parsed with its comma guards. */
+function priceFromResult(result: Record<string, unknown>): { cents: number; currency: string } | null {
+  const content = typeof result.content === "string" ? result.content : "";
+  const title = typeof result.title === "string" ? result.title : "";
+  const match = PRICE_RE.exec(`${title} ${content}`);
+  if (!match) return null;
+  return parseSnippetPrice(`${title} ${content}`, match);
 }
 
 /** Best-effort SearXNG image fallback (issue #12 "image via search"). Same

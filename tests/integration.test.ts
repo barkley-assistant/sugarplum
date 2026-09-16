@@ -1,7 +1,14 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { serve } from "bun";
 import { createTestApp, type Jar, type TestAppHandle } from "./helpers";
-import type { AdminUser, OwnedItem, PublicItem, WishlistSummaryRow } from "../src/shared/types";
+import type {
+  AdminUser,
+  Me,
+  OwnedItem,
+  PriceHintsResponse,
+  PublicItem,
+  WishlistSummaryRow,
+} from "../src/shared/types";
 
 let app: TestAppHandle;
 let admin: Jar;
@@ -538,6 +545,336 @@ describe("reorder", () => {
     expect(bad.status).toBe(400);
     const missing = await jar.request("PUT", "/api/wishlist/order", {});
     expect(missing.status).toBe(400);
+  });
+});
+
+describe("price history", () => {
+  /** A dedicated user per test: the shared admin/alice lists accumulate
+   *  items, and these assertions count history rows per item. */
+  async function newIsolatedUser(prefix: string): Promise<{ jar: Jar; id: string }> {
+    await login(admin, "admin", "admin-password");
+    const name = `${prefix}-${Math.random().toString(36).slice(2, 8)}`;
+    const id = await createUser(admin, name, "pass", prefix);
+    const jar = app.newJar();
+    await login(jar, name, "pass");
+    return { jar, id };
+  }
+
+  async function listItem(jar: Jar, userId: string, itemId: string): Promise<OwnedItem> {
+    const res = await jar.request("GET", `/api/users/${userId}/wishlist`);
+    expect(res.status).toBe(200);
+    const items = (await res.json()) as OwnedItem[];
+    return items.find((i) => i.id === itemId) as OwnedItem;
+  }
+
+  test("manual POST price → price_source 'manual' + one 'manual' snapshot with stats", async () => {
+    const { jar, id } = await newIsolatedUser("price-manual");
+    const item = await createItem(jar, "Manual price probe", {
+      priceCents: "12.50",
+      currency: "GBP",
+    });
+
+    expect(item.priceSource).toBe("manual");
+    expect(item.priceStats?.lowestCents).toBe("12.50");
+    expect(item.priceStats?.atAddCents).toBe("12.50");
+    expect(item.cheaperUrl).toBeNull();
+
+    const rows = app.app.db
+      .query("SELECT price_cents, currency, source FROM price_history WHERE item_id = ?")
+      .all(item.id) as { price_cents: number; currency: string; source: string }[];
+    expect(rows).toEqual([{ price_cents: 1250, currency: "GBP", source: "manual" }]);
+
+    const fromList = await listItem(jar, id, item.id);
+    expect(fromList.priceSource).toBe("manual");
+    expect(fromList.priceStats?.atAddCurrency).toBe("GBP");
+  });
+
+  test("PATCH priceCents → a second manual snapshot (append-only ledger)", async () => {
+    const { jar, id } = await newIsolatedUser("price-patch");
+    const item = await createItem(jar, "Patched price probe", {
+      priceCents: "12.50",
+      currency: "GBP",
+    });
+
+    const patched = await jar.request("PATCH", `/api/wishlist/items/${item.id}`, {
+      priceCents: "10.00",
+    });
+    expect(patched.status).toBe(200);
+    const body = (await patched.json()) as OwnedItem;
+    expect(body.priceCents).toBe("10.00");
+    expect(body.priceSource).toBe("manual");
+
+    const rows = app.app.db
+      .query("SELECT price_cents, source FROM price_history WHERE item_id = ? ORDER BY rowid")
+      .all(item.id) as { price_cents: number; source: string }[];
+    expect(rows).toEqual([
+      { price_cents: 1250, source: "manual" },
+      { price_cents: 1000, source: "manual" },
+    ]);
+
+    // Lowest is the newer, lower price; "at add" stays the first observation.
+    const fromList = await listItem(jar, id, item.id);
+    expect(fromList.priceStats?.lowestCents).toBe("10.00");
+    expect(fromList.priceStats?.atAddCents).toBe("12.50");
+  });
+
+  test("priceStats: lowest is the minimum, at-add is the earliest observation", async () => {
+    const { jar, id } = await newIsolatedUser("price-stats");
+    const item = await createItem(jar, "Stats probe");
+
+    const insert = app.app.db.query(
+      `INSERT INTO price_history (id, item_id, price_cents, currency, source, observed_at)
+       VALUES (?, ?, ?, ?, 'scrape', ?)`,
+    );
+    insert.run(crypto.randomUUID(), item.id, 1200, "GBP", "2026-01-01T00:00:00.000Z");
+    insert.run(crypto.randomUUID(), item.id, 1000, "GBP", "2026-02-01T00:00:00.000Z");
+    insert.run(crypto.randomUUID(), item.id, 1500, "GBP", "2026-03-01T00:00:00.000Z");
+
+    const fromList = await listItem(jar, id, item.id);
+    expect(fromList.priceStats).toEqual({
+      lowestCents: "10.00",
+      lowestCurrency: "GBP",
+      lowestSeenAt: "2026-02-01T00:00:00.000Z",
+      atAddCents: "12.00",
+      atAddCurrency: "GBP",
+    });
+  });
+
+  test("an item with no price observations → priceStats null", async () => {
+    const { jar, id } = await newIsolatedUser("price-none");
+    const item = await createItem(jar, "No price probe");
+    const fromList = await listItem(jar, id, item.id);
+    expect(fromList.priceStats).toBeNull();
+  });
+
+  test("price stats and the cheaper link are owner-only (absent from the public projection)", async () => {
+    const { jar, id } = await newIsolatedUser("price-private");
+    const item = await createItem(jar, "Private stats probe", {
+      priceCents: "4.99",
+      currency: "GBP",
+      cheaperUrl: "https://elsewhere.example.com/cheaper",
+    });
+
+    const bob = app.newJar();
+    await login(bob, "bob", "bob-pass");
+    const res = await bob.request("GET", `/api/users/${id}/wishlist`);
+    expect(res.status).toBe(200);
+    const items = (await res.json()) as PublicItem[];
+    const dto = items.find((i) => i.id === item.id) as PublicItem;
+    expect("priceStats" in dto).toBe(false);
+    expect("priceSource" in dto).toBe(false);
+    expect("cheaperUrl" in dto).toBe(false);
+  });
+
+  test("cheaper link round-trip: POST, PATCH, clear with null; invalid → 400", async () => {
+    const { jar, id } = await newIsolatedUser("price-cheaper");
+    const item = await createItem(jar, "Cheaper link probe", {
+      cheaperUrl: "https://elsewhere.example.com/first",
+    });
+    expect(item.cheaperUrl).toBe("https://elsewhere.example.com/first");
+
+    const changed = await jar.request("PATCH", `/api/wishlist/items/${item.id}`, {
+      cheaperUrl: "https://other.example.com/second",
+    });
+    expect(changed.status).toBe(200);
+    expect(((await changed.json()) as OwnedItem).cheaperUrl).toBe("https://other.example.com/second");
+
+    // Clearing does NOT touch the price ledger.
+    const before = app.app.db
+      .query("SELECT COUNT(*) AS n FROM price_history WHERE item_id = ?")
+      .get(item.id) as { n: number };
+    const cleared = await jar.request("PATCH", `/api/wishlist/items/${item.id}`, { cheaperUrl: null });
+    expect(cleared.status).toBe(200);
+    expect(((await cleared.json()) as OwnedItem).cheaperUrl).toBeNull();
+    const after = app.app.db
+      .query("SELECT COUNT(*) AS n FROM price_history WHERE item_id = ?")
+      .get(item.id) as { n: number };
+    expect(after.n).toBe(before.n);
+
+    const invalid = await jar.request("POST", "/api/wishlist/items", {
+      title: "Bad cheaper link",
+      cheaperUrl: "not a url",
+    });
+    expect(invalid.status).toBe(400);
+    expect(((await invalid.json()) as { error: string }).error).toContain("cheaperUrl");
+  });
+
+  test("settings: PUT /api/auth/me/settings toggles the hints gate and /api/auth/me reflects it", async () => {
+    const { jar } = await newIsolatedUser("price-settings");
+
+    const me = await jar.request("GET", "/api/auth/me");
+    expect(((await me.json()) as Me).hintsEnabled).toBe(true); // default ON
+
+    const off = await jar.request("PUT", "/api/auth/me/settings", { hintsEnabled: false });
+    expect(off.status).toBe(200);
+    expect(((await off.json()) as Me).hintsEnabled).toBe(false);
+
+    const afterOff = await jar.request("GET", "/api/auth/me");
+    expect(((await afterOff.json()) as Me).hintsEnabled).toBe(false);
+
+    const on = await jar.request("PUT", "/api/auth/me/settings", { hintsEnabled: true });
+    expect(on.status).toBe(200);
+    expect(((await on.json()) as Me).hintsEnabled).toBe(true);
+
+    const invalid = await jar.request("PUT", "/api/auth/me/settings", { hintsEnabled: "yes" });
+    expect(invalid.status).toBe(400);
+
+    const stranger = app.newJar();
+    const unauth = await stranger.request("PUT", "/api/auth/me/settings", { hintsEnabled: false });
+    expect(unauth.status).toBe(401);
+  });
+});
+
+describe("price hints route", () => {
+  test("owner POST /hints → ≤3 title-derived candidates (stubbed searxng); 403 non-owner; 404 unknown", async () => {
+    const seen: string[] = [];
+    const searx = serve({
+      port: 0,
+      fetch: (req) => {
+        seen.push(req.url);
+        return new Response(
+          JSON.stringify({
+            results: [
+              // The item's own shop — not a "hint" (research §Q2c noise).
+              {
+                title: "LEGO Architecture 21042 Statue of Liberty — John Lewis & Partners",
+                url: "https://own.example.com/p/1",
+                content: "£50.00",
+              },
+              // Same URL twice: deduped.
+              { title: "Liberty elsewhere", url: "https://a.example.com/p/1", content: "£44.99" },
+              { title: "Liberty elsewhere", url: "https://a.example.com/p/1", content: "£44.99" },
+              // No parseable price: skipped.
+              { title: "Review site", url: "https://review.example.com/x", content: "no price here" },
+              { title: "Reseller one", url: "https://b.example.com/p/1", content: "Only £42.00" },
+              { title: "Reseller two", url: "https://c.example.com/p/1", content: "€39,50" },
+              // Fourth valid price — must be cut by the cap.
+              { title: "Reseller three", url: "https://d.example.com/p/1", content: "£38.00" },
+            ],
+          }),
+        );
+      },
+    });
+    const hintApp = createTestApp({ searxngUrl: `http://127.0.0.1:${searx.port}` });
+    const jar = hintApp.newJar();
+    await login(jar, "admin", "admin-password");
+
+    try {
+      const created = await jar.request("POST", "/api/wishlist/items", {
+        title: "LEGO Architecture 21042 Statue of Liberty",
+        url: "https://own.example.com/p/1",
+      });
+      expect(created.status).toBe(201);
+      const item = (await created.json()) as OwnedItem;
+
+      const res = await jar.request("POST", `/api/wishlist/items/${item.id}/hints`);
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as PriceHintsResponse;
+      expect(body.disabled).toBe(false);
+      expect(body.hints.map((h) => h.sourceUrl)).toEqual([
+        "https://a.example.com/p/1",
+        "https://b.example.com/p/1",
+        "https://c.example.com/p/1",
+      ]);
+      expect(body.hints[0]).toEqual({
+        priceCents: "44.99",
+        currency: "GBP",
+        sourceUrl: "https://a.example.com/p/1",
+        sourceTitle: "Liberty elsewhere",
+      });
+      expect(body.hints[2].priceCents).toBe("39.50"); // comma-decimal guard holds
+
+      // Title-derived query, not the URL's path.
+      expect(seen[0]).toContain(encodeURIComponent("LEGO Architecture 21042 Statue of Liberty buy"));
+
+      // Nothing was persisted: still no direct price, no hint columns.
+      const row = hintApp.app.db
+        .query("SELECT price_cents, hint_price_cents FROM wishlist_items WHERE id = ?")
+        .get(item.id) as { price_cents: number | null; hint_price_cents: number | null };
+      expect(row.price_cents).toBeNull();
+      expect(row.hint_price_cents).toBeNull();
+
+      // Unauthenticated → 401; unknown id → 404.
+      const stranger = hintApp.newJar();
+      const unauth = await stranger.request("POST", `/api/wishlist/items/${item.id}/hints`);
+      expect(unauth.status).toBe(401);
+
+      const missing = await jar.request(
+        "POST",
+        "/api/wishlist/items/00000000-0000-0000-0000-000000000000/hints",
+      );
+      expect(missing.status).toBe(404);
+    } finally {
+      searx.stop(true);
+      await hintApp.cleanup();
+    }
+  });
+
+  test("non-owner POST /hints → 403 (separate user)", async () => {
+    const searx = serve({
+      port: 0,
+      fetch: () => new Response(JSON.stringify({ results: [] })),
+    });
+    const hintApp = createTestApp({ searxngUrl: `http://127.0.0.1:${searx.port}` });
+    const owner = hintApp.newJar();
+    await login(owner, "admin", "admin-password");
+    try {
+      const created = await owner.request("POST", "/api/wishlist/items", { title: "Owned thing" });
+      const item = (await created.json()) as OwnedItem;
+
+      // A second user, created through the admin session.
+      const created2 = await owner.request("POST", "/api/users", {
+        username: "hints-bob",
+        password: "bob-pass",
+        displayName: "Bob",
+      });
+      expect(created2.status).toBe(201);
+      const bob = hintApp.newJar();
+      await login(bob, "hints-bob", "bob-pass");
+
+      const res = await bob.request("POST", `/api/wishlist/items/${item.id}/hints`);
+      expect(res.status).toBe(403);
+    } finally {
+      searx.stop(true);
+      await hintApp.cleanup();
+    }
+  });
+
+  test("hints enabled = 0 → { hints: [], disabled: true } and no search is made", async () => {
+    let calls = 0;
+    const searx = serve({
+      port: 0,
+      fetch: () => {
+        calls++;
+        return new Response(JSON.stringify({ results: [] }));
+      },
+    });
+    const hintApp = createTestApp({ searxngUrl: `http://127.0.0.1:${searx.port}` });
+    const jar = hintApp.newJar();
+    await login(jar, "admin", "admin-password");
+    try {
+      const created = await jar.request("POST", "/api/wishlist/items", { title: "Hidden hints" });
+      const item = (await created.json()) as OwnedItem;
+
+      const off = await jar.request("PUT", "/api/auth/me/settings", { hintsEnabled: false });
+      expect(off.status).toBe(200);
+
+      const res = await jar.request("POST", `/api/wishlist/items/${item.id}/hints`);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ hints: [], disabled: true });
+      expect(calls).toBe(0);
+    } finally {
+      searx.stop(true);
+      await hintApp.cleanup();
+    }
+  });
+
+  test("no SearXNG configured → 503 (the default deployment)", async () => {
+    const alice = app.newJar();
+    await login(alice, "alice", "alice-pass");
+    const item = await createItem(alice, "Unconfigured hints probe");
+    const res = await alice.request("POST", `/api/wishlist/items/${item.id}/hints`);
+    expect(res.status).toBe(503);
   });
 });
 

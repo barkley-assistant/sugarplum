@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { OwnedItem, PublicItem } from "../../shared/types";
+import type { OwnedItem, PriceHintState, PublicItem } from "../../shared/types";
 import { S } from "../strings";
 import { ItemCard } from "./ItemCard";
 import type { ItemFormValues } from "./ItemForm";
@@ -17,6 +17,10 @@ interface ItemListProps {
   onClaim?: (id: string) => void | Promise<void>;
   onUnclaim?: (id: string) => void | Promise<void>;
   onRefresh?: (id: string) => void | Promise<void>;
+  /** Owner-only: runs the on-demand "prices seen elsewhere" lookup. */
+  onCheckPrices?: (id: string) => void | Promise<void>;
+  /** Owner-only: per-item candidates results, keyed by item id. */
+  hintStates?: Record<string, PriceHintState>;
   /** Builds the drag handle for a card (own lists only). */
   renderDragHandle?: (itemId: string) => ReactNode;
   /** Id of the card currently lifted, for the .dragging style. */
@@ -33,6 +37,8 @@ export function ItemList({
   onClaim,
   onUnclaim,
   onRefresh,
+  onCheckPrices,
+  hintStates,
   renderDragHandle,
   draggingId = null,
 }: ItemListProps) {
@@ -50,6 +56,8 @@ export function ItemList({
           onClaim={onClaim}
           onUnclaim={onUnclaim}
           onRefresh={onRefresh}
+          onCheckPrices={onCheckPrices}
+          hintState={hintStates?.[item.id]}
           dragHandle={renderDragHandle ? renderDragHandle(item.id) : undefined}
           dragging={draggingId === item.id}
         />
