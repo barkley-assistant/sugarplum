@@ -69,14 +69,38 @@ body {
 
   /* Velvet density — the compact row system (wave 26). */
   --row-thumb: 56px;
-  --row-gap: var(--sp-3);
-  --row-pad-y: var(--sp-2);
+  --row-gap: var(--sp-2);
+  --row-pad-y: 10px;
   --row-pad-x: var(--sp-3);
+  --list-gap: 6px;
 
   /* Surface elevation (subtle, no shadows on the feed). */
   --surface-row-hover: var(--surface-2);
+  --surface-row: transparent;
   --border-row: var(--border);
   --border-row-strong: var(--border-2);
+
+  /* Tier-1 type hierarchy (G1): title primary, price secondary, meta tertiary. */
+  --text-row-title: 0.9375rem;
+  --lh-row-title: 1.35;
+  --text-row-price: 0.9375rem;
+  --text-row-meta: 0.6875rem;
+
+  /* Price delta (G3): informative secondary line, never buy/sell signalling. */
+  --delta-down: var(--text-2);
+  --delta-up: var(--text-2);
+
+  /* Topbar (G4): quieter chrome, explicit height for the rail sticky offset. */
+  --topbar-pad-y: 6px;
+  --topbar-h: 48px;
+
+  /* Chips (G5): subordinate navigation, not buttons. Soft-tint active. */
+  --chip-bg: transparent;
+  --chip-border: transparent;
+  --chip-bg-active: var(--plum-050);
+  --chip-border-active: var(--plum-100);
+  --chip-text: var(--text-2);
+  --chip-text-active: var(--plum-600);
 
   /* Interaction states. */
   --ring: var(--plum-500);
@@ -120,6 +144,11 @@ body {
     --share-accent: #c4b5fd;
     --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.5);
     --surface-row-hover: var(--surface-2);
+    --chip-bg-active: var(--plum-050);
+    --chip-border-active: var(--plum-100);
+    --chip-text-active: var(--share-accent);
+    --delta-down: var(--text-2);
+    --delta-up: var(--text-2);
   }
 }
 
@@ -615,14 +644,6 @@ a.brand:hover {
   min-width: 0;
 }
 
-.item-card-main {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  flex: 1;
-  min-width: 0;
-}
-
 .item-thumb {
   width: 72px;
   height: 72px;
@@ -715,14 +736,6 @@ a.brand:hover {
   font-weight: 600;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-}
-
-.price-row {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--sp-1);
-  flex-shrink: 0;
 }
 
 .hint-price {
@@ -910,17 +923,6 @@ a.brand:hover {
   min-height: 36px;
   padding: 0.25rem 0.7rem;
   font-size: var(--text-sm);
-}
-
-.item-row-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
-}
-
-.item-row-actions button {
-  min-height: 40px;
 }
 
 .claimed-badge {
@@ -1415,13 +1417,6 @@ a.brand:hover {
 }
 
 .share-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
-/* Owner list actions: "Add item" beside "Share my list". */
-.list-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
