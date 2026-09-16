@@ -3,15 +3,15 @@ import { S } from "../strings";
 
 interface UserMenuProps {
   displayName: string;
-  isAdmin: boolean;
   onLogout: () => void | Promise<void>;
-  /** Scrolls to the admin panel (rendered on the page for admins). */
-  onAdmin?: () => void;
+  /** Navigates to /settings. Omitted on the settings page itself (the
+   *  brand mark links home instead). */
+  onSettings?: () => void;
   /** Extra menu items (e.g. the PWA install entry). */
   extra?: ReactNode;
 }
 
-export function UserMenu({ displayName, isAdmin, onLogout, onAdmin, extra }: UserMenuProps) {
+export function UserMenu({ displayName, onLogout, onSettings, extra }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -44,17 +44,17 @@ export function UserMenu({ displayName, isAdmin, onLogout, onAdmin, extra }: Use
       </button>
       {open && (
         <div className="menu-sheet" role="menu">
-          {isAdmin && onAdmin && (
+          {onSettings && (
             <button
               type="button"
               className="menu-item"
               role="menuitem"
               onClick={() => {
                 setOpen(false);
-                onAdmin();
+                onSettings();
               }}
             >
-              {S.admin.users}
+              {S.settings.openSettings}
             </button>
           )}
           {extra}

@@ -133,10 +133,12 @@ async function handleNonApiRequest(req: Request): Promise<Response> {
   // renders the shell; the app then requires login as usual and prefills the
   // add-item form from ?url= / ?title=. /share/<token> is the wave-10 public
   // link: the shell boots, then the SPA renders the anonymous share view.
+  // /settings is the wave-19 account + user-management page: same shell.
   let relative: string;
   if (url.pathname === "/") relative = "index.html";
   else if (url.pathname === "/login") relative = "login.html";
   else if (url.pathname === "/add") relative = "index.html";
+  else if (url.pathname === "/settings") relative = "index.html";
   else if (url.pathname.startsWith("/share/")) relative = "index.html";
   else relative = url.pathname.slice(1);
 

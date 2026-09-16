@@ -11,7 +11,7 @@ import { join } from "node:path";
  *  a new build atomically swaps the shell cache.
  */
 
-const SHELL_ROUTES = ["/", "/login", "/add"];
+const SHELL_ROUTES = ["/", "/login", "/add", "/settings"];
 const PWA_ASSETS = [
   "/manifest.webmanifest",
   "/assets/brand/pwa/icon-192.png",
