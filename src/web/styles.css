@@ -334,6 +334,21 @@ label {
   min-width: 0;
 }
 
+/* The settings page renders the brand as a home link; keep it visually
+ * identical to the main-page brand (no link color or underline). */
+a.brand {
+  color: inherit;
+  word-break: normal;
+}
+
+a.brand:hover {
+  text-decoration: none;
+}
+
+.page-title {
+  margin: 0;
+}
+
 .brand-mark {
   width: 32px;
   height: 32px;

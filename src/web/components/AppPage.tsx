@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import type {
-  AdminUser,
   Me,
   OwnedItem,
   PriceHintState,
@@ -13,7 +12,13 @@ import { useToast } from "../toast";
 import { useDragReorder } from "../reorder";
 import { parseShareTarget } from "../format";
 import { useInstallPrompt } from "../pwa/install";
-import { AdminPanel } from "./AdminPanel";
+import {
+  clearStoredIdentity,
+  readStoredMe,
+  readStoredSummary,
+  writeStoredMe,
+  writeStoredSummary,
+} from "../me-store";
 import { EmptyState } from "./EmptyState";
 import { FilterChips } from "./FilterChips";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
@@ -22,67 +27,10 @@ import { SharePanel } from "./SharePanel";
 import { SkeletonList } from "./SkeletonList";
 import { UserMenu } from "./UserMenu";
 
-/** localStorage keys. The cached `me` lets boot() render offline using the
- *  last known identity (so the SW's cached list bytes — keyed by user id —
- *  can be requested by URL). `summary` powers the user-switcher chips. */
-const STORAGE_KEY_ME = "sugarplum.me";
-const STORAGE_KEY_SUMMARY = "sugarplum.summary";
-
-function readStoredMe(): Me | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_ME);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<Me>;
-    if (typeof parsed.id === "string" && parsed.id.length > 0) {
-      return {
-        id: parsed.id,
-        username: parsed.username ?? "",
-        displayName: parsed.displayName ?? "",
-        isAdmin: Boolean(parsed.isAdmin),
-        // Older cached payloads predate the field; default to hints ON (the
-        // server default) so the offline shell matches a fresh session.
-        hintsEnabled: parsed.hintsEnabled !== false,
-      };
-    }
-  } catch {
-    // Corrupted entry — ignore and fall through to no-identity error.
-  }
-  return null;
-}
-
-function writeStoredMe(me: Me): void {
-  try {
-    localStorage.setItem(STORAGE_KEY_ME, JSON.stringify(me));
-  } catch {
-    // Storage may be unavailable (private mode); offline fallback just won't work.
-  }
-}
-
-function readStoredSummary(): WishlistSummaryRow[] | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_SUMMARY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed as WishlistSummaryRow[];
-  } catch {
-    // Ignore.
-  }
-  return null;
-}
-
-function writeStoredSummary(rows: WishlistSummaryRow[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY_SUMMARY, JSON.stringify(rows));
-  } catch {
-    // Ignore.
-  }
-}
-
 export function AppPage() {
   const [me, setMe] = useState<Me | null>(null);
   const [summary, setSummary] = useState<WishlistSummaryRow[]>([]);
   const [ownItems, setOwnItems] = useState<OwnedItem[]>([]);
-  const [users, setUsers] = useState<AdminUser[]>([]);
   const [viewing, setViewing] = useState<string | null>(null);
   const [otherItems, setOtherItems] = useState<PublicItem[]>([]);
   const [addOpen, setAddOpen] = useState(false);
@@ -143,7 +91,6 @@ export function AppPage() {
       if (share.url || share.title) setAddOpen(true);
 
       await Promise.all([refreshSummary(), refreshOwnList(meBody.id)]);
-      if (meBody.isAdmin) await refreshUsers();
       setBooted(true);
     } catch {
       const stored = readStoredMe();
@@ -186,11 +133,6 @@ export function AppPage() {
     } finally {
       setRefreshing(false);
     }
-  }
-
-  async function refreshUsers() {
-    const res = await fetch("/api/users");
-    if (res.ok) setUsers((await res.json()) as AdminUser[]);
   }
 
   async function viewList(userId: string) {
@@ -330,23 +272,6 @@ export function AppPage() {
     }));
   }
 
-  async function setHints(enabled: boolean) {
-    if (!me) return;
-    try {
-      const res = await fetch("/api/auth/me/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ hintsEnabled: enabled }),
-      });
-      if (!res.ok) throw new Error();
-      const updated = { ...me, hintsEnabled: enabled };
-      setMe(updated);
-      writeStoredMe(updated);
-    } catch {
-      toast(S.errors.changeSettings, "danger");
-    }
-  }
-
   /** After a URL-only add, poll the list a few times so "Fetching details…"
    *  resolves without user action (reuses the existing list GET; cheap). */
   async function pollAfterCreate(userId: string) {
@@ -380,21 +305,12 @@ export function AppPage() {
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    try {
-      localStorage.removeItem(STORAGE_KEY_ME);
-      localStorage.removeItem(STORAGE_KEY_SUMMARY);
-    } catch {
-      // Ignore.
-    }
+    clearStoredIdentity();
     location.href = "/login";
   }
 
-  async function adminChanged() {
-    await Promise.all([refreshSummary(), refreshUsers()]);
-  }
-
-  function scrollToAdmin() {
-    document.getElementById("admin-panel")?.scrollIntoView({ behavior: "smooth" });
+  function goToSettings() {
+    location.href = "/settings";
   }
 
   if (error && !me) {
@@ -529,32 +445,19 @@ export function AppPage() {
         <div className="topbar-right">
           <UserMenu
             displayName={me.displayName || me.username}
-            isAdmin={me.isAdmin}
             onLogout={logout}
-            onAdmin={scrollToAdmin}
+            onSettings={goToSettings}
             extra={
-              <>
+              install.canInstall ? (
                 <button
                   type="button"
                   className="menu-item"
-                  role="menuitemcheckbox"
-                  aria-checked={me.hintsEnabled}
-                  onClick={() => void setHints(!me.hintsEnabled)}
+                  role="menuitem"
+                  onClick={install.promptInstall}
                 >
-                  <span>{S.settings.hintsToggle}</span>
-                  <span className="menu-item-state">{me.hintsEnabled ? S.settings.on : S.settings.off}</span>
+                  {S.pwa.install}
                 </button>
-                {install.canInstall && (
-                  <button
-                    type="button"
-                    className="menu-item"
-                    role="menuitem"
-                    onClick={install.promptInstall}
-                  >
-                    {S.pwa.install}
-                  </button>
-                )}
-              </>
+              ) : undefined
             }
           />
         </div>
@@ -624,11 +527,6 @@ export function AppPage() {
           </div>
         )}
 
-        {me.isAdmin && (
-          <section id="admin-panel">
-            <AdminPanel users={users} onChanged={adminChanged} />
-          </section>
-        )}
       </div>
     </main>
   );
