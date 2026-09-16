@@ -24,6 +24,7 @@ import { FilterChips } from "./FilterChips";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { ItemList, ListHeading, type OwnerRef } from "./ItemList";
 import { SharePanel } from "./SharePanel";
+import { Sheet } from "./Sheet";
 import { SkeletonList } from "./SkeletonList";
 import { UserMenu } from "./UserMenu";
 
@@ -507,24 +508,17 @@ export function AppPage() {
           {renderList()}
         </section>
 
-        {!viewing && addOpen && (
-          <div
-            className="sheet-overlay"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) setAddOpen(false);
-            }}
-          >
-            <div className="sheet" role="dialog" aria-modal="true" aria-label={S.list.addItem}>
-              <h2>{S.list.addItem}</h2>
-              <ItemForm
-                submitLabel={S.list.addItem}
-                initialValues={prefill}
-                onSubmit={createItem}
-                onCancel={() => setAddOpen(false)}
-                autoFocusUrl
-              />
-            </div>
-          </div>
+        {!viewing && (
+          <Sheet open={addOpen} onClose={() => setAddOpen(false)} ariaLabel={S.list.addItem}>
+            <h2>{S.list.addItem}</h2>
+            <ItemForm
+              submitLabel={S.list.addItem}
+              initialValues={prefill}
+              onSubmit={createItem}
+              onCancel={() => setAddOpen(false)}
+              autoFocusUrl
+            />
+          </Sheet>
         )}
 
       </div>

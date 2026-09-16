@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { S } from "../strings";
+import { OverflowMenu, type OverflowItem } from "./OverflowMenu";
 
 interface UserMenuProps {
   displayName: string;
@@ -11,66 +12,44 @@ interface UserMenuProps {
   extra?: ReactNode;
 }
 
+/** Header user menu, built on the shared OverflowMenu primitive: bottom
+ *  sheet under 640px, anchored popover above, arrow-key navigation and
+ *  focus return in both. Trigger keeps the display-name label the e2e
+ *  opens ("Admin"); rows keep role=menuitem. */
 export function UserMenu({ displayName, onLogout, onSettings, extra }: UserMenuProps) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDocClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", onDocClick);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDocClick);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  const items: OverflowItem[] = [];
+  if (onSettings) {
+    items.push({
+      id: "settings",
+      label: S.settings.openSettings,
+      onSelect: () => onSettings(),
+    });
+  }
+  items.push({
+    id: "logout",
+    label: S.auth.signOut,
+    onSelect: () => onLogout(),
+  });
 
   return (
-    <div className="user-menu" ref={ref}>
-      <button
-        type="button"
-        className="user-menu-button"
-        aria-expanded={open}
-        aria-haspopup="menu"
-        onClick={() => setOpen(!open)}
-      >
-        {displayName}
-      </button>
-      {open && (
-        <div className="menu-sheet" role="menu">
-          {onSettings && (
-            <button
-              type="button"
-              className="menu-item"
-              role="menuitem"
-              onClick={() => {
-                setOpen(false);
-                onSettings();
-              }}
-            >
-              {S.settings.openSettings}
-            </button>
-          )}
-          {extra}
+    <div className="user-menu">
+      <OverflowMenu
+        menuLabel={displayName}
+        extra={extra}
+        renderTrigger={({ open, toggle, triggerRef }) => (
           <button
             type="button"
-            className="menu-item"
-            role="menuitem"
-            onClick={() => {
-              setOpen(false);
-              void onLogout();
-            }}
+            ref={triggerRef}
+            className="user-menu-button"
+            aria-expanded={open}
+            aria-haspopup="menu"
+            onClick={toggle}
           >
-            {S.auth.signOut}
+            {displayName}
           </button>
-        </div>
-      )}
+        )}
+        items={items}
+      />
     </div>
   );
 }

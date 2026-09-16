@@ -9,6 +9,8 @@ export const S = {
     name: "sugarplum",
     tagline: "Private wishlists, shared with people you trust.",
     loading: "Loading…",
+    footerSource: "Source on GitHub",
+    githubLabel: "Sugarplum source on GitHub",
   },
   auth: {
     signIn: "Sign in",
@@ -47,6 +49,8 @@ export const S = {
     checkingPrices: "Checking…",
     hintCandidateNote: "check before buying",
     hintsFootnote: "Automated search results. We can't confirm these are the same product or edition.",
+    copyProductLink: "Copy product link",
+    moreActions: "More actions",
     hintsNone: "No other prices found.",
     hintsDisabled: "Price hints are off in settings.",
     copyLink: "Copy link",
