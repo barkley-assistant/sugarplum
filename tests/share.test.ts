@@ -410,3 +410,58 @@ describe("anonymous purchased marking", () => {
     expect((await purchase(token, item.id)).status).toBe(404);
   });
 });
+
+describe("anonymous share image", () => {
+  test("token-scoped image serves bytes; 404 for foreign items and dead tokens", async () => {
+    await loginAsAdmin();
+    const item = await seedItem("Framed print");
+    // 1x1 transparent PNG. serveItemImage only needs the file to exist.
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+      "base64",
+    );
+    const path = `${item.id}.png`;
+    await Bun.write(`${app.app.config.imagesDir}/${path}`, png);
+    app.app.db.run("UPDATE wishlist_items SET image_path = ? WHERE id = ?", [path, item.id]);
+
+    const token = await activeToken();
+    // The share view advertises the image without leaking the filename.
+    const stranger = app.newJar();
+    const view = (await (await stranger.request("GET", `/api/share/${token}`)).json()) as ShareView;
+    expect(view.items[0].hasImage).toBe(true);
+
+    const res = await stranger.request("GET", `/api/share/${token}/items/${item.id}/image`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toBe("image/png");
+
+    // Foreign / nonexistent item id → 404 (same as a dead token).
+    expect(
+      (await stranger.request("GET", `/api/share/${token}/items/${crypto.randomUUID()}/image`))
+        .status,
+    ).toBe(404);
+
+    // An item id that exists but belongs to ANOTHER user is not reachable
+    // through this token either.
+    const other = app.newJar();
+    await admin.request("POST", "/api/users", {
+      username: "imgother",
+      password: "imgother-pass",
+      displayName: "Img Other",
+    });
+    await other.request("POST", "/api/auth/login", {
+      username: "imgother",
+      password: "imgother-pass",
+    });
+    const otherItem = await other.request("POST", "/api/wishlist/items", { title: "Other" });
+    const otherId = ((await otherItem.json()) as OwnedItem).id;
+    expect(
+      (await stranger.request("GET", `/api/share/${token}/items/${otherId}/image`)).status,
+    ).toBe(404);
+
+    // Revocation kills image access (a copied link must not keep loading images).
+    await admin.request("DELETE", "/api/share");
+    expect(
+      (await stranger.request("GET", `/api/share/${token}/items/${item.id}/image`)).status,
+    ).toBe(404);
+  });
+});

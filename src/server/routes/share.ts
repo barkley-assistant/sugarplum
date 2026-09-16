@@ -11,6 +11,7 @@ import {
 } from "../auth/middleware";
 import { RateLimiter } from "../auth/rate-limit";
 import { SESSION_COOKIE, getSessionUser, type SessionUser } from "../auth/sessions";
+import { serveItemImage } from "../images";
 import { formatPrice, parseTags } from "./wishlist";
 
 /**
@@ -101,7 +102,7 @@ function toShareItem(row: ShareItemRow, hidePurchased: boolean): ShareItem {
   };
 }
 
-export function shareRoutes(db: Database, limiter: RateLimiter, _cfg: ShareRoutesConfig) {
+export function shareRoutes(db: Database, limiter: RateLimiter, cfg: ShareRoutesConfig) {
   return {
     // --- owner-only token management ---
     "/api/share": {
@@ -223,6 +224,21 @@ export function shareRoutes(db: Database, limiter: RateLimiter, _cfg: ShareRoute
         );
         limiter.recordFailure(key);
         return jsonOk({ id: item.id, purchased: true } satisfies PurchaseResponse);
+      },
+    },
+    "/api/share/:token/items/:id/image": {
+      /** Token-scoped image bytes: revocation kills image access, and the
+       *  item must belong to the TOKEN's owner (never merely "a valid id"). */
+      GET: (req: RouteRequest) => {
+        const owner = shareOwner(db, req.params.token);
+        if (!owner) return jsonError(404, "Share link not found");
+        const item = db
+          .query("SELECT user_id, image_path FROM wishlist_items WHERE id = ?")
+          .get(req.params.id) as { user_id: string; image_path: string | null } | undefined;
+        if (!item || item.user_id !== owner.user_id || !item.image_path) {
+          return jsonError(404, "Not found");
+        }
+        return serveItemImage(db, cfg.imagesDir, req.params.id);
       },
     },
   };
