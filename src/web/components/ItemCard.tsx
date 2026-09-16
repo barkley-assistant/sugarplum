@@ -1,10 +1,11 @@
 import { useState, type ReactNode } from "react";
-import type { OwnedItem, PriceHintState, PriceStats, PublicItem } from "../../shared/types";
+import type { OwnedItem, PriceHintState, PricePoint, PriceStats, PriceTrend, PublicItem } from "../../shared/types";
 import { centsToDecimal, formatPrice, toCents, urlHost } from "../format";
 import { S } from "../strings";
 import { useConfirm } from "../confirm";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { ItemLink } from "./ItemLink";
+import { Sparkline } from "./Sparkline";
 
 interface ItemCardProps {
   item: OwnedItem | PublicItem;
@@ -42,6 +43,7 @@ export function ItemCard({
 }: ItemCardProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [hintsOpen, setHintsOpen] = useState(false);
+  const [trendWindow, setTrendWindow] = useState<TrendWindow>(readTrendWindow);
   const confirm = useConfirm();
 
   async function handleEdit(id: string, values: ItemFormValues) {
@@ -89,6 +91,21 @@ export function ItemCard({
   const stats = viewerIsOwner ? ownerItem.priceStats : null;
   const delta = priceDelta(item.priceCents, item.currency, stats);
   const publicItem = item as PublicItem;
+  const showTrend =
+    viewerIsOwner &&
+    stats !== null &&
+    stats.series.length >= 2 &&
+    sameCurrencySeries(stats.series, item.currency);
+  const trendValues = showTrend ? trendCents(stats.series, trendWindow) : [];
+
+  function chooseWindow(next: TrendWindow) {
+    setTrendWindow(next);
+    try {
+      localStorage.setItem(TREND_WINDOW_KEY, next);
+    } catch {
+      // Storage may be unavailable (private mode); the chip just won't persist.
+    }
+  }
 
   return (
     <li className={`card item-card${dragging ? " dragging" : ""}`} data-item-id={item.id}>
@@ -170,6 +187,35 @@ export function ItemCard({
           </div>
         </div>
       </div>
+
+      {showTrend && stats && (
+        <div className="price-trend">
+          <div className="window-chip" role="group" aria-label={S.trend.windowLabel}>
+            <button
+              type="button"
+              aria-pressed={trendWindow === "30d"}
+              className={trendWindow === "30d" ? "active" : ""}
+              onClick={() => chooseWindow("30d")}
+            >
+              {S.trend.window30d}
+            </button>
+            <button
+              type="button"
+              aria-pressed={trendWindow === "90d"}
+              className={trendWindow === "90d" ? "active" : ""}
+              onClick={() => chooseWindow("90d")}
+            >
+              {S.trend.window90d}
+            </button>
+          </div>
+          {trendValues.length >= 2 && (
+            <div className="sparkline-wrap">
+              <Sparkline values={trendValues} />
+            </div>
+          )}
+          {stats.trend && <span className="advice-label">{adviceLabel(stats.trend.advice)}</span>}
+        </div>
+      )}
 
       {viewerIsOwner && onCheckPrices && (
         <div className="hint-block">
@@ -289,4 +335,61 @@ function priceDelta(
   }
   const amount = formatPrice(centsToDecimal(Math.abs(current - atAdd)), currentCurrency);
   return current < atAdd ? S.item.downSinceAdd(amount) : S.item.upSinceAdd(amount);
+}
+
+/** Sparkline window chip state. Display-only (it never changes what the
+ *  server tracks), so localStorage is the right home — no server round-trip. */
+export type TrendWindow = "30d" | "90d";
+
+const TREND_WINDOW_KEY = "sugarplum.trend-window";
+
+function readTrendWindow(): TrendWindow {
+  try {
+    return localStorage.getItem(TREND_WINDOW_KEY) === "90d" ? "90d" : "30d";
+  } catch {
+    return "30d";
+  }
+}
+
+/** Advice enum → user-facing label. Every label is informational; none tells
+ *  the user to buy now. Exported for tests. */
+export function adviceLabel(advice: PriceTrend["advice"]): string {
+  switch (advice) {
+    case "below-30d-avg":
+      return S.trend.below30dAvg;
+    case "near-30d-low":
+      return S.trend.near30dLow;
+    case "near-30d-high":
+      return S.trend.near30dHigh;
+    case "trending-down":
+      return S.trend.trendingDown;
+    case "stable":
+      return S.trend.stable;
+    case "insufficient":
+      return S.trend.insufficient;
+  }
+}
+
+/** True when every series point shares the item's currency (null reads as
+ *  "same"). A mixed-currency series is not a comparable series and is never
+ *  drawn — same rule as priceDelta. Exported for tests. */
+export function sameCurrencySeries(series: PricePoint[], currency: string | null): boolean {
+  const code = (currency ?? "").trim().toUpperCase();
+  return series.every((p) => (p.currency ?? "").trim().toUpperCase() === code);
+}
+
+/** Series → drawable integer cents for the selected window. The server
+ *  always sends the 90-day series; the 30d chip slices it client-side.
+ *  Empty when a point is unparseable (the sparkline then stays hidden —
+ *  never draw a partial series). Exported for tests. */
+export function trendCents(series: PricePoint[], window: TrendWindow): number[] {
+  const inWindow =
+    window === "90d"
+      ? series
+      : series.filter((p) => {
+          const t = new Date(p.observedAt).getTime();
+          return Number.isFinite(t) && t >= Date.now() - 30 * 86_400_000;
+        });
+  const cents = inWindow.map((p) => toCents(p.priceCents));
+  return cents.every((c): c is number => c !== null) ? cents : [];
 }
