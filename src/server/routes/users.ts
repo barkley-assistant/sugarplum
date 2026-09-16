@@ -32,6 +32,21 @@ function getUserById(db: Database, id: string): UserRow | undefined {
     .get(id) as UserRow | undefined;
 }
 
+/** Active admins other than the given user — the pool that must never
+ *  reach zero via the admin API. Inactive admins are excluded: they
+ *  cannot log in (auth rejects inactive), and a deactivated last admin
+ *  also blocks the boot-time env re-seed (app.ts counts is_admin rows
+ *  regardless of is_active), so it would be a hard lockout. */
+function countOtherActiveAdmins(db: Database, userId: string): number {
+  const row = db
+    .query(
+      `SELECT COUNT(*) AS n FROM users
+        WHERE is_admin = 1 AND is_active = 1 AND id != ?`,
+    )
+    .get(userId) as { n: number };
+  return row.n;
+}
+
 export function userRoutes(db: Database) {
   return {
     "/api/users": {
@@ -95,6 +110,9 @@ export function userRoutes(db: Database) {
       DELETE: requireAdmin(db, (req) => {
         const user = getUserById(db, req.params.id);
         if (!user) return jsonError(404, "User not found");
+        if (user.is_admin === 1 && user.is_active === 1 && countOtherActiveAdmins(db, user.id) === 0) {
+          return jsonError(409, "Cannot delete the last active admin");
+        }
         // Their items and sessions cascade-delete; claims they made are
         // released (FK ON DELETE SET NULL on wishlist_items.claimed_by).
         db.run("DELETE FROM users WHERE id = ?", [user.id]);
@@ -105,6 +123,11 @@ export function userRoutes(db: Database) {
       POST: requireAdmin(db, (req) => {
         const user = getUserById(db, req.params.id);
         if (!user) return jsonError(404, "User not found");
+        // The target is active by definition here (deactivating an already
+        // inactive user is a no-op), so no is_active term is needed.
+        if (user.is_admin === 1 && countOtherActiveAdmins(db, user.id) === 0) {
+          return jsonError(409, "Cannot deactivate the last active admin");
+        }
         db.run("UPDATE users SET is_active = 0 WHERE id = ?", [user.id]);
         deleteUserSessions(db, user.id);
         return jsonOk(toAdminUser(getUserById(db, user.id) as UserRow));
