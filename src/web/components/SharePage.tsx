@@ -4,6 +4,7 @@ import { S } from "../strings";
 import { useToast } from "../toast";
 import { useConfirm } from "../confirm";
 import { formatPrice } from "../format";
+import { ItemLink } from "./ItemLink";
 
 type State =
   | { status: "loading" }
@@ -143,11 +144,7 @@ export function SharePage({ token }: { token: string }) {
                     <div className="item-card-text">
                       <h3 className="item-title">{item.title}</h3>
                       {item.siteName && <span className="item-site">{item.siteName}</span>}
-                      {item.url && (
-                        <a className="item-link" href={item.url} target="_blank" rel="noreferrer">
-                          {item.url}
-                        </a>
-                      )}
+                      {item.url && <ItemLink url={item.url} />}
                       {item.notes && <p className="item-notes">{item.notes}</p>}
                       {item.tags.length > 0 && (
                         <div className="tags">

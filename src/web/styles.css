@@ -569,11 +569,43 @@ label {
   font-size: var(--text-sm);
   display: inline-block;
   max-width: 100%;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   vertical-align: bottom;
+}
+
+/* Item link row: clean short link text + a compact copy action. The
+   anchor keeps the full URL in href/title; the visible text is the
+   derived display form (see displayUrl). */
+.item-link-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
   margin-bottom: var(--sp-1);
+  min-width: 0;
+}
+
+/* Compact ghost button — deliberately not a 44px action button: this
+   sits inline in the card text column on every card, both owner and
+   public share views. */
+.copy-link-btn {
+  min-height: auto;
+  min-width: 0;
+  padding: 0.15rem 0.35rem;
+  font-size: var(--text-xs);
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+}
+
+.copy-link-btn:hover {
+  background: none;
+  border: none;
+  color: var(--text-2);
 }
 
 .price {

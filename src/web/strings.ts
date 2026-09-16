@@ -49,6 +49,8 @@ export const S = {
     hintsFootnote: "Automated search results. We can't confirm these are the same product or edition.",
     hintsNone: "No other prices found.",
     hintsDisabled: "Price hints are off in settings.",
+    copyLink: "Copy link",
+    copied: "Copied",
   },
   settings: {
     hintsToggle: "Show unverified price hints",
