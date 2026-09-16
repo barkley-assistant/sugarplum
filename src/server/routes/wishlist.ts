@@ -63,7 +63,7 @@ export function formatPrice(cents: number): string {
   return `${whole}.${frac}`;
 }
 
-function parseTags(value: string | null): string[] {
+export function parseTags(value: string | null): string[] {
   if (!value) return [];
   try {
     const parsed = JSON.parse(value);
