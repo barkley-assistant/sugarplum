@@ -48,3 +48,35 @@ describe("wave13 config (stealth)", () => {
     expect(cfg.stealthVenvPython).toBe("/opt/stealth-venv/bin/python");
   });
 });
+
+describe("wave25 config (daily tracking)", () => {
+  test("defaults: 24h interval, 60s initial delay, 15min stagger, 90-row cap", () => {
+    const cfg = readConfig({ ...BASE });
+    expect(cfg.trackIntervalMs).toBe(86400000);
+    expect(cfg.trackInitialDelayMs).toBe(60000);
+    expect(cfg.trackStaggerMs).toBe(900000);
+    expect(cfg.trackSeriesCap).toBe(90);
+  });
+  test("env overrides flow through", () => {
+    const cfg = readConfig({
+      ...BASE,
+      SUGARPLUM_TRACK_INTERVAL_MS: "3600000",
+      SUGARPLUM_TRACK_INITIAL_DELAY_MS: "5000",
+      SUGARPLUM_TRACK_STAGGER_MS: "60000",
+      SUGARPLUM_TRACK_SERIES_CAP: "30",
+    });
+    expect(cfg.trackIntervalMs).toBe(3600000);
+    expect(cfg.trackInitialDelayMs).toBe(5000);
+    expect(cfg.trackStaggerMs).toBe(60000);
+    expect(cfg.trackSeriesCap).toBe(30);
+  });
+  test("bad numbers fall back to defaults; series cap clamps to [1,365]", () => {
+    expect(readConfig({ ...BASE, SUGARPLUM_TRACK_INTERVAL_MS: "abc" }).trackIntervalMs).toBe(
+      86400000,
+    );
+    expect(readConfig({ ...BASE, SUGARPLUM_TRACK_STAGGER_MS: "0" }).trackStaggerMs).toBe(900000);
+    expect(readConfig({ ...BASE, SUGARPLUM_TRACK_SERIES_CAP: "abc" }).trackSeriesCap).toBe(90);
+    expect(readConfig({ ...BASE, SUGARPLUM_TRACK_SERIES_CAP: "0" }).trackSeriesCap).toBe(1);
+    expect(readConfig({ ...BASE, SUGARPLUM_TRACK_SERIES_CAP: "9999" }).trackSeriesCap).toBe(365);
+  });
+});
