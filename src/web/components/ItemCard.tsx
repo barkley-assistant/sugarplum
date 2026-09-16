@@ -188,7 +188,7 @@ export function ItemCard({
   const publicActions = !viewerIsOwner ? (
     <>
       {!publicItem.claimed && onClaim && (
-        <button className="secondary" onClick={() => void onClaim(publicItem.id)}>
+        <button className="claim-btn" onClick={() => void onClaim(publicItem.id)}>
           {S.claims.claim}
         </button>
       )}
@@ -199,7 +199,7 @@ export function ItemCard({
         <span className="claimed-badge">
           <StatusBadge variant="claimed">{S.claims.claimedByYou}</StatusBadge>
           {onUnclaim && (
-            <button className="secondary" onClick={() => void onUnclaim(publicItem.id)}>
+            <button className="claim-btn" onClick={() => void onUnclaim(publicItem.id)}>
               {S.claims.unclaim}
             </button>
           )}
