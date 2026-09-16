@@ -116,7 +116,7 @@ body {
   /* Layout. */
   --app-main-max: 960px;
   --app-rail-min: 260px;
-  --app-rail-sticky-top: calc(var(--sp-4) + 56px);
+  --app-rail-sticky-top: calc(var(--sp-4) + var(--topbar-h));
 
   /* Type scale (extend, don't replace). */
   --text-2xs: 0.6875rem;
@@ -240,12 +240,14 @@ button.danger:hover {
   border-color: var(--danger);
 }
 
+/* Subordinate navigation, not buttons (tier-1 G5): transparent at rest,
+   soft plum tint when active. Touch targets stay 44px. */
 button.chip {
   min-height: 44px;
   padding: 0.4rem 0.9rem;
-  background: var(--surface);
-  color: var(--text-2);
-  border-color: var(--border);
+  background: var(--chip-bg);
+  color: var(--chip-text);
+  border: 1px solid var(--chip-border);
   border-radius: var(--r-full);
   font-size: var(--text-sm);
   white-space: nowrap;
@@ -254,17 +256,18 @@ button.chip {
 button.chip:hover {
   background: var(--surface-2);
   color: var(--text);
-  border-color: var(--border-2);
+  border-color: var(--border);
 }
 
 button.chip.active {
-  background: var(--plum-600);
-  color: #fff;
-  border-color: var(--plum-600);
+  background: var(--chip-bg-active);
+  color: var(--chip-text-active);
+  border-color: var(--chip-border-active);
 }
 
 button.chip.active:hover {
-  background: var(--plum-700);
+  background: var(--chip-bg-active);
+  border-color: var(--chip-border-active);
 }
 
 input,
@@ -439,7 +442,8 @@ label {
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-4);
-  padding: var(--sp-2) var(--sp-4);
+  padding: var(--topbar-pad-y) var(--sp-4);
+  min-height: var(--topbar-h);
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
@@ -467,14 +471,14 @@ a.brand:hover {
 }
 
 .brand-mark {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--r-sm);
   flex-shrink: 0;
 }
 
 .brand-name {
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   font-weight: 600;
   margin: 0;
   white-space: nowrap;
@@ -624,7 +628,7 @@ a.brand:hover {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--list-gap);
 }
 
 .item-row,
@@ -671,7 +675,7 @@ a.brand:hover {
 
 .item-site {
   display: block;
-  font-size: var(--text-sm);
+  font-size: var(--text-row-meta);
   color: var(--text-3);
   margin: 0 0 var(--sp-1);
   white-space: nowrap;
@@ -934,6 +938,35 @@ a.brand:hover {
   font-weight: 500;
 }
 
+/* Quiet inline claim control (tier-1 G6): one-tap claim stays, but the
+   button no longer out-shouts the product title. Same chip-active grammar
+   as the filter chips; the accessible name is unchanged. */
+.claim-btn {
+  min-height: 36px;
+  padding: var(--sp-1) var(--sp-3);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-full);
+  color: var(--plum-600);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.claim-btn:hover {
+  background: var(--plum-050);
+  border-color: transparent;
+  color: var(--plum-600);
+}
+
+@media (prefers-color-scheme: dark) {
+  .claim-btn,
+  .claim-btn:hover {
+    color: var(--share-accent);
+  }
+}
+
 /* Drag handle + drag states */
 .drag-handle {
   flex-shrink: 0;
@@ -972,6 +1005,8 @@ a.brand:hover {
   position: relative;
   z-index: 5;
   opacity: 0.95;
+  border-color: var(--border-2);
+  background: var(--surface);
 }
 
 .item-card.drag-over {
@@ -1517,7 +1552,9 @@ a.brand:hover {
 }
 
 .price-cluster .price {
-  font-size: var(--text-base);
+  font-size: var(--text-row-price);
+  font-weight: 600;
+  color: var(--text);
 }
 
 .price-cluster .price-meta,
@@ -1526,14 +1563,28 @@ a.brand:hover {
   font-size: var(--text-2xs);
 }
 
+/* Delta is the story (tier-1 G3): a distinct weight-600 secondary line on
+   its own full-width line; meta stays tertiary. No green/red signalling. */
+.price-cluster .price-delta {
+  width: 100%;
+  font-size: var(--text-row-meta);
+  font-weight: 600;
+  color: var(--text-2);
+}
+
 /* ---------- Product row (compact .item-card) ---------- */
+/* Feed, not card stack (tier-1 G2): the row rests on the page background
+   with a transparent border (no layout shift on drag-over); hover lifts to
+   --surface-row-hover. The .card base still supplies radius + overflow. */
 .item-card {
   gap: var(--sp-2);
   padding: var(--row-pad-y) var(--row-pad-x);
+  background: var(--surface-row);
+  border: 1px solid transparent;
 }
 
 .item-card:hover {
-  border-color: var(--border-row-strong);
+  background: var(--surface-row-hover);
 }
 
 .product-row-grid {
@@ -1561,8 +1612,9 @@ a.brand:hover {
 .product-row-title-row .item-title {
   flex: 1;
   min-width: 0;
-  font-size: var(--text-base);
-  line-height: 1.4;
+  font-size: var(--text-row-title);
+  font-weight: 600;
+  line-height: var(--lh-row-title);
   margin: 0;
 }
 
