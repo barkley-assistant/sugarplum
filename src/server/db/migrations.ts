@@ -102,6 +102,29 @@ ALTER TABLE wishlist_items ADD COLUMN cheaper_url TEXT;
 ALTER TABLE users ADD COLUMN hints_enabled INTEGER NOT NULL DEFAULT 1;
 `,
   },
+  {
+    version: 5,
+    sql: `
+-- Wave 10: public share links + anonymous purchased marking.
+-- purchased is a SEPARATE concept from claimed_by (registered-user claims):
+-- it records "someone with the share link bought this", is visible to other
+-- share viewers, and is never projected to the owner. No backfill: existing
+-- rows read as unpurchased (DEFAULT 0).
+ALTER TABLE wishlist_items ADD COLUMN purchased INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE wishlist_items ADD COLUMN purchased_at TEXT;
+
+-- One ACTIVE share token per user; revoked_at distinguishes history. No
+-- unique constraint on user_id: revocation is by timestamp, so rotation is
+-- two statements and multi-token support later is additive.
+CREATE TABLE share_tokens (
+  token      TEXT PRIMARY KEY,
+  user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  revoked_at TEXT
+);
+CREATE INDEX idx_share_tokens_user ON share_tokens(user_id);
+`,
+  },
 ];
 
 export function runMigrations(db: Database): void {

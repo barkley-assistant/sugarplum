@@ -3,6 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Nested shell routes (/share/<token>) need root-relative asset
+         resolution: the bundler emits ./chunk-*.js hrefs, which the browser
+         would otherwise resolve against /share/. -->
+    <base href="/" />
     <link rel="icon" href="/assets/brand/pwa/favicon-32.png" />
     <title>sugarplum</title>
     <meta

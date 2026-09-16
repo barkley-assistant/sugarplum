@@ -101,6 +101,45 @@ export interface PublicItem extends CommonItem {
   claimedByYou: boolean;
 }
 
+/** Anonymous share view of an item. A dedicated DTO: never OwnedItem (owner
+ *  data) and never PublicItem (claim state). */
+export interface ShareItem {
+  id: string;
+  title: string;
+  url: string | null;
+  priceCents: string | null;
+  currency: string | null;
+  notes: string | null;
+  tags: string[];
+  siteName: string | null;
+  /** True when the item has a stored image; bytes are served token-scoped
+   *  at /api/share/:token/items/:id/image (never the item-scoped path). */
+  hasImage: boolean;
+  /** Purchased-via-share-link. ALWAYS false in responses to the owner
+   *  (server-side projection — never trust the client to hide it). */
+  purchased: boolean;
+}
+
+export interface ShareView {
+  ownerDisplayName: string;
+  /** True when the requester's session (if any) IS the list owner. Tells the
+   *  requester only about THEMSELVES — no leak. Hides the mark action. */
+  viewerIsOwner: boolean;
+  items: ShareItem[];
+}
+
+/** GET/POST /api/share. `path` is the share path; the client prefixes its own
+ *  origin — the server cannot know its public URL behind the tunnel. */
+export interface ShareLinkResponse {
+  token: string | null;
+  path: string | null;
+}
+
+export interface PurchaseResponse {
+  id: string;
+  purchased: boolean;
+}
+
 export interface WishlistSummaryRow {
   userId: string;
   displayName: string;

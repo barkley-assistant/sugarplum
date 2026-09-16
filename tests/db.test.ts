@@ -24,18 +24,18 @@ afterAll(() => {
 describe("db migrations", () => {
   test("migrations are idempotent", () => {
     const version = db.query("PRAGMA user_version").get() as { user_version: number };
-    expect(version.user_version).toBe(4);
+    expect(version.user_version).toBe(5);
 
     // Re-run migrations on the same connection (and a second open) — no-op.
     runMigrations(db);
     const again = openDatabase(dbPath);
-    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 4 });
+    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 5 });
     again.close();
   });
 
-  test("v2 (enrichment state) + v3 (image provenance) + v4 (price provenance) columns exist on an upgraded db", () => {
+  test("v2 (enrichment state) + v3 (image provenance) + v4 (price provenance) + v5 (share) columns exist on an upgraded db", () => {
     const v = db.query("PRAGMA user_version").get() as { user_version: number };
-    expect(v.user_version).toBe(4);
+    expect(v.user_version).toBe(5);
     const cols = db.query("PRAGMA table_info(wishlist_items)").all() as { name: string }[];
     for (const c of [
       "fetch_state",
@@ -47,6 +47,8 @@ describe("db migrations", () => {
       "image_source",
       "price_source",
       "cheaper_url",
+      "purchased",
+      "purchased_at",
     ]) {
       expect(cols.some((x) => x.name === c)).toBe(true);
     }
@@ -77,7 +79,7 @@ describe("db migrations", () => {
         "Old item",
       ]);
       runMigrations(fresh);
-      expect((fresh.query("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(4);
+      expect((fresh.query("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(5);
       const row = fresh
         .query(
           `SELECT fetch_state, site_name, hint_price_cents, image_source, price_source, cheaper_url
@@ -103,6 +105,24 @@ describe("db migrations", () => {
         hints_enabled: number;
       };
       expect(user.hints_enabled).toBe(1);
+
+      // v5: purchased flag + share tokens
+      const cols5 = fresh.query("PRAGMA table_info(wishlist_items)").all() as {
+        name: string;
+        dflt_value: string | null;
+      }[];
+      const purchasedCol = cols5.find((c) => c.name === "purchased");
+      expect(purchasedCol).toBeDefined();
+      expect(purchasedCol?.dflt_value).toBe("0");
+      const upgraded = fresh
+        .query("SELECT purchased, purchased_at FROM wishlist_items WHERE id = ?")
+        .get("v2-upgrade-item") as { purchased: number; purchased_at: string | null };
+      expect(upgraded.purchased).toBe(0); // no backfill: pre-v5 rows read unpurchased
+      expect(upgraded.purchased_at).toBeNull();
+      const tokenCols = fresh.query("PRAGMA table_info(share_tokens)").all() as { name: string }[];
+      for (const c of ["token", "user_id", "created_at", "revoked_at"]) {
+        expect(tokenCols.some((x) => x.name === c)).toBe(true);
+      }
     } finally {
       fresh.close();
       rmSync(freshPath, { force: true });

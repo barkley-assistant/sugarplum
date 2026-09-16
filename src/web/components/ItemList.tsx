@@ -19,6 +19,8 @@ interface ItemListProps {
   onRefresh?: (id: string) => void | Promise<void>;
   /** Owner-only: runs the on-demand "prices seen elsewhere" lookup. */
   onCheckPrices?: (id: string) => void | Promise<void>;
+  /** Owner-only: clears the blind share-link purchased mark (204, no body). */
+  onResetPurchased?: (id: string) => void | Promise<void>;
   /** Owner-only: per-item candidates results, keyed by item id. */
   hintStates?: Record<string, PriceHintState>;
   /** Builds the drag handle for a card (own lists only). */
@@ -38,6 +40,7 @@ export function ItemList({
   onUnclaim,
   onRefresh,
   onCheckPrices,
+  onResetPurchased,
   hintStates,
   renderDragHandle,
   draggingId = null,
@@ -57,6 +60,7 @@ export function ItemList({
           onUnclaim={onUnclaim}
           onRefresh={onRefresh}
           onCheckPrices={onCheckPrices}
+          onResetPurchased={onResetPurchased}
           hintState={hintStates?.[item.id]}
           dragHandle={renderDragHandle ? renderDragHandle(item.id) : undefined}
           dragging={draggingId === item.id}

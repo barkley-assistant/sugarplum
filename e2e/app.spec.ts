@@ -351,6 +351,110 @@ test("14: share-target GET prefills the add sheet through the login hop", async 
   await expect(page).toHaveURL(`${BASE}/`);
 });
 
+test("15: share link — owner creates, anonymous marks purchased, owner sees nothing, revoke kills it", async ({
+  page,
+  browser,
+}) => {
+  // Seed the item the guest will mark (admin session via page.request), then
+  // reload so the owner's list state has it (the share action needs a list).
+  const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Gift for the admin" },
+  });
+  expect(seeded.status()).toBe(201);
+  await page.reload();
+
+  // Owner (admin, logged in by beforeEach) mints a link for their own list.
+  await page.getByRole("button", { name: "Share my list" }).click();
+  await page.getByRole("button", { name: "Create link" }).click();
+  const linkInput = page.locator(".share-link-row input");
+  await expect(linkInput).toBeVisible();
+  const shareUrl = await linkInput.inputValue();
+  expect(shareUrl).toMatch(/\/share\/[0-9a-f]{64}$/);
+
+  // Anonymous friend's browser: a fresh context, zero cookies.
+  const anon = await browser.newContext();
+  const anonPage = await anon.newPage();
+  try {
+    await anonPage.goto(shareUrl);
+    await expect(anonPage.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+    await expect(anonPage.getByText("Shared list — no account needed")).toBeVisible();
+
+    // Mobile-first: the anonymous page must not overflow at 375px.
+    await anonPage.setViewportSize({ width: 375, height: 800 });
+    await anonPage.reload();
+    await expect(anonPage.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+    expect(
+      await anonPage.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      ),
+    ).toBe(false);
+
+    const card = anonPage.locator(".item-card", {
+      has: anonPage.getByRole("heading", { name: "Gift for the admin" }),
+    });
+    await card.getByRole("button", { name: "Mark as purchased" }).click();
+    // Confirm dialog — same label as the row button, so scope to the dialog.
+    const dialog = anonPage.getByRole("alertdialog");
+    await expect(dialog).toBeVisible();
+    await expect(
+      dialog.getByText("This tells other viewers the item is already bought."),
+    ).toBeVisible();
+    await dialog.getByRole("button", { name: "Mark as purchased" }).click();
+    await expect(card.locator(".share-purchased-badge")).toHaveText("Purchased");
+
+    // A second anonymous viewer sees the mark (double-gift prevention).
+    const anon2 = await browser.newContext();
+    try {
+      const anon2Page = await anon2.newPage();
+      await anon2Page.goto(shareUrl);
+      const card2 = anon2Page.locator(".item-card", {
+        has: anon2Page.getByRole("heading", { name: "Gift for the admin" }),
+      });
+      await expect(card2.locator(".share-purchased-badge")).toBeVisible();
+    } finally {
+      await anon2.close();
+    }
+
+    // THE INVARIANT, in the browser: the owner's own list carries no signal.
+    await page.reload();
+    const ownerCard = page.locator(".item-card", {
+      has: page.getByRole("heading", { name: "Gift for the admin" }),
+    });
+    await expect(ownerCard).toBeVisible();
+    await expect(page.locator(".share-purchased-badge")).toHaveCount(0);
+
+    // …and the owner's own copy of the share view is projected server-side.
+    await page.goto(shareUrl);
+    await expect(
+      page.getByText("You are viewing your own shared list. Purchased marks are hidden from you."),
+    ).toBeVisible();
+    await expect(page.locator(".share-purchased-badge")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Mark as purchased" })).toHaveCount(0);
+
+    // Revocation: back to the app, reopen the panel at 375px (mobile-first:
+    // the link row must not overflow).
+    await page.setViewportSize({ width: 375, height: 800 });
+    await page.goto(`${BASE}/`);
+    await page.getByRole("button", { name: "Share my list" }).click();
+    await expect(page.locator(".share-link-row input")).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      ),
+    ).toBe(false);
+    await page.getByRole("button", { name: "Revoke link" }).click();
+    await expect(page.getByText("Anyone with the link will no longer be able to view your list.")).toBeVisible();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Revoke link" }).click();
+    await expect(page.locator(".share-link-row")).toHaveCount(0);
+
+    // The copied link is dead: the anonymous reload shows the invalid state.
+    await anonPage.reload();
+    await expect(anonPage.getByText("This link is not valid or has been revoked.")).toBeVisible();
+  } finally {
+    await anon.close();
+  }
+});
+
 /** Local static fixture server: the app's scraper (server-side) fetches it,
  *  so it must listen on 127.0.0.1 — the e2e server runs with
  *  SUGARPLUM_ALLOW_PRIVATE_FETCH=1 (global-setup). */

@@ -15,6 +15,8 @@ interface ItemCardProps {
   onRefresh?: (id: string) => void | Promise<void>;
   /** Owner-only: run the on-demand "prices seen elsewhere" lookup. */
   onCheckPrices?: (id: string) => void | Promise<void>;
+  /** Owner-only: clear the blind share-link purchased mark (204, no body). */
+  onResetPurchased?: (id: string) => void | Promise<void>;
   /** Owner-only: the last candidates result for this item, when a lookup ran. */
   hintState?: PriceHintState;
   /** Drag handle slot (pointer state machine wired by AppPage). */
@@ -32,6 +34,7 @@ export function ItemCard({
   onUnclaim,
   onRefresh,
   onCheckPrices,
+  onResetPurchased,
   hintState,
   dragHandle,
   dragging = false,
@@ -54,6 +57,19 @@ export function ItemCard({
       body: S.confirm.deleteItemBody,
     });
     if (ok) await onDelete(item.id);
+  }
+
+  /** Blind reset: the owner clears a mark they cannot see. The copy says so
+   *  explicitly ("without telling you who set it"). */
+  async function handleResetPurchased() {
+    if (!onResetPurchased) return;
+    const ok = await confirm({
+      title: S.share.resetConfirmTitle,
+      body: S.share.resetConfirmBody,
+      confirmLabel: S.share.resetPurchased,
+      danger: false,
+    });
+    if (ok) await onResetPurchased(item.id);
   }
 
   /** Fetch on each open: the whole point is fresh evidence, and the route is
@@ -219,6 +235,11 @@ export function ItemCard({
               {onEdit && (
                 <button className="secondary" onClick={() => setEditingId(item.id)}>
                   {S.item.edit}
+                </button>
+              )}
+              {onResetPurchased && (
+                <button className="secondary" onClick={() => void handleResetPurchased()}>
+                  {S.share.resetPurchased}
                 </button>
               )}
               {onDelete && (

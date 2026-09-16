@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { AppPage } from "./components/AppPage";
+import { SharePage } from "./components/SharePage";
 import { ConfirmProvider } from "./confirm";
 import { ToastProvider } from "./toast";
 
@@ -11,12 +12,19 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
   });
 }
 
+// /share/:token renders the ANONYMOUS share view — it must not call
+// /api/auth/me (AppPage's boot redirects to /login on 401, which would bounce
+// every anonymous visitor to a login wall). The regex enforces the token
+// shape; a malformed path falls through to AppPage (a broken link either
+// way).
+const shareMatch = /^\/share\/([0-9a-f]{64})$/.exec(location.pathname);
+
 const root = document.getElementById("root");
 if (root) {
   createRoot(root).render(
     <ToastProvider>
       <ConfirmProvider>
-        <AppPage />
+        {shareMatch ? <SharePage token={shareMatch[1]} /> : <AppPage />}
       </ConfirmProvider>
     </ToastProvider>,
   );
