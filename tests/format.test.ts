@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   centsToDecimal,
   displayUrl,
+  formatDate,
   formatPrice,
   formatRelativeTime,
   parseShareTarget,
@@ -106,6 +107,22 @@ describe("formatRelativeTime", () => {
 
   test("invalid input → empty string", () => {
     expect(formatRelativeTime("not-a-date", now)).toBe("");
+  });
+});
+
+describe("formatDate", () => {
+  test("formats item creation dates with day, short month, and year", () => {
+    const iso = "2024-05-14T12:00:00Z";
+    const expected = new Intl.DateTimeFormat(undefined, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(iso));
+    expect(formatDate(iso)).toBe(expected);
+  });
+
+  test("invalid input → empty string", () => {
+    expect(formatDate("not-a-date")).toBe("");
   });
 });
 
