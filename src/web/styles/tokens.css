@@ -115,6 +115,14 @@
 
   --safe-top: env(safe-area-inset-top);
   --safe-bottom: env(safe-area-inset-bottom);
+
+  /* Amethyst A4 detail surface. */
+  --detail-thumb: 136px;
+  --detail-drawer-w: 520px;
+  --detail-sheet-max-h: 90dvh;
+  --detail-handle-w: 40px;
+  --detail-handle-h: 4px;
+  --detail-section-gap: 7px;
 }
 
 /* ---------- Tokens: dark (auto, no toggle) ---------- */
