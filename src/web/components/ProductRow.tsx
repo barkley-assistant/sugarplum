@@ -5,54 +5,60 @@ interface ProductRowProps {
   title: string;
   /** Share view: dimmed + struck title + badge treatment. */
   purchased?: boolean;
-  /** True while lifted by the drag state machine. */
-  dragging?: boolean;
-  /** Drag handle slot (owner rows only). */
-  dragHandle?: ReactNode;
   /** Thumbnail slot (ProductImage). */
   image?: ReactNode;
-  /** Single compact trigger: owner overflow, public claim control, or
-   *  share overflow. The only permanently visible per-item control. */
+  /** The whole row opens details (owner rows). */
+  onOpen?: () => void;
+  /** Tooltip for the row opener; the button's accessible name stays the title. */
+  openLabel?: string;
+  /** Title-supporting column: retailer, pending/failed badges. */
+  body?: ReactNode;
+  /** Price column: current price + lowest. */
+  price?: ReactNode;
+  /** Delta line, positioned by the responsive grid. */
+  delta?: ReactNode;
+  /** One compact trigger per row. */
   actions?: ReactNode;
-  /** Title-supporting column: site, price cluster, link, notes, tags,
-   *  fetch state. */
-  meta?: ReactNode;
-  /** Full-width blocks below the row: trend, hints disclosure. */
-  below?: ReactNode;
 }
 
-/** One row primitive for every list surface (owner, public, share). Keeps
- *  .item-card + .item-title + data-item-id: the drag machine and the e2e
- *  select them. Layout: [handle] [thumb] [body] [trigger]; meta wraps
- *  under the title on narrow widths. */
+/** One row primitive for every list surface (owner, public, share). Owner
+ *  rows use a stretched title button; public/share rows keep a plain title. */
 export function ProductRow({
   id,
   title,
   purchased = false,
-  dragging = false,
-  dragHandle,
   image,
+  onOpen,
+  openLabel,
+  body,
+  price,
+  delta,
   actions,
-  meta,
-  below,
 }: ProductRowProps) {
   return (
     <li
-      className={`card item-card${dragging ? " dragging" : ""}${purchased ? " is-purchased" : ""}`}
+      className={`card item-card${purchased ? " is-purchased" : ""}`}
       data-item-id={id}
     >
-      <div className="item-card-row product-row-grid">
-        {dragHandle}
+      <div className="product-row-grid">
         {image}
-        <div className="item-card-text product-row-body">
-          <div className="product-row-title-row">
-            <h3 className="item-title">{title}</h3>
-          </div>
-          {meta}
-        </div>
+        <h3 className="item-title product-row-title">
+          {onOpen ? (
+            <button
+              type="button"
+              className="row-open"
+              onClick={onOpen}
+              title={openLabel}
+            >
+              {title}
+            </button>
+          ) : title}
+        </h3>
+        <div className="product-row-body">{body}</div>
+        {price && <div className="product-row-price">{price}</div>}
+        {delta && <div className="product-row-delta">{delta}</div>}
         {actions && <div className="product-row-actions">{actions}</div>}
       </div>
-      {below && <div className="product-row-detail">{below}</div>}
     </li>
   );
 }
