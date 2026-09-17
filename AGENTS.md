@@ -6,25 +6,24 @@ other. PWA, mobile-first, Bun-native.
 
 ## Stack (fixed — do not drift)
 
-- Runtime/server: Bun 1.4.2 (pinned via global mise `~/.config/mise/config.toml`;
-  the systemd unit runs through `mise exec`), `Bun.serve({ routes })`.
-  TypeScript runs directly; no build step for the server.
-- Frontend: React 19.3 SPA via Bun HTML imports (`src/web/index.html` is the
+- Runtime/server: Bun (latest stable, pinned via global mise
+  `~/.config/mise/config.toml`; the systemd unit runs through `mise exec`),
+  `Bun.serve({ routes })`. TypeScript runs directly; no build step for the server.
+- Frontend: React SPA via Bun HTML imports (`src/web/index.html` is the
   entry; the bundler walks it). No Next.js, no Vite, no separate tsconfig.
 - Database: `bun:sqlite`, WAL mode enabled, schema in
   `src/server/db/migrations.ts` (idempotent, versioned).
 - Tests: `bun test` for unit/integration (`tests/` only — never glob
-  Playwright specs), Playwright 1.63 in `e2e/` for browser flows.
-- Types: TypeScript 6.0.3 — one root `tsconfig.json` whose `include` covers
-  every TS directory. `bunx tsc --noEmit` is the canonical type gate.
-  NOTE: TS 7 is NOT yet usable — typescript-eslint's peer range is
-  `>=4.8.4 <6.1.0`; re-bump only after typescript-eslint supports TS 7.
-- Lint: ESLint 10 + typescript-eslint 8.70 via `eslint.config.js` (flat
-  config), `bun run lint` is the gate.
+  Playwright specs), Playwright in `e2e/` for browser flows.
+- Types: one root `tsconfig.json` whose `include` covers every TS
+  directory. `bunx tsc --noEmit` is the canonical type gate.
+- Lint: ESLint + typescript-eslint via `eslint.config.js` (flat config),
+  `bun run lint` is the gate.
 - Dependencies: no version ranges in `package.json` — install latest
-  stable; `bun.lock` is the reproducibility artifact. Keep the whole
-  toolchain at latest stable (bun, typescript, eslint, playwright,
-  react) and update this file when versions move.
+  stable; `bun.lock` is the reproducibility artifact. Keep all
+  dependencies and the toolchain (bun, typescript, eslint, playwright,
+  react) up to date — bump to the newest stable version whenever one
+  ships, and verify the gates before merging.
 
 ## Layout
 
