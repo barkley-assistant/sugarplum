@@ -6,8 +6,9 @@ other. PWA, mobile-first, Bun-native.
 
 ## Stack (fixed — do not drift)
 
-- Runtime/server: Bun 1.4, `Bun.serve({ routes })`. TypeScript runs
-  directly; no build step for the server.
+- Runtime/server: Bun (latest stable, pinned via global mise
+  `~/.config/mise/config.toml`; the systemd unit runs through `mise exec`),
+  `Bun.serve({ routes })`. TypeScript runs directly; no build step for the server.
 - Frontend: React SPA via Bun HTML imports (`src/web/index.html` is the
   entry; the bundler walks it). No Next.js, no Vite, no separate tsconfig.
 - Database: `bun:sqlite`, WAL mode enabled, schema in
@@ -16,8 +17,13 @@ other. PWA, mobile-first, Bun-native.
   Playwright specs), Playwright in `e2e/` for browser flows.
 - Types: one root `tsconfig.json` whose `include` covers every TS
   directory. `bunx tsc --noEmit` is the canonical type gate.
+- Lint: ESLint + typescript-eslint via `eslint.config.js` (flat config),
+  `bun run lint` is the gate.
 - Dependencies: no version ranges in `package.json` — install latest
-  stable; `bun.lock` is the reproducibility artifact.
+  stable; `bun.lock` is the reproducibility artifact. Keep all
+  dependencies and the toolchain (bun, typescript, eslint, playwright,
+  react) up to date — bump to the newest stable version whenever one
+  ships, and verify the gates before merging.
 
 ## Layout
 
