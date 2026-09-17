@@ -65,7 +65,7 @@ export function Sheet({
       // the box, so check the menu subtree explicitly as well.
       if (box && e.target instanceof Node) {
         const menu = box.querySelector('[role="menu"]');
-        if (!box.contains(e.target) || menu?.contains(e.target)) return;
+        if (menu?.contains(e.target)) return;
       }
       if (e.key === "Escape") {
         e.stopPropagation();
