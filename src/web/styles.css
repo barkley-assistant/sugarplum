@@ -530,25 +530,6 @@ a.brand:hover {
   background: var(--surface-2);
 }
 
-/* ---------- Wishlist switcher ---------- */
-.user-switcher {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  overflow-x: auto;
-  flex-wrap: nowrap;
-  padding: var(--sp-1) 0;
-  scrollbar-width: none;
-}
-
-.user-switcher::-webkit-scrollbar {
-  display: none;
-}
-
-.user-switcher .chip {
-  flex-shrink: 0;
-}
-
 /* ---------- List section ---------- */
 .list-section {
   display: flex;
@@ -576,6 +557,89 @@ a.brand:hover {
   color: var(--text-2);
 }
 
+/* ---------- Amethyst A2: wishlist heading switcher ---------- */
+.list-switcher {
+  position: relative;
+}
+
+.list-switcher .page-title {
+  min-width: 0;
+}
+
+.list-switcher-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex-wrap: wrap;
+  max-width: 100%;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.list-switcher-trigger:hover {
+  background: transparent;
+  color: var(--text);
+  border: none;
+}
+
+.list-switcher-caret {
+  flex: 0 0 auto;
+  color: var(--text-2);
+  transition: transform var(--ease);
+}
+
+.list-switcher-trigger[aria-expanded="true"] .list-switcher-caret {
+  transform: rotate(180deg);
+}
+
+.list-switcher-popover {
+  left: 0;
+  right: auto;
+  min-width: 240px;
+  z-index: 40;
+}
+
+.switcher-row {
+  justify-content: space-between;
+}
+
+.switcher-name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.switcher-check {
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--plum-500);
+}
+
+.switcher-count {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .list-switcher .list-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-1);
+  }
+}
+
 /* Filter chip row (client-side visibility filter) */
 .filter-row {
   display: flex;
@@ -583,8 +647,10 @@ a.brand:hover {
   gap: var(--sp-2);
   overflow-x: auto;
   flex-wrap: nowrap;
-  padding: var(--sp-1) 0;
+  padding: 2px 0;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
 }
 
 .filter-row::-webkit-scrollbar {
@@ -593,11 +659,10 @@ a.brand:hover {
 
 .filter-chip {
   flex-shrink: 0;
-}
-
-.filter-chip .count {
-  font-variant-numeric: tabular-nums;
-  opacity: 0.8;
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: var(--text-sm);
+  border-radius: var(--r-full);
 }
 
 /* ---------- Item list + cards ---------- */
@@ -1690,16 +1755,6 @@ a.brand:hover {
 
 .app-footer a {
   color: var(--text-3);
-}
-
-/* ---------- User switcher: compact subordinate control ---------- */
-.user-switcher {
-  gap: var(--sp-1);
-}
-
-.user-switcher .chip {
-  font-size: var(--text-xs);
-  padding: 0.3rem 0.7rem;
 }
 
 /* ---------- List layout: single fluid column ---------- */

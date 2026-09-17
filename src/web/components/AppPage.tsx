@@ -25,8 +25,9 @@ import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { ItemList, type OwnerRef } from "./ItemList";
 import { SharePanel } from "./SharePanel";
 import { Sheet } from "./Sheet";
-import { AppShell, AppShellLoading, PageHeader } from "./AppShell";
+import { AppShell, AppShellLoading } from "./AppShell";
 import { IconButton, PlusIcon, ShareIcon } from "./IconButton";
+import { ListSwitcher } from "./ListSwitcher";
 import { UserMenu } from "./UserMenu";
 
 export function AppPage() {
@@ -329,8 +330,15 @@ export function AppPage() {
     return <AppShellLoading />;
   }
 
-  const others = summary.filter((row) => row.userId !== me.id);
-  const ownRef: OwnerRef = { id: me.id, displayName: me.username };
+  const ownRef: OwnerRef = { id: me.id, displayName: me.displayName || me.username };
+
+  const switcherRows = [
+    { userId: me.id, displayName: ownRef.displayName, itemCount: ownItems.length },
+    ...summary
+      .filter((row) => row.userId !== me.id)
+      .map((row) => ({ userId: row.userId, displayName: row.displayName, itemCount: row.itemCount }))
+      .sort((a, b) => a.displayName.localeCompare(b.displayName)),
+  ];
 
   const allTags = Array.from(new Set(ownItems.flatMap((i) => i.tags))).sort();
   const tagCounts: Record<string, number> = {};
@@ -464,28 +472,14 @@ export function AppPage() {
     >
       {error && <p className="error" role="alert">{error}</p>}
 
-      <nav className="user-switcher" aria-label={S.list.heading(me.username)}>
-        {others.map((row) => (
-          <button
-            key={row.userId}
-            className={viewing === row.userId ? "chip active" : "chip"}
-            onClick={() => void viewList(row.userId)}
-          >
-            {S.list.viewList(row.displayName)}
-          </button>
-        ))}
-        {viewing && (
-          <button className="chip" onClick={backToOwnList}>
-            {S.list.backToMyList}
-          </button>
-        )}
-      </nav>
-
       <div className="list-layout">
         <section className="list-section">
-          <PageHeader
-            title={S.list.heading(viewing ? ownerRefFor(viewing).displayName : ownRef.displayName)}
+          <ListSwitcher
+            currentName={viewing ? ownerRefFor(viewing).displayName : ownRef.displayName}
+            rows={switcherRows}
+            currentUserId={viewing}
             count={viewing ? otherItems.length : ownItems.length}
+            onSelect={(userId) => (userId === null ? backToOwnList() : void viewList(userId))}
           />
           {!viewing && ownItems.length > 0 && (
             <FilterChips

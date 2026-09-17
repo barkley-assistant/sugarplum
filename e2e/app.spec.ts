@@ -16,8 +16,8 @@ async function login(page: Page, username: string, password: string): Promise<vo
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  // App shell appears once the session is established (nav = wishlist switcher).
-  await expect(page.getByRole("navigation")).toBeVisible();
+  // App shell appears once the session is established (heading = switcher).
+  await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
 }
 
 /** Every test gets a fresh context, so log the admin in up front. */
@@ -145,6 +145,35 @@ test("6: tag filter shows only matching items and preserves order", async ({ pag
   expect(await titles.allTextContents()).toEqual(before);
 });
 
+test("6b: heading switcher opens a sheet and switches lists", async ({ page, browser }) => {
+  const created = await page.request.post(`${BASE}/api/users`, {
+    data: { username: "switcher-probe", password: "probe-pass", displayName: "Probe" },
+  });
+  expect(created.status()).toBe(201);
+
+  const context = await browser.newContext({ viewport: { width: 390, height: 800 } });
+  const probe = await context.newPage();
+  try {
+    await login(probe, "switcher-probe", "probe-pass");
+    await expect(probe.getByRole("heading", { name: "Probe's wishlist" })).toBeVisible();
+    await probe.getByRole("button", { name: "Probe's wishlist" }).click();
+    const sheet = probe.getByRole("dialog", { name: "Switch wishlist" });
+    await expect(sheet).toBeVisible();
+    await expect(sheet.getByRole("button", { name: /Admin/ })).toBeVisible();
+    await sheet.getByRole("button", { name: /Admin/ }).click();
+    await expect(probe.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+
+    await probe.getByRole("button", { name: "Admin's wishlist" }).click();
+    await probe
+      .getByRole("dialog", { name: "Switch wishlist" })
+      .getByRole("button", { name: /Probe/ })
+      .click();
+    await expect(probe.getByRole("heading", { name: "Probe's wishlist" })).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
 test("7: claim/unclaim between users; owner never sees claim state", async ({ page, browser }) => {
   const created = await page.request.post(`${BASE}/api/users`, {
     data: { username: "boop", password: "boop-pass", displayName: "Boop" },
@@ -159,7 +188,8 @@ test("7: claim/unclaim between users; owner never sees claim state", async ({ pa
   const bob = await context.newPage();
   try {
     await login(bob, "boop", "boop-pass");
-    await bob.getByRole("button", { name: "View Admin's list" }).click();
+    await bob.getByRole("button", { name: /wishlist/ }).click();
+    await bob.getByRole("menuitemradio", { name: /Admin/ }).click();
     const card = bob.locator(".item-card", {
       has: bob.getByRole("heading", { name: "Claimable mug" }),
     });
