@@ -91,11 +91,14 @@ interface HintsBlockProps {
   open: boolean;
   onToggle: () => void;
   hintState?: PriceHintState;
+  leading?: ReactNode;
+  trailing?: ReactNode;
+  label?: string;
 }
 
 /** Owner-only "prices seen elsewhere" disclosure: on-demand candidates
  *  fetched on each open. Copy and classes verbatim (e2e-anchored). */
-export function HintsBlock({ itemId, open, onToggle, hintState }: HintsBlockProps) {
+export function HintsBlock({ itemId, open, onToggle, hintState, leading, trailing, label = S.item.pricesElsewhere }: HintsBlockProps) {
   return (
     <div className="hint-block">
       <button
@@ -105,7 +108,9 @@ export function HintsBlock({ itemId, open, onToggle, hintState }: HintsBlockProp
         aria-controls={`hints-${itemId}`}
         onClick={onToggle}
       >
-        {S.item.pricesElsewhere}
+        {leading}
+        {label}
+        {trailing}
       </button>
       {open && (
         <div className="hint-candidates" id={`hints-${itemId}`}>

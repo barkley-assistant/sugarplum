@@ -250,7 +250,7 @@ export function ItemCard({
  *  nothing honest to say: no history, no current price, no change, or a
  *  currency mismatch (mixed-currency deltas are not computed). Integer cents
  *  only — no float money arithmetic. */
-function priceDelta(
+export function priceDelta(
   currentDecimal: string | null,
   currentCurrency: string | null,
   stats: PriceStats | null,

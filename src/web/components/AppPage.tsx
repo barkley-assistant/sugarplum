@@ -25,6 +25,7 @@ import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { ItemList, type OwnerRef } from "./ItemList";
 import { SharePanel } from "./SharePanel";
 import { Sheet } from "./Sheet";
+import { ItemDetailSheet } from "./ItemDetailSheet";
 import { AppShell, AppShellLoading } from "./AppShell";
 import { IconButton, PlusIcon, ShareIcon } from "./IconButton";
 import { ListSwitcher } from "./ListSwitcher";
@@ -342,6 +343,7 @@ export function AppPage() {
   ];
 
   const allTags = Array.from(new Set(ownItems.flatMap((i) => i.tags))).sort();
+  const detailItem = ownItems.find((item) => item.id === openItemId) ?? null;
 
   function ownerRefFor(userId: string): OwnerRef {
     const row = summary.find((r) => r.userId === userId);
@@ -452,7 +454,7 @@ export function AppPage() {
       {error && <p className="error" role="alert">{error}</p>}
 
       <div className="list-layout">
-        <section className="list-section" data-detail-item-id={openItemId ?? undefined}>
+        <section className="list-section">
           <ListSwitcher
             currentName={viewing ? ownerRefFor(viewing).displayName : ownRef.displayName}
             rows={switcherRows}
@@ -488,6 +490,18 @@ export function AppPage() {
             autoFocusUrl
           />
         </Sheet>
+      )}
+      {!viewing && detailItem && (
+        <ItemDetailSheet
+          item={detailItem}
+          onClose={() => setOpenItemId(null)}
+          onEdit={editItem}
+          onDelete={deleteItem}
+          onRefresh={refreshItem}
+          onResetPurchased={resetPurchased}
+          onCheckPrices={checkPrices}
+          hintState={hintStates[detailItem.id]}
+        />
       )}
     </AppShell>
   );

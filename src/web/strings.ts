@@ -52,6 +52,18 @@ export const S = {
     hintsDisabled: "Price hints are off in settings.",
     copyLink: "Copy link",
     copied: "Copied",
+    imageViaSearch: "image via search",
+  },
+  detail: {
+    close: "Close",
+    openProduct: "Open product",
+    editItem: "Edit item",
+    notesTitle: "Notes",
+    tagsTitle: "Tags",
+    moreInfoTitle: "More information",
+    viewOn: (site: string) => `View on ${site}`,
+    checkElsewhere: "Check prices elsewhere",
+    addedOn: (date: string) => `Added ${date}`,
   },
   settings: {
     title: "Settings",
