@@ -657,7 +657,7 @@ a.brand:hover {
   display: none;
 }
 
-.filter-chip {
+button.filter-chip {
   flex-shrink: 0;
   min-height: 36px;
   padding: 0 12px;

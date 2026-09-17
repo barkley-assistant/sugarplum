@@ -341,10 +341,6 @@ export function AppPage() {
   ];
 
   const allTags = Array.from(new Set(ownItems.flatMap((i) => i.tags))).sort();
-  const tagCounts: Record<string, number> = {};
-  for (const item of ownItems) {
-    for (const t of item.tags) tagCounts[t] = (tagCounts[t] ?? 0) + 1;
-  }
 
   function ownerRefFor(userId: string): OwnerRef {
     const row = summary.find((r) => r.userId === userId);
@@ -484,7 +480,6 @@ export function AppPage() {
           {!viewing && ownItems.length > 0 && (
             <FilterChips
               tags={allTags}
-              counts={tagCounts}
               active={activeTag}
               onSelect={setActiveTag}
             />

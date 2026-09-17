@@ -131,7 +131,7 @@ test("6: member changes their display name; header follows", async ({ page }) =>
     expect(((await me.json()) as { displayName: string }).displayName).toBe("Renamed Member");
 
     await ctx.goto(`${BASE}/`);
-    await expect(ctx.getByRole("button", { name: "Renamed Member" })).toBeVisible();
+    await expect(ctx.locator('.user-menu-button[aria-label="Renamed Member"]')).toBeVisible();
   } finally {
     await ctx.close();
   }
