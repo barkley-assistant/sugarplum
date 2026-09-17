@@ -56,7 +56,8 @@
   --ease-overlay: 260ms cubic-bezier(.2,.8,.2,1);
 
   /* Compact row system. */
-  --row-thumb: 64px;
+  --row-thumb: 72px;
+  --row-thumb-desktop: 96px;
   --row-gap: var(--sp-2);
   --row-pad-y: 10px;
   --row-pad-x: var(--sp-3);
@@ -69,10 +70,12 @@
   --text-row-title: 0.9375rem;
   --lh-row-title: 1.35;
   --text-row-price: 0.9375rem;
-  --text-row-meta: 0.6875rem;
+  --text-row-meta: 0.75rem;
 
-  --delta-down: var(--success);
+  --delta-down: #15803d;
+  --delta-down-chip: rgba(22, 163, 74, 0.10);
   --delta-up: var(--text-2);
+  --delta-up-chip: var(--surface-2);
 
   --topbar-pad-y: 6px;
   --topbar-h: 52px;
@@ -141,7 +144,9 @@
     --chip-bg-active: var(--plum-700);
     --chip-border-active: var(--plum-700);
     --chip-text-active: #ffffff;
-    --delta-down: var(--success);
+    --delta-down: #8CE8A8;
+    --delta-down-chip: #1A231E;
     --delta-up: var(--text-2);
+    --delta-up-chip: var(--surface-2);
   }
 }

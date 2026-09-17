@@ -44,6 +44,7 @@ export function AppPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [hintStates, setHintStates] = useState<Record<string, PriceHintState>>({});
+  const [openItemId, setOpenItemId] = useState<string | null>(null);
   const toast = useToast();
   const reorder = useDragReorder(ownItems, onReorder);
   const install = useInstallPrompt();
@@ -405,25 +406,7 @@ export function AppPage() {
         onCheckPrices={checkPrices}
         onResetPurchased={resetPurchased}
         hintStates={hintStates}
-        draggingId={reorder.draggingId}
-        renderDragHandle={(id) => (
-          <button type="button" {...reorder.getHandleProps(id)}>
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M3 4h10M3 8h10M3 12h10"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        )}
+        onOpenDetails={setOpenItemId}
       />
     );
   }
@@ -469,7 +452,7 @@ export function AppPage() {
       {error && <p className="error" role="alert">{error}</p>}
 
       <div className="list-layout">
-        <section className="list-section">
+        <section className="list-section" data-detail-item-id={openItemId ?? undefined}>
           <ListSwitcher
             currentName={viewing ? ownerRefFor(viewing).displayName : ownRef.displayName}
             rows={switcherRows}

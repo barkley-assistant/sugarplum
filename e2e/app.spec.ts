@@ -37,8 +37,7 @@ test("2: manual add shows a card with a formatted price", async ({ page }) => {
   await sheet.getByLabel("Price").fill("12.50");
   await sheet.getByRole("button", { name: "Add item" }).click();
   await expect(page.getByRole("heading", { name: "Manual mug" })).toBeVisible();
-  // Scoped to the card: the price text also appears in the history meta line
-  // ("Lowest £12.50 · At add £12.50") since wave 5.
+  // Scope the price assertion to the card so other rows cannot match it.
   const card = page.locator(".item-card", {
     has: page.getByRole("heading", { name: "Manual mug" }),
   });
@@ -94,14 +93,51 @@ test("4b: price history shows the lowest price and the delta since added", async
     has: page.getByRole("heading", { name: "History probe" }),
   });
   await expect(card.locator(".price")).toHaveText("£10.00");
-  await expect(card.locator(".price-meta")).toHaveText("Lowest £10.00 · At add £12.50");
-  await expect(card.locator(".price-delta")).toHaveText("Down £2.50 since added");
+  await expect(card.locator(".price-meta")).toHaveText("Lowest £10.00");
+  await expect(card.locator(".price-delta .delta-copy")).toHaveText("£2.50 since added");
+  await expect(card.locator(".price-delta")).toHaveAttribute("data-direction", "down");
   await expect(card.getByRole("button", { name: "Re-check price" })).toHaveCount(0); // no URL
-  // The unverified-hints surface is present and labelled as such.
-  await expect(card.getByRole("button", { name: "Prices seen elsewhere (unverified)" })).toBeVisible();
+  await expect(card.locator(".price-meta")).not.toContainText("At add");
+  await expect(card.getByRole("button", { name: "Prices seen elsewhere (unverified)" })).toHaveCount(0);
 });
 
-test("5: drag reorder persists after reload", async ({ page }) => {
+test("4c: row opens the detail seam; overflow does not", async ({ page }) => {
+  const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as { id: string };
+  const list = (await (await page.request.get(`${BASE}/api/users/${me.id}/wishlist`)).json()) as Array<{ id: string; title: string }>;
+  const probe = list.find((item) => item.title === "History probe");
+  expect(probe).toBeTruthy();
+
+  const card = page.locator(".item-card", {
+    has: page.getByRole("heading", { name: "History probe" }),
+  });
+  const section = page.locator("section.list-section");
+  await expect(section).not.toHaveAttribute("data-detail-item-id", /.*/);
+
+  const rowButton = card.getByRole("button", { name: "History probe" });
+  await rowButton.focus();
+  await page.keyboard.press("Enter");
+  await expect(section).toHaveAttribute("data-detail-item-id", probe!.id);
+
+  await card.getByRole("button", { name: "More actions" }).click();
+  await expect(page.getByRole("menu", { name: "More actions" })).toBeVisible();
+  await expect(section).toHaveAttribute("data-detail-item-id", probe!.id);
+  await page.keyboard.press("Escape");
+
+  for (const selector of [
+    ".drag-handle",
+    ".item-link-row",
+    ".tags",
+    ".item-notes",
+    ".price-trend",
+    ".hint-block",
+    ".item-cheaper",
+    ".item-image-source",
+  ]) {
+    await expect(card.locator(selector)).toHaveCount(0);
+  }
+});
+
+test("5: manual order persists and the order API round-trips", async ({ page }) => {
   for (const title of ["Reorder one", "Reorder two", "Reorder three"]) {
     const res = await page.request.post(`${BASE}/api/wishlist/items`, { data: { title } });
     expect(res.status()).toBe(201);
@@ -110,14 +146,19 @@ test("5: drag reorder persists after reload", async ({ page }) => {
   const titles = page.locator(".item-card .item-title");
   await expect(titles.last()).toHaveText("Reorder three");
 
-  // Drag the LAST card's handle above the FIRST card. dragTo scrolls both
-  // into view; the pointer state machine lifts on pointerdown (mouse) and
-  // reorders on pointermove.
-  await page.locator(".drag-handle").last().dragTo(page.locator(".item-card").first());
+  const ids = (await page.evaluate(() => Array.from(
+    document.querySelectorAll<HTMLElement>(".item-card"),
+  ).map((el) => el.dataset.itemId))) as string[];
+  expect(ids.length).toBeGreaterThanOrEqual(3);
+  const rotated = [ids[ids.length - 1], ...ids.slice(0, -1)];
+  const put = await page.request.put(`${BASE}/api/wishlist/order`, {
+    data: { itemIds: rotated },
+  });
+  expect(put.status()).toBe(200);
 
-  await expect(titles.first()).toHaveText("Reorder three");
   await page.reload();
   await expect(page.locator(".item-card .item-title").first()).toHaveText("Reorder three");
+  await expect(page.locator(".drag-handle")).toHaveCount(0);
 });
 
 test("6: tag filter shows only matching items and preserves order", async ({ page }) => {
@@ -136,7 +177,7 @@ test("6: tag filter shows only matching items and preserves order", async ({ pag
   expect(before).toContain("Birthday candle");
   expect(before).toContain("Plain notebook");
 
-  await page.getByRole("button", { name: /Birthday/ }).click();
+  await page.getByRole("button", { name: "Birthday", exact: true }).click();
   await expect(page.locator(".item-card")).toHaveCount(1);
   await expect(page.getByRole("heading", { name: "Birthday candle" })).toBeVisible();
 

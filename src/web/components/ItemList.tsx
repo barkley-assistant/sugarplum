@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import type { OwnedItem, PriceHintState, PublicItem } from "../../shared/types";
 import { ItemCard } from "./ItemCard";
 import type { ItemFormValues } from "./ItemForm";
@@ -22,10 +21,8 @@ interface ItemListProps {
   onResetPurchased?: (id: string) => void | Promise<void>;
   /** Owner-only: per-item candidates results, keyed by item id. */
   hintStates?: Record<string, PriceHintState>;
-  /** Builds the drag handle for a card (own lists only). */
-  renderDragHandle?: (itemId: string) => ReactNode;
-  /** Id of the card currently lifted, for the .dragging style. */
-  draggingId?: string | null;
+  /** Opens the detail surface for an owner row (A4 fills the surface). */
+  onOpenDetails?: (id: string) => void;
 }
 
 /** Renders the ordered list of cards. Empty lists return null — the caller
@@ -41,8 +38,7 @@ export function ItemList({
   onCheckPrices,
   onResetPurchased,
   hintStates,
-  renderDragHandle,
-  draggingId = null,
+  onOpenDetails,
 }: ItemListProps) {
   if (items.length === 0) return null;
 
@@ -61,8 +57,7 @@ export function ItemList({
           onCheckPrices={onCheckPrices}
           onResetPurchased={onResetPurchased}
           hintState={hintStates?.[item.id]}
-          dragHandle={renderDragHandle ? renderDragHandle(item.id) : undefined}
-          dragging={draggingId === item.id}
+          onOpenDetails={onOpenDetails}
         />
       ))}
     </ul>

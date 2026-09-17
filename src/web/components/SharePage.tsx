@@ -148,7 +148,7 @@ export function SharePage({ token }: { token: string }) {
                   />
                 )
               }
-              meta={
+              body={
                 <>
                   {item.siteName && <span className="item-site">{item.siteName}</span>}
                   <PriceCluster price={formatPrice(item.priceCents, item.currency)} />

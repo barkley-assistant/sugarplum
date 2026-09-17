@@ -1,14 +1,13 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import type { OwnedItem, PriceHintState, PricePoint, PriceStats, PriceTrend, PublicItem } from "../../shared/types";
-import { centsToDecimal, formatPrice, toCents, urlHost } from "../format";
+import { centsToDecimal, formatPrice, toCents } from "../format";
 import { S } from "../strings";
 import { useConfirm } from "../confirm";
 import { useToast } from "../toast";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
-import { ItemLink } from "./ItemLink";
 import { DotsIcon } from "./IconButton";
 import { OverflowMenu, type OverflowItem } from "./OverflowMenu";
-import { PriceCluster, TrendBlock, HintsBlock, type TrendWindow } from "./PriceCluster";
+import { PriceCluster, type TrendWindow } from "./PriceCluster";
 import { ProductImage } from "./ProductImage";
 import { ProductRow } from "./ProductRow";
 import { Sheet } from "./Sheet";
@@ -30,10 +29,8 @@ interface ItemCardProps {
   onResetPurchased?: (id: string) => void | Promise<void>;
   /** Owner-only: the last candidates result for this item, when a lookup ran. */
   hintState?: PriceHintState;
-  /** Drag handle slot (pointer state machine wired by AppPage). */
-  dragHandle?: ReactNode;
-  /** True while this card is lifted by the drag state machine. */
-  dragging?: boolean;
+  /** Owner-row opener; A4 will render the detail surface behind this seam. */
+  onOpenDetails?: (id: string) => void;
 }
 
 /** Owner + public row, composed from the shared primitives. The props and
@@ -48,15 +45,12 @@ export function ItemCard({
   onClaim,
   onUnclaim,
   onRefresh,
-  onCheckPrices,
+  onCheckPrices: _onCheckPrices,
   onResetPurchased,
-  hintState,
-  dragHandle,
-  dragging = false,
+  hintState: _hintState,
+  onOpenDetails,
 }: ItemCardProps) {
   const [editing, setEditing] = useState(false);
-  const [hintsOpen, setHintsOpen] = useState(false);
-  const [trendWindow, setTrendWindow] = useState<TrendWindow>(readTrendWindow);
   const confirm = useConfirm();
   const toast = useToast();
 
@@ -98,13 +92,6 @@ export function ItemCard({
     }
   }
 
-  /** Fetch on each open: the whole point is fresh evidence, and the route is
-   *  display-only. */
-  async function toggleHints() {
-    const next = !hintsOpen;
-    setHintsOpen(next);
-    if (next && onCheckPrices) await onCheckPrices(item.id);
-  }
 
   const ownerItem = item as OwnedItem;
   const price = formatPrice(item.priceCents, item.currency);
@@ -114,28 +101,18 @@ export function ItemCard({
   const stats = viewerIsOwner ? ownerItem.priceStats : null;
   const delta = priceDelta(item.priceCents, item.currency, stats);
   const publicItem = item as PublicItem;
-  const showTrend =
-    viewerIsOwner &&
-    stats !== null &&
-    stats.series.length >= 2 &&
-    sameCurrencySeries(stats.series, item.currency);
-  const trendValues = showTrend ? trendCents(stats.series, trendWindow) : [];
-
-  function chooseWindow(next: TrendWindow) {
-    setTrendWindow(next);
-    try {
-      localStorage.setItem(TREND_WINDOW_KEY, next);
-    } catch {
-      // Storage may be unavailable (private mode); the chip just won't persist.
-    }
-  }
-
   function ownerMenuItems(): OverflowItem[] {
     const menu: OverflowItem[] = [];
     if (onEdit) {
       menu.push({ id: "edit", label: S.item.edit, onSelect: () => setEditing(true) });
     }
-    if (item.url && onRefresh) {
+    if (item.fetchState === "failed" && onRefresh) {
+      menu.push({
+        id: "retry",
+        label: S.item.retry,
+        onSelect: () => onRefresh(item.id),
+      });
+    } else if (item.url && onRefresh && item.fetchState !== "pending") {
       menu.push({
         id: "recheck",
         label: S.item.recheckPrice,
@@ -170,9 +147,6 @@ export function ItemCard({
   const metaParts: string[] = [];
   if (stats) {
     metaParts.push(S.item.lowestSeen(formatPrice(stats.lowestCents, stats.lowestCurrency)));
-    if (stats.atAddCents !== null) {
-      metaParts.push(S.item.atAddPrice(formatPrice(stats.atAddCents, stats.atAddCurrency)));
-    }
   }
 
   const ownerActions =
@@ -213,94 +187,48 @@ export function ItemCard({
       <ProductRow
         id={item.id}
         title={item.title}
-        dragging={dragging}
-        dragHandle={dragHandle}
+        onOpen={viewerIsOwner && onOpenDetails ? () => onOpenDetails(item.id) : undefined}
+        openLabel={S.item.openDetails}
         image={
           item.imagePath ? (
             <ProductImage src={`/api/wishlist/items/${item.id}/image`} />
           ) : undefined
         }
         actions={viewerIsOwner ? ownerActions : publicActions}
-        meta={
+        body={
           <>
             {item.siteName && <span className="item-site">{item.siteName}</span>}
-            {/* Provenance note: this item's picture came from a search, not
-                from the shop. Owner-only, like the price hint. */}
-            {viewerIsOwner && item.imageSource === "search" && (
-              <span className="item-image-source">{S.item.imageViaSearch}</span>
-            )}
-            <PriceCluster
-              price={price}
-              hintPrice={hintPrice}
-              metaParts={metaParts}
-              delta={delta}
-            />
-            {item.url && <ItemLink url={item.url} />}
-            {/* The owner's own "found it cheaper at" note: a link they saved,
-                carrying no automatic price claim. */}
-            {viewerIsOwner && ownerItem.cheaperUrl && (
-              <p className="item-cheaper">
-                {S.item.cheaperFound}{" "}
-                <a href={ownerItem.cheaperUrl} target="_blank" rel="noreferrer">
-                  {urlHost(ownerItem.cheaperUrl)}
-                </a>
-              </p>
-            )}
-            {item.notes && <p className="item-notes">{item.notes}</p>}
-            {item.tags.length > 0 && (
-              <div className="tags">
-                {item.tags.map((t) => (
-                  <span key={t} className="tag-pill">
-                    #{t}
-                  </span>
-                ))}
-              </div>
-            )}
             {item.fetchState === "pending" && (
               <StatusBadge variant="fetching">{S.item.fetching}</StatusBadge>
             )}
             {item.fetchState === "failed" && (
-              <span className="fetch-state">
-                <StatusBadge variant="failed">{S.item.unavailable}</StatusBadge>
-                {viewerIsOwner && onRefresh && (
-                  <button
-                    type="button"
-                    className="secondary retry-btn"
-                    onClick={() => void onRefresh(item.id)}
-                  >
-                    {S.item.retryShort}
-                  </button>
-                )}
-              </span>
+              <StatusBadge variant="failed">{S.item.unavailable}</StatusBadge>
             )}
           </>
         }
-        below={
-          showTrend && stats ? (
-            <>
-              <TrendBlock
-                window={trendWindow}
-                onWindow={chooseWindow}
-                values={trendValues}
-                advice={stats.trend ? adviceLabel(stats.trend.advice) : null}
-              />
-              {viewerIsOwner && onCheckPrices && (
-                <HintsBlock
-                  itemId={item.id}
-                  open={hintsOpen}
-                  onToggle={() => void toggleHints()}
-                  hintState={hintState}
-                />
-              )}
-            </>
-          ) : viewerIsOwner && onCheckPrices ? (
-            <HintsBlock
-              itemId={item.id}
-              open={hintsOpen}
-              onToggle={() => void toggleHints()}
-              hintState={hintState}
-            />
-          ) : undefined
+        price={<PriceCluster price={price} hintPrice={hintPrice} metaParts={metaParts} />}
+        delta={
+          delta && (
+            <span className="price-delta" data-direction={delta.direction}>
+              <span className="delta-arrow" aria-hidden="true">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path
+                    d={delta.direction === "down" ? "M5 1.5v7M1.5 5 5 8.5 8.5 5" : "M5 8.5v-7M1.5 5 5 1.5 8.5 5"}
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <span className="visually-hidden">
+                {delta.direction === "down" ? "Down " : "Up "}
+              </span>
+              <span className="delta-copy">
+                {S.item.deltaSinceAdd(delta.amount)}
+              </span>
+            </span>
+          )
         }
       />
       {viewerIsOwner && onEdit && (
@@ -318,7 +246,7 @@ export function ItemCard({
   );
 }
 
-/** "Down £2.50 since added" / "Up £2.50 since added", or null when there is
+/** The direction and amount since added, or null when there is
  *  nothing honest to say: no history, no current price, no change, or a
  *  currency mismatch (mixed-currency deltas are not computed). Integer cents
  *  only — no float money arithmetic. */
@@ -326,7 +254,7 @@ function priceDelta(
   currentDecimal: string | null,
   currentCurrency: string | null,
   stats: PriceStats | null,
-): string | null {
+): { direction: "down" | "up"; amount: string } | null {
   if (!stats || stats.atAddCents === null || currentDecimal === null) return null;
   const current = toCents(currentDecimal);
   const atAdd = toCents(stats.atAddCents);
@@ -335,12 +263,12 @@ function priceDelta(
     return null;
   }
   const amount = formatPrice(centsToDecimal(Math.abs(current - atAdd)), currentCurrency);
-  return current < atAdd ? S.item.downSinceAdd(amount) : S.item.upSinceAdd(amount);
+  return { direction: current < atAdd ? "down" : "up", amount };
 }
 
 const TREND_WINDOW_KEY = "sugarplum.trend-window";
 
-function readTrendWindow(): TrendWindow {
+export function readTrendWindow(): TrendWindow {
   try {
     return localStorage.getItem(TREND_WINDOW_KEY) === "90d" ? "90d" : "30d";
   } catch {
