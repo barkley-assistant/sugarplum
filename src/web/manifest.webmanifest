@@ -5,8 +5,8 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#151022",
-  "theme_color": "#151022",
+  "background_color": "#121017",
+  "theme_color": "#121017",
   "icons": [
     { "src": "/assets/brand/pwa/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/assets/brand/pwa/icon-512.png", "sizes": "512x512", "type": "image/png" },

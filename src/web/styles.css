@@ -1,3 +1,6 @@
+@import url("./styles/tokens.css");
+/* All design tokens live in ./styles/tokens.css; do not redeclare them here. */
+
 /* ============================================================
    sugarplum design system — Wave 3
    Flat surfaces, hairline borders, one plum-violet accent,
@@ -16,162 +19,6 @@ html,
 body {
   margin: 0;
   padding: 0;
-}
-
-/* ---------- Tokens: light (default) ---------- */
-:root {
-  --plum-700: #5b21b6;
-  --plum-600: #6d28d9;
-  --plum-500: #7c3aed;
-  --plum-100: #ede9fe;
-  --plum-050: #f5f3ff;
-
-  --bg: #fafafa;
-  --surface: #ffffff;
-  --surface-2: #f4f4f5;
-  --text: #18181b;
-  --text-2: #52525b;
-  --text-3: #a1a1aa;
-  --border: #e4e4e7;
-  --border-2: #d4d4d8;
-  --success: #16a34a;
-  --danger: #dc2626;
-  --danger-surface: #fef2f2;
-  /* Purchased badge on a shared list — distinct from the green claim badge
-     and legible on both themes (dark override below). */
-  --share-accent: #6d28d9;
-  --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.12);
-
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-
-  --sp-1: 4px;
-  --sp-2: 8px;
-  --sp-3: 12px;
-  --sp-4: 16px;
-  --sp-5: 24px;
-  --sp-6: 32px;
-
-  --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 16px;
-  --r-full: 999px;
-
-  --font-system:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
-
-  --ease: 150ms ease;
-  --ease-overlay: 220ms ease;
-
-  /* Velvet density — the compact row system (wave 26). */
-  --row-thumb: 56px;
-  --row-gap: var(--sp-2);
-  --row-pad-y: 10px;
-  --row-pad-x: var(--sp-3);
-  --list-gap: 6px;
-
-  /* Surface elevation (subtle, no shadows on the feed). */
-  --surface-row-hover: var(--surface-2);
-  --surface-row: transparent;
-  --border-row: var(--border);
-
-  /* Tier-1 type hierarchy (G1): title primary, price secondary, meta tertiary. */
-  --text-row-title: 0.9375rem;
-  --lh-row-title: 1.35;
-  --text-row-price: 0.9375rem;
-  --text-row-meta: 0.6875rem;
-
-  /* Price delta (G3): informative secondary line, never buy/sell signalling. */
-  --delta-down: var(--text-2);
-  --delta-up: var(--text-2);
-
-  /* Topbar (G4): quieter chrome, explicit height for the rail sticky offset. */
-  --topbar-pad-y: 6px;
-  --topbar-h: 48px;
-
-  /* Chips (G5): subordinate navigation, not buttons. Soft-tint active. */
-  --chip-bg: transparent;
-  --chip-border: transparent;
-  --chip-bg-active: var(--plum-050);
-  --chip-border-active: var(--plum-100);
-  --chip-text: var(--text-2);
-  --chip-text-active: var(--plum-600);
-
-  /* Interaction states. */
-  --ring: var(--plum-500);
-  --ring-offset: 2px;
-  --focus-visible: 2px solid var(--ring);
-
-  /* Status palette (one language for state). */
-  --status-success: var(--success);
-  --status-danger: var(--danger);
-  --status-muted: var(--text-3);
-  --status-purchased: var(--share-accent);
-
-  /* Layout. */
-  --app-main-max: 960px;
-  --app-rail-min: 260px;
-  --app-rail-sticky-top: calc(var(--sp-4) + var(--topbar-h));
-
-  /* Type scale (extend, don't replace). */
-  --text-2xs: 0.6875rem;
-
-  /* Motion. */
-  --ease-row: 120ms ease;
-
-  /* Tier-2 refinements (wave 26 t2). */
-  /* Skeleton: match the row shape, not the old bordered card (G2). */
-  --skel-thumb: var(--row-thumb);
-  --skel-gap: var(--row-gap);
-  --skel-row-gap: var(--list-gap);
-
-  /* Empty state: quiet, generous, no dashed box (G3). */
-  --empty-pad-y: var(--sp-6);
-  --empty-pad-x: var(--sp-4);
-
-  /* Forms: one consistent radius + a focus ring (G6). */
-  --r-input: var(--r-sm);
-  --r-form-card: var(--r-md);
-  /* --focus-visible already = 2px solid var(--ring); reused on inputs. */
-
-  /* Settings section rhythm (G4): grouped sections, consistent gap. */
-  --section-gap: var(--sp-5);
-  --section-pad: var(--sp-5);
-  --section-radius: var(--r-md);
-
-  /* Micro-interaction speed (G8): one fast transition on everything. */
-  --ease-ui: 120ms ease;
-}
-
-/* ---------- Tokens: dark (auto, no toggle) ---------- */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0c0a0f;
-    --surface: #16121c;
-    --surface-2: #211b29;
-    --text: #f4f4f5;
-    --text-2: #a8a0b3;
-    --text-3: #6b6478;
-    --border: #2a2333;
-    --border-2: #3a3145;
-    --plum-100: #2e1f4d;
-    --plum-050: #231838;
-    --success: #4ade80;
-    --danger: #f87171;
-    --danger-surface: #2b1517;
-    --share-accent: #c4b5fd;
-    --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.5);
-    --surface-row-hover: var(--surface-2);
-    --chip-bg-active: var(--plum-050);
-    --chip-border-active: var(--plum-100);
-    --chip-text-active: var(--share-accent);
-    --delta-down: var(--text-2);
-    --delta-up: var(--text-2);
-  }
 }
 
 /* ---------- Base ---------- */
@@ -408,6 +255,19 @@ label {
   color: var(--text);
 }
 
+.icon-btn--ghost {
+  border-color: var(--border-2);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-2);
+}
+
+.icon-btn--ghost:hover {
+  border-color: var(--plum-500);
+  background: transparent;
+  color: var(--text);
+}
+
 .icon-btn:focus-visible {
   outline: var(--focus-visible);
   outline-offset: var(--ring-offset);
@@ -495,6 +355,7 @@ label {
   max-width: var(--app-main-max);
   margin: 0 auto;
   padding: var(--sp-4);
+  padding-bottom: calc(var(--sp-4) + var(--safe-bottom));
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
@@ -508,10 +369,18 @@ label {
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-4);
-  padding: var(--topbar-pad-y) var(--sp-4);
+  padding: calc(var(--topbar-pad-y) + var(--safe-top)) var(--sp-4) var(--topbar-pad-y);
   min-height: var(--topbar-h);
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, var(--bg));
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .topbar {
+    background: var(--bg);
+  }
 }
 
 .brand {
@@ -608,6 +477,23 @@ a.brand:hover {
   background: var(--surface-2);
 }
 
+.user-avatar-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: var(--r-full);
+  background: var(--plum-600);
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
 .menu-sheet {
   position: absolute;
   right: 0;
@@ -678,6 +564,12 @@ a.brand:hover {
   gap: var(--sp-4);
 }
 
+.page-title {
+  font-size: var(--text-display);
+  line-height: var(--lh-display);
+  font-weight: 700;
+}
+
 .list-heading .count {
   font-variant-numeric: tabular-nums;
   font-size: var(--text-sm);
@@ -736,9 +628,9 @@ a.brand:hover {
 }
 
 .item-thumb {
-  width: 72px;
-  height: 72px;
-  border-radius: var(--r-sm);
+  width: var(--row-thumb);
+  height: var(--row-thumb);
+  border-radius: var(--r-md);
   object-fit: cover;
   background: var(--surface-2);
   flex-shrink: 0;
@@ -1263,8 +1155,9 @@ a.brand:hover {
 }
 
 .sheet {
-  background: var(--surface);
-  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
   padding: var(--sp-5) var(--sp-4) var(--sp-4);
   width: 100%;
   max-height: 92vh;
@@ -1809,7 +1702,7 @@ a.brand:hover {
   padding: 0.3rem 0.7rem;
 }
 
-/* ---------- List layout: single fluid column, desktop rail ---------- */
+/* ---------- List layout: single fluid column ---------- */
 .list-layout {
   display: flex;
   flex-direction: column;
@@ -1817,43 +1710,9 @@ a.brand:hover {
   min-width: 0;
 }
 
-.list-rail {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  min-width: 0;
-}
-
-.list-layout .list-rail {
-  order: -1; /* mobile: share panel + filters above the list, as pre-velvet */
-}
-
-.list-rail-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  min-width: 0;
-}
-
 @media (min-width: 1024px) {
-  .list-layout.has-rail {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--app-rail-min);
-    gap: var(--sp-4);
-    align-items: start;
-  }
-
-  .list-layout.has-rail .list-rail {
-    position: sticky;
-    top: var(--app-rail-sticky-top);
-    order: 0;
-  }
-
-  .list-rail-card {
-    background: var(--surface);
-    border: 1px solid var(--border-row);
-    border-radius: var(--r-md);
-    padding: var(--sp-3);
+  .topbar {
+    border-bottom: none;
   }
 }
 
