@@ -15,11 +15,11 @@ async function login(page: Page, username: string, password: string): Promise<vo
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("navigation")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
 }
 
 async function openMenu(page: Page, buttonName: string): Promise<void> {
-  await page.getByRole("button", { name: buttonName }).click();
+  await page.locator(`.user-menu-button[aria-label="${buttonName}"]`).click();
 }
 
 test.beforeEach(async ({ page }) => {
@@ -72,7 +72,7 @@ test("2: member on /settings sees Account only; /api/users is 403", async ({ pag
 
 test("3: main page has no admin controls", async ({ page }) => {
   await page.goto(`${BASE}/`);
-  await expect(page.getByRole("navigation")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
   await expect(page.locator("#admin-panel")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Create user" })).toHaveCount(0);
   await expect(page.locator(".admin-table")).toHaveCount(0);
@@ -111,7 +111,7 @@ test("5: member changes their own password and signs in again", async ({ page })
     // New password works.
     await ctx.getByLabel("Password").fill(MEMBER.newPassword);
     await ctx.getByRole("button", { name: "Sign in" }).click();
-    await expect(ctx.getByRole("navigation")).toBeVisible();
+    await expect(ctx.getByRole("heading", { name: /wishlist/ })).toBeVisible();
   } finally {
     await ctx.close();
   }
@@ -131,7 +131,7 @@ test("6: member changes their display name; header follows", async ({ page }) =>
     expect(((await me.json()) as { displayName: string }).displayName).toBe("Renamed Member");
 
     await ctx.goto(`${BASE}/`);
-    await expect(ctx.getByRole("button", { name: "Renamed Member" })).toBeVisible();
+    await expect(ctx.locator('.user-menu-button[aria-label="Renamed Member"]')).toBeVisible();
   } finally {
     await ctx.close();
   }
@@ -146,7 +146,7 @@ test("7: menu navigates to settings and the brand navigates home", async ({ page
 
   await page.getByRole("link", { name: "Back to list" }).click();
   await expect(page).toHaveURL(`${BASE}/`);
-  await expect(page.getByRole("navigation")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
 });
 
 test("8: /settings loads offline from the shell cache", async ({ page, context }) => {

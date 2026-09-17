@@ -25,10 +25,9 @@ export const S = {
   },
   list: {
     addItem: "Add item",
-    backToMyList: "Back to my list",
-    viewList: (name: string) => `View ${name}'s list`,
     heading: (name: string) => `${name}'s wishlist`,
     itemCount: (n: number) => `${n} item${n === 1 ? "" : "s"}`,
+    switcherLabel: "Switch wishlist",
   },
   item: {
     edit: "Edit",
