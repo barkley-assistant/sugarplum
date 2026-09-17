@@ -189,9 +189,8 @@ test("8: share-target GET prefills and creates the item", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Share test" })).toBeVisible();
 });
 
-test("9: no horizontal overflow at 360/390/430px (and 1280px rail)", async ({ page }) => {
-  // Seed one item so the owner rail renders at desktop width even when
-  // this test runs in isolation against a fresh server.
+test("9: no horizontal overflow at 360/390/430/1280px", async ({ page }) => {
+  // Seed one item so the populated feed is exercised in every viewport.
   const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
     data: { title: "Overflow probe" },
   });
@@ -240,17 +239,13 @@ test("9: no horizontal overflow at 360/390/430px (and 1280px rail)", async ({ pa
     expect(probe.offenders, `true escapes at ${width}px`).toEqual([]);
   }
 
-  // Desktop: the owner rail is visible alongside the feed at 1280px.
-  await page.setViewportSize({ width: 1280, height: 800 });
-  await page.reload();
-  await expect(page.locator(".list-rail")).toBeVisible();
 });
 
 test("10: dark mode flips the surface tokens", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
   await page.goto(`${BASE}/`);
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(bg).toBe("rgb(12, 10, 15)"); // --bg dark: #0c0a0f
+  expect(bg).toBe("rgb(18, 16, 23)"); // --bg dark: #121017
   expect(bg).not.toBe("rgb(250, 250, 250)"); // --bg light: #fafafa
 });
 

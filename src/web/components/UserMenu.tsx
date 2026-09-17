@@ -36,6 +36,11 @@ export function UserMenu({ displayName, onLogout, onSettings, extra }: UserMenuP
       <OverflowMenu
         triggerLabel={displayName}
         triggerClassName="user-menu-button"
+        triggerIcon={
+          <span className="user-avatar-trigger" aria-hidden="true">
+            {displayName.trim().charAt(0).toUpperCase()}
+          </span>
+        }
         menuLabel={displayName}
         extra={extra}
         items={items}

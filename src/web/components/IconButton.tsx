@@ -4,15 +4,26 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Accessible name (also the tooltip). Icon-only buttons carry no text. */
   label: string;
   children: ReactNode;
+  variant?: "default" | "ghost";
 }
 
 /** Compact 44px icon button: transparent until hovered, focus-visible ring.
  *  The SVG icon is decorative (aria-hidden); the name comes from `label`. */
-export function IconButton({ label, children, className, type = "button", ...rest }: IconButtonProps) {
+export function IconButton({
+  label,
+  children,
+  className,
+  type = "button",
+  variant = "default",
+  ...rest
+}: IconButtonProps) {
+  const classes = ["icon-btn", variant === "ghost" ? "icon-btn--ghost" : "", className]
+    .filter(Boolean)
+    .join(" ");
   return (
     <button
       type={type}
-      className={className ? `icon-btn ${className}` : "icon-btn"}
+      className={classes}
       aria-label={label}
       title={label}
       {...rest}

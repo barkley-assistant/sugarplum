@@ -46,19 +46,6 @@ export function AppPage() {
   const toast = useToast();
   const reorder = useDragReorder(ownItems, onReorder);
   const install = useInstallPrompt();
-  const wide = useDesktopRail();
-
-  // Mobile scrolled-state fix (velvet #26 round 2): the share icon lives in
-  // the sticky topbar, so it is tappable at any scrollY, but the rail sits at
-  // page-y ~101. Without this, opening from scrollY > ~100 renders the panel
-  // entirely above the viewport with zero feedback. Scroll to top on open so
-  // the panel lands in view. Guarded by !wide: desktop keeps its sticky rail.
-  // Instant ("auto") scroll: deterministic for verification and safe under
-  // prefers-reduced-motion (no smooth animation).
-  useEffect(() => {
-    if (!shareOpen || wide) return;
-    window.scrollTo({ top: 0, behavior: "auto" });
-  }, [shareOpen, wide]);
 
   useEffect(() => {
     void boot();
@@ -440,10 +427,10 @@ export function AppPage() {
   const showOwnerActions = !viewing && ownItems.length > 0;
   const ownerActions = showOwnerActions ? (
     <>
-      <IconButton label={S.list.addItem} onClick={() => setAddOpen(true)}>
+      <IconButton variant="ghost" label={S.list.addItem} onClick={() => setAddOpen(true)}>
         <PlusIcon />
       </IconButton>
-      <IconButton label={S.share.shareList} onClick={() => setShareOpen((v) => !v)} aria-expanded={shareOpen}>
+      <IconButton variant="ghost" label={S.share.shareList} onClick={() => setShareOpen((v) => !v)} aria-expanded={shareOpen}>
         <ShareIcon />
       </IconButton>
     </>
@@ -472,7 +459,7 @@ export function AppPage() {
   return (
     <AppShell
       refreshing={refreshing}
-      headerActions={!wide ? ownerActions : null}
+      headerActions={ownerActions}
       headerRight={userMenu}
     >
       {error && <p className="error" role="alert">{error}</p>}
@@ -494,30 +481,27 @@ export function AppPage() {
         )}
       </nav>
 
-      <div className={`list-layout${!viewing ? " has-rail" : ""}`}>
+      <div className="list-layout">
         <section className="list-section">
           <PageHeader
             title={S.list.heading(viewing ? ownerRefFor(viewing).displayName : ownRef.displayName)}
             count={viewing ? otherItems.length : ownItems.length}
           />
+          {!viewing && ownItems.length > 0 && (
+            <FilterChips
+              tags={allTags}
+              counts={tagCounts}
+              active={activeTag}
+              onSelect={setActiveTag}
+            />
+          )}
           {renderList()}
         </section>
 
         {!viewing && showOwnerActions && (
-          <aside className="list-rail">
-            <div className="list-rail-card">
-              {wide && <div className="topbar-actions">{ownerActions}</div>}
-              {shareOpen && <SharePanel />}
-              {ownItems.length > 0 && (
-                <FilterChips
-                  tags={allTags}
-                  counts={tagCounts}
-                  active={activeTag}
-                  onSelect={setActiveTag}
-                />
-              )}
-            </div>
-          </aside>
+          <Sheet open={shareOpen} onClose={() => setShareOpen(false)} ariaLabel={S.share.shareList}>
+            <SharePanel />
+          </Sheet>
         )}
       </div>
 
@@ -535,19 +519,4 @@ export function AppPage() {
       )}
     </AppShell>
   );
-}
-
-/** Desktop rail switch: the owner's own list gets the sticky right rail at
- *  >= 1024px; every other surface stays single-column fluid. */
-function useDesktopRail(): boolean {
-  const [wide, setWide] = useState(() =>
-    typeof window !== "undefined" ? window.matchMedia("(min-width: 1024px)").matches : false,
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const onChange = () => setWide(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-  return wide;
 }

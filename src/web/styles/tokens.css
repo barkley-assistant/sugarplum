@@ -1,0 +1,147 @@
+/* Amethyst design tokens. Keep all color, spacing, radius, type, and motion
+   definitions here so feature rules can evolve without token collisions. */
+
+/* ---------- Tokens: light (default) ---------- */
+:root {
+  --plum-800: #4c1d95;
+  --plum-700: #5b21b6;
+  --plum-600: #6d28d9;
+  --plum-500: #7c3aed;
+  --plum-100: #ede9fe;
+  --plum-050: #f5f3ff;
+
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f4f4f5;
+  --surface-3: #ffffff;
+  --text: #18181b;
+  --text-2: #52525b;
+  --text-3: #a1a1aa;
+  --border: #e4e4e7;
+  --border-2: #d4d4d8;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --danger-surface: #fef2f2;
+  /* Purchased badge on a shared list — distinct from the green claim badge. */
+  --share-accent: #6d28d9;
+  --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-display: 1.75rem;
+  --lh-display: 1.2;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 24px;
+  --r-full: 999px;
+
+  --font-system:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+
+  --ease: 150ms ease;
+  --ease-overlay: 260ms cubic-bezier(.2,.8,.2,1);
+
+  /* Compact row system. */
+  --row-thumb: 64px;
+  --row-gap: var(--sp-2);
+  --row-pad-y: 10px;
+  --row-pad-x: var(--sp-3);
+  --list-gap: 6px;
+
+  --surface-row-hover: var(--surface-2);
+  --surface-row: transparent;
+  --border-row: var(--border);
+
+  --text-row-title: 0.9375rem;
+  --lh-row-title: 1.35;
+  --text-row-price: 0.9375rem;
+  --text-row-meta: 0.6875rem;
+
+  --delta-down: var(--success);
+  --delta-up: var(--text-2);
+
+  --topbar-pad-y: 6px;
+  --topbar-h: 52px;
+
+  --chip-bg: transparent;
+  --chip-border: transparent;
+  --chip-bg-active: var(--plum-700);
+  --chip-border-active: var(--plum-700);
+  --chip-text: var(--text-2);
+  --chip-text-active: #ffffff;
+
+  --ring: var(--plum-500);
+  --ring-offset: 2px;
+  --focus-visible: 2px solid var(--ring);
+
+  --status-success: var(--success);
+  --status-danger: var(--danger);
+  --status-muted: var(--text-3);
+  --status-purchased: var(--share-accent);
+
+  --app-main-max: 1060px;
+
+  --text-2xs: 0.6875rem;
+  --ease-row: 120ms ease;
+
+  --skel-thumb: var(--row-thumb);
+  --skel-gap: var(--row-gap);
+  --skel-row-gap: var(--list-gap);
+  --empty-pad-y: var(--sp-6);
+  --empty-pad-x: var(--sp-4);
+  --r-input: var(--r-sm);
+  --r-form-card: var(--r-md);
+  --section-gap: var(--sp-5);
+  --section-pad: var(--sp-5);
+  --section-radius: var(--r-md);
+  --ease-ui: 120ms ease;
+
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+}
+
+/* ---------- Tokens: dark (auto, no toggle) ---------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121017;
+    --surface: #1B1623;
+    --surface-2: #262130;
+    --surface-3: #241B31;
+    --text: #F7F5FA;
+    --text-2: #B3AEC0;
+    --text-3: #8B8796;
+    --border: #2A2438;
+    --border-2: #3A3350;
+    --plum-800: #561E9A;
+    --plum-700: #7C55E6;
+    --plum-600: #8B5CF6;
+    --plum-500: #A78BFA;
+    --plum-100: #2e1f4d;
+    --plum-050: #231838;
+    --success: #3FD97F;
+    --danger: #f87171;
+    --danger-surface: #2b1517;
+    --share-accent: #c4b5fd;
+    --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --surface-row-hover: var(--surface-2);
+    --chip-bg-active: var(--plum-700);
+    --chip-border-active: var(--plum-700);
+    --chip-text-active: #ffffff;
+    --delta-down: var(--success);
+    --delta-up: var(--text-2);
+  }
+}

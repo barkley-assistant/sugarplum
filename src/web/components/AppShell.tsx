@@ -82,7 +82,7 @@ export function AppShellLoading() {
 export function PageHeader({ title, count }: { title: string; count?: number }) {
   return (
     <div className="list-heading">
-      <h2>{title}</h2>
+      <h2 className="page-title">{title}</h2>
       {count !== undefined && <span className="count">{S.list.itemCount(count)}</span>}
     </div>
   );
