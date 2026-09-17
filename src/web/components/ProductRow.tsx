@@ -49,6 +49,7 @@ export function ProductRow({
               className="row-open"
               onClick={onOpen}
               title={openLabel}
+              aria-haspopup="dialog"
             >
               {title}
             </button>

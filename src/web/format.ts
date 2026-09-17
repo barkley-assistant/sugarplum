@@ -53,6 +53,18 @@ export function formatRelativeTime(iso: string, now: number = Date.now()): strin
   return `${days}d ago`;
 }
 
+/** Formats an ISO timestamp for compact item metadata (for example,
+ * "14 May 2024"). Invalid timestamps render as an empty string. */
+export function formatDate(iso: string): string {
+  const date = new Date(iso);
+  if (!Number.isFinite(date.getTime())) return "";
+  return new Intl.DateTimeFormat(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
 /** Decimal price string ("12.50") → integer cents (1250); null when the input
  *  is not a plain decimal. Integer cents only — never float money math. */
 export function toCents(decimal: string | null): number | null {

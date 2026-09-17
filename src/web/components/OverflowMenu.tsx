@@ -78,6 +78,17 @@ export function OverflowMenu({ triggerLabel, triggerIcon, triggerClassName, trig
     };
   }, [open, desktop]);
 
+  // Move focus into the desktop popover as soon as it mounts. Besides making
+  // keyboard navigation discoverable, this keeps Escape targeted at the
+  // menu rather than at a parent detail Sheet.
+  useEffect(() => {
+    if (!open) return;
+    const raf = requestAnimationFrame(() => {
+      menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [open]);
+
   function closeAndFocusTrigger() {
     setOpen(false);
     triggerEl.current?.focus();

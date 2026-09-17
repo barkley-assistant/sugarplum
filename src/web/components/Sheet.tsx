@@ -1,5 +1,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
+const openStack: symbol[] = [];
+
 interface SheetProps {
   /** Controlled visibility. Mounts nothing when false. */
   open: boolean;
@@ -8,8 +10,11 @@ interface SheetProps {
   ariaLabel: string;
   children: ReactNode;
   /** "sheet" = bottom-sheet on mobile / centred on >=640px; "dialog" =
-   *  centred confirm-style box on every width. */
-  variant?: "sheet" | "dialog";
+   *  centred confirm-style box on every width; "drawer" = right-anchored
+   *  full-height detail surface on wide screens. */
+  variant?: "sheet" | "dialog" | "drawer";
+  /** Optional modifier appended to the variant box class. */
+  boxClassName?: string;
   /** Confirm flows keep the alertdialog role; everything else is dialog. */
   role?: "dialog" | "alertdialog";
 }
@@ -24,6 +29,7 @@ export function Sheet({
   ariaLabel,
   children,
   variant = "sheet",
+  boxClassName,
   role = "dialog",
 }: SheetProps) {
   const boxRef = useRef<HTMLDivElement | null>(null);
@@ -35,6 +41,8 @@ export function Sheet({
 
   useEffect(() => {
     if (!open) return;
+    const stackToken = Symbol();
+    openStack.push(stackToken);
     openerRef.current = document.activeElement;
     const box = boxRef.current;
     // Focus the first focusable element (the form's autofocused URL field,
@@ -51,6 +59,14 @@ export function Sheet({
       focusables()[0]?.focus();
     });
     function onKey(e: KeyboardEvent) {
+      if (openStack[openStack.length - 1] !== stackToken) return;
+      // A sibling popover/menu (or a stacked dialog) owns keyboard events
+      // while focus is outside this sheet's box. Desktop menus live inside
+      // the box, so check the menu subtree explicitly as well.
+      if (box && e.target instanceof Node) {
+        const menu = box.querySelector('[role="menu"]');
+        if (menu?.contains(e.target)) return;
+      }
       if (e.key === "Escape") {
         e.stopPropagation();
         onCloseRef.current();
@@ -73,10 +89,13 @@ export function Sheet({
     return () => {
       cancelAnimationFrame(raf);
       document.removeEventListener("keydown", onKey, true);
+      const wasTopmost = openStack[openStack.length - 1] === stackToken;
+      const stackIndex = openStack.indexOf(stackToken);
+      if (stackIndex >= 0) openStack.splice(stackIndex, 1);
       // Focus return; guarded for iOS Safari where programmatic focus can
       // scroll-jump (the opener is still keyboard-reachable regardless).
       const opener = openerRef.current as HTMLElement | null;
-      if (opener && typeof opener.focus === "function") {
+      if (wasTopmost && opener && typeof opener.focus === "function") {
         try {
           opener.focus({ preventScroll: true });
         } catch {
@@ -84,12 +103,14 @@ export function Sheet({
         }
       }
     };
-  }, [open ]);
+  }, [open]);
 
   if (!open) return null;
 
-  const overlayClass = variant === "dialog" ? "confirm-overlay" : "sheet-overlay";
-  const boxClass = variant === "dialog" ? "confirm-dialog" : "sheet";
+  const overlayClass =
+    variant === "dialog" ? "confirm-overlay" : variant === "drawer" ? "detail-overlay" : "sheet-overlay";
+  const baseBoxClass = variant === "dialog" ? "confirm-dialog" : variant === "drawer" ? "detail-drawer" : "sheet";
+  const boxClass = [baseBoxClass, boxClassName].filter(Boolean).join(" ");
 
   return (
     <div
