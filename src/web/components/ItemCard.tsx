@@ -224,7 +224,7 @@ export function ItemCard({
               <span className="visually-hidden">
                 {delta.direction === "down" ? "Down " : "Up "}
               </span>
-              <span className="delta-copy" aria-hidden="true">
+              <span className="delta-copy">
                 {S.item.deltaSinceAdd(delta.amount)}
               </span>
             </span>
