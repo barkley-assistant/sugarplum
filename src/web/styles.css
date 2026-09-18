@@ -2195,3 +2195,108 @@ button.filter-chip {
     flex-basis: 160px;
   }
 }
+
+/* Amethyst A5 — price history is a detail-only information card. */
+.detail-history-card .detail-card-head {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.window-seg {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-2);
+  border-radius: var(--r-full);
+}
+
+.window-seg button {
+  min-width: 44px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--text-3);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.window-seg button.active {
+  background: var(--plum-600);
+  color: #fff;
+}
+
+.price-graph {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 12px;
+  overflow: visible;
+}
+
+.price-graph-gridline,
+.price-graph-baseline,
+.price-graph-tick {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.price-graph-gridline { stroke-dasharray: 3 4; }
+.price-graph-tick { stroke: var(--border-2); }
+
+.price-graph-y-label,
+.price-graph-x-label {
+  fill: var(--text-3);
+  font-size: 9px;
+}
+
+.price-graph-area { pointer-events: none; }
+
+.price-graph-line {
+  fill: none;
+  stroke: var(--plum-500);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.price-graph-endpoint-ring {
+  fill: var(--surface);
+  stroke: var(--plum-500);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.price-graph-endpoint { fill: var(--plum-500); }
+
+.price-graph-tooltip rect {
+  fill: var(--surface-3);
+  stroke: var(--border-2);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.price-graph-tooltip-price,
+.price-graph-tooltip-date {
+  fill: var(--text);
+  font-size: 9px;
+}
+
+.price-graph-tooltip-price { font-weight: 700; }
+.price-graph-tooltip-date { fill: var(--text-3); font-size: 7px; }
+
+.price-graph-caption,
+.price-history-empty {
+  margin: 6px 0 0;
+  color: var(--text-3);
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 420px) {
+  .window-seg button { min-width: 42px; padding: 0 8px; }
+}

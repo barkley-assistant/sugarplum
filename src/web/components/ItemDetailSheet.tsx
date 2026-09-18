@@ -9,6 +9,7 @@ import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { DotsIcon, IconButton } from "./IconButton";
 import { OverflowMenu, type OverflowItem } from "./OverflowMenu";
 import { ProductImage } from "./ProductImage";
+import { PriceHistoryCard } from "./PriceHistoryCard";
 import { Sheet } from "./Sheet";
 import { StatusBadge } from "./StatusBadge";
 import { priceDelta } from "./ItemCard";
@@ -186,6 +187,8 @@ export function ItemDetailSheet({
             {S.detail.editItem}
           </button>
         </div>
+
+        {item.priceStats && <PriceHistoryCard stats={item.priceStats} currency={item.currency} />}
 
         {item.notes?.trim() && (
           <section className="detail-card detail-notes-card">

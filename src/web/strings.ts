@@ -98,6 +98,11 @@ export const S = {
     stable: "Stable",
     insufficient: "Not enough history yet",
   },
+  priceHistory: {
+    title: "Price history",
+    graphLabel: (window: string, current: string, lowest: string) =>
+      `Price over the last ${window}: now ${current}, lowest ${lowest}.`,
+  },
   form: {
     title: "Title",
     price: "Price",
