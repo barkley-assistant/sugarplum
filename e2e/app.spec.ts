@@ -206,7 +206,6 @@ test("4c: row opens the detail sheet; overflow does not", async ({ page }) => {
   await page.keyboard.press("Escape");
 
   for (const selector of [
-    ".drag-handle",
     ".item-link-row",
     ".tags",
     ".item-notes",
@@ -220,6 +219,9 @@ test("4c: row opens the detail sheet; overflow does not", async ({ page }) => {
   ]) {
     await expect(card.locator(selector)).toHaveCount(0);
   }
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await page.mouse.move(0, 0);
+  await expect(card.locator(".drag-handle:visible")).toHaveCount(0);
 });
 
 test("4d: detail actions and stacked edit/delete flows stay in sync", async ({ page }) => {
@@ -400,7 +402,7 @@ test("5: manual order persists and the order API round-trips", async ({ page }) 
 
   await page.reload();
   await expect(page.locator(".item-card .item-title").first()).toHaveText("Reorder three");
-  await expect(page.locator(".drag-handle")).toHaveCount(0);
+  await expect(page.locator(".drag-handle:visible")).toHaveCount(0);
 });
 
 test("6: tag filter shows only matching items and preserves order", async ({ page }) => {
@@ -426,6 +428,89 @@ test("6: tag filter shows only matching items and preserves order", async ({ pag
   await page.getByRole("button", { name: "All", exact: true }).click();
   await expect(page.locator(".item-card")).toHaveCount(before.length);
   expect(await titles.allTextContents()).toEqual(before);
+
+  // A8: filters and reorder mode are mutually exclusive. Entering the mode
+  // clears the filter before any handle can commit a partial id list.
+  await page.getByRole("button", { name: "Birthday", exact: true }).click();
+  await expect(page.locator(".drag-handle")).toHaveCount(0);
+  await page.getByRole("button", { name: "Reorder", exact: true }).click();
+  await expect(page.locator(".item-card.is-reordering").first()).toBeVisible();
+  await expect(page.locator(".item-list .drag-handle:visible").first()).toBeVisible();
+  await expect(page.locator(".item-card")).toHaveCount(before.length);
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+});
+
+test("5b: reorder mode supports keyboard movement and persists", async ({ page }) => {
+  const created = await page.request.post(`${BASE}/api/wishlist/items`, { data: { title: "Reorder four" } });
+  expect(created.status()).toBe(201);
+  await page.reload();
+
+  const toggle = page.getByRole("button", { name: "Reorder", exact: true });
+  await expect(toggle).toBeVisible();
+  await expect(page.locator(".drag-handle:visible")).toHaveCount(0);
+  await toggle.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".item-card.is-reordering").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Done", exact: true })).toBeVisible();
+  await expect(page.locator(".item-list .drag-handle").first()).toBeFocused();
+  await expect(page.locator(".item-card .icon-btn")).toHaveCount(0);
+  await expect(page.locator(".filter-row")).toHaveCount(0);
+
+  const ids = () => page.evaluate(() =>
+    Array.from(document.querySelectorAll<HTMLElement>(".item-card")).map((el) => el.dataset.itemId),
+  );
+  const before = await ids();
+  expect(before.length).toBeGreaterThanOrEqual(4);
+  const orderResponse = page.waitForResponse(
+    (response) => response.url().endsWith("/api/wishlist/order") && response.request().method() === "PUT",
+  );
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  expect((await orderResponse).status()).toBe(200);
+  await expect.poll(async () => (await ids())[0]).toBe(before[1]);
+  const moved = await ids();
+  expect(moved[1]).toBe(before[0]);
+
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await expect(page.locator(".drag-handle:visible")).toHaveCount(0);
+  await expect(toggle).toBeFocused();
+  await page.reload();
+  await expect.poll(async () => (await ids())[0]).toBe(before[1]);
+  await expect.poll(async () => (await ids())[1]).toBe(before[0]);
+});
+
+test("5c: pointer drag in reorder mode persists after reload", async ({ page }) => {
+  await page.reload();
+  await page.getByRole("button", { name: "Reorder", exact: true }).click();
+  const titles = page.locator(".item-card .item-title");
+  const before = await titles.allTextContents();
+  await page.locator(".item-list .drag-handle").last().dragTo(page.locator(".item-card").first());
+  await expect(titles.first()).toHaveText(before[before.length - 1]);
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await page.reload();
+  await expect(page.locator(".item-card .item-title").first()).toHaveText(before[before.length - 1]);
+  await expect(page.locator(".drag-handle:visible")).toHaveCount(0);
+});
+
+test("5d: desktop hover reveals a reorder grip without entering mode", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.reload();
+  const firstCard = page.locator(".item-card").first();
+  const lastCard = page.locator(".item-card").last();
+  const grip = lastCard.locator(".drag-handle--peek");
+  await expect(grip).toBeHidden();
+  await expect(page.locator(".item-card.is-reordering")).toHaveCount(0);
+  await lastCard.hover();
+  await expect(grip).toBeVisible();
+
+  const titles = page.locator(".item-card .item-title");
+  const before = await titles.allTextContents();
+  await grip.dragTo(firstCard);
+  await expect(titles.first()).toHaveText(before[before.length - 1]);
+  await expect(page.locator(".item-card.is-reordering")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Reorder", exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.locator(".item-card .item-title").first()).toHaveText(before[before.length - 1]);
 });
 
 test("6b: heading switcher opens a sheet and switches lists", async ({ page, browser }) => {
@@ -559,6 +644,13 @@ test("9: no horizontal overflow at 360/390/430/1280px", async ({ page }) => {
     expect(probe.docOverflow, `document overflow at ${width}px`).toBe(false);
     expect(probe.offenders, `true escapes at ${width}px`).toEqual([]);
     await page.keyboard.press("Escape");
+    if (width === 390) {
+      await page.getByRole("button", { name: "Reorder", exact: true }).click();
+      await expect(page.locator(".item-card.is-reordering").first()).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth))
+        .toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
+      await page.getByRole("button", { name: "Done", exact: true }).click();
+    }
   }
 
 });

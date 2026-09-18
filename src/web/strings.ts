@@ -25,6 +25,8 @@ export const S = {
   },
   list: {
     addItem: "Add item",
+    reorder: "Reorder",
+    doneReordering: "Done",
     heading: (name: string) => `${name}'s wishlist`,
     itemCount: (n: number) => `${n} item${n === 1 ? "" : "s"}`,
     switcherLabel: "Switch wishlist",

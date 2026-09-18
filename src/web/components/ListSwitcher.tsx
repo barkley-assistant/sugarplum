@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { S } from "../strings";
 import { Sheet } from "./Sheet";
 
@@ -13,6 +13,8 @@ interface ListSwitcherProps {
   count?: number;
   /** Select a list; null returns to the signed-in user's list. */
   onSelect: (userId: string | null) => void;
+  /** Optional action beside the count (for example, a reorder-mode toggle). */
+  action?: ReactNode;
 }
 
 function CaretIcon() {
@@ -40,7 +42,7 @@ function CheckIcon() {
 
 /** Heading trigger and responsive wishlist selector. Desktop uses an anchored
  * menu; mobile uses the shared bottom-sheet primitive. */
-export function ListSwitcher({ currentName, rows, currentUserId, count, onSelect }: ListSwitcherProps) {
+export function ListSwitcher({ currentName, rows, currentUserId, count, onSelect, action }: ListSwitcherProps) {
   const [open, setOpen] = useState(false);
   const [desktop, setDesktop] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia("(min-width: 640px)").matches : true,
@@ -159,6 +161,7 @@ export function ListSwitcher({ currentName, rows, currentUserId, count, onSelect
           </button>
         </h2>
         {count !== undefined && <span className="count">{S.list.itemCount(count)}</span>}
+        {action && <div className="list-heading-action">{action}</div>}
       </div>
 
       {open && desktop ? (
