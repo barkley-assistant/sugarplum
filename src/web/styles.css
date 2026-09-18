@@ -1156,6 +1156,17 @@ button.filter-chip {
   font-size: var(--text-sm);
 }
 
+@media (max-width: 639px) {
+  .item-form--add .field-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .item-form--add .field-row .field.grow {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (min-width: 640px) {
   .sheet--add .detail-handle {
     display: none;

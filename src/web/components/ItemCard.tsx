@@ -186,6 +186,8 @@ export function ItemCard({
         image={
           item.imagePath ? (
             <ProductImage src={`/api/wishlist/items/${item.id}/image`} />
+          ) : viewerIsOwner && item.fetchState === "pending" ? (
+            <span className="product-img-fallback" aria-hidden="true" />
           ) : undefined
         }
         actions={viewerIsOwner ? ownerActions : publicActions}
