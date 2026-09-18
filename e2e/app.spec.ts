@@ -361,6 +361,20 @@ test("4d: detail actions and stacked edit/delete flows stay in sync", async ({ p
   await expect(sheet).toContainText(`Added ${added}`);
 
   await sheet.getByRole("button", { name: "More actions" }).click();
+  // Desktop popover: Tab leaves the menu and focus walks on inside the drawer
+  // (only the mobile sheet wraps). Sheet defers keydown inside a [role="menu"]
+  // subtree to OverflowMenu, so the mobile Tab wrap must not change this.
+  const desktopMenuTrigger = sheet.getByRole("button", { name: "More actions" });
+  const desktopMenu = page.getByRole("menu", { name: "More actions" });
+  await expect(desktopMenu).toBeVisible();
+  // Focus lands on the first row a frame after the popover mounts; press Tab
+  // only once it is there, or the key lands on the trigger instead.
+  await expect(desktopMenu.getByRole("menuitem").first()).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(desktopMenu).toHaveCount(0);
+  await expect.poll(() => sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+
+  await desktopMenuTrigger.click();
   await page.getByRole("menu", { name: "More actions" }).getByRole("menuitem", { name: "Delete" }).click();
   const confirm = page.getByRole("alertdialog");
   await expect(confirm).toBeVisible();
@@ -419,6 +433,20 @@ test("4f: detail surface keeps focus contained and labels secondary actions", as
   const menu = page.getByRole("menu", { name: "More actions" });
   await expect(menu.locator(".overflow-separator")).toHaveCount(2);
   await expect(menu.locator(".menu-item-danger")).toHaveCount(1);
+
+  // The shared OverflowMenu primitive owns the mobile Tab wrap here too: this
+  // sheet portals to document.body (a sibling of the detail dialog), so focus
+  // must stay inside the overflow sheet itself.
+  const menuSheet = page.getByRole("dialog", { name: "More actions" });
+  const rows = menu.getByRole("menuitem");
+  await expect(rows.first()).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(rows.last()).toBeFocused();
+  await expect.poll(() => menuSheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+  await page.keyboard.press("Tab");
+  await expect(rows.first()).toBeFocused();
+  await expect.poll(() => menuSheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+
   await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
 });
@@ -1400,17 +1428,21 @@ test("17: mobile user-menu sheet shows every row and does not jump the page", as
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
 
   // Menu keyboard navigation works through the portal: focus starts on the
-  // first row and Tab moves to the next one, still inside the sheet.
-  //
-  // Known pre-existing gap, out of scope here: Tab past the LAST row leaves
-  // the sheet instead of wrapping. Sheet defers keydown inside a
-  // [role="menu"] subtree to OverflowMenu's own handler (Sheet.tsx:66-69),
-  // and that handler only closes on Tab on desktop (OverflowMenu.tsx:127-129).
-  // Verified with a probe at 390x844: Settings -> Log out -> Cancel -> BODY.
-  // Flagged on the PR and tracked as a follow-up card.
+  // first row, Tab moves row by row, and Tab/Shift+Tab wrap at the ends —
+  // focus never walks out of the modal into the page behind the scrim.
+  // Sheet defers keydown inside a [role="menu"] subtree to OverflowMenu's
+  // own handler, so that handler owns the mobile wrap (the desktop popover
+  // still closes on Tab by design).
   await expect(settings).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(logout).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(cancel).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(settings).toBeFocused();
+  await expect.poll(() => sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+  await page.keyboard.press("Shift+Tab");
+  await expect(cancel).toBeFocused();
   await expect.poll(() => sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
 
   // Escape closes and returns focus to the trigger (the opener is captured
