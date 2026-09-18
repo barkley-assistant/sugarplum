@@ -93,10 +93,10 @@ delta lines are only drawn when both observations share a currency.
   the same history. Items are skipped when they have no link, are already
   being fetched, or were tracked in the last 24 hours. A failed re-check
   leaves the last known price untouched.
-- **Trend sparkline + buy-time label**: items with at least two same-currency
-  observations show a 30/90-day sparkline with an honest label (Below 30-day
-  average, Trending down — could wait, At 30-day low, Near 30-day high).
-  Informational only — never a recommendation to buy now.
+- **Price history in item details**: items with at least two same-currency
+  observations show a compact 30/90-day graph with an honest label (Below
+  30-day average, Trending down — could wait, At 30-day low, Near 30-day
+  high). Informational only — never a recommendation to buy now.
 - **Track prices daily** in Settings opts out of the background pass. The
   history already collected stays visible.
 

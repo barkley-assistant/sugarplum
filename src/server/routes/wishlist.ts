@@ -151,8 +151,8 @@ export function priceStatsFor(db: Database, itemId: string, seriesCap: number = 
     currency: r.currency,
   }));
 
-  // A mixed-currency series is not a comparable series: return the shape for
-  // the sparkline but no signal (same rule as priceDelta on the client).
+  // A mixed-currency series is not a comparable series: return the history
+  // shape but no signal (same rule as priceDelta on the client).
   // deltaFromAvgCents stays server-side: the client renders the advice
   // label, not the number.
   const currencies = new Set(rows.map((r) => (r.currency ?? "").trim().toUpperCase()));

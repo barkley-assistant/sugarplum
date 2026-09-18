@@ -118,6 +118,21 @@ test("4c: row opens the detail sheet; overflow does not", async ({ page }) => {
   await expect(sheet.locator(".detail-title")).toHaveText("History probe");
   await expect(sheet.getByText("Lowest £10.00")).toBeVisible();
   await expect(sheet.getByText("£2.50 since added")).toBeVisible();
+  const history = sheet.locator(".detail-history-card");
+  await expect(history).toBeVisible();
+  await expect(history.getByRole("heading", { name: "Price history" })).toBeVisible();
+  await expect(history.locator(".price-graph")).toBeVisible();
+  await expect(history.getByRole("group", { name: "Trend window" })).toBeVisible();
+  await expect(history.getByRole("button", { name: "30d", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(history.getByRole("button", { name: "90d", exact: true })).toHaveAttribute("aria-pressed", "false");
+  await expect(history.getByRole("button", { name: "All", exact: true })).toHaveCount(0);
+  await expect(history.locator(".price-graph")).toHaveAttribute("aria-label", /now £10\.00/);
+  await expect(history.locator(".price-graph")).toHaveAttribute("aria-label", /lowest £10\.00/);
+  await expect(history.locator(".price-graph")).toContainText("£10.00");
+  await expect(history.locator(".price-graph-caption")).toHaveText("Not enough history yet");
+  await history.getByRole("button", { name: "90d", exact: true }).click();
+  await expect(history.getByRole("button", { name: "90d", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("sugarplum.trend-window"))).toBe("90d");
   await expect(sheet.getByRole("link", { name: "Open product" })).toHaveCount(0);
   await expect(sheet.getByRole("button", { name: "Edit item" })).toBeVisible();
 
@@ -137,6 +152,9 @@ test("4c: row opens the detail sheet; overflow does not", async ({ page }) => {
     ".item-notes",
     ".price-trend",
     ".hint-block",
+    ".window-seg",
+    ".price-graph",
+    ".sparkline",
     ".item-cheaper",
     ".item-image-source",
   ]) {
@@ -261,6 +279,44 @@ test("4f: detail surface keeps focus contained and labels secondary actions", as
   await expect(menu.locator(".menu-item-danger")).toHaveCount(1);
   await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
+});
+
+test("4h: prices elsewhere stays inside detail and preserves honesty states", async ({ page }) => {
+  const created = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Hints probe", url: "https://example.com/hints-probe", priceCents: "18.00", currency: "GBP" },
+  });
+  expect(created.status()).toBe(201);
+  const item = (await created.json()) as { id: string };
+  await page.reload();
+
+  const card = page.locator(`.item-card[data-item-id="${item.id}"]`);
+  await card.getByRole("button", { name: "Hints probe" }).click();
+  const sheet = page.getByRole("dialog", { name: "Hints probe" });
+  const toggle = sheet.getByRole("button", { name: "Check prices elsewhere" });
+  await toggle.click();
+  const candidates = sheet.locator(".hint-candidates");
+  await expect(candidates).toBeVisible();
+  await expect(candidates).toContainText("Could not check prices.");
+  await expect(sheet.locator(".hints-rows")).toHaveCount(0);
+
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(candidates).toHaveCount(0);
+  await toggle.click();
+  await expect(candidates).toContainText("Could not check prices.");
+
+  try {
+    const disabled = await page.request.put(`${BASE}/api/auth/me/settings`, { data: { hintsEnabled: false } });
+    expect(disabled.status()).toBe(200);
+    await toggle.click();
+    await toggle.click();
+    await expect(candidates).toContainText("Price hints are off in settings.");
+  } finally {
+    const restored = await page.request.put(`${BASE}/api/auth/me/settings`, { data: { hintsEnabled: true } });
+    expect(restored.status()).toBe(200);
+  }
+  await page.keyboard.press("Escape");
+  await page.reload();
 });
 
 test("5: manual order persists and the order API round-trips", async ({ page }) => {
@@ -396,6 +452,12 @@ test("9: no horizontal overflow at 360/390/430/1280px", async ({ page }) => {
   for (const width of [360, 390, 430, 1280]) {
     await page.setViewportSize({ width, height: 800 });
     await page.reload();
+    if (width < 1024) {
+      const historyCard = page.locator(".item-card", { has: page.getByRole("heading", { name: "History probe" }) });
+      await historyCard.getByRole("button", { name: "History probe" }).click();
+      const detail = page.getByRole("dialog", { name: "History probe" });
+      await expect(detail.locator(".price-graph")).toBeVisible();
+    }
     const probe = await page.evaluate(() => {
       const doc = document.documentElement;
       const docOverflow = doc.scrollWidth > doc.clientWidth;
@@ -434,6 +496,7 @@ test("9: no horizontal overflow at 360/390/430/1280px", async ({ page }) => {
     });
     expect(probe.docOverflow, `document overflow at ${width}px`).toBe(false);
     expect(probe.offenders, `true escapes at ${width}px`).toEqual([]);
+    await page.keyboard.press("Escape");
   }
 
 });

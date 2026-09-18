@@ -4,11 +4,12 @@ import { formatDate, formatPrice, urlHost } from "../format";
 import { S } from "../strings";
 import { useConfirm } from "../confirm";
 import { useToast } from "../toast";
-import { HintsBlock } from "./PriceCluster";
+import { HintsPanel } from "./HintsPanel";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { DotsIcon, IconButton } from "./IconButton";
 import { OverflowMenu, type OverflowItem } from "./OverflowMenu";
 import { ProductImage } from "./ProductImage";
+import { PriceHistoryCard } from "./PriceHistoryCard";
 import { Sheet } from "./Sheet";
 import { StatusBadge } from "./StatusBadge";
 import { priceDelta } from "./ItemCard";
@@ -187,6 +188,8 @@ export function ItemDetailSheet({
           </button>
         </div>
 
+        {item.priceStats && <PriceHistoryCard stats={item.priceStats} currency={item.currency} />}
+
         {item.notes?.trim() && (
           <section className="detail-card detail-notes-card">
             <div className="detail-card-head">
@@ -232,14 +235,11 @@ export function ItemDetailSheet({
             </a>
           )}
           <div className="detail-hints">
-            <HintsBlock
+            <HintsPanel
               itemId={item.id}
               open={hintsOpen}
               onToggle={toggleHints}
               hintState={hintState}
-              label={S.detail.checkElsewhere}
-              leading={<SearchIcon />}
-              trailing={<ChevronRightIcon />}
             />
           </div>
         </section>
@@ -300,10 +300,6 @@ function TagIcon() {
 
 function LinkIcon() {
   return <Icon><path d="m8.1 11.9 3.8-3.8M6.3 14.3l-1.1 1.1a2.7 2.7 0 0 1-3.8-3.8l2.2-2.2a2.7 2.7 0 0 1 3.8 0M13.7 5.7l1.1-1.1a2.7 2.7 0 0 1 3.8 3.8l-2.2 2.2a2.7 2.7 0 0 1-3.8 0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></Icon>;
-}
-
-function SearchIcon() {
-  return <Icon><circle cx="8.7" cy="8.7" r="4.5" stroke="currentColor" strokeWidth="1.5" /><path d="m12.1 12.1 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></Icon>;
 }
 
 function ChevronRightIcon() {
