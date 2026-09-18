@@ -111,7 +111,6 @@ export function PriceGraph({ points, values, currency, ariaLabel }: PriceGraphPr
   const baseline = top + plotHeight - 6;
   const areaPoints = `${left},${baseline} ${linePoints} ${width - 6},${baseline}`;
   const current = values.at(-1) ?? values[0];
-  const lowest = Math.min(...values);
   const endpoint = coordinates.at(-1) ?? coordinates[0];
   const currentLabel = formatPrice(centsToDecimal(current), currency);
   const tooltipWidth = 78;
@@ -170,7 +169,6 @@ export function PriceGraph({ points, values, currency, ariaLabel }: PriceGraphPr
       </g>
       <circle className="price-graph-endpoint-ring" cx={endpoint.x} cy={endpoint.y} r="5" />
       <circle className="price-graph-endpoint" cx={endpoint.x} cy={endpoint.y} r="2.5" />
-      <title>{`${currentLabel} now; lowest ${formatPrice(centsToDecimal(lowest), currency)}`}</title>
     </svg>
   );
 }
