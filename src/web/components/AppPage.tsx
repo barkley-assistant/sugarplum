@@ -46,6 +46,8 @@ export function AppPage() {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [hintStates, setHintStates] = useState<Record<string, PriceHintState>>({});
   const [openItemId, setOpenItemId] = useState<string | null>(null);
+  const [reordering, setReordering] = useState(false);
+  const reorderToggleRef = useRef<HTMLButtonElement | null>(null);
   const shareTriggerRef = useRef<HTMLButtonElement | null>(null);
   const toast = useToast();
   const reorder = useDragReorder(ownItems, onReorder);
@@ -147,6 +149,7 @@ export function AppPage() {
   }
 
   async function viewList(userId: string) {
+    setReordering(false);
     setViewing(userId);
     setRefreshing(true);
     try {
@@ -158,6 +161,7 @@ export function AppPage() {
   }
 
   function backToOwnList() {
+    setReordering(false);
     setViewing(null);
     setOtherItems([]);
   }
@@ -253,6 +257,35 @@ export function AppPage() {
       setOwnItems(previous);
       toast(S.errors.reorder, "danger");
     }
+  }
+
+  function exitReorderMode() {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    setReordering(false);
+    reorderToggleRef.current?.focus();
+  }
+
+  useEffect(() => {
+    if (!reordering) return;
+
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "Escape" || reorder.isDragging) return;
+      if (document.querySelector(".sheet-overlay, .confirm-overlay, .detail-overlay, .menu-sheet")) return;
+      event.preventDefault();
+      exitReorderMode();
+    }
+
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [reordering, reorder.isDragging]);
+
+  function enterReorderMode() {
+    setOpenItemId(null);
+    setActiveTag(null);
+    setReordering(true);
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLButtonElement>(".item-list .drag-handle")?.focus();
+    });
   }
 
   async function refreshItem(id: string) {
@@ -369,6 +402,22 @@ export function AppPage() {
     return row ? { id: row.userId, displayName: row.displayName } : ownRef;
   }
 
+  const renderPeekGrip = (id: string) => {
+    const props = reorder.getHandleProps(id);
+    return (
+      <button
+        type="button"
+        {...props}
+        tabIndex={-1}
+        className={`${props.className} drag-handle--peek`}
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M3 4h10M3 8h10M3 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </button>
+    );
+  };
+
   function renderList() {
     if (viewing) {
       const owner = ownerRefFor(viewing);
@@ -421,11 +470,24 @@ export function AppPage() {
       <ItemList
         items={orderedOwn}
         viewerIsOwner
-        onEdit={editItem}
-        onDelete={deleteItem}
-        onRefresh={refreshItem}
-        onResetPurchased={resetPurchased}
-        onOpenDetails={setOpenItemId}
+        onEdit={reordering ? undefined : editItem}
+        onDelete={reordering ? undefined : deleteItem}
+        onRefresh={reordering ? undefined : refreshItem}
+        onResetPurchased={reordering ? undefined : resetPurchased}
+        onOpenDetails={reordering ? undefined : setOpenItemId}
+        renderDragHandle={
+          reordering && !activeTag
+            ? (id) => (
+                <button type="button" {...reorder.getHandleProps(id)}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M3 4h10M3 8h10M3 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+              )
+            : undefined
+        }
+        renderPeekGrip={!reordering && !activeTag && ownItems.length > 1 ? renderPeekGrip : undefined}
+        draggingId={reordering ? reorder.draggingId : undefined}
       />
     );
   }
@@ -488,8 +550,21 @@ export function AppPage() {
             currentUserId={viewing}
             count={viewing ? otherItems.length : ownItems.length}
             onSelect={(userId) => (userId === null ? backToOwnList() : void viewList(userId))}
+            action={
+              !viewing && ownItems.length > 1 ? (
+                <button
+                  ref={reorderToggleRef}
+                  type="button"
+                  className="secondary compact-action"
+                  aria-pressed={reordering}
+                  onClick={reordering ? exitReorderMode : enterReorderMode}
+                >
+                  {reordering ? S.list.doneReordering : S.list.reorder}
+                </button>
+              ) : undefined
+            }
           />
-          {!viewing && ownItems.length > 0 && (
+          {!viewing && ownItems.length > 0 && !reordering && (
             <FilterChips
               tags={allTags}
               active={activeTag}
