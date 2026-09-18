@@ -1035,6 +1035,37 @@ button.filter-chip {
   max-width: 360px;
 }
 
+/* Add/edit page boot skeleton (#62): the settings recipe, one card — the
+   paste-link-first form's rhythm. */
+.skeleton-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+}
+
+/* Item page boot skeleton (#62): hero block (thumb + lines) then the same
+   section-card rhythm as the detail page it stands in for. */
+.skeleton-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--detail-section-gap);
+}
+
+.skeleton-hero {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.skeleton-hero-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding-top: 6px;
+}
+
 /* ---------- Progress hairline (refetch) ---------- */
 .progress-hairline {
   position: fixed;
@@ -1136,24 +1167,17 @@ button.filter-chip {
   margin: 0 0 var(--sp-4);
 }
 
-/* ---------- Amethyst A6: paste-link add surface ---------- */
-.sheet--add {
-  padding: 0;
-  padding-bottom: calc(var(--sp-4) + var(--safe-bottom));
+/* ---------- Amethyst A6 / #62: paste-link add surface ---------- */
+/* #62 retired the add bottom sheet: the form is a full page in the app
+   column now. The form's own rhythm rules (.add-disclose, .add-manual,
+   .item-form--add) are sheet-independent and unchanged. */
+.add-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
 }
 
-.sheet--add .add-sheet-title {
-  margin: 0;
-  padding: 0 var(--sp-4);
-  font-size: var(--text-lg);
-  line-height: 1.2;
-}
-
-.sheet--add .item-form {
-  padding: 0 var(--sp-4);
-}
-
-.sheet--add .add-submit {
+.add-submit {
   width: 100%;
   min-height: 48px;
   margin-top: var(--sp-2);
@@ -1203,12 +1227,6 @@ button.filter-chip {
 
   .item-form--add .field-row .field.grow {
     grid-column: 1 / -1;
-  }
-}
-
-@media (min-width: 640px) {
-  .sheet--add .detail-handle {
-    display: none;
   }
 }
 
@@ -1426,7 +1444,9 @@ button.filter-chip {
 
 .skeleton-card,
 .skeleton-section,
-.skeleton-auth {
+.skeleton-auth,
+.skeleton-form,
+.skeleton-item {
   animation: pulse 1.4s ease-in-out infinite;
 }
 

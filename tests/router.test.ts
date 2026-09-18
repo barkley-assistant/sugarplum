@@ -5,9 +5,8 @@ import { parseRoute, safeNext } from "../src/web/router";
 // app.spec test 14's open-redirect class) and through parseRoute.
 
 describe("parseRoute", () => {
-  test("/ and /add and unknown parse as home", () => {
+  test("/ and unknown parse as home", () => {
     expect(parseRoute("/", "")).toEqual({ name: "home" });
-    expect(parseRoute("/add", "?url=x")).toEqual({ name: "home" });
     expect(parseRoute("/nonsense", "")).toEqual({ name: "home" });
   });
   test("/share/<64hex> parses with token; malformed token falls through to home", () => {
@@ -23,6 +22,34 @@ describe("parseRoute", () => {
   test("/settings exact match only", () => {
     expect(parseRoute("/settings", "")).toEqual({ name: "settings" });
     expect(parseRoute("/settings/x", "")).toEqual({ name: "home" });
+  });
+});
+
+// #62: the add / item / edit flows became real routes. The id pattern is the
+// lowercase-hex randomUUID shape (the /share token guard's precedent): a
+// malformed id falls through to home, exactly like a malformed share token.
+describe("parseRoute — #62 page routes", () => {
+  const id = "0123abcd-45ef-6789-abcd-ef0123456789";
+
+  test("/add parses as its own route carrying the raw search", () => {
+    expect(parseRoute("/add", "")).toEqual({ name: "add", search: "" });
+    expect(parseRoute("/add", "?url=x")).toEqual({ name: "add", search: "?url=x" });
+  });
+
+  test("/items/:id parses; malformed ids fall through to home", () => {
+    expect(parseRoute(`/items/${id}`, "")).toEqual({ name: "item", id });
+    expect(parseRoute("/items/not-a-uuid", "")).toEqual({ name: "home" });
+    expect(parseRoute("/items/", "")).toEqual({ name: "home" });
+    expect(parseRoute(`/items/${id}/extra`, "")).toEqual({ name: "home" });
+  });
+
+  test("/items/:id/edit parses as itemEdit, never as item", () => {
+    expect(parseRoute(`/items/${id}/edit`, "")).toEqual({ name: "itemEdit", id });
+    expect(parseRoute(`/items/${id}/edit`, "")).not.toEqual({ name: "item", id });
+  });
+
+  test("uppercase-hex ids fall through (ids are lowercase randomUUID)", () => {
+    expect(parseRoute(`/items/${id.toUpperCase()}`, "")).toEqual({ name: "home" });
   });
 });
 

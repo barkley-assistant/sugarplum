@@ -22,10 +22,9 @@ import {
 } from "../me-store";
 import { EmptyState } from "./EmptyState";
 import { FilterChips } from "./FilterChips";
-import { ItemForm, type ItemFormValues } from "./ItemForm";
+import { type ItemFormValues } from "./ItemForm";
 import { ItemList, type OwnerRef } from "./ItemList";
 import { ShareMenu } from "./ShareMenu";
-import { Sheet } from "./Sheet";
 import { GuestItemDetailSheet, type GuestItemDetail } from "./GuestItemDetailSheet";
 import { ItemDetailSheet } from "./ItemDetailSheet";
 import { AppShell, AppShellLoading } from "./AppShell";
@@ -39,9 +38,7 @@ export function AppPage() {
   const [ownItems, setOwnItems] = useState<OwnedItem[]>([]);
   const [viewing, setViewing] = useState<string | null>(null);
   const [otherItems, setOtherItems] = useState<PublicItem[]>([]);
-  const [addOpen, setAddOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const [prefill, setPrefill] = useState<{ url: string; title: string }>({ url: "", title: "" });
   const [booted, setBooted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -63,6 +60,17 @@ export function AppPage() {
 
   async function boot() {
     try {
+      // Share-target seam: the server maps /add (the manifest action) to the
+      // shell, so a share arrival normally renders AddPage directly. This
+      // still catches the one path that reaches the feed with share params:
+      // the offline SW shell serves "/" for any navigation. Redirect rather
+      // than render the feed with an add sheet — the sheet is gone (#62).
+      const share = parseShareTarget(new URLSearchParams(location.search));
+      if (share.url || share.title) {
+        navigate(`/add${location.search}`, { replace: true });
+        return;
+      }
+
       const meRes = await fetch("/api/auth/me");
       if (meRes.status === 401) {
         // Carry share-target prefill through the login hop.
@@ -83,9 +91,6 @@ export function AppPage() {
         setMe(stored);
         const cachedSummary = readStoredSummary();
         if (cachedSummary) setSummary(cachedSummary);
-        const share = parseShareTarget(new URLSearchParams(location.search));
-        setPrefill({ url: share.url, title: share.title });
-        if (share.url || share.title) setAddOpen(true);
         await Promise.all([refreshSummary(stored.id), refreshOwnList(stored.id)]);
         setBooted(true);
         return;
@@ -93,13 +98,6 @@ export function AppPage() {
       const meBody = (await meRes.json()) as Me;
       setMe(meBody);
       writeStoredMe(meBody);
-
-      // Share Target seam: /add?url=&title=&text= prefills the add form.
-      // title falls back to the first line of text; url to the first
-      // http(s) token in text (D8).
-      const share = parseShareTarget(new URLSearchParams(location.search));
-      setPrefill({ url: share.url, title: share.title });
-      if (share.url || share.title) setAddOpen(true);
 
       await Promise.all([refreshSummary(), refreshOwnList(meBody.id)]);
       setBooted(true);
@@ -169,40 +167,6 @@ export function AppPage() {
     setGuestItemId(null);
     setViewing(null);
     setOtherItems([]);
-  }
-
-  async function createItem(values: ItemFormValues) {
-    const payload: Record<string, unknown> = { title: values.title };
-    if (values.url) payload.url = values.url;
-    if (values.priceCents) payload.priceCents = values.priceCents;
-    if (values.currency) payload.currency = values.currency;
-    if (values.notes) payload.notes = values.notes;
-    if (values.tags.length) payload.tags = values.tags;
-    if (values.cheaperUrl) payload.cheaperUrl = values.cheaperUrl;
-
-    const res = await fetch("/api/wishlist/items", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error(S.errors.addItem);
-    const created = (await res.json()) as OwnedItem;
-    setAddOpen(false);
-    setPrefill({ url: "", title: "" });
-    if (me) {
-      await refreshOwnList(me.id);
-      if (values.url) {
-        requestAnimationFrame(() => {
-          const row = document.querySelector(`.item-card[data-item-id="${created.id}"]`);
-          if (row) {
-            const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-            row.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
-          }
-        });
-        void pollEnrichment(me.id, created.id);
-      }
-    }
-    await refreshSummary();
   }
 
   async function editItem(id: string, values: ItemFormValues) {
@@ -447,7 +411,7 @@ export function AppPage() {
           title={S.empty.own}
           body={S.empty.ownHint}
           action={
-            <button className="primary" onClick={() => setAddOpen(true)}>
+            <button className="primary" onClick={() => navigate("/add")}>
               {S.list.addItem}
             </button>
           }
@@ -502,7 +466,7 @@ export function AppPage() {
   const showOwnerActions = !viewing && ownItems.length > 0;
   const ownerActions = showOwnerActions ? (
     <>
-      <IconButton variant="ghost" label={S.list.addItem} onClick={() => setAddOpen(true)}>
+      <IconButton variant="ghost" label={S.list.addItem} onClick={() => navigate("/add")}>
         <PlusIcon />
       </IconButton>
       <div className="share-anchor">
@@ -583,25 +547,6 @@ export function AppPage() {
 
       </div>
 
-      {!viewing && (
-        <Sheet
-          open={addOpen}
-          onClose={() => setAddOpen(false)}
-          ariaLabel={S.list.addItem}
-          boxClassName="sheet--add"
-        >
-          <div className="detail-handle" aria-hidden="true" />
-          <h2 className="add-sheet-title">{S.form.addTitle}</h2>
-          <ItemForm
-            mode="add"
-            submitLabel={S.list.addItem}
-            initialValues={prefill}
-            onSubmit={createItem}
-            onCancel={() => setAddOpen(false)}
-            autoFocusUrl
-          />
-        </Sheet>
-      )}
       {!viewing && detailItem && (
         <ItemDetailSheet
           item={detailItem}

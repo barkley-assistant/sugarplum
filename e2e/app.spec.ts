@@ -24,8 +24,21 @@ async function login(page: Page, username: string, password: string): Promise<vo
   await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
 }
 
+/** Document-load counter (reused from spa.spec INV-4): addInitScript bumps a
+ *  sessionStorage counter on every real document load, and sessionStorage
+ *  survives same-origin loads in the tab — so the number only moves on a full
+ *  reload. `performance.getEntriesByType("navigation")` cannot detect this
+ *  (it is always length 1 in whatever document probes it). */
+async function loads(page: Page): Promise<number> {
+  return page.evaluate(() => Number(sessionStorage.getItem("docLoads") ?? 0));
+}
+
 /** Every test gets a fresh context, so log the admin in up front. */
 test.beforeEach(async ({ page }) => {
+  // One addInitScript per fresh page: it runs on every document load.
+  await page.addInitScript(() => {
+    sessionStorage.setItem("docLoads", String(Number(sessionStorage.getItem("docLoads") ?? 0) + 1));
+  });
   await login(page, "admin", "admin-password");
 });
 
@@ -115,12 +128,17 @@ test("1: login lands on the app shell with the own empty state", async ({ page }
 });
 
 test("2: manual add shows a card with a formatted price", async ({ page }) => {
+  const before = await loads(page);
+  await page.getByRole("button", { name: "Add item" }).first().click();
+  // #62: add is a page, not a sheet — and the navigation is client-side.
+  await expect(page).toHaveURL(`${BASE}/add`);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.getByRole("button", { name: "Add details manually" }).click();
+  await page.getByLabel("Title").fill("Manual mug");
+  await page.getByLabel("Price").fill("12.50");
   await page.getByRole("button", { name: "Add item" }).click();
-  const sheet = page.getByRole("dialog", { name: "Add item" });
-  await sheet.getByRole("button", { name: "Add details manually" }).click();
-  await sheet.getByLabel("Title").fill("Manual mug");
-  await sheet.getByLabel("Price").fill("12.50");
-  await sheet.getByRole("button", { name: "Add item" }).click();
+  await expect(page).toHaveURL(`${BASE}/`);
+  expect(await loads(page)).toBe(before); // soft nav, no document reload
   await expect(page.getByRole("heading", { name: "Manual mug" })).toBeVisible();
   // Scope the price assertion to the card so other rows cannot match it.
   const card = page.locator(".item-card", {
@@ -132,10 +150,10 @@ test("2: manual add shows a card with a formatted price", async ({ page }) => {
 test("3: paste-link add scrapes a local fixture and resolves", async ({ page }) => {
   const fixture = await startFixtureServer();
   try {
+    await page.getByRole("button", { name: "Add item" }).first().click();
+    await expect(page).toHaveURL(`${BASE}/add`);
+    await page.getByLabel("Link").fill(`${fixture.url}/product`);
     await page.getByRole("button", { name: "Add item" }).click();
-    const sheet = page.getByRole("dialog", { name: "Add item" });
-    await sheet.getByLabel("Link").fill(`${fixture.url}/product`);
-    await sheet.getByRole("button", { name: "Add item" }).click();
     // The scrape on a fast local fixture may resolve before the provisional
     // "Fetching details…" state can be asserted; the contract is that the
     // item RESOLVES (fetchState complete / title updated).
@@ -152,37 +170,59 @@ test("3: paste-link add scrapes a local fixture and resolves", async ({ page }) 
 });
 
 test("3b: add details disclosure preserves values and link-only primary flow", async ({ page }) => {
-  await page.getByRole("button", { name: "Add item" }).click();
-  const sheet = page.getByRole("dialog", { name: "Add item" });
-  await expect(sheet).toHaveClass(/sheet--add/);
-  await expect(sheet.getByLabel("Link")).toBeFocused();
-  await expect(sheet.getByRole("button", { name: "Add details manually" })).toHaveAttribute("aria-expanded", "false");
-  await expect(sheet.getByLabel("Title")).toHaveCount(0);
+  await page.getByRole("button", { name: "Add item" }).first().click();
+  await expect(page).toHaveURL(`${BASE}/add`);
+  // INV-B: nothing is focused on mount. This is the bug class the page exists
+  // to close — an autofocused field pops the keyboard over a form the user
+  // (often mid-share) has not engaged.
+  await expect(page.getByLabel("Link")).not.toBeFocused();
+  await expect(page.getByRole("button", { name: "Add details manually" })).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByLabel("Title")).toHaveCount(0);
 
-  await sheet.getByRole("button", { name: "Add details manually" }).click();
-  await sheet.getByLabel("Title").fill("Disclosure probe");
-  await sheet.getByLabel("Notes").fill("Kept while collapsed");
-  await expect(sheet.getByLabel("Found it cheaper at")).toHaveCount(0);
-  await sheet.getByLabel("Link").fill("https://example.com/disclosure-probe");
-  await expect(sheet.getByLabel("Found it cheaper at")).toBeVisible();
-  await sheet.getByRole("button", { name: "Add details manually" }).click();
-  await expect(sheet.getByLabel("Title")).toHaveCount(0);
-  await sheet.getByRole("button", { name: "Add details manually" }).click();
-  await expect(sheet.getByLabel("Title")).toHaveValue("Disclosure probe");
-  await expect(sheet.getByLabel("Notes")).toHaveValue("Kept while collapsed");
-  await page.keyboard.press("Escape");
-  await expect(sheet).toHaveCount(0);
+  await page.getByRole("button", { name: "Add details manually" }).click();
+  await page.getByLabel("Title").fill("Disclosure probe");
+  await page.getByLabel("Notes").fill("Kept while collapsed");
+  await expect(page.getByLabel("Found it cheaper at")).toHaveCount(0);
+  await page.getByLabel("Link").fill("https://example.com/disclosure-probe");
+  await expect(page.getByLabel("Found it cheaper at")).toBeVisible();
+  await page.getByRole("button", { name: "Add details manually" }).click();
+  await expect(page.getByLabel("Title")).toHaveCount(0);
+  await page.getByRole("button", { name: "Add details manually" }).click();
+  await expect(page.getByLabel("Title")).toHaveValue("Disclosure probe");
+  await expect(page.getByLabel("Notes")).toHaveValue("Kept while collapsed");
+  // A page is not an overlay: Escape closes nothing, so leave via Cancel.
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page).toHaveURL(`${BASE}/`);
 });
 
-test("3c: desktop add surface stays a centered 560px sheet", async ({ page }) => {
+test("3c: desktop add page has no sheet chrome and no overflow", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.getByRole("button", { name: "Add item" }).click();
-  const sheet = page.getByRole("dialog", { name: "Add item" });
-  await expect(sheet).toHaveClass(/sheet--add/);
-  await expect(sheet.locator(".detail-handle")).toBeHidden();
-  await expect.poll(() => sheet.evaluate((node) => Math.round(node.getBoundingClientRect().width))).toBe(560);
+  await page.getByRole("button", { name: "Add item" }).first().click();
+  await expect(page).toHaveURL(`${BASE}/add`);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator(".sheet--add")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Add to Sugarplum" })).toBeVisible();
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
-  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page).toHaveURL(`${BASE}/`);
+});
+
+test("3c2: mobile add mount focuses no field (no keyboard pop)", async ({ page }) => {
+  // The viewport where the keyboard pop hurts (INV-B). A field focused on
+  // mount is what raises the on-screen keyboard; an h1/body never does.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${BASE}/`);
+  await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+  await page.getByRole("button", { name: "Add item" }).first().click();
+  await expect(page).toHaveURL(`${BASE}/add`);
+  await expect(page.getByLabel("Link")).toBeVisible();
+  await expect(page.getByLabel("Link")).not.toBeFocused();
+  expect(
+    await page.evaluate(() =>
+      ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName ?? ""),
+    ),
+    "no form field is focused after the add page mounts",
+  ).toBe(false);
 });
 
 test("3d: failed enrichment remains recoverable through Retry fetch", async ({ page }) => {
@@ -720,13 +760,14 @@ test("7: claim/unclaim between users; owner never sees claim state", async ({ pa
   await expect(ownCard.getByText(/Claimed/)).toHaveCount(0);
 });
 
-test("8: share-target GET prefills and creates the item", async ({ page }) => {
+test("8: share-target GET prefills the add page and creates the item", async ({ page }) => {
   await page.goto(`${BASE}/add?url=https://example.com/x&title=Share test`);
-  const sheet = page.getByRole("dialog", { name: "Add item" });
-  await expect(sheet.getByLabel("Link")).toHaveValue("https://example.com/x");
-  await expect(sheet.getByRole("button", { name: "Add details manually" })).toHaveAttribute("aria-expanded", "true");
-  await expect(sheet.getByLabel("Title")).toHaveValue("Share test");
-  await sheet.getByRole("button", { name: "Add item" }).click();
+  await expect(page).toHaveURL(/\/add\?url=/);
+  await expect(page.getByLabel("Link")).toHaveValue("https://example.com/x");
+  await expect(page.getByRole("button", { name: "Add details manually" })).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByLabel("Title")).toHaveValue("Share test");
+  await page.getByRole("button", { name: "Add item" }).click();
+  await expect(page).toHaveURL(`${BASE}/`);
   await expect(page.getByRole("heading", { name: "Share test" })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("heading", { name: "Share test" })).toBeVisible();
@@ -887,7 +928,7 @@ test("10: dark mode flips the surface tokens", async ({ page }) => {
   expect(await contrast(muted), "dark muted text").toBeGreaterThanOrEqual(4.5);
 
   await page.getByRole("button", { name: "Add item" }).first().click();
-  const submit = page.getByRole("dialog", { name: "Add item" }).getByRole("button", { name: "Add item" });
+  const submit = page.getByRole("button", { name: "Add item" });
   await expect(submit).toBeVisible();
   expect(await contrast(submit), "dark primary button").toBeGreaterThanOrEqual(4.5);
 });
@@ -925,12 +966,11 @@ test("12: AA contrast sweep holds in both schemes", async ({ page, browser }) =>
 
     // Primary CTA: white on the plum fill in either scheme.
     await page.getByRole("button", { name: "Add item" }).first().click();
-    const addSheet = page.getByRole("dialog", { name: "Add item" });
-    const submit = addSheet.getByRole("button", { name: "Add item" });
+    const submit = page.getByRole("button", { name: "Add item" });
     await expect(submit).toBeVisible();
     expect(await contrast(submit), `${colorScheme}: primary button`).toBeGreaterThanOrEqual(4.5);
-    await page.keyboard.press("Escape");
-    await expect(addSheet).toHaveCount(0);
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect(page).toHaveURL(`${BASE}/`);
 
     // Detail surface: muted footer metadata, and the segmented control's
     // inactive label (--text-3 on the --surface-2 track).
@@ -991,7 +1031,7 @@ test("13: offline reload still shows a previously loaded list", async ({ page, c
   }
 });
 
-test("14: share-target GET prefills the add sheet through the login hop", async ({ page, context }) => {
+test("14: share-target GET prefills the add page through the login hop", async ({ page, context }) => {
   // Log out by dropping the session cookie — the shared context carries
   // it forward from beforeEach, so a fresh cookie jar starts the user off
   // the same way an Android share-target recipient lands.
@@ -1005,13 +1045,12 @@ test("14: share-target GET prefills the add sheet through the login hop", async 
   await page.getByLabel("Password").fill("admin-password");
   await page.getByRole("button", { name: "Sign in" }).click();
 
-  // After sign-in we land back on /add with the sheet open and the title
-  // + link prefilled. Submit and confirm the card renders.
-  const sheet = page.getByRole("dialog", { name: "Add item" });
-  await expect(sheet).toBeVisible();
-  await expect(sheet.getByLabel("Title")).toHaveValue("Shared mug");
-  await expect(sheet.getByLabel("Link")).toHaveValue("https://example.com/shared");
-  await sheet.getByRole("button", { name: "Add item" }).click();
+  // After sign-in we land back on /add (the page, not a sheet) with the
+  // title + link prefilled. Submit and confirm the card renders.
+  await expect(page).toHaveURL(/\/add\?/);
+  await expect(page.getByLabel("Title")).toHaveValue("Shared mug");
+  await expect(page.getByLabel("Link")).toHaveValue("https://example.com/shared");
+  await page.getByRole("button", { name: "Add item" }).click();
   await expect(page.getByRole("heading", { name: "Shared mug" })).toBeVisible();
 
   // Open-redirect guard: a protocol-relative `next` must fall back to /.

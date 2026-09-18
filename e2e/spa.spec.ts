@@ -129,10 +129,10 @@ test("s5: 401 boot bounce lands on /login?next= without a document load", async 
   await page.getByLabel("Username").fill("admin");
   await page.getByLabel("Password").fill("admin-password");
   await page.getByRole("button", { name: "Sign in" }).click();
-  const sheet = page.getByRole("dialog", { name: "Add item" });
-  await expect(sheet).toBeVisible();
-  await expect(sheet.getByLabel("Link")).toHaveValue("https://example.com/spa");
-  await expect(sheet.getByLabel("Title")).toHaveValue("Spa probe");
+  // #62: the add flow is a page at /add (it was a sheet in the feed).
+  await expect(page).toHaveURL(/\/add\?/);
+  await expect(page.getByLabel("Link")).toHaveValue("https://example.com/spa");
+  await expect(page.getByLabel("Title")).toHaveValue("Spa probe");
   expect(await loads(page)).toBe(before); // login → app was client-side
 });
 

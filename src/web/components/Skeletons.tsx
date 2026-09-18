@@ -36,3 +36,47 @@ export function AuthSkeleton() {
     </main>
   );
 }
+
+/** Add/edit-page-shaped boot skeleton (#62): one section card with a heading
+ *  line + two field rows — the paste-link-first form's rhythm. Same recipe
+ *  as SettingsSkeleton, which is why it carries its own shell. */
+export function FormSkeleton() {
+  return (
+    <AppShell brandHref="/" brandLinkLabel="Back to list">
+      <div className="skeleton-form" aria-hidden="true">
+        <div className="skeleton-section">
+          <div className="skeleton-line short" />
+          <div className="skeleton-line" />
+          <div className="skeleton-line" />
+        </div>
+      </div>
+    </AppShell>
+  );
+}
+
+/** Item-page-shaped boot skeleton (#62): hero (thumb + lines) then two
+ *  section cards — the detail page's rhythm. */
+export function ItemSkeleton() {
+  return (
+    <AppShell brandHref="/" brandLinkLabel="Back to list">
+      <div className="skeleton-item" aria-hidden="true">
+        <div className="skeleton-hero">
+          <div className="skeleton-thumb" />
+          <div className="skeleton-hero-lines">
+            <div className="skeleton-line short" />
+            <div className="skeleton-line" />
+          </div>
+        </div>
+        <div className="skeleton-section">
+          <div className="skeleton-line" />
+          <div className="skeleton-line" />
+          <div className="skeleton-line" />
+        </div>
+        <div className="skeleton-section">
+          <div className="skeleton-line" />
+          <div className="skeleton-line" />
+        </div>
+      </div>
+    </AppShell>
+  );
+}
