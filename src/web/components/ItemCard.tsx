@@ -258,5 +258,3 @@ export function priceDelta(
   const amount = formatPrice(centsToDecimal(Math.abs(current - atAdd)), currentCurrency);
   return { direction: current < atAdd ? "down" : "up", amount };
 }
-
-
