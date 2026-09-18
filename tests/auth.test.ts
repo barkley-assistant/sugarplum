@@ -1,4 +1,5 @@
 import { rmSync } from "node:fs";
+import { scryptSync } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { createApp } from "../src/server/app";
 import { ConfigError, readConfig } from "../src/server/config";
@@ -17,6 +18,19 @@ describe("passwords (scrypt)", () => {
   test("verify rejects malformed stored hashes", () => {
     expect(verifyPassword("x", "not-a-scrypt-hash")).toBe(false);
     expect(verifyPassword("x", "scrypt$bad")).toBe(false);
+  });
+
+  test("new hashes use N=32768; legacy N=16384 hashes still verify", () => {
+    const hash = hashPassword("cost-bump-probe");
+    expect(hash.startsWith("scrypt$32768$8$1$")).toBe(true);
+
+    // Legacy hash (N=16384, hand-built in the stored format) must keep
+    // verifying — this is the parameter-migration path #63 asks about.
+    const legacySalt = Buffer.from("00112233445566778899aabbccddeeff", "hex");
+    const legacyHash = scryptSync("legacy-probe", legacySalt, 64, { N: 16384, r: 8, p: 1 });
+    const stored = `scrypt$16384$8$1$${legacySalt.toString("hex")}$${legacyHash.toString("hex")}`;
+    expect(verifyPassword("legacy-probe", stored)).toBe(true);
+    expect(verifyPassword("wrong", stored)).toBe(false);
   });
 });
 
