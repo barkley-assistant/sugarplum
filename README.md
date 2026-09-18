@@ -23,7 +23,7 @@ done in the app's admin panel.
 | `SUGARPLUM_PORT` | `3499` | HTTP port |
 | `SUGARPLUM_HOST` | `127.0.0.1` | Bind host |
 | `SUGARPLUM_DB_PATH` | `./data/sugarplum.db` | SQLite database location |
-| `SUGARPLUM_SESSION_TTL_DAYS` | `30` | Session lifetime |
+| `SUGARPLUM_SESSION_TTL_DAYS` | `30` | Session idle window: sessions renew on use, so this bounds idleness, not lifetime |
 | `SUGARPLUM_ADMIN_USERNAME` | — | Bootstrap admin username (required) |
 | `SUGARPLUM_ADMIN_PASSWORD` | — | Bootstrap admin password (required) |
 | `SUGARPLUM_ADMIN_DISPLAY_NAME` | — | Bootstrap admin display name |
