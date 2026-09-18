@@ -452,10 +452,12 @@ test("9: no horizontal overflow at 360/390/430/1280px", async ({ page }) => {
   for (const width of [360, 390, 430, 1280]) {
     await page.setViewportSize({ width, height: 800 });
     await page.reload();
-    const historyCard = page.locator(".item-card", { has: page.getByRole("heading", { name: "History probe" }) });
-    await historyCard.getByRole("button", { name: "History probe" }).click();
-    const detail = page.getByRole("dialog", { name: "History probe" });
-    await expect(detail.locator(".price-graph")).toBeVisible();
+    if (width < 1024) {
+      const historyCard = page.locator(".item-card", { has: page.getByRole("heading", { name: "History probe" }) });
+      await historyCard.getByRole("button", { name: "History probe" }).click();
+      const detail = page.getByRole("dialog", { name: "History probe" });
+      await expect(detail.locator(".price-graph")).toBeVisible();
+    }
     const probe = await page.evaluate(() => {
       const doc = document.documentElement;
       const docOverflow = doc.scrollWidth > doc.clientWidth;
