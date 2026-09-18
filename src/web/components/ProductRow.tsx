@@ -19,6 +19,10 @@ interface ProductRowProps {
   delta?: ReactNode;
   /** One compact trigger per row. */
   actions?: ReactNode;
+  /** Optional leading drag handle shown in reorder mode. */
+  reorderHandle?: ReactNode;
+  /** True while this row is lifted by the reorder state machine. */
+  dragging?: boolean;
   /** Owner-only enrichment state; omitted on public/share rows. */
   fetchState?: "pending" | "complete" | "failed";
 }
@@ -36,15 +40,18 @@ export function ProductRow({
   price,
   delta,
   actions,
+  reorderHandle,
+  dragging = false,
   fetchState,
 }: ProductRowProps) {
   return (
     <li
-      className={`card item-card${purchased ? " is-purchased" : ""}`}
+      className={`card item-card${purchased ? " is-purchased" : ""}${dragging ? " dragging" : ""}${reorderHandle ? " is-reordering" : ""}`}
       data-item-id={id}
       data-fetch={fetchState && fetchState !== "complete" ? fetchState : undefined}
     >
       <div className="product-row-grid">
+        {reorderHandle && <div className="product-row-handle">{reorderHandle}</div>}
         {image}
         <h3 className="item-title product-row-title">
           {onOpen ? (

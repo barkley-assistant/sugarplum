@@ -921,6 +921,35 @@ button.filter-chip {
   pointer-events: none;
 }
 
+.item-card .drag-handle {
+  align-self: center;
+}
+
+.item-card.is-reordering {
+  background: var(--surface-2);
+}
+
+/* Desktop shortcut: replace the kebab in-place on row hover/focus without
+   reserving permanent row space or changing the keyboard tab order. */
+.drag-handle--peek {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .item-card:not(.is-reordering) .drag-handle--peek {
+    display: inline-flex;
+    visibility: hidden;
+    position: absolute;
+    inset: 0;
+    background: var(--surface);
+  }
+
+  .item-card:not(.is-reordering):hover .drag-handle--peek,
+  .item-card:not(.is-reordering):focus-within .drag-handle--peek {
+    visibility: visible;
+  }
+}
+
 .item-card.dragging {
   box-shadow: var(--shadow-overlay);
   transform: scale(1.02);
@@ -929,10 +958,6 @@ button.filter-chip {
   opacity: 0.95;
   border-color: var(--border-2);
   background: var(--surface);
-}
-
-.item-card.drag-over {
-  border-color: var(--plum-500);
 }
 
 /* ---------- Empty states + skeletons ---------- */
@@ -1684,6 +1709,24 @@ button.filter-chip {
   grid-area: thumb;
 }
 
+.product-row-handle {
+  grid-area: handle;
+}
+
+.product-row-grid > .product-row-handle {
+  position: relative;
+  z-index: 1;
+}
+
+.item-card.is-reordering .product-row-grid {
+  grid-template-areas:
+    "handle thumb title  title  actions"
+    "handle thumb body   body   actions"
+    "handle thumb price  price  actions"
+    "handle thumb delta  delta  actions";
+  grid-template-columns: auto auto minmax(0, 1fr) 0 auto;
+}
+
 .product-row-title {
   grid-area: title;
 }
@@ -1848,6 +1891,14 @@ button.filter-chip {
     grid-template-columns: auto minmax(0, 1fr) auto auto;
     align-items: center;
     row-gap: var(--sp-1);
+  }
+
+  .item-card.is-reordering .product-row-grid {
+    grid-template-areas:
+      "handle thumb title  price actions"
+      "handle thumb body   price actions"
+      "handle thumb delta  price actions";
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
   }
 
   .item-thumb,

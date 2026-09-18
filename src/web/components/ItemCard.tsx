@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { OwnedItem, PriceStats, PublicItem } from "../../shared/types";
 import { centsToDecimal, formatPrice, toCents } from "../format";
 import { S } from "../strings";
@@ -27,6 +27,12 @@ interface ItemCardProps {
 
   /** Owner-row opener; A4 will render the detail surface behind this seam. */
   onOpenDetails?: (id: string) => void;
+  /** Drag handle slot, rendered only in explicit reorder mode. */
+  dragHandle?: ReactNode;
+  /** Desktop hover shortcut for starting a pointer reorder. */
+  peekGrip?: ReactNode;
+  /** True while this card is lifted by the reorder state machine. */
+  dragging?: boolean;
 }
 
 /** Owner + public row, composed from the shared primitives. The price helper
@@ -42,6 +48,9 @@ export function ItemCard({
   onRefresh,
   onResetPurchased,
   onOpenDetails,
+  dragHandle,
+  peekGrip,
+  dragging,
 }: ItemCardProps) {
   const [editing, setEditing] = useState(false);
   const confirm = useConfirm();
@@ -152,6 +161,10 @@ export function ItemCard({
       />
     ) : undefined;
 
+  const ownerRowActions = dragHandle ? undefined : (
+    <>{peekGrip}{ownerActions}</>
+  );
+
   const publicActions = !viewerIsOwner ? (
     <>
       {!publicItem.claimed && onClaim && (
@@ -183,6 +196,8 @@ export function ItemCard({
         fetchState={viewerIsOwner ? item.fetchState : undefined}
         onOpen={viewerIsOwner && onOpenDetails ? () => onOpenDetails(item.id) : undefined}
         openLabel={S.item.openDetails}
+        reorderHandle={dragHandle}
+        dragging={dragging}
         image={
           item.imagePath ? (
             <ProductImage src={`/api/wishlist/items/${item.id}/image`} />
@@ -190,7 +205,7 @@ export function ItemCard({
             <span className="product-img-fallback" aria-hidden="true" />
           ) : undefined
         }
-        actions={viewerIsOwner ? ownerActions : publicActions}
+        actions={viewerIsOwner ? ownerRowActions : publicActions}
         body={
           <>
             {item.siteName && <span className="item-site">{item.siteName}</span>}

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { OwnedItem, PublicItem } from "../../shared/types";
 import { ItemCard } from "./ItemCard";
 import type { ItemFormValues } from "./ItemForm";
@@ -21,6 +22,12 @@ interface ItemListProps {
 
   /** Opens the detail surface for an owner row (A4 fills the surface). */
   onOpenDetails?: (id: string) => void;
+  /** Owner-only reorder handle rendered in explicit reorder mode. */
+  renderDragHandle?: (id: string) => ReactNode;
+  /** Owner-only pointer shortcut revealed on desktop row hover. */
+  renderPeekGrip?: (id: string) => ReactNode;
+  /** Id of the card currently lifted by the reorder state machine. */
+  draggingId?: string | null;
 }
 
 /** Renders the ordered list of cards. Empty lists return null — the caller
@@ -35,6 +42,9 @@ export function ItemList({
   onRefresh,
   onResetPurchased,
   onOpenDetails,
+  renderDragHandle,
+  renderPeekGrip,
+  draggingId,
 }: ItemListProps) {
   if (items.length === 0) return null;
 
@@ -52,6 +62,9 @@ export function ItemList({
           onRefresh={onRefresh}
           onResetPurchased={onResetPurchased}
           onOpenDetails={onOpenDetails}
+          dragHandle={renderDragHandle?.(item.id)}
+          peekGrip={renderPeekGrip?.(item.id)}
+          dragging={draggingId === item.id}
         />
       ))}
     </ul>
