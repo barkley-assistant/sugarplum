@@ -33,7 +33,8 @@ body {
 
 h1,
 h2,
-h3 {
+h3,
+h4 {
   margin: 0 0 0.4rem;
   font-weight: 600;
   line-height: 1.25;
@@ -47,7 +48,8 @@ h2 {
   font-size: var(--text-lg);
 }
 
-h3 {
+h3,
+h4 {
   font-size: var(--text-base);
 }
 
@@ -431,7 +433,8 @@ a.brand:hover {
   min-width: 0;
 }
 
-.settings-section h3 {
+.settings-section h3,
+.settings-section h4 {
   margin: 0;
 }
 
