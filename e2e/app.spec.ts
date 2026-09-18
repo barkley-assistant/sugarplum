@@ -33,6 +33,7 @@ test("1: login lands on the app shell with the own empty state", async ({ page }
 test("2: manual add shows a card with a formatted price", async ({ page }) => {
   await page.getByRole("button", { name: "Add item" }).click();
   const sheet = page.getByRole("dialog", { name: "Add item" });
+  await sheet.getByRole("button", { name: "Add details manually" }).click();
   await sheet.getByLabel("Title").fill("Manual mug");
   await sheet.getByLabel("Price").fill("12.50");
   await sheet.getByRole("button", { name: "Add item" }).click();
@@ -57,9 +58,68 @@ test("3: paste-link add scrapes a local fixture and resolves", async ({ page }) 
     await expect(page.getByRole("heading", { name: "Fresh Kiss Trio" })).toBeVisible({
       timeout: 20_000,
     });
+    const resolvedCard = page.locator(".item-card", {
+      has: page.getByRole("heading", { name: "Fresh Kiss Trio" }),
+    });
+    await expect(resolvedCard).not.toHaveAttribute("data-fetch", "pending");
   } finally {
     fixture.close();
   }
+});
+
+test("3b: add details disclosure preserves values and link-only primary flow", async ({ page }) => {
+  await page.getByRole("button", { name: "Add item" }).click();
+  const sheet = page.getByRole("dialog", { name: "Add item" });
+  await expect(sheet).toHaveClass(/sheet--add/);
+  await expect(sheet.getByLabel("Link")).toBeFocused();
+  await expect(sheet.getByRole("button", { name: "Add details manually" })).toHaveAttribute("aria-expanded", "false");
+  await expect(sheet.getByLabel("Title")).toHaveCount(0);
+
+  await sheet.getByRole("button", { name: "Add details manually" }).click();
+  await sheet.getByLabel("Title").fill("Disclosure probe");
+  await sheet.getByLabel("Notes").fill("Kept while collapsed");
+  await expect(sheet.getByLabel("Found it cheaper at")).toHaveCount(0);
+  await sheet.getByLabel("Link").fill("https://example.com/disclosure-probe");
+  await expect(sheet.getByLabel("Found it cheaper at")).toBeVisible();
+  await sheet.getByRole("button", { name: "Add details manually" }).click();
+  await expect(sheet.getByLabel("Title")).toHaveCount(0);
+  await sheet.getByRole("button", { name: "Add details manually" }).click();
+  await expect(sheet.getByLabel("Title")).toHaveValue("Disclosure probe");
+  await expect(sheet.getByLabel("Notes")).toHaveValue("Kept while collapsed");
+  await page.keyboard.press("Escape");
+  await expect(sheet).toHaveCount(0);
+});
+
+test("3c: desktop add surface stays a centered 560px sheet", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.getByRole("button", { name: "Add item" }).click();
+  const sheet = page.getByRole("dialog", { name: "Add item" });
+  await expect(sheet).toHaveClass(/sheet--add/);
+  await expect(sheet.locator(".detail-handle")).toBeHidden();
+  await expect.poll(() => sheet.evaluate((node) => Math.round(node.getBoundingClientRect().width))).toBe(560);
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  await page.keyboard.press("Escape");
+});
+
+test("3d: failed enrichment remains recoverable through Retry fetch", async ({ page }) => {
+  const created = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Recoverable item", url: "https://127.0.0.1:1/unreachable" },
+  });
+  expect(created.status()).toBe(201);
+  const item = (await created.json()) as { id: string };
+  await page.reload();
+  const card = page.locator(`.item-card[data-item-id="${item.id}"]`);
+  await expect(card).toHaveAttribute("data-fetch", "failed", { timeout: 20_000 });
+  await expect(card.getByText("Details unavailable")).toBeVisible();
+  await card.getByRole("button", { name: "More actions" }).click();
+  const retryResponse = page.waitForResponse(
+    (response) => response.url().endsWith(`/api/wishlist/items/${item.id}/refresh`) && response.request().method() === "POST",
+  );
+  await page.getByRole("menu", { name: "More actions" }).getByRole("menuitem", { name: "Retry fetch" }).click();
+  expect((await retryResponse).status()).toBe(202);
+  await expect.poll(() => card.getAttribute("data-fetch") ?? "complete", { timeout: 5_000 }).toMatch(/^(pending|failed|complete)$/);
+  await expect(card).toHaveCount(1);
+  await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
 });
 
 test("4: editing an item persists after reload", async ({ page }) => {
@@ -436,6 +496,8 @@ test("8: share-target GET prefills and creates the item", async ({ page }) => {
   await page.goto(`${BASE}/add?url=https://example.com/x&title=Share test`);
   const sheet = page.getByRole("dialog", { name: "Add item" });
   await expect(sheet.getByLabel("Link")).toHaveValue("https://example.com/x");
+  await expect(sheet.getByRole("button", { name: "Add details manually" })).toHaveAttribute("aria-expanded", "true");
+  await expect(sheet.getByLabel("Title")).toHaveValue("Share test");
   await sheet.getByRole("button", { name: "Add item" }).click();
   await expect(page.getByRole("heading", { name: "Share test" })).toBeVisible();
   await page.reload();
