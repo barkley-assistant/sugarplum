@@ -1,6 +1,9 @@
 import { createRoot } from "react-dom/client";
 import { useEffect } from "react";
 import { AppPage } from "./components/AppPage";
+import { AddPage } from "./components/AddPage";
+import { ItemPage } from "./components/ItemPage";
+import { ItemEditPage } from "./components/ItemEditPage";
 import { SettingsPage } from "./components/SettingsPage";
 import { SharePage } from "./components/SharePage";
 import { LoginView } from "./components/Login";
@@ -32,6 +35,12 @@ function viewFor(route: Route) {
       return <SharePage token={route.token} />;
     case "settings":
       return <SettingsPage />;
+    case "add":
+      return <AddPage search={route.search} />;
+    case "item":
+      return <ItemPage id={route.id} />;
+    case "itemEdit":
+      return <ItemEditPage id={route.id} />;
     // /login is an in-SPA view now (one HTML entry for the whole app): the
     // SPA boots the same shell and the router renders the login form.
     case "login":
@@ -41,11 +50,27 @@ function viewFor(route: Route) {
   }
 }
 
+/** Document title per route (#62 D11). The item page overrides this once its
+ *  item boots (the item's own title is only known then); every navigation
+ *  resets it here first, so a stale item title can't outlive its page. */
+function titleFor(route: Route): string {
+  switch (route.name) {
+    case "login":
+      return "Sign in · sugarplum";
+    case "add":
+      return "Add · sugarplum";
+    case "itemEdit":
+      return "Edit item · sugarplum";
+    default:
+      return "sugarplum";
+  }
+}
+
 function Root() {
   const route = useRoute();
   useEffect(() => {
-    document.title = route.name === "login" ? "Sign in · sugarplum" : "sugarplum";
-  }, [route.name]);
+    document.title = titleFor(route);
+  }, [route]);
   return (
     <ToastProvider>
       <ConfirmProvider>{viewFor(route)}</ConfirmProvider>

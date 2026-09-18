@@ -1,22 +1,20 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { OwnedItem, PriceStats, PublicItem } from "../../shared/types";
 import { centsToDecimal, formatPrice, toCents } from "../format";
+import { navigate } from "../router";
 import { S } from "../strings";
 import { useConfirm } from "../confirm";
 import { useToast } from "../toast";
-import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { DotsIcon } from "./IconButton";
 import { OverflowMenu, type OverflowItem } from "./OverflowMenu";
 import { PriceCluster } from "./PriceCluster";
 import { ProductImage } from "./ProductImage";
 import { ProductRow } from "./ProductRow";
-import { Sheet } from "./Sheet";
 import { StatusBadge } from "./StatusBadge";
 
 interface ItemCardProps {
   item: OwnedItem | PublicItem;
   viewerIsOwner: boolean;
-  onEdit?: (id: string, values: ItemFormValues) => void | Promise<void>;
   onDelete?: (id: string) => void | Promise<void>;
   onClaim?: (id: string) => void | Promise<void>;
   onUnclaim?: (id: string) => void | Promise<void>;
@@ -25,7 +23,7 @@ interface ItemCardProps {
   /** Owner-only: clear the blind share-link purchased mark (204, no body). */
   onResetPurchased?: (id: string) => void | Promise<void>;
 
-  /** Owner-row opener; A4 will render the detail surface behind this seam. */
+  /** Owner rows: opens the item page at /items/:id (#62). */
   onOpenDetails?: (id: string) => void;
   /** Drag handle slot, rendered only in explicit reorder mode. */
   dragHandle?: ReactNode;
@@ -36,12 +34,12 @@ interface ItemCardProps {
 }
 
 /** Owner + public row, composed from the shared primitives. The price helper
- *  stays here; the layout is ProductRow, the price surface PriceCluster, the actions one
- *  OverflowMenu trigger (owner) or the inline claim control (public). */
+ *  stays here; the layout is ProductRow, the price surface PriceCluster, the
+ *  actions one OverflowMenu trigger (owner) or the inline claim control
+ *  (public). Editing is a route (#62), not a stacked sheet. */
 export function ItemCard({
   item,
   viewerIsOwner,
-  onEdit,
   onDelete,
   onClaim,
   onUnclaim,
@@ -52,16 +50,8 @@ export function ItemCard({
   peekGrip,
   dragging,
 }: ItemCardProps) {
-  const [editing, setEditing] = useState(false);
   const confirm = useConfirm();
   const toast = useToast();
-
-  async function handleEdit(id: string, values: ItemFormValues) {
-    if (onEdit) {
-      await onEdit(id, values);
-      setEditing(false);
-    }
-  }
 
   async function handleDelete(item: OwnedItem) {
     if (!onDelete) return;
@@ -105,8 +95,13 @@ export function ItemCard({
   const publicItem = item as PublicItem;
   function ownerMenuItems(): OverflowItem[] {
     const menu: OverflowItem[] = [];
-    if (onEdit) {
-      menu.push({ id: "edit", label: S.item.edit, onSelect: () => setEditing(true) });
+    if (viewerIsOwner) {
+      // #62: editing is the /items/:id/edit route, not a stacked sheet.
+      menu.push({
+        id: "edit",
+        label: S.item.edit,
+        onSelect: () => navigate(`/items/${item.id}/edit`),
+      });
     }
     if (item.fetchState === "failed" && onRefresh) {
       menu.push({
@@ -189,71 +184,58 @@ export function ItemCard({
   ) : undefined;
 
   return (
-    <>
-      <ProductRow
-        id={item.id}
-        title={item.title}
-        fetchState={viewerIsOwner ? item.fetchState : undefined}
-        onOpen={onOpenDetails ? () => onOpenDetails(item.id) : undefined}
-        openLabel={S.item.openDetails}
-        reorderHandle={dragHandle}
-        dragging={dragging}
-        image={
-          item.imagePath ? (
-            <ProductImage src={`/api/wishlist/items/${item.id}/image`} />
-          ) : viewerIsOwner && item.fetchState === "pending" ? (
-            <span className="product-img-fallback" aria-hidden="true" />
-          ) : undefined
-        }
-        actions={viewerIsOwner ? ownerRowActions : publicActions}
-        body={
-          <>
-            {item.siteName && <span className="item-site">{item.siteName}</span>}
-            {item.fetchState === "pending" && (
-              <StatusBadge variant="fetching">{S.item.fetching}</StatusBadge>
-            )}
-            {item.fetchState === "failed" && (
-              <StatusBadge variant="failed">{S.item.unavailable}</StatusBadge>
-            )}
-          </>
-        }
-        price={<PriceCluster price={price} hintPrice={hintPrice} metaParts={metaParts} />}
-        delta={
-          delta && (
-            <span className="price-delta" data-direction={delta.direction}>
-              <span className="delta-arrow" aria-hidden="true">
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                  <path
-                    d={delta.direction === "down" ? "M5 1.5v7M1.5 5 5 8.5 8.5 5" : "M5 8.5v-7M1.5 5 5 1.5 8.5 5"}
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-              <span className="visually-hidden">
-                {delta.direction === "down" ? "Down " : "Up "}
-              </span>
-              <span className="delta-copy">
-                {S.item.deltaSinceAdd(delta.amount)}
-              </span>
+    <ProductRow
+      id={item.id}
+      title={item.title}
+      fetchState={viewerIsOwner ? item.fetchState : undefined}
+      onOpen={onOpenDetails ? () => onOpenDetails(item.id) : undefined}
+      openLabel={S.item.openDetails}
+      reorderHandle={dragHandle}
+      dragging={dragging}
+      image={
+        item.imagePath ? (
+          <ProductImage src={`/api/wishlist/items/${item.id}/image`} />
+        ) : viewerIsOwner && item.fetchState === "pending" ? (
+          <span className="product-img-fallback" aria-hidden="true" />
+        ) : undefined
+      }
+      actions={viewerIsOwner ? ownerRowActions : publicActions}
+      body={
+        <>
+          {item.siteName && <span className="item-site">{item.siteName}</span>}
+          {item.fetchState === "pending" && (
+            <StatusBadge variant="fetching">{S.item.fetching}</StatusBadge>
+          )}
+          {item.fetchState === "failed" && (
+            <StatusBadge variant="failed">{S.item.unavailable}</StatusBadge>
+          )}
+        </>
+      }
+      price={<PriceCluster price={price} hintPrice={hintPrice} metaParts={metaParts} />}
+      delta={
+        delta && (
+          <span className="price-delta" data-direction={delta.direction}>
+            <span className="delta-arrow" aria-hidden="true">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path
+                  d={delta.direction === "down" ? "M5 1.5v7M1.5 5 5 8.5 8.5 5" : "M5 8.5v-7M1.5 5 5 1.5 8.5 5"}
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </span>
-          )
-        }
-      />
-      {viewerIsOwner && onEdit && (
-        <Sheet open={editing} onClose={() => setEditing(false)} ariaLabel={S.item.edit}>
-          <h2>{S.item.edit}</h2>
-          <ItemForm
-            initial={item}
-            submitLabel={S.form.save}
-            onSubmit={(values) => handleEdit(item.id, values)}
-            onCancel={() => setEditing(false)}
-          />
-        </Sheet>
-      )}
-    </>
+            <span className="visually-hidden">
+              {delta.direction === "down" ? "Down " : "Up "}
+            </span>
+            <span className="delta-copy">
+              {S.item.deltaSinceAdd(delta.amount)}
+            </span>
+          </span>
+        )
+      }
+    />
   );
 }
 

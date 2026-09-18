@@ -151,12 +151,15 @@ async function handleNonApiRequest(req: Request): Promise<Response> {
   // link: the shell boots, then the SPA renders the anonymous share view.
   // /settings is the wave-19 account + user-management page: same shell.
   // /login is an in-SPA view (issue #61): one HTML entry for every route.
+  // /items/* (issue #62) is the owner item page + edit page: a deep link or a
+  // refresh must serve the SPA shell, not 404 against a nonexistent file.
   let relative: string;
   if (url.pathname === "/") relative = "index.html";
   else if (url.pathname === "/login") relative = "index.html";
   else if (url.pathname === "/add") relative = "index.html";
   else if (url.pathname === "/settings") relative = "index.html";
   else if (url.pathname.startsWith("/share/")) relative = "index.html";
+  else if (url.pathname.startsWith("/items/")) relative = "index.html";
   else relative = url.pathname.slice(1);
 
   if (!relative || relative.includes("..")) {

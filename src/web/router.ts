@@ -16,23 +16,46 @@ export type Route =
   | { name: "home" }
   | { name: "login"; next: string }
   | { name: "settings" }
-  | { name: "share"; token: string };
+  | { name: "share"; token: string }
+  /** Raw location.search — the share-target prefill seam (INV-A). */
+  | { name: "add"; search: string }
+  | { name: "item"; id: string }
+  | { name: "itemEdit"; id: string };
 
-/** Exact-match route table, no patterns: `/add` parses as `home` (it is the
- *  feed with the add sheet open — the prefill seam reads location.search)
- *  and an unknown path falls through to the app view, same as the
- *  pre-router switch did. */
+/** Item ids are `randomUUID()` (lowercase hex). Same guard style as the
+ *  64-hex share token: a malformed id is not a route. */
+const ITEM_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/** Exact-match route table. `/add` is its own page (#62 — it was the feed
+ *  with the add sheet open before), `/items/:id` and `/items/:id/edit` are
+ *  the owner item pages, and an unknown path (including a malformed item id)
+ *  falls through to home, same as the pre-router switch did and the same as
+ *  a malformed /share token. */
 export function parseRoute(path: string, search: string): Route {
   const share = /^\/share\/([0-9a-f]{64})$/.exec(path);
   if (share) return { name: "share", token: share[1] };
+  // /edit is matched first: /items/:id would shadow it otherwise.
+  const edit = /^\/items\/([0-9a-f-]{36})\/edit$/.exec(path);
+  if (edit && ITEM_ID.test(edit[1])) return { name: "itemEdit", id: edit[1] };
+  const item = /^\/items\/([0-9a-f-]{36})$/.exec(path);
+  if (item && ITEM_ID.test(item[1])) return { name: "item", id: item[1] };
   if (path === "/login") {
     return { name: "login", next: safeNext(new URLSearchParams(search).get("next")) };
   }
+  if (path === "/add") return { name: "add", search };
   if (path === "/settings") return { name: "settings" };
   return { name: "home" };
 }
 
 const ROUTE_EVENT = "sugarplum:navigate";
+
+/** Subscribes to in-app navigation REQUESTS (the same signal useRoute()
+ *  consumes). Callers use it to freeze view state that must survive the
+ *  incoming route's scroll-to-top, which navigate() fires in the same tick. */
+export function onNavigateRequest(listener: () => void): () => void {
+  window.addEventListener(ROUTE_EVENT, listener);
+  return () => window.removeEventListener(ROUTE_EVENT, listener);
+}
 
 /** Client-side navigation: pushState + notify listeners. Never a full
  *  document load. `replace` is for the authed-login redirect (INV-6) so

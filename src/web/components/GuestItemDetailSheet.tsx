@@ -39,9 +39,10 @@ interface GuestItemDetailSheetProps {
 
 /** Read-only detail surface for the two guest projections (an authenticated
  *  other user's wishlist and the anonymous share link). Same Sheet shell and
- *  detail classes as the owner's ItemDetailSheet — same structure and
- *  density, no owner affordances: no edit, no price history, no hints, no
- *  reset, no delete, and no overflow menu. */
+ *  detail classes as the owner's item page (#62 moved the owner flow out of a
+ *  sheet; this surface stays a sheet — same structure and density, no owner
+ *  affordances: no edit, no price history, no hints, no reset, no delete, and
+ *  no overflow menu). */
 export function GuestItemDetailSheet({ item, onClose }: GuestItemDetailSheetProps) {
   const [desktop, setDesktop] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia("(min-width: 1024px)").matches : false,

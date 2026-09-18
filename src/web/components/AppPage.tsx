@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import type {
   Me,
   OwnedItem,
-  PriceHintState,
-  PriceHintsResponse,
   PublicItem,
   WishlistSummaryRow,
 } from "../../shared/types";
@@ -12,6 +10,14 @@ import { useToast } from "../toast";
 import { useDragReorder } from "../reorder";
 import { parseShareTarget } from "../format";
 import { navigate } from "../router";
+import {
+  clearPendingFocusItemId,
+  peekPendingFocusItemId,
+  saveFeedSnapshot,
+  takeFeedSnapshot,
+  trackFeedScroll,
+  trackedFeedScrollY,
+} from "../feed-handoff";
 import { useInstallPrompt } from "../pwa/install";
 import {
   clearStoredIdentity,
@@ -22,12 +28,9 @@ import {
 } from "../me-store";
 import { EmptyState } from "./EmptyState";
 import { FilterChips } from "./FilterChips";
-import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { ItemList, type OwnerRef } from "./ItemList";
 import { ShareMenu } from "./ShareMenu";
-import { Sheet } from "./Sheet";
 import { GuestItemDetailSheet, type GuestItemDetail } from "./GuestItemDetailSheet";
-import { ItemDetailSheet } from "./ItemDetailSheet";
 import { AppShell, AppShellLoading } from "./AppShell";
 import { IconButton, PlusIcon, ShareIcon } from "./IconButton";
 import { ListSwitcher } from "./ListSwitcher";
@@ -39,19 +42,18 @@ export function AppPage() {
   const [ownItems, setOwnItems] = useState<OwnedItem[]>([]);
   const [viewing, setViewing] = useState<string | null>(null);
   const [otherItems, setOtherItems] = useState<PublicItem[]>([]);
-  const [addOpen, setAddOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const [prefill, setPrefill] = useState<{ url: string; title: string }>({ url: "", title: "" });
   const [booted, setBooted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTag, setActiveTag] = useState<string | null>(null);
-  const [hintStates, setHintStates] = useState<Record<string, PriceHintState>>({});
-  const [openItemId, setOpenItemId] = useState<string | null>(null);
   const [guestItemId, setGuestItemId] = useState<string | null>(null);
   const [reordering, setReordering] = useState(false);
   const reorderToggleRef = useRef<HTMLButtonElement | null>(null);
   const shareTriggerRef = useRef<HTMLButtonElement | null>(null);
+  /** #62 D8: scroll position handed back from feed-handoff, applied after the
+   *  restored rows commit (the list must exist before scrollTo can stick). */
+  const handoffScrollRef = useRef<number | null>(null);
   const toast = useToast();
   const reorder = useDragReorder(ownItems, onReorder);
   const install = useInstallPrompt();
@@ -61,8 +63,73 @@ export function AppPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The feed snapshot is written on UNMOUNT (leaving the feed), from a ref of
+  // the latest committed state — reading it on every render would flip this
+  // into a save-per-keystroke without any benefit.
+  const feedStateRef = useRef<{
+    me: Me | null;
+    ownItems: OwnedItem[];
+    otherItems: PublicItem[];
+    summary: WishlistSummaryRow[];
+    viewing: string | null;
+    activeTag: string | null;
+  }>({ me: null, ownItems: [], otherItems: [], summary: [], viewing: null, activeTag: null });
+  useEffect(() => {
+    feedStateRef.current = { me, ownItems, otherItems, summary, viewing, activeTag };
+  });
+
+  useEffect(() => {
+    return () => {
+      const state = feedStateRef.current;
+      if (!state.me) return;
+      saveFeedSnapshot({
+        meId: state.me.id,
+        ownItems: state.ownItems,
+        otherItems: state.otherItems,
+        summary: state.summary,
+        viewingUserId: state.viewing,
+        activeTag: state.activeTag,
+        scrollY: trackedFeedScrollY(),
+      });
+    };
+  }, []);
+
+  // The scroll offset is part of the handoff, and it must be tracked while
+  // the feed is on screen (see feed-handoff: the unmount read is too late).
+  useEffect(() => trackFeedScroll(), []);
+
+  // Applied after the feed content commits: a just-added row (add flow) wins
+  // over the plain scroll restore. Re-runs when the list changes because the
+  // revalidating fetch — not the mount — is what puts the new row on screen.
+  useEffect(() => {
+    if (!booted) return;
+    const focusId = peekPendingFocusItemId();
+    if (focusId) {
+      const row = document.querySelector(`.item-card[data-item-id="${focusId}"]`);
+      if (!row) return; // not rendered yet: keep waiting, no scroll restore
+      clearPendingFocusItemId();
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      row.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+      return;
+    }
+    const restoreY = handoffScrollRef.current;
+    handoffScrollRef.current = null;
+    if (restoreY !== null) window.scrollTo(0, restoreY);
+  }, [booted, ownItems]);
+
   async function boot() {
     try {
+      // Share-target seam: the server maps /add (the manifest action) to the
+      // shell, so a share arrival normally renders AddPage directly. This
+      // still catches the one path that reaches the feed with share params:
+      // the offline SW shell serves "/" for any navigation. Redirect rather
+      // than render the feed with an add sheet — the sheet is gone (#62).
+      const share = parseShareTarget(new URLSearchParams(location.search));
+      if (share.url || share.title) {
+        navigate(`/add${location.search}`, { replace: true });
+        return;
+      }
+
       const meRes = await fetch("/api/auth/me");
       if (meRes.status === 401) {
         // Carry share-target prefill through the login hop.
@@ -83,9 +150,6 @@ export function AppPage() {
         setMe(stored);
         const cachedSummary = readStoredSummary();
         if (cachedSummary) setSummary(cachedSummary);
-        const share = parseShareTarget(new URLSearchParams(location.search));
-        setPrefill({ url: share.url, title: share.title });
-        if (share.url || share.title) setAddOpen(true);
         await Promise.all([refreshSummary(stored.id), refreshOwnList(stored.id)]);
         setBooted(true);
         return;
@@ -94,12 +158,23 @@ export function AppPage() {
       setMe(meBody);
       writeStoredMe(meBody);
 
-      // Share Target seam: /add?url=&title=&text= prefills the add form.
-      // title falls back to the first line of text; url to the first
-      // http(s) token in text (D8).
-      const share = parseShareTarget(new URLSearchParams(location.search));
-      setPrefill({ url: share.url, title: share.title });
-      if (share.url || share.title) setAddOpen(true);
+      // #62 D8: restore the snapshot taken when the user left the feed, so
+      // Back from /add, /items/:id or /items/:id/edit lands on the feed they
+      // left — same list context, same scroll — and only then revalidates.
+      // Guarded by meId: a logout/login-as-someone-else between routes must
+      // never render the previous user's rows.
+      const snap = takeFeedSnapshot();
+      if (snap && snap.meId === meBody.id) {
+        setOwnItems(snap.ownItems);
+        setOtherItems(snap.otherItems);
+        setSummary(snap.summary);
+        setViewing(snap.viewingUserId);
+        setActiveTag(snap.activeTag);
+        handoffScrollRef.current = snap.scrollY;
+        setBooted(true); // data is on screen: no skeleton flash
+        void Promise.all([refreshSummary(meBody.id), refreshOwnList(meBody.id)]);
+        return;
+      }
 
       await Promise.all([refreshSummary(), refreshOwnList(meBody.id)]);
       setBooted(true);
@@ -171,59 +246,6 @@ export function AppPage() {
     setOtherItems([]);
   }
 
-  async function createItem(values: ItemFormValues) {
-    const payload: Record<string, unknown> = { title: values.title };
-    if (values.url) payload.url = values.url;
-    if (values.priceCents) payload.priceCents = values.priceCents;
-    if (values.currency) payload.currency = values.currency;
-    if (values.notes) payload.notes = values.notes;
-    if (values.tags.length) payload.tags = values.tags;
-    if (values.cheaperUrl) payload.cheaperUrl = values.cheaperUrl;
-
-    const res = await fetch("/api/wishlist/items", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error(S.errors.addItem);
-    const created = (await res.json()) as OwnedItem;
-    setAddOpen(false);
-    setPrefill({ url: "", title: "" });
-    if (me) {
-      await refreshOwnList(me.id);
-      if (values.url) {
-        requestAnimationFrame(() => {
-          const row = document.querySelector(`.item-card[data-item-id="${created.id}"]`);
-          if (row) {
-            const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-            row.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
-          }
-        });
-        void pollEnrichment(me.id, created.id);
-      }
-    }
-    await refreshSummary();
-  }
-
-  async function editItem(id: string, values: ItemFormValues) {
-    const payload: Record<string, unknown> = { title: values.title };
-    if (values.priceCents) payload.priceCents = values.priceCents;
-    if (values.currency) payload.currency = values.currency;
-    if (values.notes) payload.notes = values.notes;
-    if (values.tags.length) payload.tags = values.tags;
-    // Emptied link fields clear the stored value (null), never a stale one.
-    payload.url = values.url || null;
-    payload.cheaperUrl = values.cheaperUrl || null;
-
-    const res = await fetch(`/api/wishlist/items/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error(S.errors.saveItem);
-    if (me) await refreshOwnList(me.id);
-  }
-
   async function deleteItem(id: string) {
     try {
       const res = await fetch(`/api/wishlist/items/${id}`, { method: "DELETE" });
@@ -285,7 +307,6 @@ export function AppPage() {
   }, [reordering, reorder.isDragging]);
 
   function enterReorderMode() {
-    setOpenItemId(null);
     setActiveTag(null);
     setReordering(true);
     requestAnimationFrame(() => {
@@ -305,30 +326,6 @@ export function AppPage() {
       // render without a manual reload.
       void pollEnrichment(me.id, id);
     }
-  }
-
-  /** On-demand, display-only candidate hints for one item (owner-only route).
-   *  Nothing here is persisted or verified. */
-  async function checkPrices(id: string) {
-    setHintStates((prev) => ({ ...prev, [id]: { status: "loading", hints: [], disabled: false } }));
-    let res: Response;
-    try {
-      res = await fetch(`/api/wishlist/items/${id}/hints`, { method: "POST" });
-    } catch {
-      setHintStates((prev) => ({ ...prev, [id]: { status: "error", hints: [], disabled: false } }));
-      toast(S.errors.checkPrices, "danger");
-      return;
-    }
-    if (!res.ok) {
-      setHintStates((prev) => ({ ...prev, [id]: { status: "error", hints: [], disabled: false } }));
-      toast(S.errors.checkPrices, "danger");
-      return;
-    }
-    const body = (await res.json()) as PriceHintsResponse;
-    setHintStates((prev) => ({
-      ...prev,
-      [id]: { status: "done", hints: body.hints, disabled: body.disabled },
-    }));
   }
 
   /** Poll while an item is still enriching. The response is returned by
@@ -400,7 +397,6 @@ export function AppPage() {
   ];
 
   const allTags = Array.from(new Set(ownItems.flatMap((i) => i.tags))).sort();
-  const detailItem = ownItems.find((item) => item.id === openItemId) ?? null;
   const guestItem = otherItems.find((item) => item.id === guestItemId) ?? null;
 
   function ownerRefFor(userId: string): OwnerRef {
@@ -447,7 +443,7 @@ export function AppPage() {
           title={S.empty.own}
           body={S.empty.ownHint}
           action={
-            <button className="primary" onClick={() => setAddOpen(true)}>
+            <button className="primary" onClick={() => navigate("/add")}>
               {S.list.addItem}
             </button>
           }
@@ -477,11 +473,10 @@ export function AppPage() {
       <ItemList
         items={orderedOwn}
         viewerIsOwner
-        onEdit={reordering ? undefined : editItem}
         onDelete={reordering ? undefined : deleteItem}
         onRefresh={reordering ? undefined : refreshItem}
         onResetPurchased={reordering ? undefined : resetPurchased}
-        onOpenDetails={reordering ? undefined : setOpenItemId}
+        onOpenDetails={reordering ? undefined : (id) => navigate(`/items/${id}`)}
         renderDragHandle={
           reordering && !activeTag
             ? (id) => (
@@ -502,7 +497,7 @@ export function AppPage() {
   const showOwnerActions = !viewing && ownItems.length > 0;
   const ownerActions = showOwnerActions ? (
     <>
-      <IconButton variant="ghost" label={S.list.addItem} onClick={() => setAddOpen(true)}>
+      <IconButton variant="ghost" label={S.list.addItem} onClick={() => navigate("/add")}>
         <PlusIcon />
       </IconButton>
       <div className="share-anchor">
@@ -583,37 +578,6 @@ export function AppPage() {
 
       </div>
 
-      {!viewing && (
-        <Sheet
-          open={addOpen}
-          onClose={() => setAddOpen(false)}
-          ariaLabel={S.list.addItem}
-          boxClassName="sheet--add"
-        >
-          <div className="detail-handle" aria-hidden="true" />
-          <h2 className="add-sheet-title">{S.form.addTitle}</h2>
-          <ItemForm
-            mode="add"
-            submitLabel={S.list.addItem}
-            initialValues={prefill}
-            onSubmit={createItem}
-            onCancel={() => setAddOpen(false)}
-            autoFocusUrl
-          />
-        </Sheet>
-      )}
-      {!viewing && detailItem && (
-        <ItemDetailSheet
-          item={detailItem}
-          onClose={() => setOpenItemId(null)}
-          onEdit={editItem}
-          onDelete={deleteItem}
-          onRefresh={refreshItem}
-          onResetPurchased={resetPurchased}
-          onCheckPrices={checkPrices}
-          hintState={hintStates[detailItem.id]}
-        />
-      )}
       {viewing && guestItem && (
         <GuestItemDetailSheet
           item={toGuestDetail(guestItem)}

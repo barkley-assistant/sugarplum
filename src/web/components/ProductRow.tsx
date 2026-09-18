@@ -28,7 +28,8 @@ interface ProductRowProps {
 }
 
 /** One row primitive for every list surface (owner, public, share). Owner
- *  rows use a stretched title button; public/share rows keep a plain title. */
+ *  rows use a stretched title button that NAVIGATES to the item page (#62) —
+ *  no dialog semantics, it is an ordinary in-app link-button. */
 export function ProductRow({
   id,
   title,
@@ -60,7 +61,6 @@ export function ProductRow({
               className="row-open"
               onClick={onOpen}
               title={openLabel}
-              aria-haspopup="dialog"
             >
               {title}
             </button>

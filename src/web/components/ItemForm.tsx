@@ -19,8 +19,6 @@ interface ItemFormProps {
   submitLabel: string;
   onSubmit: (values: ItemFormValues) => void | Promise<void>;
   onCancel?: () => void;
-  /** Paste-a-link is the primary add flow: autofocus the URL field. */
-  autoFocusUrl?: boolean;
   /** Add mode keeps manual fields behind a progressive disclosure. */
   mode?: "add" | "edit";
 }
@@ -33,7 +31,6 @@ export function ItemForm({
   submitLabel,
   onSubmit,
   onCancel,
-  autoFocusUrl = false,
   mode = "edit",
 }: ItemFormProps) {
   const [title, setTitle] = useState(initialValues?.title ?? initial?.title ?? "");
@@ -91,7 +88,6 @@ export function ItemForm({
         className="input-lg"
         value={url}
         onChange={(e) => setUrl(e.target.value)}
-        autoFocus={autoFocusUrl}
       />
     </div>
   );

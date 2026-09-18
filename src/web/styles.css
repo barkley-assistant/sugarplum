@@ -565,6 +565,15 @@ a.brand:hover {
   font-weight: 700;
 }
 
+/* #62: the page heading is focused programmatically on mount (usePageFocus)
+   so a screen reader announces the route change. It is not keyboard-reachable
+   (tabindex="-1"), so the shared focus ring only paints a box around the
+   title — suppress it for the two programmatic targets. */
+.page-title:focus,
+.detail-title:focus {
+  outline: none;
+}
+
 .list-heading .count {
   font-variant-numeric: tabular-nums;
   font-size: var(--text-sm);
@@ -1035,6 +1044,37 @@ button.filter-chip {
   max-width: 360px;
 }
 
+/* Add/edit page boot skeleton (#62): the settings recipe, one card — the
+   paste-link-first form's rhythm. */
+.skeleton-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+}
+
+/* Item page boot skeleton (#62): hero block (thumb + lines) then the same
+   section-card rhythm as the detail page it stands in for. */
+.skeleton-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--detail-section-gap);
+}
+
+.skeleton-hero {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.skeleton-hero-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding-top: 6px;
+}
+
 /* ---------- Progress hairline (refetch) ---------- */
 .progress-hairline {
   position: fixed;
@@ -1136,24 +1176,17 @@ button.filter-chip {
   margin: 0 0 var(--sp-4);
 }
 
-/* ---------- Amethyst A6: paste-link add surface ---------- */
-.sheet--add {
-  padding: 0;
-  padding-bottom: calc(var(--sp-4) + var(--safe-bottom));
+/* ---------- Amethyst A6 / #62: paste-link add surface ---------- */
+/* #62 retired the add bottom sheet: the form is a full page in the app
+   column now. The form's own rhythm rules (.add-disclose, .add-manual,
+   .item-form--add) are sheet-independent and unchanged. */
+.add-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
 }
 
-.sheet--add .add-sheet-title {
-  margin: 0;
-  padding: 0 var(--sp-4);
-  font-size: var(--text-lg);
-  line-height: 1.2;
-}
-
-.sheet--add .item-form {
-  padding: 0 var(--sp-4);
-}
-
-.sheet--add .add-submit {
+.add-submit {
   width: 100%;
   min-height: 48px;
   margin-top: var(--sp-2);
@@ -1168,7 +1201,11 @@ button.filter-chip {
   padding: var(--sp-2) 0;
   background: none;
   border: none;
+  /* A full-width hairline, not a box: the global button radius would curve
+     this single top border into a clipped rounded outline (#62, seen in the
+     page screenshots). */
   border-top: 1px solid var(--border);
+  border-radius: 0;
   color: var(--text-2);
   font-size: var(--text-sm);
   text-align: left;
@@ -1196,19 +1233,18 @@ button.filter-chip {
 }
 
 @media (max-width: 639px) {
-  .item-form--add .field-row {
+  /* Both form modes share the row's mobile rhythm: the Title field (the
+     .field.grow) spans the full width and Price/Currency sit side by side.
+     Scoped to `.item-form--add` before #62, which left the EDIT form's flex
+     row collapsing the Title input to a sliver at this width (the screenshots
+     caught it). */
+  .item-form .field-row {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .item-form--add .field-row .field.grow {
+  .item-form .field-row .field.grow {
     grid-column: 1 / -1;
-  }
-}
-
-@media (min-width: 640px) {
-  .sheet--add .detail-handle {
-    display: none;
   }
 }
 
@@ -1426,7 +1462,9 @@ button.filter-chip {
 
 .skeleton-card,
 .skeleton-section,
-.skeleton-auth {
+.skeleton-auth,
+.skeleton-form,
+.skeleton-item {
   animation: pulse 1.4s ease-in-out infinite;
 }
 
@@ -2000,6 +2038,26 @@ button.filter-chip {
   display: flex;
   flex-direction: column;
   gap: var(--detail-section-gap);
+}
+
+/* #62: the owner detail as a full page (the sheet/drawer variants are
+   retired for this flow). The page scrolls with the document, so
+   .detail-scroll keeps the detail rhythm but drops its inner scroll box and
+   the sheet's own padding/header offset. One layout at every width. */
+.item-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.item-page .detail-header {
+  padding: 0 0 var(--sp-3);
+}
+
+.item-page .detail-scroll {
+  flex: none;
+  overflow: visible;
+  padding: 0;
 }
 
 .detail-hero {
