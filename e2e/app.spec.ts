@@ -74,6 +74,37 @@ async function settleEntryAnimation(locator: Locator) {
   });
 }
 
+/** Rendered WCAG contrast ratio of an element's text against the first opaque
+ *  background behind it (walks ancestors, so transparent rows work). Pair it
+ *  with emulateMedia({ colorScheme }) to prove both themes. */
+async function contrast(locator: Locator): Promise<number> {
+  return locator.evaluate((el) => {
+    const numbers = (s: string): number[] => (s.match(/[\d.]+/g) ?? []).map(Number);
+    const parse = (s: string): number[] => numbers(s).slice(0, 3);
+    const opaque = (s: string): boolean => numbers(s).length < 4 || numbers(s)[3] === 1;
+    const lum = (rgb: number[]): number => {
+      const [r, g, b] = rgb.map((v) => {
+        v /= 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const fg = lum(parse(getComputedStyle(el).color));
+    let node: Element | null = el;
+    let bg = [255, 255, 255];
+    while (node) {
+      const cs = getComputedStyle(node);
+      if (opaque(cs.backgroundColor)) {
+        bg = parse(cs.backgroundColor);
+        break;
+      }
+      node = node.parentElement;
+    }
+    const lg = lum(bg);
+    return (Math.max(fg, lg) + 0.05) / (Math.min(fg, lg) + 0.05);
+  });
+}
+
 test("1: login lands on the app shell with the own empty state", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Nothing saved yet." })).toBeVisible();
   await expect(page.getByText("Paste a product link to start your list.")).toBeVisible();
@@ -219,7 +250,7 @@ test("4c: row opens the detail sheet; overflow does not", async ({ page }) => {
   const card = page.locator(".item-card", {
     has: page.getByRole("heading", { name: "History probe" }),
   });
-  const rowButton = card.getByRole("button", { name: "History probe" });
+  const rowButton = card.getByRole("button", { name: "History probe", exact: true });
   await rowButton.focus();
   await page.keyboard.press("Enter");
   const sheet = page.getByRole("dialog", { name: "History probe" });
@@ -289,7 +320,7 @@ test("4d: detail actions and stacked edit/delete flows stay in sync", async ({ p
   await page.reload();
 
   const card = page.locator(`.item-card[data-item-id="${item.id}"]`);
-  await card.getByRole("button", { name: "Detail probe" }).click();
+  await card.getByRole("button", { name: "Detail probe", exact: true }).click();
   const sheet = page.getByRole("dialog", { name: "Detail probe" });
   await expect(sheet.locator(".detail-site")).toHaveText("example.com");
   await expect(sheet.locator(".detail-price")).toHaveText("£24.99");
@@ -341,7 +372,7 @@ test("4d: detail actions and stacked edit/delete flows stay in sync", async ({ p
 test("4e: detail switches between bottom sheet and desktop drawer without overflow", async ({ page }) => {
   const card = page.locator(".item-card", { has: page.getByRole("heading", { name: "History probe" }) });
   await page.setViewportSize({ width: 1280, height: 900 });
-  await card.getByRole("button", { name: "History probe" }).click();
+  await card.getByRole("button", { name: "History probe", exact: true }).click();
   const drawer = page.getByRole("dialog", { name: "History probe" });
   await expect(drawer).toHaveClass(/detail-drawer/);
   const drawerWidth = await drawer.boundingBox();
@@ -351,7 +382,7 @@ test("4e: detail switches between bottom sheet and desktop drawer without overfl
   await page.keyboard.press("Escape");
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await card.getByRole("button", { name: "History probe" }).click();
+  await card.getByRole("button", { name: "History probe", exact: true }).click();
   const sheet = page.getByRole("dialog", { name: "History probe" });
   await expect(sheet).toHaveClass(/sheet--detail/);
   await expect(sheet.locator(".detail-handle")).toBeVisible();
@@ -369,7 +400,7 @@ test("4f: detail surface keeps focus contained and labels secondary actions", as
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ width: 390, height: 844 });
   const card = page.locator(".item-card", { has: page.getByRole("heading", { name: "History probe" }) });
-  const rowButton = card.getByRole("button", { name: "History probe" });
+  const rowButton = card.getByRole("button", { name: "History probe", exact: true });
   await rowButton.click();
   const sheet = page.getByRole("dialog", { name: "History probe" });
   await expect(sheet).toBeVisible();
@@ -401,7 +432,7 @@ test("4h: prices elsewhere stays inside detail and preserves honesty states", as
   await page.reload();
 
   const card = page.locator(`.item-card[data-item-id="${item.id}"]`);
-  await card.getByRole("button", { name: "Hints probe" }).click();
+  await card.getByRole("button", { name: "Hints probe", exact: true }).click();
   const sheet = page.getByRole("dialog", { name: "Hints probe" });
   const toggle = sheet.getByRole("button", { name: "Check prices elsewhere" });
   await toggle.click();
@@ -502,6 +533,10 @@ test("5b: reorder mode supports keyboard movement and persists", async ({ page }
   await expect(page.locator(".item-card.is-reordering").first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Done", exact: true })).toBeVisible();
   await expect(page.locator(".item-list .drag-handle").first()).toBeFocused();
+  // A10: every handle is named after its own row (not a shared "Move item").
+  const firstTitle = (await page.locator(".item-card .item-title").first().innerText()).trim();
+  await expect(page.locator(".item-list .drag-handle").first())
+    .toHaveAccessibleName(`Move "${firstTitle}"`);
   await expect(page.locator(".item-card .icon-btn")).toHaveCount(0);
   await expect(page.locator(".filter-row")).toHaveCount(0);
 
@@ -551,6 +586,9 @@ test("5d: desktop hover reveals a reorder grip without entering mode", async ({ 
   await expect(page.locator(".item-card.is-reordering")).toHaveCount(0);
   await lastCard.hover();
   await expect(grip).toBeVisible();
+  // The desktop peek grip carries the same per-item label (A10).
+  const lastTitle = (await lastCard.locator(".item-title").innerText()).trim();
+  await expect(grip).toHaveAccessibleName(`Move "${lastTitle}"`);
 
   const titles = page.locator(".item-card .item-title");
   const before = await titles.allTextContents();
@@ -662,19 +700,19 @@ test("8: share-target GET prefills and creates the item", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Share test" })).toBeVisible();
 });
 
-test("9: no horizontal overflow at 360/390/430/1280px", async ({ page, browser }) => {
+test("9: no horizontal overflow at 360-1280px across surfaces", async ({ page, browser }) => {
   // Seed one item so the populated feed is exercised in every viewport.
   const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
     data: { title: "Overflow probe" },
   });
   expect(seeded.status()).toBe(201);
 
-  for (const width of [360, 390, 430, 1280]) {
+  for (const width of [360, 390, 430, 768, 1024, 1280]) {
     await page.setViewportSize({ width, height: 800 });
     await page.reload();
     if (width < 1024) {
       const historyCard = page.locator(".item-card", { has: page.getByRole("heading", { name: "History probe" }) });
-      await historyCard.getByRole("button", { name: "History probe" }).click();
+      await historyCard.getByRole("button", { name: "History probe", exact: true }).click();
       const detail = page.getByRole("dialog", { name: "History probe" });
       await expect(detail.locator(".price-graph")).toBeVisible();
     }
@@ -712,7 +750,7 @@ test("9: no horizontal overflow at 360/390/430/1280px", async ({ page, browser }
     await guest.getByRole("menuitemradio", { name: /Admin/ }).click();
     await expect(guest.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
 
-    for (const width of [360, 390, 430, 1280]) {
+    for (const width of [360, 390, 430, 768, 1024, 1280]) {
       await guest.setViewportSize({ width, height: 800 });
       const probe = await horizontalEscapes(guest);
       expect(probe.docOverflow, `other-user overflow at ${width}px`).toBe(false);
@@ -745,7 +783,7 @@ test("9: no horizontal overflow at 360/390/430/1280px", async ({ page, browser }
   await page.goto(`${BASE}/share/${token}`);
   await expect(page.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
 
-  for (const width of [360, 390, 430, 1280]) {
+  for (const width of [360, 390, 430, 768, 1024, 1280]) {
     await page.setViewportSize({ width, height: 800 });
     const probe = await horizontalEscapes(page);
     expect(probe.docOverflow, `share view overflow at ${width}px`).toBe(false);
@@ -768,6 +806,35 @@ test("9: no horizontal overflow at 360/390/430/1280px", async ({ page, browser }
     await expect(sheet).toHaveCount(0);
   }
 
+  // A10: Settings and Login are their own surfaces and clear the same bar.
+  // Settings is the admin's page here, so the user table (the widest content)
+  // is exercised, including its own scroll containment at 360px.
+  for (const width of [360, 768, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto(`${BASE}/settings`);
+    await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+    await expect(page.locator(".admin-table")).toBeVisible();
+    const probe = await horizontalEscapes(page);
+    expect(probe.docOverflow, `settings overflow at ${width}px`).toBe(false);
+    expect(probe.offenders, `settings escapes at ${width}px`).toEqual([]);
+  }
+
+  // The login card is the one surface with no session: probe it anonymously.
+  const anonymous = await browser.newContext({ viewport: { width: 360, height: 800 } });
+  const loginPage = await anonymous.newPage();
+  try {
+    for (const width of [360, 390, 430, 768, 1280]) {
+      await loginPage.setViewportSize({ width, height: 800 });
+      await loginPage.goto(`${BASE}/login`);
+      await expect(loginPage.locator(".auth-card")).toBeVisible();
+      const probe = await horizontalEscapes(loginPage);
+      expect(probe.docOverflow, `login overflow at ${width}px`).toBe(false);
+      expect(probe.offenders, `login escapes at ${width}px`).toEqual([]);
+    }
+  } finally {
+    await anonymous.close();
+  }
+
   // Hand the board back clean: test 15 expects no active link (its share
   // dialog must offer "Create link", not "New link").
   const revoked = await page.request.delete(`${BASE}/api/share`);
@@ -780,6 +847,17 @@ test("10: dark mode flips the surface tokens", async ({ page }) => {
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   expect(bg).toBe("rgb(18, 16, 23)"); // --bg dark: #121017
   expect(bg).not.toBe("rgb(250, 250, 250)"); // --bg light: #fafafa
+
+  // A10 retuned the dark muted text (--text-3) and the primary fill
+  // (--plum-600); both are locked here through the rendered ratio.
+  const muted = page.locator(".app-footer a");
+  await expect(muted).toBeVisible();
+  expect(await contrast(muted), "dark muted text").toBeGreaterThanOrEqual(4.5);
+
+  await page.getByRole("button", { name: "Add item" }).first().click();
+  const submit = page.getByRole("dialog", { name: "Add item" }).getByRole("button", { name: "Add item" });
+  await expect(submit).toBeVisible();
+  expect(await contrast(submit), "dark primary button").toBeGreaterThanOrEqual(4.5);
 });
 
 test("11: manifest and service worker are installed", async ({ page }) => {
@@ -799,25 +877,66 @@ test("11: manifest and service worker are installed", async ({ page }) => {
   expect(scriptUrl).toContain("/sw.js");
 });
 
-test("12: primary button contrast meets WCAG AA (>= 4.5)", async ({ page }) => {
-  await page.getByRole("button", { name: "Add item" }).first().click();
-  const sheet = page.getByRole("dialog", { name: "Add item" });
-  const submit = sheet.getByRole("button", { name: "Add item" });
-  const ratio = await submit.evaluate((el) => {
-    const cs = getComputedStyle(el);
-    const parse = (s: string): number[] => (s.match(/\d+/g) ?? []).slice(0, 3).map(Number);
-    const lum = (rgb: number[]): number => {
-      const [r, g, b] = rgb.map((v) => {
-        v /= 255;
-        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-      });
-      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    };
-    const bg = lum(parse(cs.backgroundColor));
-    const fg = lum(parse(cs.color));
-    return (Math.max(bg, fg) + 0.05) / (Math.min(bg, fg) + 0.05);
+test("12: AA contrast sweep holds in both schemes", async ({ page, browser }) => {
+  const card = page.locator(".item-card", { has: page.getByRole("heading", { name: "History probe" }) });
+  const rowButton = card.getByRole("button", { name: "History probe", exact: true });
+
+  for (const colorScheme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme });
+    await page.goto(`${BASE}/`);
+    await expect(rowButton).toBeVisible();
+
+    // Muted text (--text-3) on the page background.
+    const muted = page.locator(".app-footer a");
+    await expect(muted).toBeVisible();
+    expect(await contrast(muted), `${colorScheme}: muted text`).toBeGreaterThanOrEqual(4.5);
+
+    // Primary CTA: white on the plum fill in either scheme.
+    await page.getByRole("button", { name: "Add item" }).first().click();
+    const addSheet = page.getByRole("dialog", { name: "Add item" });
+    const submit = addSheet.getByRole("button", { name: "Add item" });
+    await expect(submit).toBeVisible();
+    expect(await contrast(submit), `${colorScheme}: primary button`).toBeGreaterThanOrEqual(4.5);
+    await page.keyboard.press("Escape");
+    await expect(addSheet).toHaveCount(0);
+
+    // Detail surface: muted footer metadata, and the segmented control's
+    // inactive label (--text-3 on the --surface-2 track).
+    await rowButton.click();
+    const detail = page.getByRole("dialog", { name: "History probe" });
+    await expect(detail.locator(".detail-history-card")).toBeVisible();
+    expect(await contrast(detail.locator(".detail-footer")), `${colorScheme}: detail footer`)
+      .toBeGreaterThanOrEqual(4.5);
+    const inactiveWindow = detail.locator(".window-seg button:not(.active)").first();
+    await expect(inactiveWindow).toBeVisible();
+    expect(await contrast(inactiveWindow), `${colorScheme}: inactive window label`)
+      .toBeGreaterThanOrEqual(4.5);
+    await page.keyboard.press("Escape");
+    await expect(detail).toHaveCount(0);
+  }
+
+  // The claim control only exists on another user's list, where it rides
+  // --share-accent instead of --plum-600: sample it in dark.
+  const created = await page.request.post(`${BASE}/api/users`, {
+    data: { username: "contrast-guest", password: "contrast-pass", displayName: "Contrast" },
   });
-  expect(ratio).toBeGreaterThanOrEqual(4.5);
+  expect(created.status()).toBe(201);
+  const guestContext = await browser.newContext({
+    viewport: { width: 1280, height: 800 },
+    colorScheme: "dark",
+  });
+  const guest = await guestContext.newPage();
+  try {
+    await login(guest, "contrast-guest", "contrast-pass");
+    await guest.getByRole("button", { name: /wishlist/ }).click();
+    await guest.getByRole("menuitemradio", { name: /Admin/ }).click();
+    await expect(guest.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+    const claim = guest.locator(".claim-btn").first();
+    await expect(claim).toBeVisible();
+    expect(await contrast(claim), "dark claim control").toBeGreaterThanOrEqual(4.5);
+  } finally {
+    await guestContext.close();
+  }
 });
 
 test("13: offline reload still shows a previously loaded list", async ({ page, context }) => {
@@ -1212,3 +1331,30 @@ async function startFixtureServer(): Promise<{ url: string; close: () => void }>
     });
   });
 }
+
+test("16: login card meets AA, fits 360px, and reports failures", async ({ page, context }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  // Anonymous: the login page is the one surface without a session.
+  await context.clearCookies();
+  await page.goto(`${BASE}/login`);
+  const card = page.locator(".auth-card");
+  await expect(card).toBeVisible();
+
+  const signIn = page.getByRole("button", { name: "Sign in" });
+  await expect(signIn).toHaveClass(/settings-submit/);
+  expect(await contrast(signIn), "login primary button").toBeGreaterThanOrEqual(4.5);
+  expect(await contrast(card.locator(".auth-lockup .muted")), "login tagline")
+    .toBeGreaterThanOrEqual(4.5);
+
+  // Keyboard-reachable fields draw the shared 2px focus ring (A10 F5).
+  const username = page.getByLabel("Username");
+  await username.focus();
+  expect(await username.evaluate((el) => getComputedStyle(el).outlineWidth)).toBe("2px");
+
+  // A failed sign-in is announced, not a silent no-op.
+  await username.fill("admin");
+  await page.getByLabel("Password").fill("not-the-password");
+  await signIn.click();
+  await expect(page.getByRole("alert")).toHaveText(/Invalid username or password|Too many attempts/);
+  await expect(card).toBeVisible();
+});

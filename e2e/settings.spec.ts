@@ -126,6 +126,15 @@ test("6: member changes their display name; header follows", async ({ page }) =>
     await ctx.getByRole("button", { name: "Save", exact: true }).click();
     await expect(ctx.getByText("Profile updated.")).toBeVisible();
 
+    // A10: the toast's manual dismiss is the only early route, so it is a
+    // full 44px touch target (rounded: browsers report sub-pixel boxes).
+    const dismiss = ctx.getByRole("button", { name: "Dismiss" });
+    const dismissBox = await dismiss.boundingBox();
+    expect(Math.round(dismissBox?.width ?? 0)).toBeGreaterThanOrEqual(44);
+    expect(Math.round(dismissBox?.height ?? 0)).toBeGreaterThanOrEqual(44);
+    await dismiss.click();
+    await expect(ctx.getByText("Profile updated.")).toHaveCount(0);
+
     const me = await ctx.request.get(`${BASE}/api/auth/me`);
     expect(me.status()).toBe(200);
     expect(((await me.json()) as { displayName: string }).displayName).toBe("Renamed Member");
@@ -160,5 +169,67 @@ test("8: /settings loads offline from the shell cache", async ({ page, context }
     await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   } finally {
     await context.setOffline(false);
+  }
+});
+
+test("9: preference rows are real switches that round-trip", async ({ page }) => {
+  await page.goto(`${BASE}/settings`);
+  const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as { hintsEnabled: boolean };
+  const hints = page.getByRole("switch", { name: /Show unverified price hints/ });
+  await expect(page.getByRole("switch", { name: /Track prices daily/ })).toBeVisible();
+  await expect(hints).toHaveAttribute("aria-checked", String(me.hintsEnabled));
+  // role=menuitemcheckbox is invalid outside a menu: the old role is gone.
+  await expect(page.getByRole("menuitemcheckbox")).toHaveCount(0);
+
+  await hints.click();
+  await expect(hints).toHaveAttribute("aria-checked", String(!me.hintsEnabled));
+  await page.reload();
+  await expect(page.getByRole("switch", { name: /Show unverified price hints/ }))
+    .toHaveAttribute("aria-checked", String(!me.hintsEnabled));
+
+  // Leave the operator's setting as it was for the remaining specs.
+  await page.getByRole("switch", { name: /Show unverified price hints/ }).click();
+  await expect(page.getByRole("switch", { name: /Show unverified price hints/ }))
+    .toHaveAttribute("aria-checked", String(me.hintsEnabled));
+});
+
+test("10: heading ladder has one h2 and unique section headings", async ({ page }) => {
+  await page.goto(`${BASE}/settings`);
+  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toHaveCount(1);
+  for (const name of ["Account", "Change password", "Preferences", "Users"]) {
+    await expect(page.getByRole("heading", { name, exact: true, level: 3 })).toHaveCount(1);
+  }
+  // The Users section is named once (h3), not twice.
+  await expect(page.getByRole("heading", { name: "Users", level: 2 })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Create user", level: 4 })).toBeVisible();
+
+  // No level is skipped anywhere on the page.
+  const levels = await page.evaluate(() =>
+    Array.from(document.querySelectorAll("h1, h2, h3, h4, h5, h6")).map((el) => Number(el.tagName[1])),
+  );
+  expect(levels[0]).toBe(1);
+  for (let i = 1; i < levels.length; i++) {
+    expect(levels[i] - levels[i - 1], `heading ladder ${levels[i - 1]} -> ${levels[i]}`)
+      .toBeLessThanOrEqual(1);
+  }
+});
+
+test("11: settings submits carry the amethyst pill grammar", async ({ page }) => {
+  await page.goto(`${BASE}/settings`);
+  for (const name of ["Save", "Set new password"]) {
+    const button = page.getByRole("button", { name, exact: true });
+    await expect(button).toBeVisible();
+    await expect(button).toHaveClass(/settings-submit/);
+    const rendered = await button.evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return {
+        radius: cs.borderRadius,
+        weight: Number(cs.fontWeight),
+        height: el.getBoundingClientRect().height,
+      };
+    });
+    expect(rendered.radius).toBe("999px"); // --r-full
+    expect(rendered.weight).toBeGreaterThanOrEqual(600);
+    expect(rendered.height).toBeGreaterThanOrEqual(44);
   }
 });
