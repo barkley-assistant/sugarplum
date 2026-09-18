@@ -140,6 +140,7 @@ export const S = {
     shareTitle: "Share your wishlist",
     shareIntro:
       "Anyone with this link can view your list and mark items as purchased. Purchased marks are never shown to you.",
+    loading: "Loading…",
     copyLink: "Copy link",
     copied: "Copied",
     createLink: "Create link",

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   Me,
   OwnedItem,
@@ -23,7 +23,7 @@ import { EmptyState } from "./EmptyState";
 import { FilterChips } from "./FilterChips";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { ItemList, type OwnerRef } from "./ItemList";
-import { SharePanel } from "./SharePanel";
+import { ShareMenu } from "./ShareMenu";
 import { Sheet } from "./Sheet";
 import { ItemDetailSheet } from "./ItemDetailSheet";
 import { AppShell, AppShellLoading } from "./AppShell";
@@ -46,6 +46,7 @@ export function AppPage() {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [hintStates, setHintStates] = useState<Record<string, PriceHintState>>({});
   const [openItemId, setOpenItemId] = useState<string | null>(null);
+  const shareTriggerRef = useRef<HTMLButtonElement | null>(null);
   const toast = useToast();
   const reorder = useDragReorder(ownItems, onReorder);
   const install = useInstallPrompt();
@@ -435,9 +436,19 @@ export function AppPage() {
       <IconButton variant="ghost" label={S.list.addItem} onClick={() => setAddOpen(true)}>
         <PlusIcon />
       </IconButton>
-      <IconButton variant="ghost" label={S.share.shareList} onClick={() => setShareOpen((v) => !v)} aria-expanded={shareOpen}>
-        <ShareIcon />
-      </IconButton>
+      <div className="share-anchor">
+        <IconButton
+          ref={shareTriggerRef}
+          variant="ghost"
+          label={S.share.shareList}
+          onClick={() => setShareOpen((v) => !v)}
+          aria-expanded={shareOpen}
+          aria-haspopup="dialog"
+        >
+          <ShareIcon />
+        </IconButton>
+        <ShareMenu open={shareOpen} onClose={() => setShareOpen(false)} triggerRef={shareTriggerRef} />
+      </div>
     </>
   ) : null;
 
@@ -488,11 +499,6 @@ export function AppPage() {
           {renderList()}
         </section>
 
-        {!viewing && showOwnerActions && (
-          <Sheet open={shareOpen} onClose={() => setShareOpen(false)} ariaLabel={S.share.shareList}>
-            <SharePanel />
-          </Sheet>
-        )}
       </div>
 
       {!viewing && (

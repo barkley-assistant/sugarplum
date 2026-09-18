@@ -1417,16 +1417,16 @@ button.filter-chip {
   color: var(--share-accent);
 }
 
-/* Owner-side link manager: own surface (no generic .card — the desktop
-   rail-card already provides a surface, so .card would double it). */
+/* Owner-side share-link manager, rendered inside the A7 ShareMenu surface
+   (mobile sheet / desktop popover). */
 .share-panel {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  padding: var(--sp-4);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
   min-width: 0;
 }
 
@@ -1498,6 +1498,33 @@ button.filter-chip {
 .overflow-cancel {
   color: var(--text-2);
   justify-content: center;
+}
+
+/* ---------- Amethyst A7: share contextual surface ---------- */
+.share-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Desktop (>=640px): anchored popover under the Share trigger. */
+.share-popover {
+  z-index: 40;
+  width: min(360px, calc(100vw - 2 * var(--sp-4)));
+  padding: var(--sp-4);
+  gap: var(--sp-2);
+}
+
+/* Mobile: the portal-mounted sheet owns the surface chrome. */
+.sheet--share {
+  padding: 0 var(--sp-4) calc(var(--sp-4) + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.sheet--share .share-heading {
+  margin: 0 0 calc(-1 * var(--sp-2));
+  font-size: var(--text-lg);
 }
 
 /* ---------- Status badges (one language for state) ---------- */

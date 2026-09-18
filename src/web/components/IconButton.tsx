@@ -1,10 +1,12 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Accessible name (also the tooltip). Icon-only buttons carry no text. */
   label: string;
   children: ReactNode;
   variant?: "default" | "ghost";
+  /** React 19 exposes refs as ordinary function-component props. */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 /** Compact 44px icon button: transparent until hovered, focus-visible ring.
@@ -15,6 +17,7 @@ export function IconButton({
   className,
   type = "button",
   variant = "default",
+  ref,
   ...rest
 }: IconButtonProps) {
   const classes = ["icon-btn", variant === "ghost" ? "icon-btn--ghost" : "", className]
@@ -23,6 +26,7 @@ export function IconButton({
   return (
     <button
       type={type}
+      ref={ref}
       className={classes}
       aria-label={label}
       title={label}

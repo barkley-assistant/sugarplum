@@ -11,18 +11,25 @@ export function SharePanel() {
   const [link, setLink] = useState<ShareLinkResponse | null>(null);
   const [busyOp, setBusyOp] = useState<"create" | "revoke" | null>(null);
   const [copied, setCopied] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const toast = useToast();
   const confirm = useConfirm();
 
   useEffect(() => {
+    let active = true;
     void (async () => {
       try {
         const res = await fetch("/api/share");
-        if (res.ok) setLink((await res.json()) as ShareLinkResponse);
+        if (res.ok && active) setLink((await res.json()) as ShareLinkResponse);
       } catch {
-        // Panel simply shows the create button when the state is unknown.
+        // The panel stays usable when the current link cannot be loaded.
+      } finally {
+        if (active) setLoaded(true);
       }
     })();
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function create() {
@@ -85,8 +92,9 @@ export function SharePanel() {
   const url = `${location.origin}${link?.path ?? ""}`;
   return (
     <div className="share-panel">
-      <h3>{S.share.shareTitle}</h3>
-      <p className="muted">{S.share.shareIntro}</p>
+      <h3 className="share-heading">{S.share.shareTitle}</h3>
+      <p className="muted share-intro">{S.share.shareIntro}</p>
+      {!loaded && !hasLink && <p className="muted">{S.share.loading}</p>}
       {hasLink && (
         <div className="share-link-row">
           <input readOnly value={url} aria-label={S.share.shareTitle} onFocus={(e) => e.currentTarget.select()} />

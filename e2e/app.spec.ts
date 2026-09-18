@@ -696,8 +696,17 @@ test("15: share link — owner creates, anonymous marks purchased, owner sees no
 
   // Owner (admin, logged in by beforeEach) mints a link for their own list.
   await page.getByRole("button", { name: "Share my list" }).click();
-  await page.getByRole("button", { name: "Create link" }).click();
-  const linkInput = page.locator(".share-link-row input");
+  const desktopShare = page.getByRole("dialog", { name: "Share my list" });
+  await expect(desktopShare).toBeVisible();
+  const triggerBox = await page.getByRole("button", { name: "Share my list" }).boundingBox();
+  const popoverBox = await desktopShare.boundingBox();
+  expect(triggerBox).not.toBeNull();
+  expect(popoverBox).not.toBeNull();
+  expect(popoverBox!.x + popoverBox!.width).toBeCloseTo(triggerBox!.x + triggerBox!.width, 0);
+  expect(popoverBox!.y).toBeGreaterThanOrEqual(triggerBox!.y + triggerBox!.height);
+  expect(popoverBox!.width).toBeLessThanOrEqual(360);
+  await desktopShare.getByRole("button", { name: "Create link" }).click();
+  const linkInput = desktopShare.locator(".share-link-row input");
   await expect(linkInput).toBeVisible();
   const shareUrl = await linkInput.inputValue();
   expect(shareUrl).toMatch(/\/share\/[0-9a-f]{64}$/);
@@ -763,18 +772,21 @@ test("15: share link — owner creates, anonymous marks purchased, owner sees no
     await expect(page.locator(".share-purchased-badge")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Mark as purchased" })).toHaveCount(0);
 
-    // Revocation: back to the app, reopen the panel at 375px (mobile-first:
+    // Revocation: back to the app, reopen the sheet at 375px (mobile-first:
     // the link row must not overflow).
     await page.setViewportSize({ width: 375, height: 800 });
     await page.goto(`${BASE}/`);
     await page.getByRole("button", { name: "Share my list" }).click();
-    await expect(page.locator(".share-link-row input")).toBeVisible();
+    const mobileShare = page.getByRole("dialog", { name: "Share my list" });
+    await expect(mobileShare).toHaveClass(/sheet--share/);
+    await expect(mobileShare.locator(".detail-handle")).toBeVisible();
+    await expect(mobileShare.locator(".share-link-row input")).toBeVisible();
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
       ),
     ).toBe(false);
-    await page.getByRole("button", { name: "Revoke link" }).click();
+    await mobileShare.getByRole("button", { name: "Revoke link" }).click();
     await expect(page.getByText("Anyone with the link will no longer be able to view your list.")).toBeVisible();
     await page.getByRole("alertdialog").getByRole("button", { name: "Revoke link" }).click();
     await expect(page.locator(".share-link-row")).toHaveCount(0);
@@ -785,6 +797,93 @@ test("15: share link — owner creates, anonymous marks purchased, owner sees no
   } finally {
     await anon.close();
   }
+});
+
+test("15b: desktop share popover closes outside, returns focus, and stays in bounds", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const trigger = page.getByRole("button", { name: "Share my list" });
+  await trigger.click();
+  const popover = page.getByRole("dialog", { name: "Share my list" });
+  await expect(popover).toBeVisible();
+
+  await page.mouse.click(24, 300);
+  await expect(popover).toHaveCount(0);
+
+  await trigger.click();
+  await expect(popover).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(popover).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+
+  await page.setViewportSize({ width: 768, height: 800 });
+  await trigger.click();
+  await expect(popover).toBeVisible();
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  await page.keyboard.press("Escape");
+});
+
+test("15c: desktop share confirm stays stacked and regenerates the token", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const created = await page.request.post(`${BASE}/api/share`);
+  expect(created.status()).toBe(201);
+  await page.reload();
+
+  await page.getByRole("button", { name: "Share my list" }).click();
+  const popover = page.getByRole("dialog", { name: "Share my list" });
+  const linkInput = popover.locator(".share-link-row input");
+  await expect(linkInput).toBeVisible();
+  const oldUrl = await linkInput.inputValue();
+
+  await popover.getByRole("button", { name: "New link" }).click();
+  const confirm = page.getByRole("alertdialog");
+  await expect(confirm).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(confirm).toHaveCount(0);
+  await expect(popover).toBeVisible();
+  await expect(linkInput).toHaveValue(oldUrl);
+
+  await popover.getByRole("button", { name: "New link" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "New link" }).click();
+  await expect.poll(() => linkInput.inputValue()).not.toBe(oldUrl);
+  expect(await linkInput.inputValue()).toMatch(/\/share\/[0-9a-f]{64}$/);
+
+  await popover.getByRole("button", { name: "Revoke link" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Revoke link" }).click();
+  await expect(popover.locator(".share-link-row")).toHaveCount(0);
+});
+
+test("15d: mobile share sheet traps focus and returns it to the trigger", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  const created = await page.request.post(`${BASE}/api/share`);
+  expect(created.status()).toBe(201);
+  await page.reload();
+
+  const trigger = page.getByRole("button", { name: "Share my list" });
+  await trigger.click();
+  const sheet = page.getByRole("dialog", { name: "Share my list" });
+  await expect(sheet).toBeVisible();
+  await expect(sheet).toHaveClass(/sheet--share/);
+  await expect(sheet.locator(".detail-handle")).toBeVisible();
+  await expect.poll(() => sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+
+  const focusableSelector = 'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  const focusableCount = await sheet.locator(focusableSelector).count();
+  expect(focusableCount).toBeGreaterThan(0);
+  for (let i = 0; i < focusableCount + 2; i++) {
+    await page.keyboard.press("Tab");
+    await expect.poll(() => sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+  }
+
+  await page.keyboard.press("Escape");
+  await expect(sheet).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+
+  await trigger.click();
+  await page.getByRole("dialog", { name: "Share my list" }).getByRole("button", { name: "Revoke link" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Revoke link" }).click();
 });
 
 /** Local static fixture server: the app's scraper (server-side) fetches it,
