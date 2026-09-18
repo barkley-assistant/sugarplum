@@ -19,8 +19,8 @@ type State =
   | { status: "invalid" }
   | { status: "ready"; view: ShareView };
 
-/** Anonymous share view. Renders inside ToastProvider+ConfirmProvider;
- *  app.tsx routes /share/:token here BEFORE AppPage, so there is no
+/** Anonymous share view. Renders inside ToastProvider+ConfirmProvider; the
+ *  SPA router routes /share/:token here INSTEAD of AppPage, so there is no
  *  /api/auth/me call, no login redirect and no admin surface. The owner may
  *  still open their own link: the server then projects the purchased marks
  *  out and tells us so (viewerIsOwner), and the mark action is hidden. */
