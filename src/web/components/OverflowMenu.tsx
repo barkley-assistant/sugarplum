@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { S } from "../strings";
-import { Sheet } from "./Sheet";
+import { Sheet, FOCUSABLE_SELECTOR } from "./Sheet";
 
 export interface OverflowItem {
   id: string;
@@ -105,6 +105,14 @@ export function OverflowMenu({ triggerLabel, triggerIcon, triggerClassName, trig
     }, 0);
   }
 
+  /** Focusable rows inside the menu surface, in DOM order. Shares the Sheet's
+   *  tabbable selector so the mobile wrap closes on the same boundaries. */
+  function menuFocusables(): HTMLElement[] {
+    const menu = menuRef.current;
+    if (!menu) return [];
+    return Array.from(menu.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+  }
+
   /** Arrow-key navigation shared by both containers. */
   function onMenuKeyDown(e: ReactKeyboardEvent) {
     const rows = menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([aria-disabled="true"])');
@@ -126,8 +134,25 @@ export function OverflowMenu({ triggerLabel, triggerIcon, triggerClassName, trig
       e.preventDefault();
       closeAndFocusTrigger();
     } else if (e.key === "Tab") {
-      // Let Tab leave naturally on desktop; Sheet traps it on mobile.
-      if (desktop) closeAndFocusTrigger();
+      if (desktop) {
+        // Desktop popover: let Tab leave, but hand focus back to the trigger.
+        closeAndFocusTrigger();
+        return;
+      }
+      // Mobile sheet: the Sheet defers keydown inside a [role="menu"] subtree
+      // to this handler, so the wrap has to live here — without it Tab past
+      // the last row walks out of the modal into the page behind the scrim.
+      const items = menuFocusables();
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     }
   }
 

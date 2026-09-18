@@ -2,6 +2,11 @@ import { useEffect, useRef, type ReactNode } from "react";
 
 const openStack: symbol[] = [];
 
+/** Tabbable descendants of a container, in DOM order: the set the Sheet traps
+ *  focus within and OverflowMenu's mobile branch wraps at. */
+export const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
 interface SheetProps {
   /** Controlled visibility. Mounts nothing when false. */
   open: boolean;
@@ -49,11 +54,7 @@ export function Sheet({
     // the first menu row, the confirm button) once mounted.
     const focusables = () =>
       box
-        ? Array.from(
-            box.querySelectorAll<HTMLElement>(
-              'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-            ),
-          )
+        ? Array.from(box.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
         : [];
     const raf = requestAnimationFrame(() => {
       focusables()[0]?.focus({ preventScroll: true });
@@ -62,7 +63,8 @@ export function Sheet({
       if (openStack[openStack.length - 1] !== stackToken) return;
       // A sibling popover/menu (or a stacked dialog) owns keyboard events
       // while focus is outside this sheet's box. Desktop menus live inside
-      // the box, so check the menu subtree explicitly as well.
+      // the box, so check the menu subtree explicitly as well — the menu's
+      // own handler then owns those keys, including the mobile Tab wrap.
       if (box && e.target instanceof Node) {
         const menu = box.querySelector('[role="menu"]');
         if (menu?.contains(e.target)) return;
