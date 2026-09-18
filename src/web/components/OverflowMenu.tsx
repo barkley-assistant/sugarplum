@@ -135,7 +135,8 @@ export function OverflowMenu({ triggerLabel, triggerIcon, triggerClassName, trig
       closeAndFocusTrigger();
     } else if (e.key === "Tab") {
       if (desktop) {
-        // Desktop popover: let Tab leave, but hand focus back to the trigger.
+        // Desktop popover: Tab leaves the menu naturally (focus walks on
+        // inside the enclosing surface); only the mobile sheet wraps.
         closeAndFocusTrigger();
         return;
       }

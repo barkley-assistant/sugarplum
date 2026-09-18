@@ -361,6 +361,20 @@ test("4d: detail actions and stacked edit/delete flows stay in sync", async ({ p
   await expect(sheet).toContainText(`Added ${added}`);
 
   await sheet.getByRole("button", { name: "More actions" }).click();
+  // Desktop popover: Tab leaves the menu and focus walks on inside the drawer
+  // (only the mobile sheet wraps). Sheet defers keydown inside a [role="menu"]
+  // subtree to OverflowMenu, so the mobile Tab wrap must not change this.
+  const desktopMenuTrigger = sheet.getByRole("button", { name: "More actions" });
+  const desktopMenu = page.getByRole("menu", { name: "More actions" });
+  await expect(desktopMenu).toBeVisible();
+  // Focus lands on the first row a frame after the popover mounts; press Tab
+  // only once it is there, or the key lands on the trigger instead.
+  await expect(desktopMenu.getByRole("menuitem").first()).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(desktopMenu).toHaveCount(0);
+  await expect.poll(() => sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+
+  await desktopMenuTrigger.click();
   await page.getByRole("menu", { name: "More actions" }).getByRole("menuitem", { name: "Delete" }).click();
   const confirm = page.getByRole("alertdialog");
   await expect(confirm).toBeVisible();
