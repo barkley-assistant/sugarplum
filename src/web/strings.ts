@@ -35,6 +35,7 @@ export const S = {
     edit: "Edit",
     delete: "Delete",
     retry: "Retry fetch",
+    notFound: "Item not found.",
     recheckPrice: "Re-check price",
     openDetails: "Open details",
     deltaSinceAdd: (amount: string) => `${amount} since added`,

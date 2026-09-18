@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import type { OwnedItem, PublicItem } from "../../shared/types";
 import { ItemCard } from "./ItemCard";
-import type { ItemFormValues } from "./ItemForm";
 
 export interface OwnerRef {
   id: string;
@@ -11,7 +10,6 @@ export interface OwnerRef {
 interface ItemListProps {
   items: OwnedItem[] | PublicItem[];
   viewerIsOwner: boolean;
-  onEdit?: (id: string, values: ItemFormValues) => void | Promise<void>;
   onDelete?: (id: string) => void | Promise<void>;
   onClaim?: (id: string) => void | Promise<void>;
   onUnclaim?: (id: string) => void | Promise<void>;
@@ -20,7 +18,7 @@ interface ItemListProps {
   /** Owner-only: clears the blind share-link purchased mark (204, no body). */
   onResetPurchased?: (id: string) => void | Promise<void>;
 
-  /** Opens the detail surface for an owner row (A4 fills the surface). */
+  /** Owner rows open the item page (#62); guest rows open the guest sheet. */
   onOpenDetails?: (id: string) => void;
   /** Owner-only reorder handle rendered in explicit reorder mode. */
   renderDragHandle?: (id: string) => ReactNode;
@@ -35,7 +33,6 @@ interface ItemListProps {
 export function ItemList({
   items,
   viewerIsOwner,
-  onEdit,
   onDelete,
   onClaim,
   onUnclaim,
@@ -55,7 +52,6 @@ export function ItemList({
           key={item.id}
           item={item}
           viewerIsOwner={viewerIsOwner}
-          onEdit={onEdit}
           onDelete={onDelete}
           onClaim={onClaim}
           onUnclaim={onUnclaim}

@@ -73,10 +73,13 @@ self.addEventListener("fetch", (event) => {
   const path = url.pathname;
 
   // App-shell navigations: cache-first (offline reads work). Share links
-  // (/share/<token>) serve the cached "/" shell bytes: the token is unknown
-  // at build time and token-keyed cache entries would leak it into the cache,
-  // while the share DATA (/api/share/*) stays network-only below.
-  const isShellRoute = SHELL_ROUTES.includes(path) || path.startsWith("/share/");
+  // (/share/<token>) and owner item pages (/items/<id>[/edit]) serve the
+  // cached "/" shell bytes: neither the token nor the item id is known at
+  // build time, and keyed cache entries would leak it into the cache, while
+  // the share DATA (/api/share/*) stays network-only below. (SHELL_ROUTES
+  // stays the PRECACHE list; the id-bearing paths are runtime shell
+  // fallbacks onto the "/" entry, never their own keys.)
+  const isShellRoute = SHELL_ROUTES.includes(path) || path.startsWith("/share/") || path.startsWith("/items/");
   if (req.mode === "navigate" && isShellRoute) {
     const shellKey = SHELL_ROUTES.includes(path) ? path : "/";
     event.respondWith(

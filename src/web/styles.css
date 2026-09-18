@@ -2022,6 +2022,26 @@ button.filter-chip {
   gap: var(--detail-section-gap);
 }
 
+/* #62: the owner detail as a full page (the sheet/drawer variants are
+   retired for this flow). The page scrolls with the document, so
+   .detail-scroll keeps the detail rhythm but drops its inner scroll box and
+   the sheet's own padding/header offset. One layout at every width. */
+.item-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.item-page .detail-header {
+  padding: 0 0 var(--sp-3);
+}
+
+.item-page .detail-scroll {
+  flex: none;
+  overflow: visible;
+  padding: 0;
+}
+
 .detail-hero {
   display: flex;
   gap: 16px;

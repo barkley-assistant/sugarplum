@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import type {
   Me,
   OwnedItem,
-  PriceHintState,
-  PriceHintsResponse,
   PublicItem,
   WishlistSummaryRow,
 } from "../../shared/types";
@@ -22,11 +20,9 @@ import {
 } from "../me-store";
 import { EmptyState } from "./EmptyState";
 import { FilterChips } from "./FilterChips";
-import { type ItemFormValues } from "./ItemForm";
 import { ItemList, type OwnerRef } from "./ItemList";
 import { ShareMenu } from "./ShareMenu";
 import { GuestItemDetailSheet, type GuestItemDetail } from "./GuestItemDetailSheet";
-import { ItemDetailSheet } from "./ItemDetailSheet";
 import { AppShell, AppShellLoading } from "./AppShell";
 import { IconButton, PlusIcon, ShareIcon } from "./IconButton";
 import { ListSwitcher } from "./ListSwitcher";
@@ -43,8 +39,6 @@ export function AppPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTag, setActiveTag] = useState<string | null>(null);
-  const [hintStates, setHintStates] = useState<Record<string, PriceHintState>>({});
-  const [openItemId, setOpenItemId] = useState<string | null>(null);
   const [guestItemId, setGuestItemId] = useState<string | null>(null);
   const [reordering, setReordering] = useState(false);
   const reorderToggleRef = useRef<HTMLButtonElement | null>(null);
@@ -169,25 +163,6 @@ export function AppPage() {
     setOtherItems([]);
   }
 
-  async function editItem(id: string, values: ItemFormValues) {
-    const payload: Record<string, unknown> = { title: values.title };
-    if (values.priceCents) payload.priceCents = values.priceCents;
-    if (values.currency) payload.currency = values.currency;
-    if (values.notes) payload.notes = values.notes;
-    if (values.tags.length) payload.tags = values.tags;
-    // Emptied link fields clear the stored value (null), never a stale one.
-    payload.url = values.url || null;
-    payload.cheaperUrl = values.cheaperUrl || null;
-
-    const res = await fetch(`/api/wishlist/items/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error(S.errors.saveItem);
-    if (me) await refreshOwnList(me.id);
-  }
-
   async function deleteItem(id: string) {
     try {
       const res = await fetch(`/api/wishlist/items/${id}`, { method: "DELETE" });
@@ -249,7 +224,6 @@ export function AppPage() {
   }, [reordering, reorder.isDragging]);
 
   function enterReorderMode() {
-    setOpenItemId(null);
     setActiveTag(null);
     setReordering(true);
     requestAnimationFrame(() => {
@@ -269,30 +243,6 @@ export function AppPage() {
       // render without a manual reload.
       void pollEnrichment(me.id, id);
     }
-  }
-
-  /** On-demand, display-only candidate hints for one item (owner-only route).
-   *  Nothing here is persisted or verified. */
-  async function checkPrices(id: string) {
-    setHintStates((prev) => ({ ...prev, [id]: { status: "loading", hints: [], disabled: false } }));
-    let res: Response;
-    try {
-      res = await fetch(`/api/wishlist/items/${id}/hints`, { method: "POST" });
-    } catch {
-      setHintStates((prev) => ({ ...prev, [id]: { status: "error", hints: [], disabled: false } }));
-      toast(S.errors.checkPrices, "danger");
-      return;
-    }
-    if (!res.ok) {
-      setHintStates((prev) => ({ ...prev, [id]: { status: "error", hints: [], disabled: false } }));
-      toast(S.errors.checkPrices, "danger");
-      return;
-    }
-    const body = (await res.json()) as PriceHintsResponse;
-    setHintStates((prev) => ({
-      ...prev,
-      [id]: { status: "done", hints: body.hints, disabled: body.disabled },
-    }));
   }
 
   /** Poll while an item is still enriching. The response is returned by
@@ -364,7 +314,6 @@ export function AppPage() {
   ];
 
   const allTags = Array.from(new Set(ownItems.flatMap((i) => i.tags))).sort();
-  const detailItem = ownItems.find((item) => item.id === openItemId) ?? null;
   const guestItem = otherItems.find((item) => item.id === guestItemId) ?? null;
 
   function ownerRefFor(userId: string): OwnerRef {
@@ -441,11 +390,10 @@ export function AppPage() {
       <ItemList
         items={orderedOwn}
         viewerIsOwner
-        onEdit={reordering ? undefined : editItem}
         onDelete={reordering ? undefined : deleteItem}
         onRefresh={reordering ? undefined : refreshItem}
         onResetPurchased={reordering ? undefined : resetPurchased}
-        onOpenDetails={reordering ? undefined : setOpenItemId}
+        onOpenDetails={reordering ? undefined : (id) => navigate(`/items/${id}`)}
         renderDragHandle={
           reordering && !activeTag
             ? (id) => (
@@ -547,18 +495,6 @@ export function AppPage() {
 
       </div>
 
-      {!viewing && detailItem && (
-        <ItemDetailSheet
-          item={detailItem}
-          onClose={() => setOpenItemId(null)}
-          onEdit={editItem}
-          onDelete={deleteItem}
-          onRefresh={refreshItem}
-          onResetPurchased={resetPurchased}
-          onCheckPrices={checkPrices}
-          hintState={hintStates[detailItem.id]}
-        />
-      )}
       {viewing && guestItem && (
         <GuestItemDetailSheet
           item={toGuestDetail(guestItem)}

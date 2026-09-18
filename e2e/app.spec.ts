@@ -200,7 +200,6 @@ test("3c: desktop add page has no sheet chrome and no overflow", async ({ page }
   await page.getByRole("button", { name: "Add item" }).first().click();
   await expect(page).toHaveURL(`${BASE}/add`);
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page.locator(".sheet--add")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Add to Sugarplum" })).toBeVisible();
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   await page.getByRole("button", { name: "Cancel" }).click();
@@ -252,10 +251,17 @@ test("4: editing an item persists after reload", async ({ page }) => {
   });
   await card.getByRole("button", { name: "More actions" }).click();
   await page.getByRole("menuitem", { name: "Edit" }).click();
+  // #62: edit is a page route, not a stacked sheet.
+  await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}\/edit$/);
   await page.getByLabel("Title").fill("Manual mug v2");
   await page.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByRole("heading", { name: "Manual mug v2" })).toBeVisible();
+  // Save returns to the item view.
+  await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}$/);
+  await expect(page.locator(".detail-title")).toHaveText("Manual mug v2");
+  // The item URL is addressable: a real reload renders it from the server.
   await page.reload();
+  await expect(page.locator(".detail-title")).toHaveText("Manual mug v2");
+  await page.getByRole("link", { name: "Back to list" }).click();
   await expect(page.getByRole("heading", { name: "Manual mug v2" })).toBeVisible();
 });
 
@@ -285,7 +291,7 @@ test("4b: price history shows the lowest price and the delta since added", async
   await expect(card.getByRole("button", { name: "Prices seen elsewhere (unverified)" })).toHaveCount(0);
 });
 
-test("4c: row opens the detail sheet; overflow does not", async ({ page }) => {
+test("4c: row opens the item page; overflow does not", async ({ page }) => {
   const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as { id: string };
   const list = (await (await page.request.get(`${BASE}/api/users/${me.id}/wishlist`)).json()) as Array<{ id: string; title: string; url: string | null }>;
   const probe = list.find((item) => item.title === "History probe");
@@ -297,12 +303,13 @@ test("4c: row opens the detail sheet; overflow does not", async ({ page }) => {
   const rowButton = card.getByRole("button", { name: "History probe", exact: true });
   await rowButton.focus();
   await page.keyboard.press("Enter");
-  const sheet = page.getByRole("dialog", { name: "History probe" });
-  await expect(sheet).toBeVisible();
-  await expect(sheet.locator(".detail-title")).toHaveText("History probe");
-  await expect(sheet.getByText("Lowest £10.00")).toBeVisible();
-  await expect(sheet.getByText("£2.50 since added")).toBeVisible();
-  const history = sheet.locator(".detail-history-card");
+  // #62: the row opener navigates to the item page — it opens no dialog.
+  await expect(page).toHaveURL(`${BASE}/items/${probe!.id}`);
+  const itemPage = page.locator(".item-page");
+  await expect(itemPage.locator(".detail-title")).toHaveText("History probe");
+  await expect(itemPage.getByText("Lowest £10.00")).toBeVisible();
+  await expect(itemPage.getByText("£2.50 since added")).toBeVisible();
+  const history = itemPage.locator(".detail-history-card");
   await expect(history).toBeVisible();
   await expect(history.getByRole("heading", { name: "Price history" })).toBeVisible();
   await expect(history.locator(".price-graph")).toBeVisible();
@@ -317,16 +324,18 @@ test("4c: row opens the detail sheet; overflow does not", async ({ page }) => {
   await history.getByRole("button", { name: "90d", exact: true }).click();
   await expect(history.getByRole("button", { name: "90d", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect.poll(() => page.evaluate(() => localStorage.getItem("sugarplum.trend-window"))).toBe("90d");
-  await expect(sheet.getByRole("link", { name: "Open product" })).toHaveCount(0);
-  await expect(sheet.getByRole("button", { name: "Edit item" })).toBeVisible();
+  await expect(itemPage.getByRole("link", { name: "Open product" })).toHaveCount(0);
+  await expect(itemPage.getByRole("button", { name: "Edit item" })).toBeVisible();
 
-  await page.keyboard.press("Escape");
-  await expect(sheet).toHaveCount(0);
-  await expect(rowButton).toBeFocused();
+  // A page is left by navigation, not by Escape; there is no focus-return
+  // contract to the row opener any more (it navigated away).
+  await page.getByRole("link", { name: "Back to list" }).click();
+  await expect(page).toHaveURL(`${BASE}/`);
 
+  // The row's overflow menu does not navigate anywhere.
   await card.getByRole("button", { name: "More actions" }).click();
   await expect(page.getByRole("menu", { name: "More actions" })).toBeVisible();
-  await expect(page.getByRole("dialog", { name: "History probe" })).toHaveCount(0);
+  await expect(page).toHaveURL(`${BASE}/`);
   await page.keyboard.press("Escape");
 
   for (const selector of [
@@ -348,7 +357,7 @@ test("4c: row opens the detail sheet; overflow does not", async ({ page }) => {
   await expect(card.locator(".drag-handle:visible")).toHaveCount(0);
 });
 
-test("4d: detail actions and stacked edit/delete flows stay in sync", async ({ page }) => {
+test("4d: item page actions, edit route round-trip and delete", async ({ page }) => {
   const created = await page.request.post(`${BASE}/api/wishlist/items`, {
     data: {
       title: "Detail probe",
@@ -365,15 +374,16 @@ test("4d: detail actions and stacked edit/delete flows stay in sync", async ({ p
 
   const card = page.locator(`.item-card[data-item-id="${item.id}"]`);
   await card.getByRole("button", { name: "Detail probe", exact: true }).click();
-  const sheet = page.getByRole("dialog", { name: "Detail probe" });
-  await expect(sheet.locator(".detail-site")).toHaveText("example.com");
-  await expect(sheet.locator(".detail-price")).toHaveText("£24.99");
-  await expect(sheet.getByText("Lowest £24.99")).toBeVisible();
-  const productLink = sheet.getByRole("link", { name: "Open product" });
+  await expect(page).toHaveURL(`${BASE}/items/${item.id}`);
+  const itemPage = page.locator(".item-page");
+  await expect(itemPage.locator(".detail-site")).toHaveText("example.com");
+  await expect(itemPage.locator(".detail-price")).toHaveText("£24.99");
+  await expect(itemPage.getByText("Lowest £24.99")).toBeVisible();
+  const productLink = itemPage.getByRole("link", { name: "Open product" });
   await expect(productLink).toHaveAttribute("href", "https://example.com/detail-probe");
   await expect(productLink).toHaveAttribute("target", "_blank");
 
-  await sheet.getByRole("button", { name: "More actions" }).click();
+  await itemPage.getByRole("button", { name: "More actions" }).click();
   const menu = page.getByRole("menu", { name: "More actions" });
   // Re-check/retry is URL- and fetch-state-gated; the background fetch may
   // resolve before this menu opens, so either valid state is accepted.
@@ -382,117 +392,175 @@ test("4d: detail actions and stacked edit/delete flows stay in sync", async ({ p
   await expect(menu.getByRole("menuitem", { name: "Copy product link" })).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: "Reset purchased mark" })).toBeVisible();
   await expect(menu.getByRole("menuitem", { name: "Delete" })).toBeVisible();
+  // Edit is not a menu entry on the item page: it is the action button below.
   await expect(menu.getByRole("menuitem", { name: "Edit" })).toHaveCount(0);
   await page.keyboard.press("Escape");
 
-  await sheet.getByRole("button", { name: "Edit item" }).click();
-  const editSheet = page.getByRole("dialog", { name: "Edit" });
-  await expect(editSheet).toBeVisible();
-  await editSheet.getByLabel("Title").fill("Detail probe updated");
-  await editSheet.getByRole("button", { name: "Save" }).click();
-  await expect(sheet.locator(".detail-title")).toHaveText("Detail probe updated");
-  await expect(card.getByRole("heading", { name: "Detail probe updated" })).toBeVisible();
+  // Edit is the /items/:id/edit page; Save returns to the item view.
+  await itemPage.getByRole("button", { name: "Edit item" }).click();
+  await expect(page).toHaveURL(`${BASE}/items/${item.id}/edit`);
+  await page.getByLabel("Title").fill("Detail probe updated");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page).toHaveURL(`${BASE}/items/${item.id}`);
+  await expect(page.locator(".detail-title")).toHaveText("Detail probe updated");
 
-  // Re-open edit to exercise the stacked Escape rule independently from the
-  // existing save flow, which closes the edit sheet after a successful save.
-  await sheet.getByRole("button", { name: "Edit item" }).click();
-  const secondEditSheet = page.getByRole("dialog", { name: "Edit" });
-  await page.keyboard.press("Escape");
-  await expect(secondEditSheet).toHaveCount(0);
-  await expect(sheet).toBeVisible();
+  // Cancel returns to the item view without saving (the route pairing).
+  await page.getByRole("button", { name: "Edit item" }).click();
+  await expect(page).toHaveURL(`${BASE}/items/${item.id}/edit`);
+  await page.getByLabel("Title").fill("Should not persist");
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page).toHaveURL(`${BASE}/items/${item.id}`);
+  await expect(page.locator(".detail-title")).toHaveText("Detail probe updated");
 
   const added = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" }).format(new Date());
-  await expect(sheet).toContainText(`Added ${added}`);
+  await expect(page.locator(".item-page")).toContainText(`Added ${added}`);
 
-  await sheet.getByRole("button", { name: "More actions" }).click();
-  // Desktop popover: Tab leaves the menu and focus walks on inside the drawer
-  // (only the mobile sheet wraps). Sheet defers keydown inside a [role="menu"]
-  // subtree to OverflowMenu, so the mobile Tab wrap must not change this.
-  const desktopMenuTrigger = sheet.getByRole("button", { name: "More actions" });
-  const desktopMenu = page.getByRole("menu", { name: "More actions" });
-  await expect(desktopMenu).toBeVisible();
-  // Focus lands on the first row a frame after the popover mounts; press Tab
-  // only once it is there, or the key lands on the trigger instead.
-  await expect(desktopMenu.getByRole("menuitem").first()).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(desktopMenu).toHaveCount(0);
-  await expect.poll(() => sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
-
-  await desktopMenuTrigger.click();
+  // Delete confirms, then lands on the feed with the card gone.
+  await page.locator(".item-page").getByRole("button", { name: "More actions" }).click();
   await page.getByRole("menu", { name: "More actions" }).getByRole("menuitem", { name: "Delete" }).click();
   const confirm = page.getByRole("alertdialog");
   await expect(confirm).toBeVisible();
   await confirm.getByRole("button", { name: "Delete" }).click();
-  await expect(sheet).toHaveCount(0);
+  await expect(page).toHaveURL(`${BASE}/`);
   await expect(page.locator(`.item-card[data-item-id="${item.id}"]`)).toHaveCount(0);
+  await expect(card).toHaveCount(0);
 });
 
-test("4e: detail switches between bottom sheet and desktop drawer without overflow", async ({ page }) => {
+test("4e: item page keeps one layout and no overflow at any width", async ({ page }) => {
   const card = page.locator(".item-card", { has: page.getByRole("heading", { name: "History probe" }) });
   await page.setViewportSize({ width: 1280, height: 900 });
   await card.getByRole("button", { name: "History probe", exact: true }).click();
-  const drawer = page.getByRole("dialog", { name: "History probe" });
-  await expect(drawer).toHaveClass(/detail-drawer/);
-  const drawerWidth = await drawer.boundingBox();
-  expect(drawerWidth?.width).toBeGreaterThanOrEqual(480);
-  expect(drawerWidth?.width).toBeLessThanOrEqual(560);
-  await expect(drawer.locator(".detail-handle")).not.toBeVisible();
-  await page.keyboard.press("Escape");
+  await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}$/);
+  await expect(page.locator(".item-page .detail-title")).toBeVisible();
+  // One layout at every width: no drawer variant, no sheet handle, no dialog.
+  await expect(page.locator(".detail-drawer")).toHaveCount(0);
+  await expect(page.locator(".detail-handle")).toHaveCount(0);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  for (const width of [360, 390, 430, 768, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    const probe = await horizontalEscapes(page);
+    expect(probe.docOverflow, `item page overflow at ${width}px`).toBe(false);
+    expect(probe.offenders, `item page escapes at ${width}px`).toEqual([]);
+  }
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await card.getByRole("button", { name: "History probe", exact: true }).click();
-  const sheet = page.getByRole("dialog", { name: "History probe" });
-  await expect(sheet).toHaveClass(/sheet--detail/);
-  await expect(sheet.locator(".detail-handle")).toBeVisible();
-  await expect(sheet).not.toHaveClass(/detail-drawer/);
-
-  for (const width of [360, 390, 430]) {
-    await page.setViewportSize({ width, height: 844 });
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
-    expect(overflow, `document overflow at ${width}px`).toBe(false);
-  }
-  await page.keyboard.press("Escape");
+  await page.getByRole("link", { name: "Back to list" }).click();
+  await expect(page).toHaveURL(`${BASE}/`);
 });
 
-test("4f: detail surface keeps focus contained and labels secondary actions", async ({ page }) => {
+test("4e2: item page deep link, unknown id and malformed id", async ({ page }) => {
+  const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as { id: string };
+  const list = (await (await page.request.get(`${BASE}/api/users/${me.id}/wishlist`)).json()) as Array<{ id: string; title: string }>;
+  const probe = list.find((item) => item.title === "History probe");
+  expect(probe).toBeTruthy();
+
+  // A cold deep link is a fresh document load: the server static map must
+  // serve the SPA shell for /items/*, not 404 against a nonexistent file.
+  await page.goto(`${BASE}/items/${probe!.id}`);
+  await expect(page.locator(".detail-title")).toHaveText("History probe");
+  await expect(page.locator(".item-page .price-graph")).toBeVisible();
+
+  // A well-formed id that is not in the owner's list renders the not-found
+  // state (never a blank page or a dead end).
+  await page.goto(`${BASE}/items/00000000-0000-4000-8000-000000000000`);
+  await expect(page.getByRole("heading", { name: "Item not found." })).toBeVisible();
+
+  // A malformed id is not a route: it falls through to the feed.
+  await page.goto(`${BASE}/items/not-a-uuid`);
+  await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+});
+
+test("4i: edit page round-trip and keyboard stillness", async ({ page }) => {
+  const created = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Edit page probe", priceCents: "9.99", currency: "GBP" },
+  });
+  expect(created.status()).toBe(201);
+  const item = (await created.json()) as { id: string };
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  // A deep link straight to the edit route (no feed in history).
+  await page.goto(`${BASE}/items/${item.id}/edit`);
+  await expect(page.getByRole("heading", { name: "Edit" })).toBeVisible();
+  // INV-B on the edit surface too: nothing focused, so no keyboard pops.
+  await expect(page.getByLabel("Title")).not.toBeFocused();
+  expect(
+    await page.evaluate(() =>
+      ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName ?? ""),
+    ),
+    "no form field is focused after the edit page mounts",
+  ).toBe(false);
+
+  await page.getByLabel("Title").fill("Edited via page");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page).toHaveURL(`${BASE}/items/${item.id}`);
+  await expect(page.locator(".detail-title")).toHaveText("Edited via page");
+
+  // Cancel path: back to the item view, value discarded.
+  await page.getByRole("button", { name: "Edit item" }).click();
+  await expect(page).toHaveURL(`${BASE}/items/${item.id}/edit`);
+  await page.getByLabel("Title").fill("Discarded");
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page).toHaveURL(`${BASE}/items/${item.id}`);
+  await expect(page.locator(".detail-title")).toHaveText("Edited via page");
+
+  await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
+  await page.goto(`${BASE}/`);
+});
+
+test("4f: item page does not trap focus and keeps the menu popover contract", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ width: 390, height: 844 });
   const card = page.locator(".item-card", { has: page.getByRole("heading", { name: "History probe" }) });
   const rowButton = card.getByRole("button", { name: "History probe", exact: true });
   await rowButton.click();
-  const sheet = page.getByRole("dialog", { name: "History probe" });
-  await expect(sheet).toBeVisible();
-  await expect(sheet.getByRole("button", { name: "Close" })).toBeVisible();
-  await expect(sheet.getByRole("button", { name: "More actions" })).toBeVisible();
+  const itemPage = page.locator(".item-page");
+  await expect(page.getByRole("button", { name: "Close" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "More actions" })).toBeVisible();
 
-  const focusableSelector = 'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-  const focusableCount = await sheet.locator(focusableSelector).count();
-  expect(focusableCount).toBeGreaterThan(0);
-  for (let i = 0; i < focusableCount + 2; i++) {
+  // A page traps nothing: tabbing walks out of the item body into the shell
+  // (topbar/footer) instead of cycling inside a modal (the retired sheet's
+  // Tab-wrap contract).
+  await expect(page.locator(".detail-title")).toBeFocused(); // usePageFocus heading
+  const focusables = await itemPage
+    .locator('button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+    .count();
+  expect(focusables).toBeGreaterThan(0);
+  const visited: string[] = [];
+  let escaped = false;
+  for (let i = 0; i < focusables + 4 && !escaped; i++) {
     await page.keyboard.press("Tab");
-    await expect.poll(() => sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+    const active = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return el ? `${el.tagName}.${el.className}` : "none";
+    });
+    visited.push(active);
+    escaped = !(await itemPage.evaluate((el) => el.contains(document.activeElement)));
   }
+  expect(escaped, `Tab left the item page (no focus trap); path=${visited.join(" → ")}`).toBe(true);
 
-  await sheet.getByRole("button", { name: "More actions" }).click();
+  // The overflow menu keeps its own small-overlay keyboard contract.
+  await itemPage.getByRole("button", { name: "More actions" }).click();
   const menu = page.getByRole("menu", { name: "More actions" });
   await expect(menu.locator(".overflow-separator")).toHaveCount(2);
   await expect(menu.locator(".menu-item-danger")).toHaveCount(1);
-
-  // The shared OverflowMenu primitive owns the mobile Tab wrap here too: this
-  // sheet portals to document.body (a sibling of the detail dialog), so focus
-  // must stay inside the overflow sheet itself.
-  const menuSheet = page.getByRole("dialog", { name: "More actions" });
   const rows = menu.getByRole("menuitem");
   await expect(rows.first()).toBeFocused();
   await page.keyboard.press("Shift+Tab");
   await expect(rows.last()).toBeFocused();
-  await expect.poll(() => menuSheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
   await page.keyboard.press("Tab");
   await expect(rows.first()).toBeFocused();
+
+  // The menu portals to document.body, so the shared OverflowMenu primitive
+  // owns the mobile Tab wrap: focus never leaves the overflow sheet.
+  const menuSheet = page.getByRole("dialog", { name: "More actions" });
   await expect.poll(() => menuSheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
 
+  // Escape closes the menu, not the page.
   await page.keyboard.press("Escape");
-  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+  await expect(menuSheet).toHaveCount(0);
+  await expect(page).toHaveURL(/\/items\//);
 });
 
 test("4h: prices elsewhere stays inside detail and preserves honesty states", async ({ page }) => {
@@ -505,13 +573,14 @@ test("4h: prices elsewhere stays inside detail and preserves honesty states", as
 
   const card = page.locator(`.item-card[data-item-id="${item.id}"]`);
   await card.getByRole("button", { name: "Hints probe", exact: true }).click();
-  const sheet = page.getByRole("dialog", { name: "Hints probe" });
-  const toggle = sheet.getByRole("button", { name: "Check prices elsewhere" });
+  await expect(page).toHaveURL(`${BASE}/items/${item.id}`);
+  const itemPage = page.locator(".item-page");
+  const toggle = itemPage.getByRole("button", { name: "Check prices elsewhere" });
   await toggle.click();
-  const candidates = sheet.locator(".hint-candidates");
+  const candidates = itemPage.locator(".hint-candidates");
   await expect(candidates).toBeVisible();
   await expect(candidates).toContainText("Could not check prices.");
-  await expect(sheet.locator(".hints-rows")).toHaveCount(0);
+  await expect(itemPage.locator(".hints-rows")).toHaveCount(0);
 
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-expanded", "false");
@@ -529,8 +598,9 @@ test("4h: prices elsewhere stays inside detail and preserves honesty states", as
     const restored = await page.request.put(`${BASE}/api/auth/me/settings`, { data: { hintsEnabled: true } });
     expect(restored.status()).toBe(200);
   }
-  await page.keyboard.press("Escape");
-  await page.reload();
+  // Leave the board on the feed (the sheet's Escape-then-reload closer is gone;
+  // a page is left by navigating).
+  await page.goto(`${BASE}/`);
 });
 
 test("5: manual order persists and the order API round-trips", async ({ page }) => {
@@ -786,13 +856,18 @@ test("9: no horizontal overflow at 360-1280px across surfaces", async ({ page, b
     if (width < 1024) {
       const historyCard = page.locator(".item-card", { has: page.getByRole("heading", { name: "History probe" }) });
       await historyCard.getByRole("button", { name: "History probe", exact: true }).click();
-      const detail = page.getByRole("dialog", { name: "History probe" });
-      await expect(detail.locator(".price-graph")).toBeVisible();
+      await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}$/);
+      await expect(page.locator(".item-page .price-graph")).toBeVisible();
     }
     const probe = await horizontalEscapes(page);
     expect(probe.docOverflow, `document overflow at ${width}px`).toBe(false);
     expect(probe.offenders, `true escapes at ${width}px`).toEqual([]);
-    await page.keyboard.press("Escape");
+    if (width < 1024) {
+      // #62: the item view is a page — it is left by navigating back, not by
+      // Escape (the sheet closer is gone).
+      await page.getByRole("link", { name: "Back to list" }).click();
+      await expect(page).toHaveURL(`${BASE}/`);
+    }
     if (width === 390) {
       await page.getByRole("button", { name: "Reorder", exact: true }).click();
       await expect(page.locator(".item-card.is-reordering").first()).toBeVisible();
@@ -975,7 +1050,8 @@ test("12: AA contrast sweep holds in both schemes", async ({ page, browser }) =>
     // Detail surface: muted footer metadata, and the segmented control's
     // inactive label (--text-3 on the --surface-2 track).
     await rowButton.click();
-    const detail = page.getByRole("dialog", { name: "History probe" });
+    await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}$/);
+    const detail = page.locator(".item-page");
     await expect(detail.locator(".detail-history-card")).toBeVisible();
     expect(await contrast(detail.locator(".detail-footer")), `${colorScheme}: detail footer`)
       .toBeGreaterThanOrEqual(4.5);
@@ -983,8 +1059,8 @@ test("12: AA contrast sweep holds in both schemes", async ({ page, browser }) =>
     await expect(inactiveWindow).toBeVisible();
     expect(await contrast(inactiveWindow), `${colorScheme}: inactive window label`)
       .toBeGreaterThanOrEqual(4.5);
-    await page.keyboard.press("Escape");
-    await expect(detail).toHaveCount(0);
+    await page.getByRole("link", { name: "Back to list" }).click();
+    await expect(page).toHaveURL(`${BASE}/`);
   }
 
   // The claim control only exists on another user's list, where it rides

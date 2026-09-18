@@ -2,6 +2,8 @@ import { createRoot } from "react-dom/client";
 import { useEffect } from "react";
 import { AppPage } from "./components/AppPage";
 import { AddPage } from "./components/AddPage";
+import { ItemPage } from "./components/ItemPage";
+import { ItemEditPage } from "./components/ItemEditPage";
 import { SettingsPage } from "./components/SettingsPage";
 import { SharePage } from "./components/SharePage";
 import { LoginView } from "./components/Login";
@@ -35,6 +37,10 @@ function viewFor(route: Route) {
       return <SettingsPage />;
     case "add":
       return <AddPage search={route.search} />;
+    case "item":
+      return <ItemPage id={route.id} />;
+    case "itemEdit":
+      return <ItemEditPage id={route.id} />;
     // /login is an in-SPA view now (one HTML entry for the whole app): the
     // SPA boots the same shell and the router renders the login form.
     case "login":
