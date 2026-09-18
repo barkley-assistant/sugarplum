@@ -1030,7 +1030,9 @@ button.filter-chip {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  width: min(100%, 22rem);
+  /* Mirrors .auth-card's outer box so the boot → form swap does not move. */
+  width: 100%;
+  max-width: 360px;
 }
 
 /* ---------- Progress hairline (refetch) ---------- */
