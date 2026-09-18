@@ -810,7 +810,7 @@ button.filter-chip {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  color: var(--success);
+  color: var(--status-claimed);
   font-size: var(--text-sm);
   font-weight: 500;
 }
@@ -1536,7 +1536,7 @@ button.filter-chip {
 }
 
 .status--claimed {
-  color: var(--status-success);
+  color: var(--status-claimed);
   background: transparent;
   padding-left: 0;
   padding-right: 0;

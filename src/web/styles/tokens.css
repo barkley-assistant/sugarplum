@@ -95,6 +95,9 @@
   --status-danger: var(--danger);
   --status-muted: var(--text-3);
   --status-purchased: var(--share-accent);
+  /* Claim badge: a dedicated token, because --success (#16a34a) is 3.16:1 on
+     --bg and fails AA for the 12px badge text. This value reads 4.81:1. */
+  --status-claimed: #15803d;
   /* Struck purchased title / dimmed row price: text-2 reads 7.41:1 on light
      and 8.21:1 on dark (AA at row sizes). text-3 would be 2.46:1 — a fail. */
   --purchased-text: var(--text-2);
@@ -147,6 +150,7 @@
     --plum-100: #2e1f4d;
     --plum-050: #231838;
     --success: #3FD97F;
+    --status-claimed: #3FD97F;
     --danger: #f87171;
     --danger-surface: #2b1517;
     --share-accent: #c4b5fd;
