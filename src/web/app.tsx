@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { AppPage } from "./components/AppPage";
 import { SettingsPage } from "./components/SettingsPage";
 import { SharePage } from "./components/SharePage";
-import { Login } from "./components/Login";
+import { LoginView } from "./components/Login";
 import { ConfirmProvider } from "./confirm";
 import { ToastProvider } from "./toast";
 import { useRoute, type Route } from "./router";
@@ -32,12 +32,10 @@ function viewFor(route: Route) {
       return <SharePage token={route.token} />;
     case "settings":
       return <SettingsPage />;
-    // The SPA /login view is unreachable at this commit (the server still
-    // serves login.html at /login, and every navigation to it is still a
-    // full load) — it becomes live in the next commit, which renames
-    // Login → LoginView and flips the server route.
+    // /login is an in-SPA view now (one HTML entry for the whole app): the
+    // SPA boots the same shell and the router renders the login form.
     case "login":
-      return <Login />;
+      return <LoginView />;
     default:
       return <AppPage />;
   }

@@ -1005,6 +1005,16 @@ button.filter-chip {
   width: 40%;
 }
 
+/* Login auth-check skeleton (SPA #61): the same card chrome recipe as
+   .auth-card, but its OWN class — e2e targets .auth-card for the real form
+   and must never match transient skeleton chrome. */
+.skeleton-auth {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: min(100%, 22rem);
+}
+
 /* ---------- Progress hairline (refetch) ---------- */
 .progress-hairline {
   position: fixed;
@@ -1394,7 +1404,8 @@ button.filter-chip {
   }
 }
 
-.skeleton-card {
+.skeleton-card,
+.skeleton-auth {
   animation: pulse 1.4s ease-in-out infinite;
 }
 

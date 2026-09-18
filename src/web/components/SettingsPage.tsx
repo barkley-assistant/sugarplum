@@ -4,6 +4,7 @@ import { S } from "../strings";
 import { useToast } from "../toast";
 import { useInstallPrompt } from "../pwa/install";
 import { clearStoredIdentity, readStoredMe, writeStoredMe } from "../me-store";
+import { navigate } from "../router";
 import { AdminPanel } from "./AdminPanel";
 import { AppShell, AppShellLoading, PageHeader } from "./AppShell";
 import { UserMenu } from "./UserMenu";
@@ -39,7 +40,7 @@ export function SettingsPage() {
     try {
       const meRes = await fetch("/api/auth/me");
       if (meRes.status === 401) {
-        location.href = `/login?next=${encodeURIComponent("/settings")}`;
+        navigate(`/login?next=${encodeURIComponent("/settings")}`);
         return;
       }
       if (!meRes.ok) {
@@ -148,7 +149,7 @@ export function SettingsPage() {
       toast(S.settings.passwordChanged);
       await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
       clearStoredIdentity();
-      location.href = "/login";
+      navigate("/login");
     } catch {
       setPasswordError(S.errors.changeSettings);
     } finally {
@@ -159,7 +160,7 @@ export function SettingsPage() {
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     clearStoredIdentity();
-    location.href = "/login";
+    navigate("/login");
   }
 
   if (error && !me) {

@@ -11,6 +11,7 @@ import { S } from "../strings";
 import { useToast } from "../toast";
 import { useDragReorder } from "../reorder";
 import { parseShareTarget } from "../format";
+import { navigate } from "../router";
 import { useInstallPrompt } from "../pwa/install";
 import {
   clearStoredIdentity,
@@ -66,7 +67,7 @@ export function AppPage() {
       if (meRes.status === 401) {
         // Carry share-target prefill through the login hop.
         const here = location.pathname + location.search;
-        location.href = `/login?next=${encodeURIComponent(here)}`;
+        navigate(`/login?next=${encodeURIComponent(here)}`);
         return;
       }
       if (!meRes.ok) {
@@ -367,11 +368,11 @@ export function AppPage() {
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     clearStoredIdentity();
-    location.href = "/login";
+    navigate("/login");
   }
 
   function goToSettings() {
-    location.href = "/settings";
+    navigate("/settings");
   }
 
   if (error && !me) {
