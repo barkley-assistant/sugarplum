@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import type { ShareView } from "../../shared/types";
+import type { ShareItem, ShareView } from "../../shared/types";
 import { S } from "../strings";
 import { useToast } from "../toast";
 import { useConfirm } from "../confirm";
 import { formatPrice } from "../format";
 import { AppShell, AppShellLoading, PageHeader } from "./AppShell";
 import { DotsIcon } from "./IconButton";
-import { ItemLink } from "./ItemLink";
+import { EmptyState } from "./EmptyState";
+import { GuestItemDetailSheet, type GuestItemDetail } from "./GuestItemDetailSheet";
 import { OverflowMenu } from "./OverflowMenu";
 import { PriceCluster } from "./PriceCluster";
 import { ProductImage } from "./ProductImage";
@@ -26,6 +27,7 @@ type State =
 export function SharePage({ token }: { token: string }) {
   const [state, setState] = useState<State>({ status: "loading" });
   const [busy, setBusy] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
   const toast = useToast();
   const confirm = useConfirm();
 
@@ -67,6 +69,7 @@ export function SharePage({ token }: { token: string }) {
   }
 
   const { view } = state;
+  const openItem = view.items.find((item) => item.id === openId) ?? null;
 
   async function markPurchased(itemId: string) {
     const ok = await confirm({
@@ -115,7 +118,7 @@ export function SharePage({ token }: { token: string }) {
       <p className="muted share-note">{S.share.sharedByNote}</p>
       {view.viewerIsOwner && <p className="muted share-note">{S.share.ownerViewingOwn}</p>}
       {view.items.length === 0 ? (
-        <p className="muted">{S.empty.other(view.ownerDisplayName)}</p>
+        <EmptyState title={S.empty.other(view.ownerDisplayName)} />
       ) : (
         <ul className="item-list">
           {view.items.map((item) => (
@@ -124,11 +127,14 @@ export function SharePage({ token }: { token: string }) {
               id={item.id}
               title={item.title}
               purchased={item.purchased}
+              onOpen={() => setOpenId(item.id)}
+              openLabel={S.item.openDetails}
               image={
                 item.hasImage ? (
                   <ProductImage src={`/api/share/${token}/items/${item.id}/image`} />
                 ) : undefined
               }
+              price={<PriceCluster price={formatPrice(item.priceCents, item.currency)} />}
               actions={
                 item.purchased ? (
                   <StatusBadge variant="purchased">{S.share.purchasedBadge}</StatusBadge>
@@ -148,27 +154,37 @@ export function SharePage({ token }: { token: string }) {
                   />
                 )
               }
-              body={
-                <>
-                  {item.siteName && <span className="item-site">{item.siteName}</span>}
-                  <PriceCluster price={formatPrice(item.priceCents, item.currency)} />
-                  {item.url && <ItemLink url={item.url} />}
-                  {item.notes && <p className="item-notes">{item.notes}</p>}
-                  {item.tags.length > 0 && (
-                    <div className="tags">
-                      {item.tags.map((t) => (
-                        <span key={t} className="tag-pill">
-                          #{t}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </>
-              }
+              body={item.siteName ? <span className="item-site">{item.siteName}</span> : undefined}
             />
           ))}
         </ul>
       )}
+      {openItem && (
+        <GuestItemDetailSheet
+          item={toGuestDetail(openItem, token)}
+          onClose={() => setOpenId(null)}
+        />
+      )}
     </AppShell>
   );
+}
+
+/** Maps the anonymous share projection (ShareItem) into the guest detail
+ *  sheet's normalized shape. Every field read here exists on ShareItem — the
+ *  DTO carries no owner data, no claim state and no createdAt, so the sheet
+ *  cannot render one. The image stays token-scoped: a share viewer must never
+ *  reach the session-scoped item image route. */
+function toGuestDetail(item: ShareItem, token: string): GuestItemDetail {
+  return {
+    id: item.id,
+    title: item.title,
+    url: item.url,
+    priceCents: item.priceCents,
+    currency: item.currency,
+    notes: item.notes,
+    tags: item.tags,
+    siteName: item.siteName,
+    imageSrc: item.hasImage ? `/api/share/${token}/items/${item.id}/image` : undefined,
+    purchased: item.purchased,
+  };
 }

@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,6 +24,55 @@ async function login(page: Page, username: string, password: string): Promise<vo
 test.beforeEach(async ({ page }) => {
   await login(page, "admin", "admin-password");
 });
+
+/** Horizontal-overflow probe shared by the feed, guest and share surfaces:
+ *  document overflow, plus TRUE element escapes (past the right edge with no
+ *  clipping/scrollable ancestor — contained escapes are fine). */
+async function horizontalEscapes(page: Page) {
+  return page.evaluate(() => {
+    const doc = document.documentElement;
+    const docOverflow = doc.scrollWidth > doc.clientWidth;
+    const offenders: string[] = [];
+    for (const el of Array.from(document.querySelectorAll("body *"))) {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.right > window.innerWidth + 1) {
+        let anc = el.parentElement;
+        let contained = false;
+        while (anc) {
+          const cs = getComputedStyle(anc);
+          if (
+            cs.overflowX === "hidden" ||
+            cs.overflowX === "clip" ||
+            cs.overflowX === "auto" ||
+            cs.overflowX === "scroll"
+          ) {
+            contained = true;
+            break;
+          }
+          anc = anc.parentElement;
+        }
+        if (!contained) {
+          offenders.push(`${el.tagName}.${(el as HTMLElement).className}`);
+        }
+      }
+    }
+    return {
+      docOverflow,
+      docScrollWidth: doc.scrollWidth,
+      clientWidth: doc.clientWidth,
+      offenders,
+    };
+  });
+}
+
+/** Waits for an overlay's own entry animation to settle, so geometry probes
+ *  measure the resting layout instead of a mid-slide frame (the desktop
+ *  drawer enters from translateX(100%)). */
+async function settleEntryAnimation(locator: Locator) {
+  await locator.evaluate(async (el) => {
+    await Promise.all(el.getAnimations().map((a) => a.finished.catch(() => undefined)));
+  });
+}
 
 test("1: login lands on the app shell with the own empty state", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Nothing saved yet." })).toBeVisible();
@@ -561,9 +610,33 @@ test("7: claim/unclaim between users; owner never sees claim state", async ({ pa
     const card = bob.locator(".item-card", {
       has: bob.getByRole("heading", { name: "Claimable mug" }),
     });
-    await card.getByRole("button", { name: "Claim" }).click();
+    await card.getByRole("button", { name: "Claim", exact: true }).click();
     await expect(card.getByText("Claimed by you")).toBeVisible();
-    await card.getByRole("button", { name: "Unclaim" }).click();
+    await card.getByRole("button", { name: "Unclaim", exact: true }).click();
+    await expect(card.getByText("Claimed by you")).not.toBeVisible();
+
+    // A9: the public row stays compact — claim state is a row affordance and
+    // carries no owner-only tooling or price intelligence.
+    await card.getByRole("button", { name: "Claim", exact: true }).click();
+    await expect(card.getByText("Claimed by you")).toBeVisible();
+    await expect(card.getByRole("button", { name: "More actions" })).toHaveCount(0);
+    await expect(card.locator(".price-meta")).toHaveCount(0);
+    await expect(card.locator(".price-delta")).toHaveCount(0);
+
+    // A9: the public row title opens the read-only guest detail surface.
+    await card.getByRole("button", { name: "Claimable mug" }).click();
+    const guestSheet = bob.getByRole("dialog", { name: "Claimable mug" });
+    await expect(guestSheet).toBeVisible();
+    await expect(guestSheet.getByRole("button", { name: "Edit item" })).toHaveCount(0);
+    await expect(guestSheet.locator(".price-graph")).toHaveCount(0);
+    await expect(guestSheet.getByRole("button", { name: "Re-check price" })).toHaveCount(0);
+    await expect(guestSheet.getByText("Reset purchased mark")).toHaveCount(0);
+    await expect(guestSheet.getByRole("button", { name: "More actions" })).toHaveCount(0);
+    await bob.keyboard.press("Escape");
+    await expect(guestSheet).toHaveCount(0);
+
+    // Leave the item unclaimed, as the original test did.
+    await card.getByRole("button", { name: "Unclaim", exact: true }).click();
     await expect(card.getByText("Claimed by you")).not.toBeVisible();
   } finally {
     await context.close();
@@ -589,7 +662,7 @@ test("8: share-target GET prefills and creates the item", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Share test" })).toBeVisible();
 });
 
-test("9: no horizontal overflow at 360/390/430/1280px", async ({ page }) => {
+test("9: no horizontal overflow at 360/390/430/1280px", async ({ page, browser }) => {
   // Seed one item so the populated feed is exercised in every viewport.
   const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
     data: { title: "Overflow probe" },
@@ -605,42 +678,7 @@ test("9: no horizontal overflow at 360/390/430/1280px", async ({ page }) => {
       const detail = page.getByRole("dialog", { name: "History probe" });
       await expect(detail.locator(".price-graph")).toBeVisible();
     }
-    const probe = await page.evaluate(() => {
-      const doc = document.documentElement;
-      const docOverflow = doc.scrollWidth > doc.clientWidth;
-      // Flag only TRUE escapes: elements past the right edge with no
-      // clipping/scrollable ancestor (contained escapes are fine).
-      const offenders: string[] = [];
-      for (const el of Array.from(document.querySelectorAll("body *"))) {
-        const r = el.getBoundingClientRect();
-        if (r.width > 0 && r.right > window.innerWidth + 1) {
-          let anc = el.parentElement;
-          let contained = false;
-          while (anc) {
-            const cs = getComputedStyle(anc);
-            if (
-              cs.overflowX === "hidden" ||
-              cs.overflowX === "clip" ||
-              cs.overflowX === "auto" ||
-              cs.overflowX === "scroll"
-            ) {
-              contained = true;
-              break;
-            }
-            anc = anc.parentElement;
-          }
-          if (!contained) {
-            offenders.push(`${el.tagName}.${(el as HTMLElement).className}`);
-          }
-        }
-      }
-      return {
-        docOverflow,
-        docScrollWidth: doc.scrollWidth,
-        clientWidth: doc.clientWidth,
-        offenders,
-      };
-    });
+    const probe = await horizontalEscapes(page);
     expect(probe.docOverflow, `document overflow at ${width}px`).toBe(false);
     expect(probe.offenders, `true escapes at ${width}px`).toEqual([]);
     await page.keyboard.press("Escape");
@@ -653,6 +691,87 @@ test("9: no horizontal overflow at 360/390/430/1280px", async ({ page }) => {
     }
   }
 
+  // A9 guest surfaces: the other-user feed and the anonymous share view must
+  // clear the same bar, including with their guest detail surface open.
+  const created = await page.request.post(`${BASE}/api/users`, {
+    data: { username: "overflow-guest", password: "guest-pass", displayName: "Guest" },
+  });
+  expect(created.status()).toBe(201);
+  const guestContext = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const guest = await guestContext.newPage();
+  try {
+    await login(guest, "overflow-guest", "guest-pass");
+    for (const title of ["Guest row one", "Guest row two"]) {
+      const row = await guest.request.post(`${BASE}/api/wishlist/items`, {
+        data: { title, notes: "Guest note", tags: ["Guest tag"] },
+      });
+      expect(row.status()).toBe(201);
+    }
+    await guest.reload();
+    await guest.getByRole("button", { name: /wishlist/ }).click();
+    await guest.getByRole("menuitemradio", { name: /Admin/ }).click();
+    await expect(guest.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+
+    for (const width of [360, 390, 430, 1280]) {
+      await guest.setViewportSize({ width, height: 800 });
+      const probe = await horizontalEscapes(guest);
+      expect(probe.docOverflow, `other-user overflow at ${width}px`).toBe(false);
+      expect(probe.offenders, `other-user escapes at ${width}px`).toEqual([]);
+    }
+
+    // The guest detail sheet is the new surface: probe it at both ends.
+    for (const width of [360, 1280]) {
+      await guest.setViewportSize({ width, height: 800 });
+      await guest
+        .locator(".item-card", { has: guest.getByRole("heading", { name: "Claimable mug" }) })
+        .getByRole("button", { name: "Claimable mug" })
+        .click();
+      const sheet = guest.getByRole("dialog", { name: "Claimable mug" });
+      await expect(sheet).toBeVisible();
+      await settleEntryAnimation(sheet);
+      const probe = await horizontalEscapes(guest);
+      expect(probe.docOverflow, `other-user sheet overflow at ${width}px`).toBe(false);
+      expect(probe.offenders, `other-user sheet escapes at ${width}px`).toEqual([]);
+      await guest.keyboard.press("Escape");
+      await expect(sheet).toHaveCount(0);
+    }
+  } finally {
+    await guestContext.close();
+  }
+
+  const shared = await page.request.post(`${BASE}/api/share`);
+  expect(shared.status()).toBe(201);
+  const { token } = (await shared.json()) as { token: string };
+  await page.goto(`${BASE}/share/${token}`);
+  await expect(page.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+
+  for (const width of [360, 390, 430, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    const probe = await horizontalEscapes(page);
+    expect(probe.docOverflow, `share view overflow at ${width}px`).toBe(false);
+    expect(probe.offenders, `share view escapes at ${width}px`).toEqual([]);
+  }
+
+  for (const width of [360, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page
+      .locator(".item-card", { has: page.getByRole("heading", { name: "Claimable mug" }) })
+      .getByRole("button", { name: "Claimable mug" })
+      .click();
+    const sheet = page.getByRole("dialog", { name: "Claimable mug" });
+    await expect(sheet).toBeVisible();
+    await settleEntryAnimation(sheet);
+    const probe = await horizontalEscapes(page);
+    expect(probe.docOverflow, `share sheet overflow at ${width}px`).toBe(false);
+    expect(probe.offenders, `share sheet escapes at ${width}px`).toEqual([]);
+    await page.keyboard.press("Escape");
+    await expect(sheet).toHaveCount(0);
+  }
+
+  // Hand the board back clean: test 15 expects no active link (its share
+  // dialog must offer "Create link", not "New link").
+  const revoked = await page.request.delete(`${BASE}/api/share`);
+  expect(revoked.status()).toBe(204);
 });
 
 test("10: dark mode flips the surface tokens", async ({ page }) => {
@@ -781,7 +900,7 @@ test("15: share link — owner creates, anonymous marks purchased, owner sees no
   // Seed the item the guest will mark (admin session via page.request), then
   // reload so the owner's list state has it (the share action needs a list).
   const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
-    data: { title: "Gift for the admin" },
+    data: { title: "Gift for the admin", notes: "Note for the guest" },
   });
   expect(seeded.status()).toBe(201);
   await page.reload();
@@ -824,6 +943,29 @@ test("15: share link — owner creates, anonymous marks purchased, owner sees no
     const card = anonPage.locator(".item-card", {
       has: anonPage.getByRole("heading", { name: "Gift for the admin" }),
     });
+
+    // A9: share rows carry the compact feed grammar — notes, tags and the raw
+    // link move into the guest detail sheet, never inline.
+    await expect(card.locator(".item-notes")).toHaveCount(0);
+    await expect(card.locator(".tags")).toHaveCount(0);
+    await expect(card.locator(".item-link-row")).toHaveCount(0);
+    await expect(card.locator(".price-meta")).toHaveCount(0);
+    await expect(card.locator(".price-delta")).toHaveCount(0);
+
+    // A9: the row title opens the read-only guest sheet, which now carries
+    // the details. No owner surface may appear inside it.
+    await card.getByRole("button", { name: "Gift for the admin" }).click();
+    const guestSheet = anonPage.getByRole("dialog", { name: "Gift for the admin" });
+    await expect(guestSheet).toBeVisible();
+    await expect(guestSheet.getByText("Note for the guest")).toBeVisible();
+    await expect(guestSheet.getByRole("button", { name: "Edit item" })).toHaveCount(0);
+    await expect(guestSheet.locator(".price-graph")).toHaveCount(0);
+    await expect(guestSheet.getByRole("button", { name: "Re-check price" })).toHaveCount(0);
+    await expect(guestSheet.getByText("Reset purchased mark")).toHaveCount(0);
+    await expect(guestSheet.getByRole("button", { name: "More actions" })).toHaveCount(0);
+    await anonPage.keyboard.press("Escape");
+    await expect(guestSheet).toHaveCount(0);
+
     await card.getByRole("button", { name: "More actions" }).click();
     await anonPage.getByRole("menuitem", { name: "Mark as purchased" }).click();
     // Confirm dialog — same label as the row button, so scope to the dialog.
@@ -834,6 +976,12 @@ test("15: share link — owner creates, anonymous marks purchased, owner sees no
     ).toBeVisible();
     await dialog.getByRole("button", { name: "Mark as purchased" }).click();
     await expect(card.locator(".share-purchased-badge")).toHaveText("Purchased");
+
+    // A9: the purchased state is the struck title + dimmed meta, with the
+    // badge at full emphasis (no whole-card opacity).
+    await expect(card).toHaveClass(/is-purchased/);
+    await expect(card.locator(".item-title")).toHaveCSS("text-decoration-line", "line-through");
+    await expect(card.locator(".share-purchased-badge")).toHaveCSS("opacity", "1");
 
     // A second anonymous viewer sees the mark (double-gift prevention).
     const anon2 = await browser.newContext();
@@ -862,6 +1010,7 @@ test("15: share link — owner creates, anonymous marks purchased, owner sees no
       page.getByText("You are viewing your own shared list. Purchased marks are hidden from you."),
     ).toBeVisible();
     await expect(page.locator(".share-purchased-badge")).toHaveCount(0);
+    await expect(page.locator(".item-card.is-purchased")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Mark as purchased" })).toHaveCount(0);
 
     // Revocation: back to the app, reopen the sheet at 375px (mobile-first:
@@ -976,6 +1125,65 @@ test("15d: mobile share sheet traps focus and returns it to the trigger", async 
   await trigger.click();
   await page.getByRole("dialog", { name: "Share my list" }).getByRole("button", { name: "Revoke link" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Revoke link" }).click();
+});
+
+test("15e: anonymous guest sheet shows details and confirmed purchase state", async ({
+  page,
+  browser,
+}) => {
+  // Seed + mint a link exactly like test 15 (page.request carries the session).
+  const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: {
+      title: "Guest detail probe",
+      notes: "Size medium",
+      tags: ["Kitchen"],
+      priceCents: "19.99",
+      currency: "GBP",
+    },
+  });
+  expect(seeded.status()).toBe(201);
+  const created = await page.request.post(`${BASE}/api/share`);
+  expect(created.status()).toBe(201);
+  const token = ((await created.json()) as { token: string }).token;
+
+  const anon = await browser.newContext();
+  const anonPage = await anon.newPage();
+  try {
+    await anonPage.goto(`${BASE}/share/${token}`);
+    const card = anonPage.locator(".item-card", {
+      has: anonPage.getByRole("heading", { name: "Guest detail probe" }),
+    });
+    await card.getByRole("button", { name: "Guest detail probe" }).click();
+    const sheet = anonPage.getByRole("dialog", { name: "Guest detail probe" });
+    await expect(sheet).toBeVisible();
+    await expect(sheet.getByText("Size medium")).toBeVisible();
+    await expect(sheet.getByText("Kitchen")).toBeVisible();
+    await expect(sheet.getByText("£19.99")).toBeVisible();
+    await expect(sheet.getByRole("link", { name: /Open product/ })).toHaveCount(0); // no url seeded
+    await expect(sheet.getByRole("button", { name: "Edit item" })).toHaveCount(0);
+    await expect(sheet.locator(".price-graph")).toHaveCount(0);
+    await expect(sheet.getByRole("button", { name: "More actions" })).toHaveCount(0);
+    await sheet.getByRole("button", { name: "Close" }).click();
+    await expect(sheet).toHaveCount(0);
+
+    // Marking stays a row interaction; the sheet then reports the confirmed
+    // state without offering a second marking affordance.
+    await card.getByRole("button", { name: "More actions" }).click();
+    await anonPage.getByRole("menuitem", { name: "Mark as purchased" }).click();
+    await anonPage.getByRole("alertdialog").getByRole("button", { name: "Mark as purchased" }).click();
+    await expect(card.locator(".share-purchased-badge")).toHaveText("Purchased");
+
+    await card.getByRole("button", { name: "Guest detail probe" }).click();
+    const purchasedSheet = anonPage.getByRole("dialog", { name: "Guest detail probe" });
+    await expect(purchasedSheet.locator(".share-purchased-badge")).toHaveText("Purchased");
+    await expect(purchasedSheet.getByRole("button", { name: "More actions" })).toHaveCount(0);
+    await purchasedSheet.getByRole("button", { name: "Close" }).click();
+    await expect(purchasedSheet).toHaveCount(0);
+  } finally {
+    await anon.close();
+    // Leave no live link behind for later specs.
+    await page.request.delete(`${BASE}/api/share`);
+  }
 });
 
 /** Local static fixture server: the app's scraper (server-side) fetches it,

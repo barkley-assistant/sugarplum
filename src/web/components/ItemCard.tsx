@@ -194,7 +194,7 @@ export function ItemCard({
         id={item.id}
         title={item.title}
         fetchState={viewerIsOwner ? item.fetchState : undefined}
-        onOpen={viewerIsOwner && onOpenDetails ? () => onOpenDetails(item.id) : undefined}
+        onOpen={onOpenDetails ? () => onOpenDetails(item.id) : undefined}
         openLabel={S.item.openDetails}
         reorderHandle={dragHandle}
         dragging={dragging}
