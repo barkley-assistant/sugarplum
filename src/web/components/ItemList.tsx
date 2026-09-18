@@ -1,4 +1,4 @@
-import type { OwnedItem, PriceHintState, PublicItem } from "../../shared/types";
+import type { OwnedItem, PublicItem } from "../../shared/types";
 import { ItemCard } from "./ItemCard";
 import type { ItemFormValues } from "./ItemForm";
 
@@ -15,12 +15,10 @@ interface ItemListProps {
   onClaim?: (id: string) => void | Promise<void>;
   onUnclaim?: (id: string) => void | Promise<void>;
   onRefresh?: (id: string) => void | Promise<void>;
-  /** Owner-only: runs the on-demand "prices seen elsewhere" lookup. */
-  onCheckPrices?: (id: string) => void | Promise<void>;
+
   /** Owner-only: clears the blind share-link purchased mark (204, no body). */
   onResetPurchased?: (id: string) => void | Promise<void>;
-  /** Owner-only: per-item candidates results, keyed by item id. */
-  hintStates?: Record<string, PriceHintState>;
+
   /** Opens the detail surface for an owner row (A4 fills the surface). */
   onOpenDetails?: (id: string) => void;
 }
@@ -35,9 +33,7 @@ export function ItemList({
   onClaim,
   onUnclaim,
   onRefresh,
-  onCheckPrices,
   onResetPurchased,
-  hintStates,
   onOpenDetails,
 }: ItemListProps) {
   if (items.length === 0) return null;
@@ -54,9 +50,7 @@ export function ItemList({
           onClaim={onClaim}
           onUnclaim={onUnclaim}
           onRefresh={onRefresh}
-          onCheckPrices={onCheckPrices}
           onResetPurchased={onResetPurchased}
-          hintState={hintStates?.[item.id]}
           onOpenDetails={onOpenDetails}
         />
       ))}

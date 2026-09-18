@@ -405,9 +405,7 @@ export function AppPage() {
         onEdit={editItem}
         onDelete={deleteItem}
         onRefresh={refreshItem}
-        onCheckPrices={checkPrices}
         onResetPurchased={resetPurchased}
-        hintStates={hintStates}
         onOpenDetails={setOpenItemId}
       />
     );

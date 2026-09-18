@@ -2300,3 +2300,59 @@ button.filter-chip {
 @media (max-width: 420px) {
   .window-seg button { min-width: 42px; padding: 0 8px; }
 }
+
+/* A5 hints remain a detail-row disclosure; candidates are evidence rows,
+   not a comparison widget. */
+.detail-hints .hints-toggle {
+  cursor: pointer;
+}
+
+.detail-hints .hints-toggle svg:last-child {
+  transition: transform var(--ease-ui);
+}
+
+.detail-hints .hints-toggle[aria-expanded="true"] svg:last-child {
+  transform: rotate(90deg);
+}
+
+.detail-hints .hint-candidates {
+  margin-top: 4px;
+  padding: 8px 0 0;
+  background: transparent;
+}
+
+.hints-rows {
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.hints-row a {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.hints-row .hint-price-now {
+  flex: 0 0 auto;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hints-row .hint-host {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+
+.hints-row .hint-note {
+  margin-left: auto;
+  color: var(--text-3);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}

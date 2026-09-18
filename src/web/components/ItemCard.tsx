@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { OwnedItem, PriceHintState, PricePoint, PriceStats, PriceTrend, PublicItem } from "../../shared/types";
+import type { OwnedItem, PriceStats, PublicItem } from "../../shared/types";
 import { centsToDecimal, formatPrice, toCents } from "../format";
 import { S } from "../strings";
 import { useConfirm } from "../confirm";
@@ -7,13 +7,11 @@ import { useToast } from "../toast";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { DotsIcon } from "./IconButton";
 import { OverflowMenu, type OverflowItem } from "./OverflowMenu";
-import { PriceCluster, type TrendWindow } from "./PriceCluster";
+import { PriceCluster } from "./PriceCluster";
 import { ProductImage } from "./ProductImage";
 import { ProductRow } from "./ProductRow";
 import { Sheet } from "./Sheet";
 import { StatusBadge } from "./StatusBadge";
-
-export type { TrendWindow };
 
 interface ItemCardProps {
   item: OwnedItem | PublicItem;
@@ -23,19 +21,16 @@ interface ItemCardProps {
   onClaim?: (id: string) => void | Promise<void>;
   onUnclaim?: (id: string) => void | Promise<void>;
   onRefresh?: (id: string) => void | Promise<void>;
-  /** Owner-only: run the on-demand "prices seen elsewhere" lookup. */
-  onCheckPrices?: (id: string) => void | Promise<void>;
+
   /** Owner-only: clear the blind share-link purchased mark (204, no body). */
   onResetPurchased?: (id: string) => void | Promise<void>;
-  /** Owner-only: the last candidates result for this item, when a lookup ran. */
-  hintState?: PriceHintState;
+
   /** Owner-row opener; A4 will render the detail surface behind this seam. */
   onOpenDetails?: (id: string) => void;
 }
 
-/** Owner + public row, composed from the shared primitives. The props and
- *  the price helpers stay here (unit-tested via sparkline.test.ts); the
- *  layout is ProductRow, the price surface PriceCluster, the actions one
+/** Owner + public row, composed from the shared primitives. The price helper
+ *  stays here; the layout is ProductRow, the price surface PriceCluster, the actions one
  *  OverflowMenu trigger (owner) or the inline claim control (public). */
 export function ItemCard({
   item,
@@ -45,9 +40,7 @@ export function ItemCard({
   onClaim,
   onUnclaim,
   onRefresh,
-  onCheckPrices: _onCheckPrices,
   onResetPurchased,
-  hintState: _hintState,
   onOpenDetails,
 }: ItemCardProps) {
   const [editing, setEditing] = useState(false);
@@ -266,55 +259,4 @@ export function priceDelta(
   return { direction: current < atAdd ? "down" : "up", amount };
 }
 
-const TREND_WINDOW_KEY = "sugarplum.trend-window";
 
-export function readTrendWindow(): TrendWindow {
-  try {
-    return localStorage.getItem(TREND_WINDOW_KEY) === "90d" ? "90d" : "30d";
-  } catch {
-    return "30d";
-  }
-}
-
-/** Advice enum → user-facing label. Every label is informational; none tells
- *  the user to buy now. Exported for tests. */
-export function adviceLabel(advice: PriceTrend["advice"]): string {
-  switch (advice) {
-    case "below-30d-avg":
-      return S.trend.below30dAvg;
-    case "near-30d-low":
-      return S.trend.near30dLow;
-    case "near-30d-high":
-      return S.trend.near30dHigh;
-    case "trending-down":
-      return S.trend.trendingDown;
-    case "stable":
-      return S.trend.stable;
-    case "insufficient":
-      return S.trend.insufficient;
-  }
-}
-
-/** True when every series point shares the item's currency (null reads as
- *  "same"). A mixed-currency series is not a comparable series and is never
- *  drawn — same rule as priceDelta. Exported for tests. */
-export function sameCurrencySeries(series: PricePoint[], currency: string | null): boolean {
-  const code = (currency ?? "").trim().toUpperCase();
-  return series.every((p) => (p.currency ?? "").trim().toUpperCase() === code);
-}
-
-/** Series → drawable integer cents for the selected window. The server
- *  always sends the 90-day series; the 30d chip slices it client-side.
- *  Empty when a point is unparseable (the sparkline then stays hidden —
- *  never draw a partial series). Exported for tests. */
-export function trendCents(series: PricePoint[], window: TrendWindow): number[] {
-  const inWindow =
-    window === "90d"
-      ? series
-      : series.filter((p) => {
-          const t = new Date(p.observedAt).getTime();
-          return Number.isFinite(t) && t >= Date.now() - 30 * 86_400_000;
-        });
-  const cents = inWindow.map((p) => toCents(p.priceCents));
-  return cents.every((c): c is number => c !== null) ? cents : [];
-}
