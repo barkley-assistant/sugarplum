@@ -214,7 +214,7 @@ export function SettingsPage() {
                 required
               />
             </div>
-            <button type="submit" disabled={profileBusy}>
+            <button type="submit" className="settings-submit" disabled={profileBusy}>
               {profileBusy ? S.form.saving : S.settings.saveProfile}
             </button>
           </form>
@@ -259,17 +259,18 @@ export function SettingsPage() {
               </div>
             </div>
             {passwordError && <p className="error" role="alert">{passwordError}</p>}
-            <button type="submit" disabled={passwordBusy}>
+            <button type="submit" className="settings-submit" disabled={passwordBusy}>
               {passwordBusy ? S.form.saving : S.settings.setPassword}
             </button>
           </form>
         </section>
 
-        <section className="settings-section" aria-label="Preferences">
+        <section className="settings-section" aria-label={S.settings.preferences}>
+          <h3>{S.settings.preferences}</h3>
           <button
             type="button"
             className="menu-item"
-            role="menuitemcheckbox"
+            role="switch"
             aria-checked={me.hintsEnabled}
             onClick={() => void setSetting("hintsEnabled", !me.hintsEnabled)}
           >
@@ -280,7 +281,7 @@ export function SettingsPage() {
           <button
             type="button"
             className="menu-item"
-            role="menuitemcheckbox"
+            role="switch"
             aria-checked={me.priceTrackingEnabled}
             onClick={() => void setSetting("priceTrackingEnabled", !me.priceTrackingEnabled)}
           >
@@ -291,6 +292,7 @@ export function SettingsPage() {
 
         {me.isAdmin && (
           <section className="settings-section" aria-label={S.settings.usersSection}>
+            <h3>{S.settings.usersSection}</h3>
             {usersError && <p className="error" role="alert">{usersError}</p>}
             <AdminPanel users={users} onChanged={refreshUsers} />
           </section>

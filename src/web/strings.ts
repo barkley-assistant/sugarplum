@@ -84,6 +84,7 @@ export const S = {
     setPassword: "Set new password",
     backToList: "Back to list",
     openSettings: "Settings",
+    preferences: "Preferences",
     hintsToggle: "Show unverified price hints",
     trackToggle: "Track prices daily",
     on: "On",
@@ -171,7 +172,6 @@ export const S = {
     ownerViewingOwn: "You are viewing your own shared list. Purchased marks are hidden from you.",
   },
   admin: {
-    users: "Users",
     name: "Name",
     username: "Username",
     status: "Status",
@@ -227,7 +227,10 @@ export const S = {
     clearFilter: "Clear filter",
   },
   dnd: {
+    /** Drag-handle label. Per-item by default (A10) so a screen-reader user
+     *  can tell the rows apart; falls back when a row still has no title. */
     moveItem: "Move item",
+    moveItemNamed: (title: string) => `Move "${title}"`,
   },
   confirm: {
     deleteItem: (title: string) => `Delete "${title}"?`,

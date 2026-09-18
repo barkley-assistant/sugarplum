@@ -54,7 +54,7 @@ interface PressState {
 }
 
 export function useDragReorder(
-  items: readonly { id: string }[],
+  items: readonly { id: string; title: string }[],
   onCommit: (orderedIds: string[]) => void | Promise<void>,
 ): DragReorderHandle {
   const [orderOverride, setOrderOverride] = useState<string[] | null>(null);
@@ -172,14 +172,19 @@ export function useDragReorder(
   );
 
   const getHandleProps = useCallback(
-    (id: string): HandleProps => ({
-      className: `drag-handle${draggingId === id ? " is-active" : ""}`,
-      "aria-label": S.dnd.moveItem,
-      onPointerDown: (e) => handlePointerDown(e, id),
-      onKeyDown: (e) => handleKeyDown(e, id),
-      onBlur: commitPending,
-    }),
-    [draggingId, handleKeyDown, handlePointerDown, commitPending],
+    (id: string): HandleProps => {
+      // Name each handle after its row: with a bare "Move item" a screen
+      // reader hears the same label on every card.
+      const title = items.find((item) => item.id === id)?.title ?? "";
+      return {
+        className: `drag-handle${draggingId === id ? " is-active" : ""}`,
+        "aria-label": title ? S.dnd.moveItemNamed(title) : S.dnd.moveItem,
+        onPointerDown: (e) => handlePointerDown(e, id),
+        onKeyDown: (e) => handleKeyDown(e, id),
+        onBlur: commitPending,
+      };
+    },
+    [draggingId, items, handleKeyDown, handlePointerDown, commitPending],
   );
 
   // Permanent window listeners: the state machine lives in refs, so the

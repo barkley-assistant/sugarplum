@@ -98,8 +98,6 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
 
   return (
     <section className="admin-panel">
-      <h2>{S.admin.users}</h2>
-
       <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
@@ -183,7 +181,7 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
         </form>
       )}
 
-      <h3>{S.admin.createUser}</h3>
+      <h4>{S.admin.createUser}</h4>
       <form className="item-form" onSubmit={createUser}>
         <div className="field-row">
           <div className="field grow">
