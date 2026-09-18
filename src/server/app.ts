@@ -78,6 +78,13 @@ export function createApp(config: Config): App {
   );
 
   const limiter = new RateLimiter();
+  // IP-only backstop for login (#63 G3): the per-(username|IP) limiter above
+  // never trips for an attacker cycling random usernames from one IP, and each
+  // attempt costs a full scrypt verify. 50 failures / 15 min is far above what
+  // fat-fingering can reach (the 10-failure per-username lockout fires first)
+  // yet caps a spray at 50 hashes per window. The two real users share the
+  // tunnel's client IP; both would have to fail 25× each inside 15 minutes.
+  const loginIpLimiter = new RateLimiter(50, 15 * 60 * 1000);
   // Anonymous purchase attempts: ~5 per 15 min per token+IP. Only
   // mutation-reaching attempts are recorded (see share.ts).
   const shareLimiter = new RateLimiter(5, 15 * 60 * 1000);
@@ -98,7 +105,7 @@ export function createApp(config: Config): App {
     hostname: config.host,
     port: config.port,
     routes: hardenRoutes({
-      ...authRoutes(db, config, limiter),
+      ...authRoutes(db, config, limiter, loginIpLimiter),
       ...userRoutes(db),
       ...wishlistRoutes(db, config.imagesDir, queue, {
         searxngUrl: config.searxngUrl,

@@ -212,6 +212,27 @@ describe("auth flow (integration)", () => {
     }
   });
 
+  test("IP backstop: 50 distinct-username failures from one IP → 429", async () => {
+    const rlApp = createTestApp();
+    try {
+      for (let i = 0; i < 50; i++) {
+        const res = await rlApp.request("POST", "/api/auth/login", {
+          username: `spray-${i}`,
+          password: "wrong",
+        });
+        expect(res.status).toBe(401); // per-(user|ip) never trips: unique names
+      }
+      const blocked = await rlApp.request("POST", "/api/auth/login", {
+        username: "spray-50",
+        password: "wrong",
+      });
+      expect(blocked.status).toBe(429);
+      expect(blocked.headers.get("retry-after")).not.toBeNull();
+    } finally {
+      await rlApp.cleanup();
+    }
+  }, 60_000);
+
   test("second boot does not duplicate or overwrite the bootstrap admin", async () => {
     const { config, dir } = makeTestConfig();
     const first = createApp(config);
