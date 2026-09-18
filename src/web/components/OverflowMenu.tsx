@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { S } from "../strings";
 import { Sheet } from "./Sheet";
 
@@ -84,7 +85,7 @@ export function OverflowMenu({ triggerLabel, triggerIcon, triggerClassName, trig
   useEffect(() => {
     if (!open) return;
     const raf = requestAnimationFrame(() => {
-      menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+      menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus({ preventScroll: true });
     });
     return () => cancelAnimationFrame(raf);
   }, [open]);
@@ -190,22 +191,29 @@ export function OverflowMenu({ triggerLabel, triggerIcon, triggerClassName, trig
             {renderItems()}
           </div>
         ) : (
-          <Sheet open onClose={closeAndFocusTrigger} ariaLabel={menuLabel ?? S.item.moreActions}>
-            <div
-              ref={menuRef}
-              role="menu"
-              id={menuId}
-              aria-label={menuLabel ?? S.item.moreActions}
-              className="overflow-sheet-list"
-              onKeyDown={onMenuKeyDown}
-            >
-              {renderItems()}
-              <div className="overflow-separator" aria-hidden="true" />
-              <button type="button" className="menu-item overflow-cancel" role="menuitem" onClick={closeAndFocusTrigger}>
-                {S.confirm.cancel}
-              </button>
-            </div>
-          </Sheet>
+          // The mobile sheet portals to document.body: .topbar's
+          // backdrop-filter makes it a containing block for position: fixed,
+          // which would clip the overlay to a topbar-height strip (#60).
+          // Mirrors ShareMenu's portal for the mobile branch.
+          createPortal(
+            <Sheet open onClose={closeAndFocusTrigger} ariaLabel={menuLabel ?? S.item.moreActions}>
+              <div
+                ref={menuRef}
+                role="menu"
+                id={menuId}
+                aria-label={menuLabel ?? S.item.moreActions}
+                className="overflow-sheet-list"
+                onKeyDown={onMenuKeyDown}
+              >
+                {renderItems()}
+                <div className="overflow-separator" aria-hidden="true" />
+                <button type="button" className="menu-item overflow-cancel" role="menuitem" onClick={closeAndFocusTrigger}>
+                  {S.confirm.cancel}
+                </button>
+              </div>
+            </Sheet>,
+            document.body,
+          )
         ))}
     </>
   );

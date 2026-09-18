@@ -61,7 +61,7 @@ export function ShareMenu({ open, onClose, triggerRef }: ShareMenuProps) {
   useEffect(() => {
     if (!open || !desktop) return;
     const raf = requestAnimationFrame(() => {
-      popoverRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)?.focus();
+      popoverRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)?.focus({ preventScroll: true });
     });
     return () => cancelAnimationFrame(raf);
   }, [desktop, open]);
