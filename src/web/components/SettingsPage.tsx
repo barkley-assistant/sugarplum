@@ -6,7 +6,8 @@ import { useInstallPrompt } from "../pwa/install";
 import { clearStoredIdentity, readStoredMe, writeStoredMe } from "../me-store";
 import { navigate } from "../router";
 import { AdminPanel } from "./AdminPanel";
-import { AppShell, AppShellLoading, PageHeader } from "./AppShell";
+import { AppShell, PageHeader } from "./AppShell";
+import { SettingsSkeleton } from "./Skeletons";
 import { UserMenu } from "./UserMenu";
 
 /** Dedicated settings surface: every user gets the Account section
@@ -174,7 +175,7 @@ export function SettingsPage() {
   }
 
   if (!booted || !me) {
-    return <AppShellLoading />;
+    return <SettingsSkeleton />;
   }
 
   const userMenu = (
