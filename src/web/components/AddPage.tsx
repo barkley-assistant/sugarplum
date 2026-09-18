@@ -3,6 +3,7 @@ import { navigate } from "../router";
 import { parseShareTarget } from "../format";
 import { useBootMe } from "../use-boot-me";
 import { usePageFocus } from "../use-page-focus";
+import { setPendingFocusItemId } from "../feed-handoff";
 import { AppShell } from "./AppShell";
 import { FormSkeleton } from "./Skeletons";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
@@ -39,6 +40,10 @@ export function AddPage({ search }: AddPageProps) {
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(S.errors.addItem);
+    const created = (await res.json()) as { id: string };
+    // #62 D8: hand the feed the new row so it scrolls it into view — this
+    // page cannot scroll a feed that is not mounted.
+    setPendingFocusItemId(created.id);
     navigate("/");
   }
 

@@ -10,6 +10,14 @@ import { useToast } from "../toast";
 import { useDragReorder } from "../reorder";
 import { parseShareTarget } from "../format";
 import { navigate } from "../router";
+import {
+  clearPendingFocusItemId,
+  peekPendingFocusItemId,
+  saveFeedSnapshot,
+  takeFeedSnapshot,
+  trackFeedScroll,
+  trackedFeedScrollY,
+} from "../feed-handoff";
 import { useInstallPrompt } from "../pwa/install";
 import {
   clearStoredIdentity,
@@ -43,6 +51,9 @@ export function AppPage() {
   const [reordering, setReordering] = useState(false);
   const reorderToggleRef = useRef<HTMLButtonElement | null>(null);
   const shareTriggerRef = useRef<HTMLButtonElement | null>(null);
+  /** #62 D8: scroll position handed back from feed-handoff, applied after the
+   *  restored rows commit (the list must exist before scrollTo can stick). */
+  const handoffScrollRef = useRef<number | null>(null);
   const toast = useToast();
   const reorder = useDragReorder(ownItems, onReorder);
   const install = useInstallPrompt();
@@ -51,6 +62,60 @@ export function AppPage() {
     void boot();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // The feed snapshot is written on UNMOUNT (leaving the feed), from a ref of
+  // the latest committed state — reading it on every render would flip this
+  // into a save-per-keystroke without any benefit.
+  const feedStateRef = useRef<{
+    me: Me | null;
+    ownItems: OwnedItem[];
+    otherItems: PublicItem[];
+    summary: WishlistSummaryRow[];
+    viewing: string | null;
+    activeTag: string | null;
+  }>({ me: null, ownItems: [], otherItems: [], summary: [], viewing: null, activeTag: null });
+  useEffect(() => {
+    feedStateRef.current = { me, ownItems, otherItems, summary, viewing, activeTag };
+  });
+
+  useEffect(() => {
+    return () => {
+      const state = feedStateRef.current;
+      if (!state.me) return;
+      saveFeedSnapshot({
+        meId: state.me.id,
+        ownItems: state.ownItems,
+        otherItems: state.otherItems,
+        summary: state.summary,
+        viewingUserId: state.viewing,
+        activeTag: state.activeTag,
+        scrollY: trackedFeedScrollY(),
+      });
+    };
+  }, []);
+
+  // The scroll offset is part of the handoff, and it must be tracked while
+  // the feed is on screen (see feed-handoff: the unmount read is too late).
+  useEffect(() => trackFeedScroll(), []);
+
+  // Applied after the feed content commits: a just-added row (add flow) wins
+  // over the plain scroll restore. Re-runs when the list changes because the
+  // revalidating fetch — not the mount — is what puts the new row on screen.
+  useEffect(() => {
+    if (!booted) return;
+    const focusId = peekPendingFocusItemId();
+    if (focusId) {
+      const row = document.querySelector(`.item-card[data-item-id="${focusId}"]`);
+      if (!row) return; // not rendered yet: keep waiting, no scroll restore
+      clearPendingFocusItemId();
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      row.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+      return;
+    }
+    const restoreY = handoffScrollRef.current;
+    handoffScrollRef.current = null;
+    if (restoreY !== null) window.scrollTo(0, restoreY);
+  }, [booted, ownItems]);
 
   async function boot() {
     try {
@@ -92,6 +157,24 @@ export function AppPage() {
       const meBody = (await meRes.json()) as Me;
       setMe(meBody);
       writeStoredMe(meBody);
+
+      // #62 D8: restore the snapshot taken when the user left the feed, so
+      // Back from /add, /items/:id or /items/:id/edit lands on the feed they
+      // left — same list context, same scroll — and only then revalidates.
+      // Guarded by meId: a logout/login-as-someone-else between routes must
+      // never render the previous user's rows.
+      const snap = takeFeedSnapshot();
+      if (snap && snap.meId === meBody.id) {
+        setOwnItems(snap.ownItems);
+        setOtherItems(snap.otherItems);
+        setSummary(snap.summary);
+        setViewing(snap.viewingUserId);
+        setActiveTag(snap.activeTag);
+        handoffScrollRef.current = snap.scrollY;
+        setBooted(true); // data is on screen: no skeleton flash
+        void Promise.all([refreshSummary(meBody.id), refreshOwnList(meBody.id)]);
+        return;
+      }
 
       await Promise.all([refreshSummary(), refreshOwnList(meBody.id)]);
       setBooted(true);

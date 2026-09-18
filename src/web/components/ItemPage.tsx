@@ -7,6 +7,7 @@ import { useConfirm } from "../confirm";
 import { useToast } from "../toast";
 import { useBootMe } from "../use-boot-me";
 import { usePageFocus } from "../use-page-focus";
+import { pruneFeedSnapshotItem } from "../feed-handoff";
 import { AppShell } from "./AppShell";
 import { EmptyState } from "./EmptyState";
 import { HintsPanel } from "./HintsPanel";
@@ -134,7 +135,9 @@ export function ItemPage({ id }: { id: string }) {
       return;
     }
     // The item no longer exists: staying on /items/:id would render the
-    // not-found state.
+    // not-found state. Prune the handoff snapshot first so the feed cannot
+    // resurrect the deleted row on the way back.
+    pruneFeedSnapshotItem(id);
     navigate("/");
   }
 

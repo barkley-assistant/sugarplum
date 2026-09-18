@@ -224,6 +224,42 @@ test("3c2: mobile add mount focuses no field (no keyboard pop)", async ({ page }
   ).toBe(false);
 });
 
+test("3e: add from the page returns to the feed scrolled to the new row", async ({ page }) => {
+  // Seed enough rows that the new item lands below the fold: the handoff
+  // scroll-to-row is only observable when the row is off-screen.
+  for (let i = 0; i < 8; i++) {
+    const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
+      data: { title: `Scroll filler ${i}` },
+    });
+    expect(seeded.status()).toBe(201);
+  }
+  await page.reload();
+  await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+
+  await page.getByRole("button", { name: "Add item" }).first().click();
+  await expect(page).toHaveURL(`${BASE}/add`);
+  await page.getByRole("button", { name: "Add details manually" }).click();
+  await page.getByLabel("Title").fill("Scrollback probe");
+  await page.getByRole("button", { name: "Add item" }).click();
+  await expect(page).toHaveURL(`${BASE}/`);
+
+  const row = page.locator(".item-card").filter({ hasText: "Scrollback probe" });
+  await expect(row).toBeVisible();
+  // The feed handed the just-added row back and scrolled it into view (the
+  // scroll is smooth unless reduced motion is requested, so poll for it).
+  await expect
+    .poll(
+      async () => {
+        const box = await row.boundingBox();
+        if (!box) return false;
+        const viewportHeight = await page.evaluate(() => window.innerHeight);
+        return box.y >= 0 && box.y <= viewportHeight;
+      },
+      { timeout: 10_000, message: "the just-added row scrolled into view" },
+    )
+    .toBe(true);
+});
+
 test("3d: failed enrichment remains recoverable through Retry fetch", async ({ page }) => {
   const created = await page.request.post(`${BASE}/api/wishlist/items`, {
     data: { title: "Recoverable item", url: "https://127.0.0.1:1/unreachable" },
@@ -660,6 +696,52 @@ test("6: tag filter shows only matching items and preserves order", async ({ pag
   await expect(page.locator(".item-list .drag-handle:visible").first()).toBeVisible();
   await expect(page.locator(".item-card")).toHaveCount(before.length);
   await page.getByRole("button", { name: "Done", exact: true }).click();
+});
+
+test("6c: back from an item page preserves the tag filter and scroll position", async ({ page }) => {
+  // A long feed is needed for the scroll half of this test.
+  for (let i = 0; i < 8; i++) {
+    const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
+      data: { title: `Context filler ${i}` },
+    });
+    expect(seeded.status()).toBe(201);
+  }
+  const tagged = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Context probe", tags: ["Birthday"] },
+  });
+  expect(tagged.status()).toBe(201);
+  await page.reload();
+
+  // Scroll half: the position survives the round trip, with no document load.
+  const docLoads = await loads(page);
+  await page.evaluate(() => window.scrollTo(0, 400));
+  const scrolled = await page.evaluate(() => window.scrollY);
+  expect(scrolled, "the feed really scrolls").toBeGreaterThan(100);
+  await page.locator(".item-card .row-open").first().click();
+  await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}$/);
+  await expect(page.locator(".detail-title")).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(`${BASE}/`);
+  expect(await loads(page)).toBe(docLoads); // soft navigation, no reload
+  expect(
+    await page.evaluate(() => window.scrollY),
+    "scroll position restored from the feed handoff",
+  ).toBeGreaterThanOrEqual(scrolled - 5);
+
+  // Context half: the active tag filter survives the same round trip.
+  await page.getByRole("button", { name: "Birthday", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Birthday", exact: true })).toHaveClass(/active/);
+  const filtered = await page.locator(".item-card").count();
+  expect(filtered).toBeGreaterThan(0);
+  await page.locator(".item-card .row-open").first().click();
+  await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}$/);
+  await page.goBack();
+  await expect(page).toHaveURL(`${BASE}/`);
+  await expect(page.locator(".item-card")).toHaveCount(filtered);
+  await expect(page.getByRole("button", { name: "Birthday", exact: true })).toHaveClass(/active/);
+
+  // Leave the feed unfiltered for the tests that follow.
+  await page.getByRole("button", { name: "All", exact: true }).click();
 });
 
 test("5b: reorder mode supports keyboard movement and persists", async ({ page }) => {

@@ -49,6 +49,14 @@ export function parseRoute(path: string, search: string): Route {
 
 const ROUTE_EVENT = "sugarplum:navigate";
 
+/** Subscribes to in-app navigation REQUESTS (the same signal useRoute()
+ *  consumes). Callers use it to freeze view state that must survive the
+ *  incoming route's scroll-to-top, which navigate() fires in the same tick. */
+export function onNavigateRequest(listener: () => void): () => void {
+  window.addEventListener(ROUTE_EVENT, listener);
+  return () => window.removeEventListener(ROUTE_EVENT, listener);
+}
+
 /** Client-side navigation: pushState + notify listeners. Never a full
  *  document load. `replace` is for the authed-login redirect (INV-6) so
  *  back-button doesn't trap the user on a login view they skipped. */
