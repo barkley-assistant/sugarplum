@@ -121,7 +121,12 @@ export const S = {
     tagsPlaceholder: "Birthday, Someday",
     cancel: "Cancel",
     saving: "Saving…",
+    addSubmitBusy: "Adding…",
     save: "Save",
+    addTitle: "Add to Sugarplum",
+    addDetailsManually: "Add details manually",
+    manualIntro: "Optional — we'll fetch the title, price and image from the link.",
+    linkPlaceholderAdd: "Paste a product link…",
     needTitleOrLink: "Add a title or a link.",
   },
   claims: {

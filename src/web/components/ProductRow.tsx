@@ -19,6 +19,8 @@ interface ProductRowProps {
   delta?: ReactNode;
   /** One compact trigger per row. */
   actions?: ReactNode;
+  /** Owner-only enrichment state; omitted on public/share rows. */
+  fetchState?: "pending" | "complete" | "failed";
 }
 
 /** One row primitive for every list surface (owner, public, share). Owner
@@ -34,11 +36,13 @@ export function ProductRow({
   price,
   delta,
   actions,
+  fetchState,
 }: ProductRowProps) {
   return (
     <li
       className={`card item-card${purchased ? " is-purchased" : ""}`}
       data-item-id={id}
+      data-fetch={fetchState && fetchState !== "complete" ? fetchState : undefined}
     >
       <div className="product-row-grid">
         {image}

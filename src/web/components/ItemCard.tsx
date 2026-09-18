@@ -180,6 +180,7 @@ export function ItemCard({
       <ProductRow
         id={item.id}
         title={item.title}
+        fetchState={viewerIsOwner ? item.fetchState : undefined}
         onOpen={viewerIsOwner && onOpenDetails ? () => onOpenDetails(item.id) : undefined}
         openLabel={S.item.openDetails}
         image={
