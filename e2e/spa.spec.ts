@@ -51,20 +51,40 @@ test("s1: feed → settings is client-side; URL + no document reload", async ({ 
   expect(await loads(page)).toBe(before); // INV-4: no document reload
 });
 
-test("s2: skeleton is visible during the settings boot transition", async ({ page }) => {
+test("s2: settings route renders its boot skeleton before content", async ({ page }) => {
+  // Route interception cannot widen this window: the app runs a service
+  // worker (PROD build) and SW-mediated fetches do not reach page.route, so
+  // the boot window stays sub-frame. Watch the DOM instead — React commits
+  // the skeleton before the boot fetch resolves, and a MutationObserver on
+  // `document` (documentElement does not exist yet at init-script time)
+  // records that commit even if the follow-up commit lands in the same tick.
+  await page.addInitScript(() => {
+    const state = { saw: false };
+    (window as unknown as { __sawSettingsSkeleton: { saw: boolean } }).__sawSettingsSkeleton = state;
+    new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of Array.from(record.addedNodes)) {
+          const el = node as Element;
+          if (el.nodeType !== 1) continue;
+          if (el.matches?.(".skeleton-settings") || el.querySelector?.(".skeleton-settings")) {
+            state.saw = true;
+          }
+        }
+      }
+    }).observe(document, { childList: true, subtree: true });
+  });
   await page.goto(`${BASE}/`);
   await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
-  // Widen the boot window before clicking Settings: local boots are fast.
-  await page.route("**/api/auth/me", async (route) => {
-    await new Promise((r) => setTimeout(r, 400));
-    await route.continue();
-  });
+
   await page.locator('.user-menu-button[aria-label="Admin"]').click();
   await page.getByRole("menuitem", { name: "Settings" }).click();
-  await expect(page.locator(".skeleton-settings")).toBeVisible();
-  await page.unroute("**/api/auth/me");
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
-  await expect(page.locator(".skeleton-settings")).toHaveCount(0);
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { __sawSettingsSkeleton: { saw: boolean } }).__sawSettingsSkeleton.saw,
+    ),
+  ).toBe(true);
+  await expect(page.locator(".skeleton-settings")).toHaveCount(0); // settled
 });
 
 test("s3: brand link returns home client-side", async ({ page }) => {
