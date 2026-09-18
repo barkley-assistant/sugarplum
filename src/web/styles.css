@@ -1005,6 +1005,36 @@ button.filter-chip {
   width: 40%;
 }
 
+/* Settings boot skeleton (SPA #61): section-shaped cards, same pulse as
+   .skeleton-card. Mirrors the real .settings-section recipe. */
+.skeleton-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+}
+
+.skeleton-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--section-pad);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--section-radius);
+}
+
+/* Login auth-check skeleton (SPA #61): the same card chrome recipe as
+   .auth-card, but its OWN class — e2e targets .auth-card for the real form
+   and must never match transient skeleton chrome. */
+.skeleton-auth {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  /* Mirrors .auth-card's outer box so the boot → form swap does not move. */
+  width: 100%;
+  max-width: 360px;
+}
+
 /* ---------- Progress hairline (refetch) ---------- */
 .progress-hairline {
   position: fixed;
@@ -1394,7 +1424,9 @@ button.filter-chip {
   }
 }
 
-.skeleton-card {
+.skeleton-card,
+.skeleton-section,
+.skeleton-auth {
   animation: pulse 1.4s ease-in-out infinite;
 }
 

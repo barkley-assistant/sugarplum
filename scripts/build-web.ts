@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { generateServiceWorker } from "./generate-sw";
 
@@ -13,7 +13,7 @@ async function buildWeb() {
   await mkdir(OUT_DIR, { recursive: true });
 
   const result = await Bun.build({
-    entrypoints: [join(ROOT, "src", "web", "index.html"), join(ROOT, "src", "web", "login.html")],
+    entrypoints: [join(ROOT, "src", "web", "index.html")],
     outdir: OUT_DIR,
     minify: false,
     sourcemap: "none",
@@ -35,12 +35,16 @@ async function buildWeb() {
   // contract). Copy the canonical source verbatim and rewrite the built HTML
   // link back to the absolute path.
   await cp(join(ROOT, "src", "web", "manifest.webmanifest"), join(OUT_DIR, "manifest.webmanifest"));
-  for (const page of ["index.html", "login.html"]) {
+  for (const page of ["index.html"]) {
     const path = join(OUT_DIR, page);
     const html = await readFile(path, "utf8");
     const fixed = html.replace(/\.\/manifest-[a-z0-9]+\.webmanifest/g, "/manifest.webmanifest");
     if (fixed !== html) await writeFile(path, fixed);
   }
+
+  // One HTML entry now serves every route (the SPA router renders them), so a
+  // reused dist must never keep serving the retired login document.
+  await rm(join(OUT_DIR, "login.html"), { force: true });
 
   // Service worker precache must reflect the ACTUAL hashed outputs.
   await generateServiceWorker(OUT_DIR);

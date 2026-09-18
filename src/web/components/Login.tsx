@@ -1,28 +1,42 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { S } from "../strings";
+import { navigate, safeNext } from "../router";
+import { AuthSkeleton } from "./Skeletons";
 
-/** Open-redirect guard: only follow a same-site relative path. The
- *  share-target prefill fix uses /login?next=<encoded path>; any other
- *  shape (absolute URL, protocol-relative `//evil.example`, empty) falls
- *  back to the home shell. WHATWG URL parsing treats backslash and
- *  tab/LF/CR as slash equivalents, so we also reject `/\evil.example`,
- *  `/\tevil.example`, etc. — all of which would otherwise navigate
- *  off-site after login. */
-function safeNext(raw: string | null): string {
-  if (!raw) return "/";
-  if (raw.length > 512) return "/";
-  if (!raw.startsWith("/")) return "/";
-  // URL parsing treats backslash / tab / LF / CR as a slash, so reject
-  // every shape the parser would read as protocol-relative.
-  if (raw.startsWith("//") || (raw.length >= 2 && /[\\\t\n\r]/.test(raw[1]))) return "/";
-  return raw;
-}
-
-export function Login() {
+/** In-SPA login view (the /login route). Renders the same form it always
+ *  did; the difference is transport — successful sign-in is a pushState,
+ *  never a document load. On mount it asks the server whether this browser
+ *  already has a session: a 200 means the user is already signed in and must
+ *  land on the app instead of a dead form (INV-6). The check hits the
+ *  server, not the localStorage identity cache, because a stale cached
+ *  identity would present a dead session as valid. */
+export function LoginView() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [authCheck, setAuthCheck] = useState<"checking" | "anonymous">("checking");
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (!cancelled && res.ok) {
+          // replace: Back from the app must not land on /login, which would
+          // immediately bounce forward again.
+          navigate(safeNext(new URLSearchParams(location.search).get("next")), { replace: true });
+          return;
+        }
+      } catch {
+        // Offline → show the form; the submit path surfaces any error.
+      }
+      if (!cancelled) setAuthCheck("anonymous");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -35,13 +49,9 @@ export function Login() {
         body: JSON.stringify({ username, password }),
       });
       if (res.status === 200) {
-        // Full navigation so the session cookie applies to the shell fetch.
-        // Honor ?next= for the share-target carry-through; the safeNext guard
-        // blocks open redirects via `//attacker.example` etc.
-        const next = safeNext(
-          new URLSearchParams(location.search).get("next"),
-        );
-        location.href = next;
+        // Honor ?next= for the share-target carry-through; safeNext blocks
+        // open redirects via `//attacker.example` etc.
+        navigate(safeNext(new URLSearchParams(location.search).get("next")));
         return;
       }
       if (res.status === 429) {
@@ -57,6 +67,10 @@ export function Login() {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (authCheck === "checking") {
+    return <AuthSkeleton />;
   }
 
   return (

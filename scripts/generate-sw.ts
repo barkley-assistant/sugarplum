@@ -21,7 +21,7 @@ const PWA_ASSETS = [
 
 export async function generateServiceWorker(outDir: string): Promise<void> {
   const assets = new Set<string>();
-  for (const page of ["index.html", "login.html"]) {
+  for (const page of ["index.html"]) {
     const html = await readFile(join(outDir, page), "utf8");
     for (const match of html.matchAll(/(?:href|src)="(\.\/[^"]+)"/g)) {
       assets.add(match[1].slice(2)); // strip the leading "./"

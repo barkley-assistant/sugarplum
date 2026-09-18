@@ -11,6 +11,10 @@ const MEMBER = { username: "settings-member", password: "member-pass", newPasswo
 test.describe.configure({ mode: "serial" });
 
 async function login(page: Page, username: string, password: string): Promise<void> {
+  // The SPA /login view bounces already-authenticated visitors to the feed
+  // (INV-6), so a login inside a context that already holds a session cookie
+  // must start cookieless — the cookie would otherwise win.
+  await page.context().clearCookies();
   await page.goto(`${BASE}/login`);
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill(password);

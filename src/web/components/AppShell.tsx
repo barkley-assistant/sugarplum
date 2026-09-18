@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { S } from "../strings";
+import { navigate } from "../router";
 import { SkeletonList } from "./SkeletonList";
 
 /** Canonical public repo URL (from `git remote get-url origin`). The footer
@@ -28,7 +29,20 @@ function Brand({ href, linkLabel }: { href?: string; linkLabel?: string }) {
   );
   if (href) {
     return (
-      <a className="brand" href={href} aria-label={linkLabel ?? S.settings.backToList}>
+      <a
+        className="brand"
+        href={href}
+        aria-label={linkLabel ?? S.settings.backToList}
+        onClick={(e) => {
+          // In-app targets navigate through the router (no document load);
+          // modified clicks keep the browser's own behaviour.
+          if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+            return;
+          }
+          e.preventDefault();
+          navigate(href);
+        }}
+      >
         {lockup}
       </a>
     );
