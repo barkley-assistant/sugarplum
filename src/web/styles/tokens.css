@@ -95,6 +95,9 @@
   --status-danger: var(--danger);
   --status-muted: var(--text-3);
   --status-purchased: var(--share-accent);
+  /* Struck purchased title / dimmed row price: text-2 reads 7.41:1 on light
+     and 8.21:1 on dark (AA at row sizes). text-3 would be 2.46:1 — a fail. */
+  --purchased-text: var(--text-2);
 
   --app-main-max: 1060px;
 

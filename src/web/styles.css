@@ -737,49 +737,6 @@ button.filter-chip {
   overflow: hidden;
 }
 
-.item-link {
-  font-size: var(--text-sm);
-  display: inline-block;
-  max-width: 100%;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: bottom;
-}
-
-/* Item link row: clean short link text + a compact copy action. The
-   anchor keeps the full URL in href/title; the visible text is the
-   derived display form (see displayUrl). */
-.item-link-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-2);
-  margin-bottom: var(--sp-1);
-  min-width: 0;
-}
-
-/* Compact ghost button — deliberately not a 44px action button: this
-   sits inline in the card text column on every card, both owner and
-   public share views. */
-.copy-link-btn {
-  min-height: auto;
-  min-width: 0;
-  padding: 0.15rem 0.35rem;
-  font-size: var(--text-xs);
-  background: none;
-  border: none;
-  color: var(--text-3);
-  cursor: pointer;
-}
-
-.copy-link-btn:hover {
-  background: none;
-  border: none;
-  color: var(--text-2);
-}
-
 .price {
   font-weight: 600;
   white-space: nowrap;
@@ -1597,14 +1554,24 @@ button.filter-chip {
   color: var(--status-muted);
 }
 
-/* Purchased share row: dimmed + struck title + badge. */
-.item-card.is-purchased {
-  opacity: 0.75;
-}
-
+/* Purchased share row: struck title + dimmed image and price; the badge keeps
+   FULL emphasis. There is deliberately no whole-card opacity — that starved
+   contrast of every child, including the "Purchased" badge, which is the one
+   element double-gift prevention depends on reading at a glance. */
 .item-card.is-purchased .item-title {
   text-decoration: line-through;
-  color: var(--text-3);
+  color: var(--purchased-text);
+}
+
+.item-card.is-purchased .product-img,
+.item-card.is-purchased .product-img-fallback {
+  filter: saturate(0.6);
+  opacity: 0.9;
+}
+
+.item-card.is-purchased .price-cluster .price {
+  color: var(--purchased-text);
+  opacity: 0.85;
 }
 
 /* ---------- Price cluster ---------- */
@@ -1833,10 +1800,6 @@ button.filter-chip {
 
 .item-card .tags {
   margin: var(--sp-1) 0 0;
-}
-
-.item-card .item-link-row {
-  margin-bottom: 0;
 }
 
 .item-card[data-fetch="pending"] .product-img,
