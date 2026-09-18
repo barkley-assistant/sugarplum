@@ -1097,6 +1097,82 @@ button.filter-chip {
   margin: 0 0 var(--sp-4);
 }
 
+/* ---------- Amethyst A6: paste-link add surface ---------- */
+.sheet--add {
+  padding: 0;
+  padding-bottom: calc(var(--sp-4) + var(--safe-bottom));
+}
+
+.sheet--add .add-sheet-title {
+  margin: 0;
+  padding: 0 var(--sp-4);
+  font-size: var(--text-lg);
+  line-height: 1.2;
+}
+
+.sheet--add .item-form {
+  padding: 0 var(--sp-4);
+}
+
+.sheet--add .add-submit {
+  width: 100%;
+  min-height: 48px;
+  margin-top: var(--sp-2);
+}
+
+.add-disclose {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  padding: var(--sp-2) 0;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  text-align: left;
+}
+
+.add-disclose-caret {
+  font-size: 1.15rem;
+  line-height: 1;
+  transition: transform var(--ease-ui);
+}
+
+.add-disclose[aria-expanded="true"] .add-disclose-caret {
+  transform: rotate(180deg);
+}
+
+.add-manual {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.add-manual-intro {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 639px) {
+  .item-form--add .field-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .item-form--add .field-row .field.grow {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 640px) {
+  .sheet--add .detail-handle {
+    display: none;
+  }
+}
+
 @media (min-width: 640px) {
   .sheet-overlay {
     align-items: center;
@@ -1678,6 +1754,15 @@ button.filter-chip {
 
 .item-card .item-link-row {
   margin-bottom: 0;
+}
+
+.item-card[data-fetch="pending"] .product-img,
+.item-card[data-fetch="pending"] .product-img-fallback {
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.item-card[data-fetch="pending"] .product-row-title {
+  color: var(--text-2);
 }
 
 /* ---------- App shell: header actions + footer ---------- */

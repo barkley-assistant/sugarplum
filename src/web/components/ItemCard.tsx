@@ -180,11 +180,14 @@ export function ItemCard({
       <ProductRow
         id={item.id}
         title={item.title}
+        fetchState={viewerIsOwner ? item.fetchState : undefined}
         onOpen={viewerIsOwner && onOpenDetails ? () => onOpenDetails(item.id) : undefined}
         openLabel={S.item.openDetails}
         image={
           item.imagePath ? (
             <ProductImage src={`/api/wishlist/items/${item.id}/image`} />
+          ) : viewerIsOwner && item.fetchState === "pending" ? (
+            <span className="product-img-fallback" aria-hidden="true" />
           ) : undefined
         }
         actions={viewerIsOwner ? ownerActions : publicActions}

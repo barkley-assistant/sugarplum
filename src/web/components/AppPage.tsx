@@ -130,11 +130,16 @@ export function AppPage() {
     }
   }
 
-  async function refreshOwnList(userId: string) {
+  async function refreshOwnList(userId: string): Promise<OwnedItem[] | null> {
     setRefreshing(true);
     try {
       const res = await fetch(`/api/users/${userId}/wishlist`);
-      if (res.ok) setOwnItems((await res.json()) as OwnedItem[]);
+      if (res.ok) {
+        const items = (await res.json()) as OwnedItem[];
+        setOwnItems(items);
+        return items;
+      }
+      return null;
     } finally {
       setRefreshing(false);
     }
@@ -171,11 +176,21 @@ export function AppPage() {
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(S.errors.addItem);
+    const created = (await res.json()) as OwnedItem;
     setAddOpen(false);
     setPrefill({ url: "", title: "" });
     if (me) {
       await refreshOwnList(me.id);
-      if (values.url) void pollAfterCreate(me.id);
+      if (values.url) {
+        requestAnimationFrame(() => {
+          const row = document.querySelector(`.item-card[data-item-id="${created.id}"]`);
+          if (row) {
+            const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            row.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+          }
+        });
+        void pollEnrichment(me.id, created.id);
+      }
     }
     await refreshSummary();
   }
@@ -249,7 +264,7 @@ export function AppPage() {
       await refreshOwnList(me.id);
       // The 202 means "queued": poll so a moved price and the new snapshot
       // render without a manual reload.
-      void pollAfterCreate(me.id);
+      void pollEnrichment(me.id, id);
     }
   }
 
@@ -277,12 +292,15 @@ export function AppPage() {
     }));
   }
 
-  /** After a URL-only add, poll the list a few times so "Fetching details…"
-   *  resolves without user action (reuses the existing list GET; cheap). */
-  async function pollAfterCreate(userId: string) {
-    for (let i = 0; i < 5; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      await refreshOwnList(userId);
+  /** Poll while an item is still enriching. The response is returned by
+   *  refreshOwnList so the stop condition never reads stale render state. */
+  async function pollEnrichment(userId: string, itemId: string) {
+    const deadline = Date.now() + 30_000;
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const items = await refreshOwnList(userId);
+      const item = items?.find((candidate) => candidate.id === itemId);
+      if (!item || item.fetchState !== "pending") return;
     }
   }
 
@@ -478,9 +496,16 @@ export function AppPage() {
       </div>
 
       {!viewing && (
-        <Sheet open={addOpen} onClose={() => setAddOpen(false)} ariaLabel={S.list.addItem}>
-          <h2>{S.list.addItem}</h2>
+        <Sheet
+          open={addOpen}
+          onClose={() => setAddOpen(false)}
+          ariaLabel={S.list.addItem}
+          boxClassName="sheet--add"
+        >
+          <div className="detail-handle" aria-hidden="true" />
+          <h2 className="add-sheet-title">{S.form.addTitle}</h2>
           <ItemForm
+            mode="add"
             submitLabel={S.list.addItem}
             initialValues={prefill}
             onSubmit={createItem}
