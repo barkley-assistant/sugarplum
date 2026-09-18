@@ -565,6 +565,15 @@ a.brand:hover {
   font-weight: 700;
 }
 
+/* #62: the page heading is focused programmatically on mount (usePageFocus)
+   so a screen reader announces the route change. It is not keyboard-reachable
+   (tabindex="-1"), so the shared focus ring only paints a box around the
+   title — suppress it for the two programmatic targets. */
+.page-title:focus,
+.detail-title:focus {
+  outline: none;
+}
+
 .list-heading .count {
   font-variant-numeric: tabular-nums;
   font-size: var(--text-sm);
@@ -1192,7 +1201,11 @@ button.filter-chip {
   padding: var(--sp-2) 0;
   background: none;
   border: none;
+  /* A full-width hairline, not a box: the global button radius would curve
+     this single top border into a clipped rounded outline (#62, seen in the
+     page screenshots). */
   border-top: 1px solid var(--border);
+  border-radius: 0;
   color: var(--text-2);
   font-size: var(--text-sm);
   text-align: left;
@@ -1220,12 +1233,17 @@ button.filter-chip {
 }
 
 @media (max-width: 639px) {
-  .item-form--add .field-row {
+  /* Both form modes share the row's mobile rhythm: the Title field (the
+     .field.grow) spans the full width and Price/Currency sit side by side.
+     Scoped to `.item-form--add` before #62, which left the EDIT form's flex
+     row collapsing the Title input to a sliver at this width (the screenshots
+     caught it). */
+  .item-form .field-row {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .item-form--add .field-row .field.grow {
+  .item-form .field-row .field.grow {
     grid-column: 1 / -1;
   }
 }

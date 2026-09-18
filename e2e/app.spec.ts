@@ -222,6 +222,13 @@ test("3c2: mobile add mount focuses no field (no keyboard pop)", async ({ page }
     ),
     "no form field is focused after the add page mounts",
   ).toBe(false);
+  // The add page clears the mobile overflow bar at the widths that matter.
+  for (const width of [360, 390, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    const probe = await horizontalEscapes(page);
+    expect(probe.docOverflow, `add page overflow at ${width}px`).toBe(false);
+    expect(probe.offenders, `add page escapes at ${width}px`).toEqual([]);
+  }
 });
 
 test("3e: add from the page returns to the feed scrolled to the new row", async ({ page }) => {
@@ -532,9 +539,20 @@ test("4i: edit page round-trip and keyboard stillness", async ({ page }) => {
   await expect(page).toHaveURL(`${BASE}/items/${item.id}`);
   await expect(page.locator(".detail-title")).toHaveText("Edited via page");
 
-  // Cancel path: back to the item view, value discarded.
+  // The edit form keeps the mobile title row usable (no collapsed field) and
+  // clears the overflow bar at every phone width.
   await page.getByRole("button", { name: "Edit item" }).click();
   await expect(page).toHaveURL(`${BASE}/items/${item.id}/edit`);
+  await expect.poll(() => page.getByLabel("Title").evaluate((el) => Math.round(el.getBoundingClientRect().width)))
+    .toBeGreaterThan(200);
+  for (const width of [360, 390, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    const probe = await horizontalEscapes(page);
+    expect(probe.docOverflow, `edit page overflow at ${width}px`).toBe(false);
+    expect(probe.offenders, `edit page escapes at ${width}px`).toEqual([]);
+  }
+
+  // Cancel path: back to the item view, value discarded.
   await page.getByLabel("Title").fill("Discarded");
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page).toHaveURL(`${BASE}/items/${item.id}`);
