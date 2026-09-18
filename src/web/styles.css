@@ -557,6 +557,19 @@ a.brand:hover {
   color: var(--text-2);
 }
 
+/* A8: temporary Reorder/Done action in the list heading. */
+.list-heading-action {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.list-heading-action .compact-action {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: var(--text-sm);
+}
+
 /* ---------- Amethyst A2: wishlist heading switcher ---------- */
 .list-switcher {
   position: relative;
