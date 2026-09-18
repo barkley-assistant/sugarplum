@@ -56,7 +56,7 @@ export function Sheet({
           )
         : [];
     const raf = requestAnimationFrame(() => {
-      focusables()[0]?.focus();
+      focusables()[0]?.focus({ preventScroll: true });
     });
     function onKey(e: KeyboardEvent) {
       if (openStack[openStack.length - 1] !== stackToken) return;

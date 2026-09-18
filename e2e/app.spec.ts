@@ -1358,3 +1358,72 @@ test("16: login card meets AA, fits 360px, and reports failures", async ({ page,
   await expect(page.getByRole("alert")).toHaveText(/Invalid username or password|Too many attempts/);
   await expect(card).toBeVisible();
 });
+
+test("17: mobile user-menu sheet shows every row and does not jump the page", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  // The admin's header UserMenu trigger is named after the display name
+  // (UserMenu.tsx:37,44; settings.spec.ts:22 pins "Admin").
+  const trigger = page.locator('.user-menu-button[aria-label="Admin"]');
+  await expect(trigger).toBeVisible();
+  const scrollBefore = await page.evaluate(() => window.scrollY);
+  await trigger.click();
+
+  const sheet = page.getByRole("dialog", { name: "Admin" });
+  await expect(sheet).toBeVisible();
+
+  // The mobile sheet portals to document.body, so its overlay resolves
+  // `inset: 0` against the viewport. Rendered in place it resolves against
+  // .topbar's backdrop-filter containing block instead and collapses to a
+  // ~topbar-height strip (#60), pushing the upper rows above the viewport.
+  const overlay = await page.locator(".sheet-overlay").boundingBox();
+  expect(overlay).not.toBeNull();
+  expect(overlay!.y, "overlay starts at the viewport top").toBeLessThanOrEqual(1);
+  expect(overlay!.height, "overlay spans the viewport").toBeGreaterThanOrEqual(840);
+
+  // Every row is on screen and clickable — not clipped out of the viewport.
+  // (`toBeVisible` alone cannot catch this: an element above the viewport
+  // still has a non-empty box.)
+  const settings = sheet.getByRole("menuitem", { name: "Settings" });
+  const logout = sheet.getByRole("menuitem", { name: "Log out" });
+  const cancel = sheet.getByRole("menuitem", { name: "Cancel" });
+  await expect(settings).toBeInViewport();
+  await expect(logout).toBeInViewport();
+  await expect(cancel).toBeInViewport();
+
+  // Focus moved into the sheet without scrolling the page (Sheet's
+  // focus-on-open passes preventScroll).
+  const scrollAfterOpen = await page.evaluate(() => window.scrollY);
+  expect(scrollAfterOpen, "opening the sheet did not scroll the page").toBe(scrollBefore);
+  await expect.poll(() => sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+
+  // Menu keyboard navigation works through the portal: focus starts on the
+  // first row and Tab moves to the next one, still inside the sheet.
+  //
+  // Known pre-existing gap, out of scope here: Tab past the LAST row leaves
+  // the sheet instead of wrapping. Sheet defers keydown inside a
+  // [role="menu"] subtree to OverflowMenu's own handler (Sheet.tsx:66-69),
+  // and that handler only closes on Tab on desktop (OverflowMenu.tsx:127-129).
+  // Verified with a probe at 390x844: Settings -> Log out -> Cancel -> BODY.
+  // Flagged on the PR and tracked as a follow-up card.
+  await expect(settings).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(logout).toBeFocused();
+  await expect.poll(() => sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+
+  // Escape closes and returns focus to the trigger (the opener is captured
+  // via document.activeElement at open, so it survives the portal).
+  await page.keyboard.press("Escape");
+  await expect(sheet).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+
+  // Usable, not merely visible: choosing Settings navigates to /settings.
+  await trigger.click();
+  const reopened = page.getByRole("dialog", { name: "Admin" });
+  await expect(reopened).toBeVisible();
+  await reopened.getByRole("menuitem", { name: "Settings" }).click();
+  await expect(page).toHaveURL(/\/settings$/);
+});
