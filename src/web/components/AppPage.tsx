@@ -25,6 +25,7 @@ import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { ItemList, type OwnerRef } from "./ItemList";
 import { ShareMenu } from "./ShareMenu";
 import { Sheet } from "./Sheet";
+import { GuestItemDetailSheet, type GuestItemDetail } from "./GuestItemDetailSheet";
 import { ItemDetailSheet } from "./ItemDetailSheet";
 import { AppShell, AppShellLoading } from "./AppShell";
 import { IconButton, PlusIcon, ShareIcon } from "./IconButton";
@@ -46,6 +47,7 @@ export function AppPage() {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [hintStates, setHintStates] = useState<Record<string, PriceHintState>>({});
   const [openItemId, setOpenItemId] = useState<string | null>(null);
+  const [guestItemId, setGuestItemId] = useState<string | null>(null);
   const [reordering, setReordering] = useState(false);
   const reorderToggleRef = useRef<HTMLButtonElement | null>(null);
   const shareTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -150,6 +152,7 @@ export function AppPage() {
 
   async function viewList(userId: string) {
     setReordering(false);
+    setGuestItemId(null);
     setViewing(userId);
     setRefreshing(true);
     try {
@@ -162,6 +165,7 @@ export function AppPage() {
 
   function backToOwnList() {
     setReordering(false);
+    setGuestItemId(null);
     setViewing(null);
     setOtherItems([]);
   }
@@ -396,6 +400,7 @@ export function AppPage() {
 
   const allTags = Array.from(new Set(ownItems.flatMap((i) => i.tags))).sort();
   const detailItem = ownItems.find((item) => item.id === openItemId) ?? null;
+  const guestItem = otherItems.find((item) => item.id === guestItemId) ?? null;
 
   function ownerRefFor(userId: string): OwnerRef {
     const row = summary.find((r) => r.userId === userId);
@@ -430,6 +435,7 @@ export function AppPage() {
           viewerIsOwner={false}
           onClaim={claim}
           onUnclaim={unclaim}
+          onOpenDetails={setGuestItemId}
         />
       );
     }
@@ -607,6 +613,34 @@ export function AppPage() {
           hintState={hintStates[detailItem.id]}
         />
       )}
+      {viewing && guestItem && (
+        <GuestItemDetailSheet
+          item={toGuestDetail(guestItem)}
+          onClose={() => setGuestItemId(null)}
+        />
+      )}
     </AppShell>
   );
+}
+
+/** Maps the other-user projection (PublicItem) into the guest detail sheet's
+ *  normalized shape. Only fields PublicItem actually carries are read — an
+ *  owner-only field (hints, priceStats, cheaperUrl) is not even addressable
+ *  here, so nothing can reach the sheet by omission. The image stays on the
+ *  session-scoped route the public rows already use; there is no claim
+ *  state in this shape (it lives on the row) and no purchased state, because
+ *  the other-user projection has none. */
+function toGuestDetail(item: PublicItem): GuestItemDetail {
+  return {
+    id: item.id,
+    title: item.title,
+    url: item.url,
+    priceCents: item.priceCents,
+    currency: item.currency,
+    notes: item.notes,
+    tags: item.tags,
+    siteName: item.siteName,
+    imageSrc: item.imagePath ? `/api/wishlist/items/${item.id}/image` : undefined,
+    createdAt: item.createdAt,
+  };
 }
