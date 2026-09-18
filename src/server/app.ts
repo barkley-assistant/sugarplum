@@ -1,11 +1,13 @@
 import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { join, normalize } from "node:path";
+import type { RouteRequest, RouteServer } from "./auth/middleware";
 import { hashPassword } from "./auth/passwords";
 import { RateLimiter } from "./auth/rate-limit";
 import { sweepExpiredSessions } from "./auth/sessions";
 import type { Config } from "./config";
 import { openDatabase } from "./db/db";
+import { withSecurityHeaders } from "./http-headers";
 import { authRoutes } from "./routes/auth";
 import { healthRoutes } from "./routes/health";
 import { imageRoutes } from "./routes/images";
@@ -23,6 +25,31 @@ export interface App {
   db: Database;
   config: Config;
   stop: () => Promise<void>;
+}
+
+/** Every handler shape the route tables use, widened for wrapping. Handlers
+ *  with fewer parameters stay assignable to this two-arg form. */
+type AnyRouteHandler = (
+  req: RouteRequest,
+  server: RouteServer,
+) => Response | Promise<Response>;
+type AnyRouteTable = Record<string, Record<string, AnyRouteHandler>>;
+
+/** Wraps a route table so every method handler emits hardened headers (#63
+ *  G4). Builds a FRESH table — the constructors' own returns are untouched.
+ *  The cast at the call site is the one documented widening: Bun's `routes`
+ *  generic wants the literal table shape, which a mapped table can't carry. */
+function hardenRoutes(routes: AnyRouteTable): AnyRouteTable {
+  const out: AnyRouteTable = {};
+  for (const [path, methods] of Object.entries(routes)) {
+    const wrapped: Record<string, AnyRouteHandler> = {};
+    for (const [method, handler] of Object.entries(methods)) {
+      wrapped[method] = async (req, server) =>
+        withSecurityHeaders(await handler(req, server), path);
+    }
+    out[path] = wrapped;
+  }
+  return out;
 }
 
 export function createApp(config: Config): App {
@@ -51,6 +78,13 @@ export function createApp(config: Config): App {
   );
 
   const limiter = new RateLimiter();
+  // IP-only backstop for login (#63 G3): the per-(username|IP) limiter above
+  // never trips for an attacker cycling random usernames from one IP, and each
+  // attempt costs a full scrypt verify. 50 failures / 15 min is far above what
+  // fat-fingering can reach (the 10-failure per-username lockout fires first)
+  // yet caps a spray at 50 hashes per window. The two real users share the
+  // tunnel's client IP; both would have to fail 25× each inside 15 minutes.
+  const loginIpLimiter = new RateLimiter(50, 15 * 60 * 1000);
   // Anonymous purchase attempts: ~5 per 15 min per token+IP. Only
   // mutation-reaching attempts are recorded (see share.ts).
   const shareLimiter = new RateLimiter(5, 15 * 60 * 1000);
@@ -70,8 +104,8 @@ export function createApp(config: Config): App {
   const server = Bun.serve({
     hostname: config.host,
     port: config.port,
-    routes: {
-      ...authRoutes(db, config, limiter),
+    routes: hardenRoutes({
+      ...authRoutes(db, config, limiter, loginIpLimiter),
       ...userRoutes(db),
       ...wishlistRoutes(db, config.imagesDir, queue, {
         searxngUrl: config.searxngUrl,
@@ -80,7 +114,7 @@ export function createApp(config: Config): App {
       ...shareRoutes(db, shareLimiter, { imagesDir: config.imagesDir }),
       ...imageRoutes(db, config.imagesDir),
       ...healthRoutes(),
-    },
+    } as AnyRouteTable),
     fetch: (req) => handleNonApiRequest(req),
   });
 
@@ -139,10 +173,13 @@ function ensureBootstrapAdmin(db: Database, config: Config): void {
 async function handleNonApiRequest(req: Request): Promise<Response> {
   const url = new URL(req.url);
   if (url.pathname.startsWith("/api/")) {
-    return new Response(JSON.stringify({ error: "Not found" }), {
-      status: 404,
-      headers: { "Content-Type": "application/json" },
-    });
+    return withSecurityHeaders(
+      new Response(JSON.stringify({ error: "Not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      }),
+      url.pathname,
+    );
   }
 
   // Explicit static map. /add is the wave-3 Web Share Target seam: it only
@@ -163,17 +200,17 @@ async function handleNonApiRequest(req: Request): Promise<Response> {
   else relative = url.pathname.slice(1);
 
   if (!relative || relative.includes("..")) {
-    return new Response("Not found", { status: 404 });
+    return withSecurityHeaders(new Response("Not found", { status: 404 }), url.pathname);
   }
 
   const resolved = normalize(join(PUBLIC_DIR, relative));
   if (!resolved.startsWith(PUBLIC_DIR)) {
-    return new Response("Not found", { status: 404 });
+    return withSecurityHeaders(new Response("Not found", { status: 404 }), url.pathname);
   }
 
   const file = Bun.file(resolved);
   if (!(await file.exists())) {
-    return new Response("Not found", { status: 404 });
+    return withSecurityHeaders(new Response("Not found", { status: 404 }), url.pathname);
   }
-  return new Response(file);
+  return withSecurityHeaders(new Response(file), url.pathname);
 }

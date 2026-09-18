@@ -37,7 +37,12 @@ interface UserRow {
   price_tracking_enabled: number;
 }
 
-export function authRoutes(db: Database, config: Config, limiter: RateLimiter) {
+export function authRoutes(
+  db: Database,
+  config: Config,
+  limiter: RateLimiter,
+  ipLimiter: RateLimiter,
+) {
   return {
     "/api/auth/login": {
       POST: async (req: RouteRequest, server: RouteServer) => {
@@ -55,15 +60,20 @@ export function authRoutes(db: Database, config: Config, limiter: RateLimiter) {
           return jsonError(400, "Username and password are required");
         }
 
-        // Per (username + client IP), 10 failures per 15 minutes → 429.
+        // Two failure buckets, both recorded on any credential failure:
+        //  - per (username|IP), 10 / 15 min → the user-facing lockout;
+        //  - per IP, 50 / 15 min → the spray backstop (#63 G3). Cycling random
+        //    usernames from one IP never trips the first bucket, and every
+        //    attempt costs a full scrypt verify.
         const ip = server.requestIP(req)?.address ?? "unknown";
         const key = `${username.toLowerCase()}|${ip}`;
-        if (limiter.isBlocked(key)) {
+        if (limiter.isBlocked(key) || ipLimiter.isBlocked(ip)) {
+          const retryAfterMs = Math.max(limiter.retryAfterMs(key), ipLimiter.retryAfterMs(ip));
           return new Response(JSON.stringify({ error: "Too many attempts. Try again later." }), {
             status: 429,
             headers: {
               "Content-Type": "application/json",
-              "Retry-After": String(Math.ceil(limiter.retryAfterMs(key) / 1000)),
+              "Retry-After": String(Math.ceil(retryAfterMs / 1000)),
             },
           });
         }
@@ -81,11 +91,13 @@ export function authRoutes(db: Database, config: Config, limiter: RateLimiter) {
           // not distinguishable from wrong passwords by timing.
           verifyDummyPassword();
           limiter.recordFailure(key);
+          ipLimiter.recordFailure(ip);
           return jsonError(401, "Invalid username or password");
         }
 
         if (!verifyPassword(password, user.password_hash)) {
           limiter.recordFailure(key);
+          ipLimiter.recordFailure(ip);
           return jsonError(401, "Invalid username or password");
         }
 

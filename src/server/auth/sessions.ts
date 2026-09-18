@@ -35,11 +35,19 @@ export function createSession(
 }
 
 /** Returns the session's user, or null when the session is missing/expired/
- *  the user was deactivated (the row is deleted in those cases). */
+ *  the user was deactivated (the row is deleted in those cases).
+ *
+ *  Sliding renewal (#63): a session used inside the LAST half of its window
+ *  is extended by its full window, so an active user is never surprise-logged-
+ *  out. The window is the row's own `expires_at − created_at` span (the TTL
+ *  current at mint), and BOTH columns are co-updated on renewal so the span
+ *  never drifts — `created_at` means "window start (mint or last renewal)".
+ *  Renewal happens at most once per half-window; an idle row is never written
+ *  and still dies at its edge (the sweep and the expiry check are unchanged). */
 export function getSessionUser(db: Database, token: string): SessionUser | null {
   const row = db
     .query(
-      `SELECT s.expires_at AS expires_at,
+      `SELECT s.expires_at AS expires_at, s.created_at AS created_at,
               u.id AS id, u.username AS username, u.display_name AS display_name,
               u.is_admin AS is_admin, u.is_active AS is_active, u.hints_enabled AS hints_enabled,
               u.price_tracking_enabled AS price_tracking_enabled
@@ -49,6 +57,7 @@ export function getSessionUser(db: Database, token: string): SessionUser | null 
     .get(token) as
     | {
         expires_at: string;
+        created_at: string;
         id: string;
         username: string;
         display_name: string;
@@ -60,9 +69,23 @@ export function getSessionUser(db: Database, token: string): SessionUser | null 
     | undefined;
 
   if (!row) return null;
+  const now = Date.now();
   if (row.expires_at <= nowIso() || !row.is_active) {
     db.run("DELETE FROM sessions WHERE token = ?", [token]);
     return null;
+  }
+
+  // Fail-closed on a torn row: a non-positive window (unparseable dates)
+  // never renews — that row dies at its edge exactly like before.
+  const expiresMs = Date.parse(row.expires_at);
+  const windowMs = expiresMs - Date.parse(row.created_at);
+  if (windowMs > 0 && expiresMs - now < windowMs / 2) {
+    const startedAt = new Date(now).toISOString();
+    db.run("UPDATE sessions SET created_at = ?, expires_at = ? WHERE token = ?", [
+      startedAt,
+      new Date(now + windowMs).toISOString(),
+      token,
+    ]);
   }
 
   return {
