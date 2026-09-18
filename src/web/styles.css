@@ -940,7 +940,7 @@ button.filter-chip {
     display: inline-flex;
     visibility: hidden;
     position: absolute;
-    inset: 0;
+    inset: 0 auto 0 -44px;
     background: var(--surface);
   }
 
