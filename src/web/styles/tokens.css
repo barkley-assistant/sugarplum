@@ -16,7 +16,10 @@
   --surface-3: #ffffff;
   --text: #18181b;
   --text-2: #52525b;
-  --text-3: #a1a1aa;
+  /* Muted text (placeholders, footer, graph labels, On/Off state) must clear
+     AA where it renders: 5.05:1 on --bg, 4.80:1 on --surface-2, 5.28:1 on
+     --surface. The old #a1a1aa read 2.46:1. */
+  --text-3: #6b6b74;
   --border: #e4e4e7;
   --border-2: #d4d4d8;
   --success: #16a34a;
@@ -91,8 +94,6 @@
   --ring-offset: 2px;
   --focus-visible: 2px solid var(--ring);
 
-  --status-success: var(--success);
-  --status-danger: var(--danger);
   --status-muted: var(--text-3);
   --status-purchased: var(--share-accent);
   /* Claim badge: a dedicated token, because --success (#16a34a) is 3.16:1 on
@@ -104,7 +105,6 @@
 
   --app-main-max: 1060px;
 
-  --text-2xs: 0.6875rem;
   --ease-row: 120ms ease;
 
   --skel-thumb: var(--row-thumb);
@@ -113,7 +113,6 @@
   --empty-pad-y: var(--sp-6);
   --empty-pad-x: var(--sp-4);
   --r-input: var(--r-sm);
-  --r-form-card: var(--r-md);
   --section-gap: var(--sp-5);
   --section-pad: var(--sp-5);
   --section-radius: var(--r-md);
@@ -140,12 +139,15 @@
     --surface-3: #241B31;
     --text: #F7F5FA;
     --text-2: #B3AEC0;
-    --text-3: #8B8796;
+    /* 5.03:1 on --surface-2 (the segmented-control track), 6.07:1 on --bg;
+       the old #8B8796 read 4.47:1 on --surface-2. */
+    --text-3: #94909F;
     --border: #2A2438;
     --border-2: #3A3350;
     --plum-800: #561E9A;
-    --plum-700: #7C55E6;
-    --plum-600: #8B5CF6;
+    /* White label on these fills: 5.74:1 (700) / 4.88:1 (600), both AA. */
+    --plum-700: #6D4ED1;
+    --plum-600: #7C55E6;
     --plum-500: #A78BFA;
     --plum-100: #2e1f4d;
     --plum-050: #231838;

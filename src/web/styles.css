@@ -189,10 +189,14 @@ textarea:focus {
   box-shadow: 0 0 0 2px var(--plum-100);
 }
 
+/* The halo above is decorative; in dark it is 1.2:1 against the field and
+   reads as nothing. Give inputs the same focus-visible outline every other
+   control uses, hugging the field (offset 1px). */
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: none;
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
 }
 
 label {
@@ -2387,4 +2391,19 @@ button.filter-chip {
   color: var(--text-3);
   font-size: var(--text-xs);
   white-space: nowrap;
+}
+
+/* ---------- Amethyst A10: dark link family ---------- */
+/* Plum-600 text links sat at 3.89:1 (on --surface-3) / 4.46:1 (on --bg) in
+   dark — below AA. Dark links, the detail edit affordance and the row /
+   hints-toggle hover states use plum-500 (#A78BFA): 6.94:1 on --bg, 6.05:1
+   on --surface-3. Declared last on purpose: it has to win on source order
+   against the light-scheme rules above, not on specificity. */
+@media (prefers-color-scheme: dark) {
+  a,
+  .detail-edit-link,
+  .detail-row:hover,
+  .detail-hints .hints-toggle:hover {
+    color: var(--plum-500);
+  }
 }
