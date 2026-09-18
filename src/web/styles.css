@@ -137,6 +137,13 @@ button.danger:hover {
   border-color: var(--danger);
 }
 
+/* Settings + login submits adopt the detail surface's pill CTA grammar. */
+button.settings-submit {
+  border-radius: var(--r-full);
+  font-weight: 600;
+  padding: 0 var(--sp-5);
+}
+
 /* Subordinate navigation, not buttons (tier-1 G5): transparent at rest,
    soft plum tint when active. Touch targets stay 44px. */
 button.chip {
@@ -319,7 +326,7 @@ label {
   flex-direction: column;
   gap: 0.6rem;
   padding: var(--sp-6);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-xl);
 }
 
 .auth-lockup {
@@ -823,7 +830,7 @@ button.filter-chip {
    button no longer out-shouts the product title. Same chip-active grammar
    as the filter chips; the accessible name is unchanged. */
 .claim-btn {
-  min-height: 36px;
+  min-height: 44px;
   padding: var(--sp-1) var(--sp-3);
   font-size: var(--text-sm);
   font-weight: 500;
@@ -1219,8 +1226,8 @@ button.filter-chip {
 }
 
 .toast-close {
-  min-height: 36px;
-  min-width: 36px;
+  min-height: 44px;
+  min-width: 44px;
   padding: 0 var(--sp-2);
   background: transparent;
   border: none;
@@ -2249,7 +2256,7 @@ button.filter-chip {
 
 .window-seg button {
   min-width: 44px;
-  min-height: 36px;
+  min-height: 44px;
   padding: 0 10px;
   border: 1px solid transparent;
   border-radius: var(--r-full);

@@ -90,7 +90,7 @@ export function Login() {
 
         {error && <p className="error" role="alert">{error}</p>}
 
-        <button type="submit" disabled={busy}>
+        <button type="submit" className="settings-submit" disabled={busy}>
           {busy ? S.auth.signingIn : S.auth.signIn}
         </button>
       </form>

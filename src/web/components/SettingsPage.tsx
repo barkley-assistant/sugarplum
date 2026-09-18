@@ -214,7 +214,7 @@ export function SettingsPage() {
                 required
               />
             </div>
-            <button type="submit" disabled={profileBusy}>
+            <button type="submit" className="settings-submit" disabled={profileBusy}>
               {profileBusy ? S.form.saving : S.settings.saveProfile}
             </button>
           </form>
@@ -259,7 +259,7 @@ export function SettingsPage() {
               </div>
             </div>
             {passwordError && <p className="error" role="alert">{passwordError}</p>}
-            <button type="submit" disabled={passwordBusy}>
+            <button type="submit" className="settings-submit" disabled={passwordBusy}>
               {passwordBusy ? S.form.saving : S.settings.setPassword}
             </button>
           </form>
