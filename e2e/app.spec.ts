@@ -2189,3 +2189,138 @@ test("20: quiet ghost icon buttons — no standing chrome, soft hover (#75)", as
   const outline = await add.evaluate((e) => getComputedStyle(e).outlineColor);
   expect(outline).toContain("124, 58, 237"); // --plum-500 light #7c3aed = rgb(124,58,237)
 });
+
+test("21: desktop reading column — non-feed pages cap at 720px, feed does not (#71)", async ({ page }) => {
+  // #71: on desktop the non-feed pages (detail, add, edit) stop stretching
+  // their drawer-era internals across the full 1060px .app-main column and
+  // render a centered 720px reading column instead. The feed keeps the full
+  // column. Geometry is asserted with computed styles + boundingBox (the
+  // house idiom from tests 18/20) — screenshots cannot go red, geometry can.
+  const COL = 720;
+
+  // The serial chain seeds "History probe" in 4b. When this test runs alone
+  // (the filtered RED/GREEN runs) seed the same shape, so the assertions
+  // below measure the layout rather than a missing fixture.
+  const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as { id: string };
+  const list = (await (await page.request.get(`${BASE}/api/users/${me.id}/wishlist`)).json()) as Array<{ id: string; title: string }>;
+  let probe = list.find((item) => item.title === "History probe");
+  if (!probe) {
+    const created = await page.request.post(`${BASE}/api/wishlist/items`, {
+      data: { title: "History probe", priceCents: "12.50", currency: "GBP" },
+    });
+    expect(created.status()).toBe(201);
+    probe = { id: ((await created.json()) as { id: string }).id, title: "History probe" };
+  }
+
+  // --- Detail page: cap + centering at every desktop width, both schemes.
+  for (const scheme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    for (const width of [1024, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`${BASE}/items/${probe.id}`);
+      const itemPage = page.locator(".item-page");
+      await expect(itemPage).toBeVisible();
+
+      const capped = await itemPage.evaluate((el) => ({
+        maxWidth: getComputedStyle(el).maxWidth,
+        box: el.getBoundingClientRect().width,
+      }));
+      expect(capped.maxWidth, `${scheme} @${width}: .item-page max-width`).toBe(`${COL}px`);
+      expect(capped.box, `${scheme} @${width}: .item-page rendered width`).toBeLessThanOrEqual(COL);
+
+      // Centered: .item-page's midpoint == .app-main's midpoint (both are
+      // auto-margin centered on the same axis).
+      const centers = await itemPage.evaluate((el) => {
+        const pageBox = el.getBoundingClientRect();
+        const main = el.closest(".app-main")!.getBoundingClientRect();
+        return { pageMid: pageBox.left + pageBox.width / 2, mainMid: main.left + main.width / 2 };
+      });
+      expect(Math.abs(centers.pageMid - centers.mainMid), `${scheme} @${width}: column centered`).toBeLessThanOrEqual(1);
+
+      const overflow = await horizontalEscapes(page);
+      expect(overflow.docOverflow, `${scheme} @${width}: detail overflow`).toBe(false);
+      expect(overflow.offenders, `${scheme} @${width}: detail escapes`).toEqual([]);
+    }
+  }
+
+  // --- Add page: same cap; the submit pill spans the column, not the viewport.
+  await page.emulateMedia({ colorScheme: "light" });
+  for (const width of [1024, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(`${BASE}/add`);
+    const addPage = page.locator(".add-page");
+    await expect(addPage).toBeVisible();
+    expect((await addPage.boundingBox())!.width, `@${width}: .add-page column width`).toBeLessThanOrEqual(COL);
+
+    const submit = page.locator(".add-submit");
+    await expect(submit).toBeVisible();
+    expect((await submit.boundingBox())!.width, `@${width}: submit pill spans the column`).toBeLessThanOrEqual(COL);
+
+    const overflow = await horizontalEscapes(page);
+    expect(overflow.docOverflow, `@${width}: add overflow`).toBe(false);
+    expect(overflow.offenders, `@${width}: add escapes`).toEqual([]);
+  }
+
+  // --- Skeleton parity: the boot skeleton renders inside the same column, so
+  // the skeleton→page swap never re-centers (no layout shift on slow loads).
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${BASE}/add`);
+  const skeleton = page.locator(".skeleton-form");
+  if ((await skeleton.count()) > 0) {
+    expect((await skeleton.boundingBox())!.width, "boot skeleton width matches the column").toBeLessThanOrEqual(COL);
+  } else {
+    // The boot already settled. getComputedStyle on a detached-class probe
+    // still resolves media queries in Chromium, so the rule itself is the
+    // contract here (the live box above is best-effort).
+    const probeMax = await page.evaluate(() => {
+      const el = document.createElement("div");
+      el.className = "skeleton-form";
+      document.body.appendChild(el);
+      const maxWidth = getComputedStyle(el).maxWidth;
+      el.remove();
+      return maxWidth;
+    });
+    expect(probeMax, "skeleton-form carries the 720px cap rule").toBe(`${COL}px`);
+  }
+
+  // --- Edit page: shares .add-page — one spot check.
+  await page.goto(`${BASE}/items/${probe.id}/edit`);
+  const editPage = page.locator(".add-page");
+  await expect(editPage).toBeVisible();
+  expect((await editPage.boundingBox())!.width, "edit page column width").toBeLessThanOrEqual(COL);
+
+  // --- Feed lock: the feed does NOT get the cap (its rows span the full
+  // 1060px column minus the 16px gutters).
+  await page.goto(`${BASE}/`);
+  await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+  const rowWidth = await page.locator(".product-row-grid").first().evaluate((el) => el.getBoundingClientRect().width);
+  expect(rowWidth, "feed rows keep the full app column").toBeGreaterThan(COL);
+
+  // --- Below the 1024px gate there is NO cap: mobile (≤430px) and tablet
+  // stay fluid, and the overflow probe stays clean at every width.
+  for (const width of [430, 768, 1023]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${BASE}/items/${probe.id}`);
+    const itemPage = page.locator(".item-page");
+    await expect(itemPage).toBeVisible();
+    const fluid = await itemPage.evaluate((el) => {
+      const main = el.closest(".app-main")!;
+      const cs = getComputedStyle(main);
+      return {
+        maxWidth: getComputedStyle(el).maxWidth,
+        box: el.getBoundingClientRect().width,
+        contentWidth:
+          main.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight),
+      };
+    });
+    expect(fluid.maxWidth, `@${width}: no 720 cap below the gate`).toBe("none");
+    expect(fluid.box, `@${width}: page fills the app column`).toBeGreaterThanOrEqual(fluid.contentWidth - 1);
+
+    const overflow = await horizontalEscapes(page);
+    expect(overflow.docOverflow, `@${width}: overflow`).toBe(false);
+    expect(overflow.offenders, `@${width}: escapes`).toEqual([]);
+  }
+
+  // Leave the viewport desktop for any later assertions.
+  await page.setViewportSize({ width: 1280, height: 900 });
+});
