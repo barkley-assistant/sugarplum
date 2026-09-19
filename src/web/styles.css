@@ -187,7 +187,32 @@ textarea {
   background: var(--surface);
   color: var(--text);
   width: 100%;
+  min-height: 44px; /* #74: one shared vertical metric, border-box (global
+     box-sizing), so a native select can never drift from its sibling input
+     regardless of engine intrinsic metrics. Matches the 44px tap-target
+     grammar every other control already follows. */
   transition: border-color var(--ease-ui), box-shadow var(--ease-ui);
+}
+
+/* #74: native select chrome measures differently from inputs across engines
+   (the root cause of the currency/price mismatch — measured here as a 5px
+   shortfall, 38.59px vs 43.59px). Strip the native chrome so the box is
+   fully ours: with appearance:none the select's layout math becomes
+   identical to an input's (content + padding), so the shared min-height
+   makes the two boxes equal by construction. Then draw the dropdown
+   affordance back as a chevron. The popup stays native (keyboard + a11y
+   intact). The stroke hex is --text-3 per scheme (light #6b6b74): a data
+   URI cannot host var(), so each scheme carries its own literal. */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b6b74' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  /* Reserve arrow room so "GBP" cannot run under it at any locale/font.
+     Must stay AFTER the shared rule above: the shared `background`
+     shorthand would reset background-image. */
+  padding-right: 2rem;
 }
 
 input:focus,
@@ -2505,5 +2530,12 @@ button.filter-chip {
   .detail-row:hover,
   .detail-hints .hints-toggle:hover {
     color: var(--plum-500);
+  }
+
+  /* #74: the select chevron is a data URI, which cannot resolve var(), so the
+     dark scheme carries its own literal stroke (--text-3 dark, #94909F).
+     Declared here on purpose for source-order wins over the light rule. */
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394909F' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
 }
