@@ -1,0 +1,234 @@
+{
+  "label": "after",
+  "shots": [
+    {
+      "width": 1280,
+      "scheme": "light",
+      "pointerOnTitle": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": null,
+        "openBg": "rgba(0, 0, 0, 0)",
+        "gripPosition": "static",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 1058,
+          "right": 1102,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 847.48,
+          "right": 1046,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": false,
+        "overlaps": []
+      },
+      "pointerOnGrip": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": null,
+        "openBg": "rgba(0, 0, 0, 0)",
+        "gripPosition": "static",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 1058,
+          "right": 1102,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 847.48,
+          "right": 1046,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": false,
+        "overlaps": []
+      }
+    },
+    {
+      "width": 1024,
+      "scheme": "light",
+      "pointerOnTitle": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": null,
+        "openBg": "rgba(0, 0, 0, 0)",
+        "gripPosition": "static",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 912,
+          "right": 956,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 701.48,
+          "right": 900,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": false,
+        "overlaps": []
+      },
+      "pointerOnGrip": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": null,
+        "openBg": "rgba(0, 0, 0, 0)",
+        "gripPosition": "static",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 912,
+          "right": 956,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 701.48,
+          "right": 900,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": false,
+        "overlaps": []
+      }
+    },
+    {
+      "width": 1280,
+      "scheme": "dark",
+      "pointerOnTitle": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": null,
+        "openBg": "rgba(0, 0, 0, 0)",
+        "gripPosition": "static",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 1058,
+          "right": 1102,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 847.48,
+          "right": 1046,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": false,
+        "overlaps": []
+      },
+      "pointerOnGrip": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": null,
+        "openBg": "rgba(0, 0, 0, 0)",
+        "gripPosition": "static",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 1058,
+          "right": 1102,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 847.48,
+          "right": 1046,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": false,
+        "overlaps": []
+      }
+    },
+    {
+      "width": 1024,
+      "scheme": "dark",
+      "pointerOnTitle": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": null,
+        "openBg": "rgba(0, 0, 0, 0)",
+        "gripPosition": "static",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 912,
+          "right": 956,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 701.48,
+          "right": 900,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": false,
+        "overlaps": []
+      },
+      "pointerOnGrip": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": null,
+        "openBg": "rgba(0, 0, 0, 0)",
+        "gripPosition": "static",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 912,
+          "right": 956,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 701.48,
+          "right": 900,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": false,
+        "overlaps": []
+      }
+    }
+  ],
+  "reorder": [
+    {
+      "handle": {
+        "left": 130,
+        "right": 174
+      },
+      "overlaps": []
+    },
+    {
+      "handle": {
+        "left": 130,
+        "right": 174
+      },
+      "overlaps": []
+    },
+    {
+      "handle": {
+        "left": 130,
+        "right": 174
+      },
+      "overlaps": []
+    },
+    {
+      "handle": {
+        "left": 130,
+        "right": 174
+      },
+      "overlaps": []
+    },
+    {
+      "handle": {
+        "left": 130,
+        "right": 174
+      },
+      "overlaps": []
+    }
+  ]
+}

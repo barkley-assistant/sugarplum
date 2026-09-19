@@ -1,0 +1,250 @@
+{
+  "label": "before",
+  "shots": [
+    {
+      "width": 1280,
+      "scheme": "light",
+      "pointerOnTitle": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": "Open details",
+        "openBg": "rgb(91, 33, 182)",
+        "gripPosition": "absolute",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 1062,
+          "right": 1106,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 895.48,
+          "right": 1094,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": true,
+        "overlaps": [
+          "SPAN.price-meta(Lowest £18,999.00)"
+        ]
+      },
+      "pointerOnGrip": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": "Open details",
+        "openBg": "rgba(91, 33, 182, 0.15)",
+        "gripPosition": "absolute",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 1062,
+          "right": 1106,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 895.48,
+          "right": 1094,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": true,
+        "overlaps": [
+          "SPAN.price-meta(Lowest £18,999.00)"
+        ]
+      }
+    },
+    {
+      "width": 1024,
+      "scheme": "light",
+      "pointerOnTitle": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": "Open details",
+        "openBg": "rgba(91, 33, 182, 0.97)",
+        "gripPosition": "absolute",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 916,
+          "right": 960,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 749.48,
+          "right": 948,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": true,
+        "overlaps": [
+          "SPAN.price-meta(Lowest £18,999.00)"
+        ]
+      },
+      "pointerOnGrip": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": "Open details",
+        "openBg": "rgba(91, 33, 182, 0.15)",
+        "gripPosition": "absolute",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 916,
+          "right": 960,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 749.48,
+          "right": 948,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": true,
+        "overlaps": [
+          "SPAN.price-meta(Lowest £18,999.00)"
+        ]
+      }
+    },
+    {
+      "width": 1280,
+      "scheme": "dark",
+      "pointerOnTitle": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": "Open details",
+        "openBg": "rgba(109, 78, 209, 0.992)",
+        "gripPosition": "absolute",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 1062,
+          "right": 1106,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 895.48,
+          "right": 1094,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": true,
+        "overlaps": [
+          "SPAN.price-meta(Lowest £18,999.00)"
+        ]
+      },
+      "pointerOnGrip": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": "Open details",
+        "openBg": "rgba(109, 78, 209, 0.424)",
+        "gripPosition": "absolute",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 1062,
+          "right": 1106,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 895.48,
+          "right": 1094,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": true,
+        "overlaps": [
+          "SPAN.price-meta(Lowest £18,999.00)"
+        ]
+      }
+    },
+    {
+      "width": 1024,
+      "scheme": "dark",
+      "pointerOnTitle": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": "Open details",
+        "openBg": "rgba(109, 78, 209, 0.925)",
+        "gripPosition": "absolute",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 916,
+          "right": 960,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 749.48,
+          "right": 948,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": true,
+        "overlaps": [
+          "SPAN.price-meta(Lowest £18,999.00)"
+        ]
+      },
+      "pointerOnGrip": {
+        "title": "Aeropress Go travel coffee maker",
+        "titleAttr": "Open details",
+        "openBg": "rgba(109, 78, 209, 0.655)",
+        "gripPosition": "absolute",
+        "gripVisibility": "visible",
+        "gripTabIndex": "-1",
+        "grip": {
+          "left": 916,
+          "right": 960,
+          "top": 223.98,
+          "bottom": 267.98
+        },
+        "price": {
+          "left": 749.48,
+          "right": 948,
+          "top": 233.23,
+          "bottom": 258.73
+        },
+        "gripIntrudesIntoPrice": true,
+        "overlaps": [
+          "SPAN.price-meta(Lowest £18,999.00)"
+        ]
+      }
+    }
+  ],
+  "reorder": [
+    {
+      "handle": {
+        "left": 130,
+        "right": 174
+      },
+      "overlaps": []
+    },
+    {
+      "handle": {
+        "left": 130,
+        "right": 174
+      },
+      "overlaps": []
+    },
+    {
+      "handle": {
+        "left": 130,
+        "right": 174
+      },
+      "overlaps": []
+    },
+    {
+      "handle": {
+        "left": 130,
+        "right": 174
+      },
+      "overlaps": []
+    },
+    {
+      "handle": {
+        "left": 130,
+        "right": 174
+      },
+      "overlaps": []
+    }
+  ]
+}
