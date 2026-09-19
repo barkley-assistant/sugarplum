@@ -121,7 +121,7 @@ export function authRoutes(
             status: 200,
             headers: {
               "Content-Type": "application/json",
-              "Set-Cookie": sessionCookie(token, config.cookieSecure),
+              "Set-Cookie": sessionCookie(token, config.cookieSecure, config.sessionTtlDays),
             },
           },
         );
