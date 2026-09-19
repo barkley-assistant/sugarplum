@@ -1715,3 +1715,76 @@ test("17: mobile user-menu sheet shows every row and does not jump the page", as
   await reopened.getByRole("menuitem", { name: "Settings" }).click();
   await expect(page).toHaveURL(/\/settings$/);
 });
+
+test("18: currency select matches input metrics and keeps a chevron (#74)", async ({ page }) => {
+  const created = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Select metrics probe", priceCents: "9.99", currency: "GBP" },
+  });
+  expect(created.status()).toBe(201);
+  const item = (await created.json()) as { id: string };
+
+  for (const width of [360, 390, 430, 768, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${BASE}/items/${item.id}/edit`);
+    await expect(page.getByLabel("Currency")).toBeVisible();
+
+    const metrics = await page.evaluate(() => {
+      const input = document.getElementById("item-price");
+      const select = document.getElementById("item-currency");
+      if (!input || !select) throw new Error("price/currency fields missing");
+      const cs = getComputedStyle(select);
+      const ir = input.getBoundingClientRect();
+      const sr = select.getBoundingClientRect();
+      return {
+        inputH: ir.height,
+        selectH: sr.height,
+        topsEqual: ir.top === sr.top,
+        bottomsEqual: ir.bottom === sr.bottom,
+        minHeight: cs.minHeight,
+        appearance: cs.appearance,
+        chevron: cs.backgroundImage,
+        padRight: cs.paddingRight,
+      };
+    });
+    expect(metrics.minHeight, `select min-height at ${width}px`).toBe("44px");
+    expect(metrics.appearance, `select appearance at ${width}px`).toBe("none");
+    expect(metrics.chevron, `chevron painted at ${width}px`).toContain("data:image/svg+xml");
+    // "Pixel-for-pixel" gate: identical boxes (≤0.5px float noise) and both at
+    // least the shared 44px floor.
+    expect(Math.abs(metrics.selectH - metrics.inputH), `select height at ${width}px`).toBeLessThanOrEqual(0.5);
+    expect(metrics.selectH, `select floor at ${width}px`).toBeGreaterThanOrEqual(44);
+    expect(metrics.topsEqual && metrics.bottomsEqual, `row alignment at ${width}px`).toBe(true);
+  }
+
+  // Both themes: the chevron must paint in dark too (different SVG tint).
+  // Compare lowercased — the serializer keeps the data URI verbatim (including
+  // the %23 escaping), so the lowercase hex substring is stable.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto(`${BASE}/items/${item.id}/edit`);
+  const darkChevron = await page.evaluate(() => {
+    const select = document.getElementById("item-currency");
+    if (!select) throw new Error("currency select missing");
+    return getComputedStyle(select).backgroundImage.toLowerCase();
+  });
+  expect(darkChevron).toContain("%2394909f");
+
+  // Keyboard behavior is unchanged by appearance:none (it styles the closed box
+  // only). Measured on this host's headless Chromium with the real option set:
+  // ArrowDown advances and commits GBP -> USD; type-ahead "e" jumps to EUR;
+  // focus is retained throughout. On a real desktop ArrowDown opens the popup
+  // and the same key lands on the next option either way — the VALUE contract
+  // is the portable assertion.
+  await expect(page.getByLabel("Currency")).toBeVisible();
+  await page.getByLabel("Currency").focus();
+  await expect(page.getByLabel("Currency")).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(page.getByLabel("Currency")).toHaveValue("USD");
+  await expect(page.getByLabel("Currency")).toBeFocused();
+  await page.evaluate(() => {
+    const sel = document.getElementById("item-currency");
+    if (sel instanceof HTMLSelectElement) sel.value = "GBP";
+  });
+  await page.keyboard.press("e");
+  await expect(page.getByLabel("Currency")).toHaveValue("EUR");
+});
