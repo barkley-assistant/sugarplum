@@ -4,7 +4,7 @@ import tsParser from "@typescript-eslint/parser";
 import reactHooks from "eslint-plugin-react-hooks";
 
 export default [
-  { ignores: ["dist/**", "data/**", "node_modules/**", "e2e/**", "test-results/**"] },
+  { ignores: ["dist/**", "data/**", "node_modules/**", "e2e/**", "test-results/**", ".hermes/**"] },
   js.configs.recommended,
   {
     files: ["**/*.{ts,tsx}"],

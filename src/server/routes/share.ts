@@ -74,7 +74,7 @@ export function shareOwner(db: Database, token: string): { user_id: string } | u
 function optionalSessionUser(db: Database, req: RouteRequest): SessionUser | null {
   const cookies = parseCookies(req.headers.get("cookie"));
   const token = cookies[SESSION_COOKIE];
-  return token ? getSessionUser(db, token) : null;
+  return token ? getSessionUser(db, token).user : null;
 }
 
 /** The share surface transmits no claim, hint, provenance or internal

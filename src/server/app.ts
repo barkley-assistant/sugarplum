@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { join, normalize } from "node:path";
 import type { RouteRequest, RouteServer } from "./auth/middleware";
+import { configureSessionCookie } from "./auth/middleware";
 import { hashPassword } from "./auth/passwords";
 import { RateLimiter } from "./auth/rate-limit";
 import { sweepExpiredSessions } from "./auth/sessions";
@@ -56,6 +57,7 @@ export function createApp(config: Config): App {
   const db = openDatabase(config.dbPath);
   ensureBootstrapAdmin(db, config);
   sweepExpiredSessions(db);
+  configureSessionCookie({ secure: config.cookieSecure, ttlDays: config.sessionTtlDays });
 
   // Crash sweep: anything left 'pending' by a previous process (kill -9,
   // reboot mid-enrichment) is resolved on boot. A row with NO usable data
