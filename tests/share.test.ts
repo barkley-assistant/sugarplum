@@ -327,18 +327,28 @@ describe("anonymous purchased marking", () => {
 
     // …and the owner sees NOTHING, anywhere:
 
-    // 1. Their own list (OwnedItem must not even carry the field).
+    // 1. Their own list: the ONLY purchased key allowed is ownerPurchased
+    // (#76, the owner's own mark — which this item does NOT have). The
+    // anonymous flag's names must never appear.
     const ownList = (await (
       await giftee.request("GET", `/api/users/${gifteeId}/wishlist`)
-    ).json()) as OwnedItem[];
-    const ownPayload = JSON.stringify(ownList);
-    expect(ownPayload).not.toContain("purchased");
-    expect(ownPayload).not.toContain("Purchased");
+    ).json()) as Record<string, unknown>[];
+    const ownItem = ownList.find((i) => i.id === item.id) as Record<string, unknown>;
+    expect(Object.keys(ownItem)).not.toContain("purchased");
+    expect(Object.keys(ownItem)).not.toContain("purchasedAt");
+    expect(JSON.stringify(ownItem)).not.toContain("purchased_at");
+    // No item on the owner's list carries an anonymous purchased key.
+    for (const row of ownList) {
+      expect(Object.keys(row)).not.toContain("purchased");
+      expect(Object.keys(row)).not.toContain("purchasedAt");
+    }
 
     // 2. Another registered user's PublicItem view (claims only, never purchase).
     const otherView = (await (
       await admin.request("GET", `/api/users/${gifteeId}/wishlist`)
     ).json()) as unknown[];
+    // PublicItem/summary carry no purchased key of either kind — the substring
+    // scan stays exact here.
     expect(JSON.stringify(otherView)).not.toContain("purchased");
 
     // 3. The share view fetched WITH the owner's session cookie.

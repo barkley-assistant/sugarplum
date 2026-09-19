@@ -61,6 +61,10 @@ export interface OwnedItem extends CommonItem {
   /** Lowest + earliest price observation from price_history; null when the
    *  item has no history rows at all. */
   priceStats: PriceStats | null;
+  /** #76: the OWNER's own "I bought this" mark. This is owner data about
+   *  THEMSELVES — unrelated to the anonymous share-link purchased flag,
+   *  which is never transmitted to the owner on any surface. */
+  ownerPurchased: boolean;
 }
 
 /** Derived summary of an item's price_history ledger. Every money value is a

@@ -24,18 +24,18 @@ afterAll(() => {
 describe("db migrations", () => {
   test("migrations are idempotent", () => {
     const version = db.query("PRAGMA user_version").get() as { user_version: number };
-    expect(version.user_version).toBe(6);
+    expect(version.user_version).toBe(7);
 
     // Re-run migrations on the same connection (and a second open) — no-op.
     runMigrations(db);
     const again = openDatabase(dbPath);
-    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 6 });
+    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 7 });
     again.close();
   });
 
-  test("v2 (enrichment state) + v3 (image provenance) + v4 (price provenance) + v5 (share) + v6 (tracking) columns exist on an upgraded db", () => {
+  test("v2 (enrichment state) + v3 (image provenance) + v4 (price provenance) + v5 (share) + v6 (tracking) + v7 (owner mark) columns exist on an upgraded db", () => {
     const v = db.query("PRAGMA user_version").get() as { user_version: number };
-    expect(v.user_version).toBe(6);
+    expect(v.user_version).toBe(7);
     const cols = db.query("PRAGMA table_info(wishlist_items)").all() as { name: string }[];
     for (const c of [
       "fetch_state",
@@ -50,6 +50,8 @@ describe("db migrations", () => {
       "purchased",
       "purchased_at",
       "last_tracked_at",
+      "owner_purchased",
+      "owner_purchased_at",
     ]) {
       expect(cols.some((x) => x.name === c)).toBe(true);
     }
@@ -84,7 +86,7 @@ describe("db migrations", () => {
         "Old item",
       ]);
       runMigrations(fresh);
-      expect((fresh.query("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(6);
+      expect((fresh.query("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(7);
       const row = fresh
         .query(
           `SELECT fetch_state, site_name, hint_price_cents, image_source, price_source, cheaper_url
@@ -139,6 +141,20 @@ describe("db migrations", () => {
         "v2-upgrade-user",
       ) as { price_tracking_enabled: number };
       expect(trackedUser.price_tracking_enabled).toBe(1);
+
+      // v7: owner purchased mark — additive, no backfill.
+      const ownerCols = fresh.query("PRAGMA table_info(wishlist_items)").all() as {
+        name: string;
+        dflt_value: string | null;
+      }[];
+      const ownerPurchasedCol = ownerCols.find((c) => c.name === "owner_purchased");
+      expect(ownerPurchasedCol).toBeDefined();
+      expect(ownerPurchasedCol?.dflt_value).toBe("0");
+      const upgraded7 = fresh
+        .query("SELECT owner_purchased, owner_purchased_at FROM wishlist_items WHERE id = ?")
+        .get("v2-upgrade-item") as { owner_purchased: number; owner_purchased_at: string | null };
+      expect(upgraded7.owner_purchased).toBe(0);
+      expect(upgraded7.owner_purchased_at).toBeNull();
     } finally {
       fresh.close();
       rmSync(freshPath, { force: true });
