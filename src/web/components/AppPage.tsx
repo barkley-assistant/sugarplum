@@ -54,6 +54,9 @@ export function AppPage() {
   /** #62 D8: scroll position handed back from feed-handoff, applied after the
    *  restored rows commit (the list must exist before scrollTo can stick). */
   const handoffScrollRef = useRef<number | null>(null);
+  /** #69: start of the current "some row is pending" episode, so the poll
+   *  window is bounded across effect re-runs (see the convergence effect). */
+  const pendingPollStartRef = useRef<number | null>(null);
   const toast = useToast();
   const reorder = useDragReorder(ownItems, onReorder);
   const install = useInstallPrompt();
@@ -62,6 +65,30 @@ export function AppPage() {
     void boot();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // #69: converge pending rows. boot() fetches the list exactly once per mount,
+  // so a scrape that commits after that read would leave its row stuck on the
+  // provisional hostname title ("Fetching details…") forever — the manual
+  // re-check path polls, the add path did not. While any own row is pending,
+  // re-read the list after 1.5s (same budget as ItemPage.pollUntilSettled).
+  // Each effect run schedules exactly ONE fetch; the setOwnItems commit
+  // re-triggers this effect, which re-derives the condition from fresh state —
+  // so there is no loop to leak and unmount safety is just clearTimeout.
+  useEffect(() => {
+    if (!booted || !me || viewing !== null || reorder.isDragging) return;
+    if (!ownItems.some((item) => item.fetchState === "pending")) {
+      // Converged: a later pending row starts a fresh 30s window.
+      pendingPollStartRef.current = null;
+      return;
+    }
+    if (pendingPollStartRef.current === null) pendingPollStartRef.current = Date.now();
+    if (Date.now() - pendingPollStartRef.current > 30_000) return; // one 30s window per episode
+    const userId = me.id;
+    const timer = setTimeout(() => void refreshOwnList(userId), 1500);
+    return () => clearTimeout(timer);
+    // refreshOwnList is re-created every render, so it is deliberately not a
+    // dep: including it would turn this into a fetch-per-render loop.
+  }, [booted, me, viewing, reorder.isDragging, ownItems]);
 
   // The feed snapshot is written on UNMOUNT (leaving the feed), from a ref of
   // the latest committed state — reading it on every render would flip this
