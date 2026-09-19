@@ -202,6 +202,17 @@ export const S = {
   pwa: {
     install: "Install app",
   },
+  bar: {
+    /** Visible labels on the mobile bottom action bar (#73). Add reuses the
+     *  feed's action copy; Share is short (its accessible name stays
+     *  "Share my list" via aria-label on the trigger). */
+    add: "Add item",
+    share: "Share",
+    settings: "Settings",
+    /** Landmark label for the bottom bar (screen readers announce
+     *  "Primary actions navigation"). */
+    navigation: "Primary actions",
+  },
   tags: {
     all: "All",
     filterLabel: "Filter by tag",

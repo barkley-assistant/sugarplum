@@ -1795,10 +1795,12 @@ test("17: mobile user-menu sheet shows every row and does not jump the page", as
   // Every row is on screen and clickable — not clipped out of the viewport.
   // (`toBeVisible` alone cannot catch this: an element above the viewport
   // still has a non-empty box.)
-  const settings = sheet.getByRole("menuitem", { name: "Settings" });
+  // #73: Settings moved out of the mobile avatar menu (it now lives on the
+  // bottom action bar), so the rows are Log out and Cancel — plus the install
+  // row when the browser offers install, which is not focusable here.
   const logout = sheet.getByRole("menuitem", { name: "Log out" });
   const cancel = sheet.getByRole("menuitem", { name: "Cancel" });
-  await expect(settings).toBeInViewport();
+  await expect(sheet.getByRole("menuitem", { name: "Settings" })).toHaveCount(0);
   await expect(logout).toBeInViewport();
   await expect(cancel).toBeInViewport();
 
@@ -1815,13 +1817,11 @@ test("17: mobile user-menu sheet shows every row and does not jump the page", as
   // Sheet defers keydown inside a [role="menu"] subtree to OverflowMenu's
   // own handler, so that handler owns the mobile wrap (the desktop popover
   // still closes on Tab by design).
-  await expect(settings).toBeFocused();
-  await page.keyboard.press("Tab");
   await expect(logout).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(cancel).toBeFocused();
   await page.keyboard.press("Tab");
-  await expect(settings).toBeFocused();
+  await expect(logout).toBeFocused();
   await expect.poll(() => sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
   await page.keyboard.press("Shift+Tab");
   await expect(cancel).toBeFocused();
@@ -1834,11 +1834,17 @@ test("17: mobile user-menu sheet shows every row and does not jump the page", as
   await expect(trigger).toBeFocused();
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
 
-  // Usable, not merely visible: choosing Settings navigates to /settings.
+  // Usable, not merely visible: the mobile route to Settings is the bottom
+  // action bar's Settings item (#73), and it navigates.
   await trigger.click();
   const reopened = page.getByRole("dialog", { name: "Admin" });
   await expect(reopened).toBeVisible();
-  await reopened.getByRole("menuitem", { name: "Settings" }).click();
+  await page.keyboard.press("Escape"); // close the sheet, back to the feed
+  await expect(reopened).toHaveCount(0);
+  await page
+    .getByRole("navigation", { name: "Primary actions" })
+    .getByRole("button", { name: "Settings" })
+    .click();
   await expect(page).toHaveURL(/\/settings$/);
 });
 
@@ -1913,4 +1919,178 @@ test("18: currency select matches input metrics and keeps a chevron (#74)", asyn
   });
   await page.keyboard.press("e");
   await expect(page.getByLabel("Currency")).toHaveValue("EUR");
+});
+
+test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ page }) => {
+  // Seed one item so the feed shows the full 3-item bar (share included).
+  const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Bottom bar probe" },
+  });
+  expect(seeded.status()).toBe(201);
+
+  for (const width of [360, 390, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${BASE}/`);
+    await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+
+    // A nav landmark with three named buttons; the visible labels are the
+    // bar's own short copy while the accessible names stay the app's.
+    const bar = page.getByRole("navigation", { name: "Primary actions" });
+    await expect(bar).toBeVisible();
+    await expect(bar.locator(".action-bar-item")).toHaveCount(3);
+    for (const name of ["Add item", "Share my list", "Settings"]) {
+      await expect(bar.getByRole("button", { name })).toBeVisible();
+    }
+    await expect(bar.getByText("Share", { exact: true })).toBeVisible(); // visible label
+
+    // Mockup grammar: fixed, borderless buttons on the app background, one
+    // hairline divider, no fills.
+    const chrome = await bar.evaluate((el) => {
+      const cs = getComputedStyle(el);
+      const btn = el.querySelector("button");
+      const bcs = btn ? getComputedStyle(btn) : null;
+      return {
+        barBg: cs.backgroundColor,
+        bodyBg: getComputedStyle(document.body).backgroundColor,
+        barBorderTop: cs.borderTopWidth,
+        barBorderTopColor: cs.borderTopColor,
+        position: cs.position,
+        btnBorder: bcs?.borderStyle,
+        btnBg: bcs?.backgroundColor,
+        btnOutline: bcs?.outlineStyle,
+      };
+    });
+    expect(chrome.position).toBe("fixed");
+    expect(chrome.barBg).toBe(chrome.bodyBg); // app background, not a bar fill
+    expect(chrome.barBorderTop).toBe("1px"); // thin top divider
+    expect(chrome.barBorderTopColor).not.toBe("rgba(0, 0, 0, 0)");
+    expect(chrome.btnBorder).toBe("none"); // NO button borders
+    expect(chrome.btnBg).toBe("rgba(0, 0, 0, 0)"); // no fills
+
+    // 44px+ touch targets on a full-width bar.
+    for (const item of await bar.locator(".action-bar-item").all()) {
+      const box = await item.boundingBox();
+      expect(Math.round(box?.height ?? 0), `target height at ${width}px`).toBeGreaterThanOrEqual(44);
+    }
+    const barBox = await bar.boundingBox();
+    expect(Math.round(barBox?.width ?? 0), `bar width at ${width}px`).toBe(width);
+    expect(Math.round(barBox?.y ?? 0) + Math.round(barBox?.height ?? 0)).toBe(844); // flush to the bottom
+
+    // No occlusion: the bar is fixed over the last 56px of the viewport, so
+    // at the bottom of the scroll the footer's CONTENT must still clear the
+    // bar's top edge — the reserved footer padding is what buys that space.
+    // (The footer's BOX always ends at the viewport bottom; its content is
+    // what would be swallowed without the reservation.)
+    const clearance = await page.evaluate(() => {
+      const barEl = document.querySelector(".action-bar");
+      const footer = document.querySelector(".app-footer");
+      if (!barEl || !footer) throw new Error("bar/footer missing");
+      window.scrollTo(0, document.body.scrollHeight);
+      const content = footer.querySelector("a") ?? footer;
+      return {
+        barTop: barEl.getBoundingClientRect().top,
+        contentBottom: content.getBoundingClientRect().bottom,
+      };
+    });
+    expect(clearance.contentBottom, `footer content occluded at ${width}px`).toBeLessThanOrEqual(
+      clearance.barTop,
+    );
+
+    // No horizontal overflow with the bar in place (also rides the 360-1280
+    // sweep in test 9).
+    const probe = await horizontalEscapes(page);
+    expect(probe.docOverflow, `bar overflow at ${width}px`).toBe(false);
+    expect(probe.offenders, `bar escapes at ${width}px`).toEqual([]);
+
+    // Wiring and the rest are route- or keyboard-level, not per-width.
+    if (width === 390) {
+      // Keyboard-complete: the bar closes the feed's tab order and all three
+      // items are reachable in order with the app's focus ring.
+      await page.evaluate(() => {
+        const sel = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        const barEl = document.querySelector(".action-bar");
+        if (!barEl) throw new Error("bar missing");
+        const before = Array.from(document.querySelectorAll<HTMLElement>(sel)).filter(
+          (el) =>
+            !barEl.contains(el) &&
+            (barEl.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING) !== 0,
+        );
+        before[before.length - 1]?.focus();
+      });
+      await page.keyboard.press("Tab");
+      await expect(bar.getByRole("button", { name: "Add item" })).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(bar.getByRole("button", { name: "Share my list" })).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(bar.getByRole("button", { name: "Settings" })).toBeFocused();
+      expect(
+        await bar
+          .getByRole("button", { name: "Settings" })
+          .evaluate((el) => getComputedStyle(el).outlineWidth),
+        "keyboard focus ring on a bar item",
+      ).toBe("2px");
+      await page.keyboard.press("Shift+Tab");
+      await expect(bar.getByRole("button", { name: "Share my list" })).toBeFocused();
+
+      // Settings navigates to /settings, where the bar does not exist.
+      await bar.getByRole("button", { name: "Settings" }).click();
+      await expect(page).toHaveURL(/\/settings$/);
+      await expect(page.locator(".action-bar")).toHaveCount(0);
+      await page.goBack();
+      await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+
+      // Share opens the SAME #45 surface (the mobile sheet), and closing it
+      // returns focus to the bar trigger.
+      await bar.getByRole("button", { name: "Share my list" }).click();
+      const shareSheet = page.getByRole("dialog", { name: "Share my list" });
+      await expect(shareSheet).toHaveClass(/sheet--share/);
+      await expect(shareSheet.getByRole("heading", { name: "Share your wishlist" })).toBeVisible();
+      await expect(shareSheet.getByRole("button", { name: /Create link|New link/ })).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(shareSheet).toHaveCount(0);
+      await expect(bar.getByRole("button", { name: "Share my list" })).toBeFocused();
+      await expect(bar.getByRole("button", { name: "Share my list" })).toHaveAttribute(
+        "aria-expanded",
+        "false",
+      );
+
+      // Add navigates to /add client-side (no document load) and the bar is
+      // absent there.
+      const loadsBefore = await loads(page);
+      await bar.getByRole("button", { name: "Add item" }).click();
+      await expect(page).toHaveURL(`${BASE}/add`);
+      expect(await loads(page)).toBe(loadsBefore);
+      await expect(page.locator(".action-bar")).toHaveCount(0);
+      await page.goBack();
+      await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+    }
+  }
+
+  // The breakpoint seam is the app's existing 640px one: below it the bar
+  // owns the actions, at it the header cluster does — and exactly ONE Share
+  // and one Add button exist either side of the seam (#73 D1/D4).
+  for (const [width, barCount] of [
+    [639, 1],
+    [640, 0],
+  ] as const) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto(`${BASE}/`);
+    await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+    await expect(page.locator(".action-bar"), `.action-bar at ${width}px`).toHaveCount(barCount);
+    await expect(page.getByRole("button", { name: "Share my list" })).toHaveCount(1);
+    await expect(page.getByRole("button", { name: "Add item" })).toHaveCount(1);
+  }
+
+  // Desktop (1280): NO bar, and the top-bar actions are still there — with
+  // the avatar menu still carrying Settings (#73 keeps desktop untouched).
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(`${BASE}/`);
+  await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+  await expect(page.locator(".action-bar")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Add item" })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Share my list" })).toBeVisible();
+  const menu = page.locator('.user-menu-button[aria-label="Admin"]');
+  await menu.click();
+  await expect(page.getByRole("menuitem", { name: "Settings" })).toBeVisible();
+  await page.keyboard.press("Escape");
 });

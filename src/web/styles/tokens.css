@@ -121,6 +121,11 @@
   --safe-top: env(safe-area-inset-top);
   --safe-bottom: env(safe-area-inset-bottom);
 
+  /* #73: mobile bottom action bar — chrome height excluding safe-area.
+     Shared by the bar (min-height) and the footer reservation + toast
+     lift, so the three can never drift. */
+  --action-bar-h: 56px;
+
   /* Amethyst A4 detail surface. */
   --detail-thumb: 136px;
   --detail-drawer-w: 520px;
