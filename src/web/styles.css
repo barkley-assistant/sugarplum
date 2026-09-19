@@ -2550,3 +2550,112 @@ button.row-open:hover {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394909F' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   }
 }
+
+/* ============================================================
+   #73 — Mobile bottom action bar (owner feed only, <640px)
+   Mockup grammar: borderless icon+label buttons, outline icons,
+   one hairline top divider, the app background, safe-area aware.
+   ============================================================ */
+
+.action-bar {
+  display: none; /* >=640px: no bar (the desktop header cluster owns the actions) */
+}
+
+/* The EXACT negation of the JS gate — useMedia("(min-width: 640px)") renders
+   the bar whenever that query is false, so the CSS must reveal it under
+   precisely the same condition. `not all and (min-width: 640px)` is width
+   < 640 with no fractional-boundary sliver (a 639.98px max-width would leave
+   a 0.02px window where the DOM has the bar but the CSS hides it). */
+@media not all and (min-width: 640px) {
+  .action-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30; /* under sheets (50) / toasts (60) / confirm (70) */
+    display: flex;
+    justify-content: space-around; /* even thirds, mockup style */
+    align-items: stretch;
+    min-height: calc(var(--action-bar-h) + var(--safe-bottom));
+    padding: 0 var(--sp-2) var(--safe-bottom);
+    background: var(--bg); /* app surface, not a contrasting bar */
+    /* Same hairline recipe as .topbar's bottom border: one divider grammar. */
+    border-top: 1px solid color-mix(in srgb, var(--border) 60%, var(--bg));
+  }
+
+  /* Buttons: transparent, borderless, icon over label. The global button
+     reset (plum fill + plum border) is fully overridden here; the 44px touch
+     floor comes free from that reset but is restated so the override is
+     self-evident. */
+  .action-bar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex: 1 1 0; /* equal thirds */
+    min-width: 44px;
+    min-height: var(--action-bar-h);
+    padding: 6px 0 4px;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-2);
+    font-size: var(--text-xs);
+    line-height: 1.1;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .action-bar-item:hover {
+    background: transparent; /* NO hover chrome — borderless mandate */
+    color: var(--text);
+  }
+
+  .action-bar-item:active {
+    color: var(--text); /* touch feedback is color-only */
+  }
+
+  .action-bar-item:focus-visible {
+    outline: var(--focus-visible);
+    outline-offset: var(--ring-offset);
+    border-radius: var(--r-sm);
+  }
+
+  .action-bar-item svg {
+    display: block;
+    pointer-events: none;
+  }
+
+  .action-bar-label {
+    white-space: nowrap; /* three labels at 360px keep their thirds */
+  }
+
+  /* DORMANT: the mockup's current-tab accent, kept as a hook for a future
+     cross-route navigator. Nothing sets .is-current today — this bar is an
+     action bar where no item can truthfully be the current page. */
+  .action-bar-item.is-current {
+    color: var(--plum-500);
+  }
+
+  .action-bar-item.is-current::after {
+    content: "";
+    width: 4px;
+    height: 4px;
+    border-radius: var(--r-full);
+    background: var(--plum-500);
+  }
+
+  /* Occlusion guard: the bar is fixed, and the footer is the last
+     scroll-flow element on the feed. Reserve the chrome + safe-area there.
+     :has scopes the reservation to pages that actually render the bar (only
+     the owner feed does), so /add, /settings etc. keep their plain rhythm. */
+  #root:has(.action-bar) .app-footer {
+    padding-bottom: calc(var(--sp-4) + var(--action-bar-h) + var(--safe-bottom));
+  }
+
+  /* Toasts must clear the bar and stay readable/dismissible. */
+  #root:has(.action-bar) .toast-host {
+    bottom: calc(var(--sp-4) + var(--action-bar-h) + var(--safe-bottom));
+  }
+}
