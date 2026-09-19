@@ -1850,6 +1850,14 @@ button.filter-chip {
   overflow: hidden;
 }
 
+/* #70: the stretched title button is not a chip — the global button:hover
+   (0,1,1) must never paint it plum. The row itself is the hover affordance
+   (.item-card:hover); the title stays text-only. */
+button.row-open:hover {
+  background: none;
+  border-color: transparent;
+}
+
 .row-open::after {
   content: "";
   position: absolute;

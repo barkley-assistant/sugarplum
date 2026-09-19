@@ -9,8 +9,6 @@ interface ProductRowProps {
   image?: ReactNode;
   /** The whole row opens details (owner rows). */
   onOpen?: () => void;
-  /** Tooltip for the row opener; the button's accessible name stays the title. */
-  openLabel?: string;
   /** Title-supporting column: retailer, pending/failed badges. */
   body?: ReactNode;
   /** Price column: current price + lowest. */
@@ -36,7 +34,6 @@ export function ProductRow({
   purchased = false,
   image,
   onOpen,
-  openLabel,
   body,
   price,
   delta,
@@ -60,7 +57,6 @@ export function ProductRow({
               type="button"
               className="row-open"
               onClick={onOpen}
-              title={openLabel}
             >
               {title}
             </button>
