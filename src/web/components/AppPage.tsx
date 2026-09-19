@@ -10,6 +10,7 @@ import { useToast } from "../toast";
 import { useDragReorder } from "../reorder";
 import { parseShareTarget } from "../format";
 import { navigate } from "../router";
+import { useMedia } from "../use-media";
 import {
   clearPendingFocusItemId,
   peekPendingFocusItemId,
@@ -27,6 +28,7 @@ import {
   writeStoredSummary,
 } from "../me-store";
 import { EmptyState } from "./EmptyState";
+import { ActionBar } from "./ActionBar";
 import { FilterChips } from "./FilterChips";
 import { ItemList, type OwnerRef } from "./ItemList";
 import { ShareMenu } from "./ShareMenu";
@@ -60,6 +62,10 @@ export function AppPage() {
   const toast = useToast();
   const reorder = useDragReorder(ownItems, onReorder);
   const install = useInstallPrompt();
+  /** #73: one action cluster per width. Desktop keeps the header cluster;
+   *  mobile moves Add/Share to the bottom bar and drops the avatar-menu
+   *  Settings entry (the bar owns that destination). */
+  const isDesktop = useMedia("(min-width: 640px)");
 
   useEffect(() => {
     void boot();
@@ -522,7 +528,9 @@ export function AppPage() {
   }
 
   const showOwnerActions = !viewing && ownItems.length > 0;
-  const ownerActions = showOwnerActions ? (
+  /** Desktop header cluster — mobile gets the same actions in the bottom bar
+   *  instead (#73 D4: exactly one cluster is in the DOM at any width). */
+  const ownerActions = showOwnerActions && isDesktop ? (
     <>
       <IconButton variant="ghost" label={S.list.addItem} onClick={() => navigate("/add")}>
         <PlusIcon />
@@ -547,7 +555,7 @@ export function AppPage() {
     <UserMenu
       displayName={me.displayName || me.username}
       onLogout={logout}
-      onSettings={goToSettings}
+      onSettings={isDesktop ? goToSettings : undefined}
       extra={
         install.canInstall ? (
           <button
@@ -610,6 +618,35 @@ export function AppPage() {
           item={toGuestDetail(guestItem)}
           onClose={() => setGuestItemId(null)}
         />
+      )}
+
+      {/* #73: mobile action bar. Gated on width only — the Share ITEM inside
+          it is what follows #45's "there is a list to share" rule, so an
+          empty mobile feed still has Add and Settings (the avatar menu no
+          longer carries Settings on mobile).
+
+          The ShareMenu element is the same component the desktop cluster
+          mounts, one per width: on mobile it portals its sheet to
+          document.body, so this DOM position is irrelevant (on desktop the
+          popover stays inside .share-anchor, which anchors it). */}
+      {!isDesktop && (
+        <>
+          <ActionBar
+            shareTriggerRef={shareTriggerRef}
+            shareOpen={shareOpen}
+            shareAvailable={showOwnerActions}
+            onShareClick={() => setShareOpen((v) => !v)}
+            onAdd={() => navigate("/add")}
+            onSettings={goToSettings}
+          />
+          {showOwnerActions && (
+            <ShareMenu
+              open={shareOpen}
+              onClose={() => setShareOpen(false)}
+              triggerRef={shareTriggerRef}
+            />
+          )}
+        </>
       )}
     </AppShell>
   );
