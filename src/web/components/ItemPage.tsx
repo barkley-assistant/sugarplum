@@ -102,6 +102,33 @@ export function ItemPage({ id }: { id: string }) {
     await reload();
   }
 
+  /** #76: the owner's own mark. Confirm-guarded on the way IN (mirrors the
+   *  share flow); unmark needs no confirm (non-destructive, reversible). */
+  async function markOwnerPurchased() {
+    const ok = await confirm({
+      title: S.owner.markTitle,
+      body: S.owner.markBody,
+      confirmLabel: S.owner.mark,
+      danger: false,
+    });
+    if (!ok) return;
+    const res = await fetch(`/api/wishlist/items/${id}/owner-purchased`, { method: "PUT" });
+    if (!res.ok) {
+      toast(S.errors.generic, "danger");
+      return;
+    }
+    setItem((await res.json()) as OwnedItem);
+  }
+
+  async function unmarkOwnerPurchased() {
+    const res = await fetch(`/api/wishlist/items/${id}/owner-purchased`, { method: "DELETE" });
+    if (res.status !== 204) {
+      toast(S.errors.generic, "danger");
+      return;
+    }
+    await reload();
+  }
+
   /** On-demand, display-only candidate hints (owner-only route). Nothing here
    *  is persisted or verified. */
   async function checkPrices() {
@@ -164,6 +191,11 @@ export function ItemPage({ id }: { id: string }) {
         label: S.item.copyProductLink,
         onSelect: () => copyProductLink(item.url as string),
       });
+    }
+    if (item.ownerPurchased === true) {
+      items.push({ id: "unmark-owner-purchased", label: S.owner.unmark, onSelect: unmarkOwnerPurchased });
+    } else {
+      items.push({ id: "mark-owner-purchased", label: S.owner.mark, onSelect: markOwnerPurchased });
     }
     items.push({ id: "reset-purchased", label: S.share.resetPurchased, onSelect: resetPurchased });
     items.push({ id: "delete", label: S.item.delete, danger: true, onSelect: deleteItem });
@@ -230,6 +262,11 @@ export function ItemPage({ id }: { id: string }) {
               {site && <span className="detail-site">{site}</span>}
               {item.fetchState === "pending" && <StatusBadge variant="fetching">{S.item.fetching}</StatusBadge>}
               {item.fetchState === "failed" && <StatusBadge variant="failed">{S.item.unavailable}</StatusBadge>}
+              {item.ownerPurchased === true && (
+                <span className="status status--purchased owner-purchased-badge">
+                  {S.owner.badge}
+                </span>
+              )}
               {price ? (
                 <span className="detail-price">{price}</span>
               ) : (

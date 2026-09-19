@@ -23,6 +23,11 @@ interface ItemCardProps {
   /** Owner-only: clear the blind share-link purchased mark (204, no body). */
   onResetPurchased?: (id: string) => void | Promise<void>;
 
+  /** #76: set the owner's own purchased mark (confirm lives here). */
+  onMarkOwnerPurchased?: (id: string) => void | Promise<void>;
+  /** #76: clear the owner's own purchased mark (no confirm). */
+  onUnmarkOwnerPurchased?: (id: string) => void | Promise<void>;
+
   /** Owner rows: opens the item page at /items/:id (#62). */
   onOpenDetails?: (id: string) => void;
   /** Drag handle slot, rendered only in explicit reorder mode. */
@@ -45,6 +50,8 @@ export function ItemCard({
   onUnclaim,
   onRefresh,
   onResetPurchased,
+  onMarkOwnerPurchased,
+  onUnmarkOwnerPurchased,
   onOpenDetails,
   dragHandle,
   peekGrip,
@@ -73,6 +80,18 @@ export function ItemCard({
       danger: false,
     });
     if (ok) await onResetPurchased(item.id);
+  }
+
+  /** #76: the owner's own mark — confirm-guarded like the share flow. */
+  async function handleMarkOwnerPurchased() {
+    if (!onMarkOwnerPurchased) return;
+    const ok = await confirm({
+      title: S.owner.markTitle,
+      body: S.owner.markBody,
+      confirmLabel: S.owner.mark,
+      danger: false,
+    });
+    if (ok) await onMarkOwnerPurchased(item.id);
   }
 
   async function copyProductLink(url: string) {
@@ -121,6 +140,19 @@ export function ItemCard({
         id: "copy-link",
         label: S.item.copyProductLink,
         onSelect: () => copyProductLink(item.url as string),
+      });
+    }
+    if (onMarkOwnerPurchased && ownerItem.ownerPurchased === true) {
+      menu.push({
+        id: "unmark-owner-purchased",
+        label: S.owner.unmark,
+        onSelect: () => onUnmarkOwnerPurchased?.(item.id),
+      });
+    } else if (onMarkOwnerPurchased) {
+      menu.push({
+        id: "mark-owner-purchased",
+        label: S.owner.mark,
+        onSelect: handleMarkOwnerPurchased,
       });
     }
     if (onResetPurchased) {
@@ -191,6 +223,7 @@ export function ItemCard({
       onOpen={onOpenDetails ? () => onOpenDetails(item.id) : undefined}
       reorderHandle={dragHandle}
       dragging={dragging}
+      purchased={viewerIsOwner && ownerItem.ownerPurchased === true}
       image={
         item.imagePath ? (
           <ProductImage src={`/api/wishlist/items/${item.id}/image`} />
@@ -207,6 +240,11 @@ export function ItemCard({
           )}
           {item.fetchState === "failed" && (
             <StatusBadge variant="failed">{S.item.unavailable}</StatusBadge>
+          )}
+          {viewerIsOwner && ownerItem.ownerPurchased === true && (
+            <span className="status status--purchased owner-purchased-badge">
+              {S.owner.badge}
+            </span>
           )}
         </>
       }

@@ -301,6 +301,25 @@ export function AppPage() {
     if (me) await refreshOwnList(me.id);
   }
 
+  /** #76: the owner's own mark (confirm is in ItemCard). */
+  async function markOwnerPurchased(id: string) {
+    const res = await fetch(`/api/wishlist/items/${id}/owner-purchased`, { method: "PUT" });
+    if (!res.ok) {
+      toast(S.errors.generic, "danger");
+      return;
+    }
+    if (me) await refreshOwnList(me.id);
+  }
+
+  async function unmarkOwnerPurchased(id: string) {
+    const res = await fetch(`/api/wishlist/items/${id}/owner-purchased`, { method: "DELETE" });
+    if (res.status !== 204) {
+      toast(S.errors.generic, "danger");
+      return;
+    }
+    if (me) await refreshOwnList(me.id);
+  }
+
   /** Optimistic reorder commit: PUT the full ordered id array. On failure,
    *  restore the pre-drag order and surface a danger toast. */
   async function onReorder(ids: string[]) {
@@ -509,6 +528,8 @@ export function AppPage() {
         onDelete={reordering ? undefined : deleteItem}
         onRefresh={reordering ? undefined : refreshItem}
         onResetPurchased={reordering ? undefined : resetPurchased}
+        onMarkOwnerPurchased={reordering ? undefined : markOwnerPurchased}
+        onUnmarkOwnerPurchased={reordering ? undefined : unmarkOwnerPurchased}
         onOpenDetails={reordering ? undefined : (id) => navigate(`/items/${id}`)}
         renderDragHandle={
           reordering && !activeTag
