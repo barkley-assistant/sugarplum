@@ -136,6 +136,20 @@ ALTER TABLE wishlist_items ADD COLUMN last_tracked_at TEXT;
 ALTER TABLE users ADD COLUMN price_tracking_enabled INTEGER NOT NULL DEFAULT 1;
 `,
   },
+  {
+    version: 7,
+    sql: `
+-- #76: the owner's own purchased mark, deliberately separate from the
+-- anonymous share-link flag (v5's purchased/purchased_at). The two have
+-- independent lifecycles: owner_purchased is visible to the owner on the
+-- owner DTO and set/cleared by the owner route; purchased stays invisible to
+-- the owner (blind, anonymous) and is only ever mutated through the share
+-- routes. No backfill: existing rows read as owner-unpurchased (DEFAULT 0),
+-- exactly as pre-v5 rows read as unpurchased.
+ALTER TABLE wishlist_items ADD COLUMN owner_purchased INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE wishlist_items ADD COLUMN owner_purchased_at TEXT;
+`,
+  },
 ];
 
 export function runMigrations(db: Database): void {

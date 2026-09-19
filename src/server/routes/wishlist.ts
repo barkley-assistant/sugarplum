@@ -40,6 +40,8 @@ interface ItemRow {
   hint_source_url: string | null;
   price_source: string | null;
   cheaper_url: string | null;
+  owner_purchased: number;
+  owner_purchased_at: string | null;
 }
 
 interface SummaryRow {
@@ -99,6 +101,7 @@ function toOwnedItem(db: Database, row: ItemRow, seriesCap: number): OwnedItem {
   return {
     ...commonItem(row),
     updatedAt: row.updated_at,
+    ownerPurchased: row.owner_purchased === 1,
     hintPriceCents: row.hint_price_cents === null ? null : formatPrice(row.hint_price_cents),
     hintCurrency: row.hint_currency,
     hintSourceUrl: row.hint_source_url,
@@ -222,7 +225,7 @@ const ITEM_SELECT = `
   SELECT id, user_id, title, url, image_path, image_source, price_cents, currency, notes, tags,
          sort_order, created_at, updated_at, claimed_by, claimed_at,
          fetch_state, last_fetch_error, site_name, hint_price_cents, hint_currency, hint_source_url,
-         price_source, cheaper_url
+         price_source, cheaper_url, owner_purchased, owner_purchased_at
   FROM wishlist_items`;
 
 function getItem(db: Database, id: string): ItemRow | undefined {
@@ -461,6 +464,44 @@ export function wishlistRoutes(
         db.run("UPDATE wishlist_items SET purchased = 0, purchased_at = NULL WHERE id = ?", [
           item.id,
         ]);
+        return new Response(null, { status: 204 });
+      }),
+    },
+    "/api/wishlist/items/:id/owner-purchased": {
+      /** #76: the owner's OWN mark — the mirror of the blind reset above, but
+       *  NOT blind: the owner sees their own state through OwnedItem
+       *  (ownerPurchased). Like the blind reset it is owner-only and 204 on
+       *  clear; PUT returns the full updated OwnedItem so the client can
+       *  re-render without a second read. The anonymous share-link flag is
+       *  NEVER touched here. */
+      PUT: requireSession(db, (req, viewer) => {
+        const item = getItem(db, req.params.id);
+        if (!item) return jsonError(404, "Item not found");
+        if (item.user_id !== viewer.id) {
+          return jsonError(403, "Only the owner can mark this item");
+        }
+        // Idempotent: re-PUT on an already-marked row keeps the original
+        // owner_purchased_at (mirrors the share route's idempotent re-mark).
+        if (item.owner_purchased === 0) {
+          db.run(
+            "UPDATE wishlist_items SET owner_purchased = 1, owner_purchased_at = ? WHERE id = ? AND owner_purchased = 0",
+            [new Date().toISOString(), item.id],
+          );
+        }
+        return jsonOk(toOwnedItem(db, getItem(db, item.id) as ItemRow, seriesCap));
+      }),
+      DELETE: requireSession(db, (req, viewer) => {
+        const item = getItem(db, req.params.id);
+        if (!item) return jsonError(404, "Item not found");
+        if (item.user_id !== viewer.id) {
+          return jsonError(403, "Only the owner can unmark this item");
+        }
+        db.run(
+          "UPDATE wishlist_items SET owner_purchased = 0, owner_purchased_at = NULL WHERE id = ?",
+          [item.id],
+        );
+        // 204 mirrors the blind reset's clear semantics (no body needed:
+        // the client refreshes from the list read, which carries ownerPurchased).
         return new Response(null, { status: 204 });
       }),
     },

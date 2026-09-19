@@ -18,6 +18,10 @@ interface ItemListProps {
   /** Owner-only: clears the blind share-link purchased mark (204, no body). */
   onResetPurchased?: (id: string) => void | Promise<void>;
 
+  /** #76: the owner's own purchased mark (set is confirm-guarded in ItemCard). */
+  onMarkOwnerPurchased?: (id: string) => void | Promise<void>;
+  onUnmarkOwnerPurchased?: (id: string) => void | Promise<void>;
+
   /** Owner rows open the item page (#62); guest rows open the guest sheet. */
   onOpenDetails?: (id: string) => void;
   /** Owner-only reorder handle rendered in explicit reorder mode. */
@@ -38,6 +42,8 @@ export function ItemList({
   onUnclaim,
   onRefresh,
   onResetPurchased,
+  onMarkOwnerPurchased,
+  onUnmarkOwnerPurchased,
   onOpenDetails,
   renderDragHandle,
   renderPeekGrip,
@@ -57,6 +63,8 @@ export function ItemList({
           onUnclaim={onUnclaim}
           onRefresh={onRefresh}
           onResetPurchased={onResetPurchased}
+          onMarkOwnerPurchased={onMarkOwnerPurchased}
+          onUnmarkOwnerPurchased={onUnmarkOwnerPurchased}
           onOpenDetails={onOpenDetails}
           dragHandle={renderDragHandle?.(item.id)}
           peekGrip={renderPeekGrip?.(item.id)}

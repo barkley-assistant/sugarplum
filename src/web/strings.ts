@@ -171,6 +171,16 @@ export const S = {
       "Purchased marks are anonymous. This clears the mark without telling you who set it.",
     ownerViewingOwn: "You are viewing your own shared list. Purchased marks are hidden from you.",
   },
+  owner: {
+    /** #76: the owner's OWN purchased mark (distinct from the anonymous
+     *  share-link flag whose copy lives in S.share). */
+    mark: "Mark as purchased",
+    markTitle: "Mark as purchased?",
+    markBody:
+      "Records that you already bought this. Only you can see and undo this mark.",
+    unmark: "Unmark purchased",
+    badge: "Bought by you",
+  },
   admin: {
     name: "Name",
     username: "Username",

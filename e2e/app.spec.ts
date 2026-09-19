@@ -2324,3 +2324,138 @@ test("21: desktop reading column — non-feed pages cap at 720px, feed does not 
   // Leave the viewport desktop for any later assertions.
   await page.setViewportSize({ width: 1280, height: 900 });
 });
+
+test("22: owner purchased mark — mark, badge, unmark, and privacy (#76)", async ({
+  page,
+  browser,
+}) => {
+  // Seed a fresh item for this test (serial suite: earlier rows exist too —
+  // scope every locator to THIS item id).
+  const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Owner mark probe" },
+  });
+  expect(seeded.status()).toBe(201);
+  const item = (await seeded.json()) as { id: string };
+  await page.reload();
+
+  // --- 1. Feed row: mark via overflow menu, confirm-guarded. ---
+  const card = page.locator(`.item-card[data-item-id="${item.id}"]`);
+  await card.getByRole("button", { name: "More actions" }).click();
+  const menu = page.getByRole("menu", { name: "More actions" });
+  await menu.getByRole("menuitem", { name: "Mark as purchased" }).click();
+  const dialog = page.getByRole("alertdialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText("Only you can see and undo this mark.")).toBeVisible();
+  await dialog.getByRole("button", { name: "Mark as purchased" }).click();
+  await expect(dialog).toHaveCount(0);
+
+  // Row now carries the owner badge + share-view strike treatment.
+  await expect(card.locator(".owner-purchased-badge")).toHaveText("Bought by you");
+  await expect(card).toHaveClass(/is-purchased/);
+  await expect(card.locator(".item-title")).toHaveCSS("text-decoration-line", "line-through");
+  // The owner badge is NOT the share badge (test 15's selector contract).
+  await expect(card.locator(".share-purchased-badge")).toHaveCount(0);
+
+  // --- 2. Item page: badge + menu flips to Unmark; unmark clears. ---
+  await card.getByRole("button", { name: "Owner mark probe", exact: true }).click();
+  await expect(page).toHaveURL(`${BASE}/items/${item.id}`);
+  const itemPage = page.locator(".item-page");
+  await expect(itemPage.locator(".owner-purchased-badge")).toHaveText("Bought by you");
+  await itemPage.getByRole("button", { name: "More actions" }).click();
+  await page
+    .getByRole("menu", { name: "More actions" })
+    .getByRole("menuitem", { name: "Unmark purchased" })
+    .click();
+  await expect(itemPage.locator(".owner-purchased-badge")).toHaveCount(0);
+  // Back on the feed, the row is restored (no strike, no badge).
+  await page.goto(`${BASE}/`);
+  await expect(card.locator(".owner-purchased-badge")).toHaveCount(0);
+  await expect(card).not.toHaveClass(/is-purchased/);
+
+  // --- 3. THE PRIVACY REGRESSION, in the browser. ---
+  // Mark again (item page path this time), then have an anonymous friend
+  // ALSO mark the same item via the share link. The owner's surfaces must
+  // show ONLY their own mark — and an anonymous mark must move nothing the
+  // owner can see.
+  await page.goto(`${BASE}/items/${item.id}`);
+  await page.getByRole("button", { name: "More actions" }).click();
+  await page
+    .getByRole("menu", { name: "More actions" })
+    .getByRole("menuitem", { name: "Mark as purchased" })
+    .click();
+  const dialog2 = page.getByRole("alertdialog");
+  await dialog2.getByRole("button", { name: "Mark as purchased" }).click();
+  await expect(page.locator(".item-page .owner-purchased-badge")).toBeVisible();
+
+  const shared = await page.request.post(`${BASE}/api/share`);
+  expect(shared.status()).toBe(201);
+  const { token } = (await shared.json()) as { token: string };
+  const shareUrl = `${BASE}/share/${token}`;
+
+  const anon = await browser.newContext();
+  try {
+    const anonPage = await anon.newPage();
+    await anonPage.goto(shareUrl);
+    const anonCard = anonPage.locator(`.item-card[data-item-id="${item.id}"]`);
+    await anonCard.getByRole("button", { name: "More actions" }).click();
+    await anonPage.getByRole("menuitem", { name: "Mark as purchased" }).click();
+    const anonDialog = anonPage.getByRole("alertdialog");
+    await anonDialog.getByRole("button", { name: "Mark as purchased" }).click();
+    // The anonymous viewer sees the SHARE badge (double-gift prevention).
+    await expect(anonCard.locator(".share-purchased-badge")).toBeVisible();
+
+    // Owner list API: the raw JSON carries the owner's own mark ONLY.
+    const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as { id: string };
+    const ownList = (await (
+      await page.request.get(`${BASE}/api/users/${me.id}/wishlist`)
+    ).json()) as Record<string, unknown>[];
+    const mine = ownList.find((i) => i.id === item.id) as Record<string, unknown>;
+    expect(mine.ownerPurchased).toBe(true);
+    expect(Object.keys(mine)).not.toContain("purchased");
+    expect(Object.keys(mine)).not.toContain("purchasedAt");
+    expect(JSON.stringify(mine)).not.toContain("purchased_at");
+
+    // Owner's own share view: the anonymous mark is projected out; the owner
+    // mark does NOT appear on the share surface either.
+    await page.goto(shareUrl);
+    await expect(
+      page.getByText("You are viewing your own shared list. Purchased marks are hidden from you."),
+    ).toBeVisible();
+    await expect(page.locator(".share-purchased-badge")).toHaveCount(0);
+    await expect(page.locator(".owner-purchased-badge")).toHaveCount(0);
+    await expect(page.locator(`.item-card[data-item-id="${item.id}"]`)).not.toHaveClass(/is-purchased/);
+  } finally {
+    await anon.close();
+  }
+
+  // --- 4. Mobile + dark sweep on the marked row (product rules). ---
+  for (const width of [360, 390, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${BASE}/`);
+    await expect(card.locator(".owner-purchased-badge")).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      ),
+    ).toBe(false);
+  }
+  for (const scheme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.goto(`${BASE}/`);
+    await expect(card.locator(".owner-purchased-badge")).toBeVisible();
+  }
+  // Restore the suite's ambient scheme (later tests assert light-tinted
+  // styles; test 6b/12 set and reset explicitly — follow the same pattern).
+  await page.emulateMedia({ colorScheme: "light" });
+
+  // --- 5. Board hygiene: leave the row unmarked and the token dead for any
+  // later test (mirror test 15's revoke-and-clean ending). ---
+  await card.getByRole("button", { name: "More actions" }).click();
+  await page
+    .getByRole("menu", { name: "More actions" })
+    .getByRole("menuitem", { name: "Unmark purchased" })
+    .click();
+  await expect(card.locator(".owner-purchased-badge")).toHaveCount(0);
+  const revoke = await page.request.delete(`${BASE}/api/share`);
+  expect([200, 204]).toContain(revoke.status());
+});
