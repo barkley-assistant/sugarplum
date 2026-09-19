@@ -58,7 +58,6 @@ export const S = {
     imageViaSearch: "image via search",
   },
   detail: {
-    close: "Close",
     openProduct: "Open product",
     editItem: "Edit item",
     notesTitle: "Notes",

@@ -11,7 +11,7 @@ import { pruneFeedSnapshotItem } from "../feed-handoff";
 import { AppShell } from "./AppShell";
 import { EmptyState } from "./EmptyState";
 import { HintsPanel } from "./HintsPanel";
-import { DotsIcon, IconButton } from "./IconButton";
+import { DotsIcon } from "./IconButton";
 import { OverflowMenu, type OverflowItem } from "./OverflowMenu";
 import { ProductImage } from "./ProductImage";
 import { PriceHistoryCard } from "./PriceHistoryCard";
@@ -206,12 +206,9 @@ export function ItemPage({ id }: { id: string }) {
     <AppShell brandHref="/" brandLinkLabel={S.settings.backToList}>
       <div className="item-page" data-item-id={item.id}>
         <div className="detail-header">
-          {/* A page has no overlay to dismiss: this is the browser's own back
-              (the feed when the page was opened from it, the previous site on
-              a cold deep link — same as any web page's back button). */}
-          <IconButton label={S.detail.close} onClick={() => history.back()} className="detail-close">
-            <CloseIcon />
-          </IconButton>
+          {/* #72: the close icon is gone — a page is dismissed by the
+              browser's own back button (the feed when opened from it, the
+              previous site on a cold deep link), same as any web page. */}
           <OverflowMenu
             triggerLabel={S.item.moreActions}
             triggerIcon={<DotsIcon />}
@@ -359,10 +356,6 @@ async function pollUntilSettled(reload: () => Promise<OwnedItem | null>): Promis
 
 function Icon({ children, size = 18 }: { children: ReactNode; size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">{children}</svg>;
-}
-
-function CloseIcon() {
-  return <Icon><path d="m5 5 10 10M15 5 5 15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></Icon>;
 }
 
 function ExternalLinkIcon() {
