@@ -104,6 +104,10 @@
   --purchased-text: var(--text-2);
 
   --app-main-max: 1060px;
+  /* #71: reading-measure cap for the non-feed pages (detail, add, edit) and
+     their boot skeletons. The feed keeps the full --app-main-max column;
+     this cap only applies >=1024px (styles.css "Desktop reading column"). */
+  --content-col-max: 720px;
 
   --ease-row: 120ms ease;
 
