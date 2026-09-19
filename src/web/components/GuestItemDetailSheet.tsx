@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { formatDate, formatPrice, urlHost } from "../format";
+import { useBackDismiss } from "../use-back-dismiss";
 import { S } from "../strings";
 import { IconButton } from "./IconButton";
 import { ProductImage } from "./ProductImage";
@@ -44,6 +45,9 @@ interface GuestItemDetailSheetProps {
  *  affordances: no edit, no price history, no hints, no reset, no delete, and
  *  no overflow menu). */
 export function GuestItemDetailSheet({ item, onClose }: GuestItemDetailSheetProps) {
+  // #72: the app back button (browser/Android back) is a dismissal path for
+  // this surface, alongside Escape and overlay-click.
+  useBackDismiss(onClose);
   const [desktop, setDesktop] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia("(min-width: 1024px)").matches : false,
   );
