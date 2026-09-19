@@ -293,16 +293,19 @@ label {
   color: var(--text);
 }
 
+/* #75: ghost = no standing chrome. Transparent like .icon-btn, same soft
+   hover tint + hairline reveal (see .icon-btn:hover); only the shape
+   (--r-md) keeps it distinct from the default --r-sm box. */
 .icon-btn--ghost {
-  border-color: var(--border-2);
+  border-color: transparent;
   border-radius: var(--r-md);
   background: transparent;
   color: var(--text-2);
 }
 
 .icon-btn--ghost:hover {
-  border-color: var(--plum-500);
-  background: transparent;
+  border-color: var(--border);
+  background: var(--surface-2);
   color: var(--text);
 }
 
@@ -498,6 +501,10 @@ a.brand:hover {
   position: relative;
 }
 
+/* #75: the avatar chip wrapper is a quiet ghost target — transparent
+   standing, soft tint on hover. The plum avatar (.user-avatar-trigger)
+   is the brand element and keeps its own fill. border-color is pinned in
+   BOTH states so the global button:hover plum flash cannot leak in. */
 .user-menu-button {
   min-height: 44px;
   min-width: 44px;
@@ -505,8 +512,8 @@ a.brand:hover {
   align-items: center;
   justify-content: center;
   padding: var(--sp-2);
-  background: var(--surface);
-  border: 1px solid var(--border-2);
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: var(--r-sm);
   color: var(--text);
   transition: background-color var(--ease-ui), border-color var(--ease-ui);
@@ -514,6 +521,7 @@ a.brand:hover {
 
 .user-menu-button:hover {
   background: var(--surface-2);
+  border-color: var(--border);
 }
 
 .user-avatar-trigger {
@@ -2055,10 +2063,14 @@ button.row-open:hover {
   position: relative;
 }
 
+/* #75: the round ⋮ loses its standing chip (fill + ring) and reads as a
+   plain ghost circle like .icon-btn; only the shape (--r-full) remains
+   distinct. Hover comes from .icon-btn:hover, which this element already
+   carries via its "icon-btn detail-menu-trigger" class pair. */
 .detail-menu-trigger {
   border-radius: var(--r-full);
-  border: 1px solid var(--border-2);
-  background: var(--surface-2);
+  border: 1px solid transparent;
+  background: transparent;
 }
 
 .detail-scroll {
