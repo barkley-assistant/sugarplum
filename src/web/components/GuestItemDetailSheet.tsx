@@ -2,7 +2,6 @@ import { useEffect, useState, type ReactNode } from "react";
 import { formatDate, formatPrice, urlHost } from "../format";
 import { useBackDismiss } from "../use-back-dismiss";
 import { S } from "../strings";
-import { IconButton } from "./IconButton";
 import { ProductImage } from "./ProductImage";
 import { Sheet } from "./Sheet";
 import { StatusBadge } from "./StatusBadge";
@@ -72,11 +71,6 @@ export function GuestItemDetailSheet({ item, onClose }: GuestItemDetailSheetProp
       boxClassName={desktop ? undefined : "sheet--detail"}
     >
       <div className="detail-handle" aria-hidden="true" />
-      <div className="detail-header">
-        <IconButton label={S.detail.close} onClick={onClose} className="detail-close">
-          <CloseIcon />
-        </IconButton>
-      </div>
 
       <div className="detail-scroll">
         <div className="detail-hero">
@@ -145,14 +139,6 @@ function Icon({ children, size = 18 }: { children: ReactNode; size?: number }) {
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
       {children}
     </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <Icon>
-      <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </Icon>
   );
 }
 
