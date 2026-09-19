@@ -752,16 +752,36 @@ test("6c: back from an item page preserves the tag filter and scroll position", 
   await page.evaluate(() => window.scrollTo(0, 400));
   const scrolled = await page.evaluate(() => window.scrollY);
   expect(scrolled, "the feed really scrolls").toBeGreaterThan(100);
-  await page.locator(".item-card .row-open").first().click();
+  // Open a row that is ALREADY inside the viewport. Playwright scrolls an
+  // off-viewport target into view before clicking, and a scroll that happens
+  // while the feed is on screen is — correctly — recorded by the feed's scroll
+  // tracker; clicking the above-the-fold first row would therefore hand the
+  // feed a 0 offset and the restore assertion below would compare against a
+  // position the test itself erased.
+  const visibleRow = await page.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll(".item-card .row-open"));
+    return rows.findIndex((row) => {
+      const rect = row.getBoundingClientRect();
+      return rect.top >= 0 && rect.bottom <= window.innerHeight;
+    });
+  });
+  expect(visibleRow, "a row is fully inside the viewport at this scroll").toBeGreaterThanOrEqual(0);
+  await page.locator(".item-card .row-open").nth(visibleRow).click();
   await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}$/);
   await expect(page.locator(".detail-title")).toBeVisible();
   await page.goBack();
   await expect(page).toHaveURL(`${BASE}/`);
   expect(await loads(page)).toBe(docLoads); // soft navigation, no reload
-  expect(
-    await page.evaluate(() => window.scrollY),
-    "scroll position restored from the feed handoff",
-  ).toBeGreaterThanOrEqual(scrolled - 5);
+  // The restore runs in AppPage's mount effects after boot()'s /api/auth/me
+  // round trip — always after goBack() returns, sometimes a beat later. Poll
+  // for it rather than reading once: the poll can only pass once the handoff's
+  // scrollTo(0, restoreY) has actually run.
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY), {
+      timeout: 10_000,
+      message: "scroll position restored from the feed handoff",
+    })
+    .toBeGreaterThanOrEqual(scrolled - 5);
 
   // Context half: the active tag filter survives the same round trip.
   await page.getByRole("button", { name: "Birthday", exact: true }).click();
