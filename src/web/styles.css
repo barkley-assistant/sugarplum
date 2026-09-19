@@ -934,8 +934,9 @@ button.filter-chip {
   background: var(--surface-2);
 }
 
-/* Desktop shortcut: replace the kebab in-place on row hover/focus without
-   reserving permanent row space or changing the keyboard tab order. */
+/* Desktop shortcut: a peek grip beside the kebab on row hover/focus. It
+   reserves real space in the actions column (so it can never overlap the
+   price) and stays out of the tab order (pointer shortcut only). */
 .drag-handle--peek {
   display: none;
 }
@@ -944,8 +945,6 @@ button.filter-chip {
   .item-card:not(.is-reordering) .drag-handle--peek {
     display: inline-flex;
     visibility: hidden;
-    position: absolute;
-    inset: 0 auto 0 -44px;
     background: var(--surface);
   }
 
@@ -1850,6 +1849,14 @@ button.filter-chip {
   overflow: hidden;
 }
 
+/* #70: the stretched title button is not a chip — the global button:hover
+   (0,1,1) must never paint it plum. The row itself is the hover affordance
+   (.item-card:hover); the title stays text-only. */
+button.row-open:hover {
+  background: none;
+  border-color: transparent;
+}
+
 .row-open::after {
   content: "";
   position: absolute;
@@ -1874,6 +1881,7 @@ button.filter-chip {
   align-items: flex-start;
   flex-shrink: 0;
   min-width: 0;
+  gap: var(--sp-1);
 }
 
 .product-row-body .claim-btn {

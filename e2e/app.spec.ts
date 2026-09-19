@@ -879,6 +879,79 @@ test("5d: desktop hover reveals a reorder grip without entering mode", async ({ 
   await expect(page.locator(".item-card .item-title").first()).toHaveText(before[before.length - 1]);
 });
 
+test("5e: #70 desktop hover — title paints nothing, grip overlaps nothing", async ({ page }) => {
+  // Two priced rows so hover state, price-cluster geometry and reorder are
+  // all exercised (priceCents/currency shape per test 18's API usage).
+  for (const [title, price] of [["Hover probe A", "19.99"], ["Hover probe B", "9.99"]] as const) {
+    const res = await page.request.post(`${BASE}/api/wishlist/items`, {
+      data: { title, priceCents: price, currency: "USD" },
+    });
+    expect(res.status()).toBe(201);
+  }
+  await page.reload();
+
+  for (const width of [1024, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    // Mouse park: the PREVIOUS iteration may leave the pointer over a card
+    // at stale viewport coordinates — clear hover so toBeHidden() is
+    // deterministic (the suite's own pattern, e.g. test 5's mouse.move(0,0)).
+    await page.mouse.move(0, 0);
+    const card = page.locator(".item-card", { hasText: "Hover probe A" }).first();
+    const open = card.locator(".row-open");
+    const grip = card.locator(".drag-handle--peek");
+
+    await expect(grip).toBeHidden();
+    await card.hover();
+    await expect(grip).toBeVisible();
+
+    // Fix 1: hover the TITLE BUTTON itself — the global button:hover only
+    // paints when the button is the hovered element. Card hover persists
+    // (button is inside the card), so the grip stays visible throughout.
+    await open.hover();
+    const btnBg = await open.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(btnBg, `title paint at ${width}px`).toBe("rgba(0, 0, 0, 0)");
+
+    // Fix 2: no native tooltip attribute.
+    expect(await open.getAttribute("title")).toBeNull();
+
+    // Fix 3: the grip participates in the actions flex row — static, so it
+    // cannot overlap anything. Compute-style is the portable proof.
+    const pos = await grip.evaluate((el) => getComputedStyle(el).position);
+    expect(pos, `grip position at ${width}px`).toBe("static");
+
+    // And the geometry agrees: the grip must sit entirely RIGHT of the price
+    // column (its left edge at or past price's right edge). NB the OLD
+    // absolute code fails this (-44px offset intrudes 32px into price).
+    const clear = await card.evaluate((el) => {
+      const g = el.querySelector(".drag-handle--peek");
+      const p = el.querySelector(".product-row-price");
+      if (!g || !p) throw new Error("grip/price missing");
+      const gr = g.getBoundingClientRect();
+      const pr = p.getBoundingClientRect();
+      return gr.left >= pr.right - 0.5; // true == no intrusion into price
+    });
+    expect(clear, `grip clear of price at ${width}px`).toBe(true);
+
+    // Keyboard contract: peek grip stays a pointer shortcut (tabIndex -1).
+    expect(await grip.getAttribute("tabindex")).toBe("-1");
+
+    // No horizontal escape introduced at this width.
+    const probe = await horizontalEscapes(page);
+    expect(probe.docOverflow, `#70 overflow at ${width}px`).toBe(false);
+    expect(probe.offenders, `#70 escapes at ${width}px`).toEqual([]);
+  }
+
+  // Both themes: the reset is token-free but verify dark renders the same.
+  await page.emulateMedia({ colorScheme: "dark" });
+  const card = page.locator(".item-card", { hasText: "Hover probe A" }).first();
+  const open = card.locator(".row-open");
+  await card.hover();
+  await open.hover();
+  const darkBg = await open.evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(darkBg, "title paint dark").toBe("rgba(0, 0, 0, 0)");
+  await page.emulateMedia({ colorScheme: "light" });
+});
+
 test("6b: heading switcher opens a sheet and switches lists", async ({ page, browser }) => {
   const created = await page.request.post(`${BASE}/api/users`, {
     data: { username: "switcher-probe", password: "probe-pass", displayName: "Probe" },

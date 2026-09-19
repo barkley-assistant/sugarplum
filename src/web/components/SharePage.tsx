@@ -128,7 +128,6 @@ export function SharePage({ token }: { token: string }) {
               title={item.title}
               purchased={item.purchased}
               onOpen={() => setOpenId(item.id)}
-              openLabel={S.item.openDetails}
               image={
                 item.hasImage ? (
                   <ProductImage src={`/api/share/${token}/items/${item.id}/image`} />
