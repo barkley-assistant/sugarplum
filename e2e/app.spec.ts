@@ -91,6 +91,25 @@ async function settleEntryAnimation(locator: Locator) {
   });
 }
 
+/** #72: the guest sheet's back-dismiss hook pops its same-URL sentinel via a
+ *  history.back() on non-back closes. That traversal is ASYNC (commits a few
+ *  ms later); a pushState issued before it commits is truncated. Any test that
+ *  closes the sheet via Escape/overlay and then REOPENS it at machine speed
+ *  must first wait for the previous sentinel to be gone from the history
+ *  entry's state. goBack-close needs no settle (popstate already popped it). */
+async function sheetHistorySettled(page: Page): Promise<void> {
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const s = history.state as { sugarplum?: string } | null;
+          return s?.sugarplum === "sheet";
+        }),
+      { timeout: 5_000 },
+    )
+    .toBe(false);
+}
+
 /** Rendered WCAG contrast ratio of an element's text against the first opaque
  *  background behind it (walks ancestors, so transparent rows work). Pair it
  *  with emulateMedia({ colorScheme }) to prove both themes. */
@@ -586,7 +605,8 @@ test("4f: item page does not trap focus and keeps the menu popover contract", as
   const rowButton = card.getByRole("button", { name: "History probe", exact: true });
   await rowButton.click();
   const itemPage = page.locator(".item-page");
-  await expect(page.getByRole("button", { name: "Close" })).toBeVisible();
+  // #72: the close icon is gone — a page is dismissed by the app back button.
+  await expect(page.getByRole("button", { name: "Close" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "More actions" })).toBeVisible();
 
   // A page traps nothing: tabbing walks out of the item body into the shell
@@ -632,6 +652,13 @@ test("4f: item page does not trap focus and keeps the menu popover contract", as
   await expect(menu).toHaveCount(0);
   await expect(menuSheet).toHaveCount(0);
   await expect(page).toHaveURL(/\/items\//);
+
+  // #72: back dismisses the page (the close icon was its duplicate). The feed
+  // and focus is not stranded in the unmounted page.
+  await page.goBack();
+  await expect(page).toHaveURL(`${BASE}/`);
+  await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+  expect(await page.evaluate(() => document.activeElement?.tagName)).toBe("BODY");
 });
 
 test("4h: prices elsewhere stays inside detail and preserves honesty states", async ({ page }) => {
@@ -1025,6 +1052,20 @@ test("7: claim/unclaim between users; owner never sees claim state", async ({ pa
     await bob.keyboard.press("Escape");
     await expect(guestSheet).toHaveCount(0);
 
+    // #72: the app back button also dismisses the guest sheet, and focus
+    // returns to the opener row (Sheet's own close contract). The Escape
+    // close above queued a pop, so let it commit before reopening.
+    await sheetHistorySettled(bob);
+    await card.getByRole("button", { name: "Claimable mug" }).click();
+    const guestSheet2 = bob.getByRole("dialog", { name: "Claimable mug" });
+    await expect(guestSheet2).toBeVisible();
+    await expect(guestSheet2.getByRole("button", { name: "Close" })).toHaveCount(0);
+    const guestUrl = bob.url();
+    await bob.goBack();
+    await expect(guestSheet2).toHaveCount(0);
+    expect(bob.url()).toBe(guestUrl); // same-URL sentinel: no navigation
+    await expect(card.getByRole("button", { name: "Claimable mug" })).toBeFocused();
+
     // Leave the item unclaimed, as the original test did.
     await card.getByRole("button", { name: "Unclaim", exact: true }).click();
     await expect(card.getByText("Claimed by you")).not.toBeVisible();
@@ -1118,6 +1159,9 @@ test("9: no horizontal overflow at 360-1280px across surfaces", async ({ page, b
     // The guest detail sheet is the new surface: probe it at both ends.
     for (const width of [360, 1280]) {
       await guest.setViewportSize({ width, height: 800 });
+      // #72: the previous iteration's Escape close queued a sentinel pop; let
+      // that traversal commit before this open pushes a new one.
+      await sheetHistorySettled(guest);
       await guest
         .locator(".item-card", { has: guest.getByRole("heading", { name: "Claimable mug" }) })
         .getByRole("button", { name: "Claimable mug" })
@@ -1150,6 +1194,8 @@ test("9: no horizontal overflow at 360-1280px across surfaces", async ({ page, b
 
   for (const width of [360, 1280]) {
     await page.setViewportSize({ width, height: 800 });
+    // #72: same settle discipline as the other-user probe above.
+    await sheetHistorySettled(page);
     await page
       .locator(".item-card", { has: page.getByRole("heading", { name: "Claimable mug" }) })
       .getByRole("button", { name: "Claimable mug" })
@@ -1639,8 +1685,14 @@ test("15e: anonymous guest sheet shows details and confirmed purchase state", as
     await expect(sheet.getByRole("button", { name: "Edit item" })).toHaveCount(0);
     await expect(sheet.locator(".price-graph")).toHaveCount(0);
     await expect(sheet.getByRole("button", { name: "More actions" })).toHaveCount(0);
-    await sheet.getByRole("button", { name: "Close" }).click();
+    // #72: no close icon on the sheet; the app back button dismisses it
+    // gesture equivalent) with focus returning to the opener row.
+    await expect(sheet.getByRole("button", { name: "Close" })).toHaveCount(0);
+    const shareUrl = `${BASE}/share/${token}`;
+    await anonPage.goBack();
     await expect(sheet).toHaveCount(0);
+    await expect(anonPage).toHaveURL(shareUrl); // sentinel is same-URL
+    await expect(card.getByRole("button", { name: "Guest detail probe" })).toBeFocused();
 
     // Marking stays a row interaction; the sheet then reports the confirmed
     // state without offering a second marking affordance.
@@ -1653,8 +1705,9 @@ test("15e: anonymous guest sheet shows details and confirmed purchase state", as
     const purchasedSheet = anonPage.getByRole("dialog", { name: "Guest detail probe" });
     await expect(purchasedSheet.locator(".share-purchased-badge")).toHaveText("Purchased");
     await expect(purchasedSheet.getByRole("button", { name: "More actions" })).toHaveCount(0);
-    await purchasedSheet.getByRole("button", { name: "Close" }).click();
+    await anonPage.goBack();
     await expect(purchasedSheet).toHaveCount(0);
+    await expect(anonPage).toHaveURL(shareUrl);
   } finally {
     await anon.close();
     // Leave no live link behind for later specs.
