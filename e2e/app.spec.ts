@@ -150,20 +150,37 @@ test("2: manual add shows a card with a formatted price", async ({ page }) => {
 test("3: paste-link add scrapes a local fixture and resolves", async ({ page }) => {
   const fixture = await startFixtureServer();
   try {
+    // Capture the POST to learn the new row's id BEFORE any rendered state
+    // exists — every later assertion anchors on that id, so --repeat-each
+    // re-runs (same server, same DB, another "Fresh Kiss Trio" row) can never
+    // go strict-mode-ambiguous or latch onto a prior run's row.
+    const created = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/wishlist/items") && response.request().method() === "POST",
+    );
     await page.getByRole("button", { name: "Add item" }).first().click();
     await expect(page).toHaveURL(`${BASE}/add`);
     await page.getByLabel("Link").fill(`${fixture.url}/product`);
     await page.getByRole("button", { name: "Add item" }).click();
-    // The scrape on a fast local fixture may resolve before the provisional
-    // "Fetching details…" state can be asserted; the contract is that the
-    // item RESOLVES (fetchState complete / title updated).
-    await expect(page.getByRole("heading", { name: "Fresh Kiss Trio" })).toBeVisible({
-      timeout: 20_000,
-    });
-    const resolvedCard = page.locator(".item-card", {
-      has: page.getByRole("heading", { name: "Fresh Kiss Trio" }),
-    });
-    await expect(resolvedCard).not.toHaveAttribute("data-fetch", "pending");
+    const response = await created;
+    expect(response.status()).toBe(201);
+    const item = (await response.json()) as { id: string };
+
+    const card = page.locator(`.item-card[data-item-id="${item.id}"]`);
+    // The pending→resolved transition IS the product contract: the row is
+    // created pending with a provisional hostname title (127.0.0.1) and
+    // enrichment must flip it to the scraped title. The feed polls while any
+    // row is pending (AppPage convergence effect), so this converges even when
+    // the initial feed fetch lost the race with the scrape.
+    await expect
+      .poll(() => card.locator(".row-open").innerText(), {
+        timeout: 20_000,
+        message: "scraped title replaces the provisional hostname",
+      })
+      .toContain("Fresh Kiss Trio");
+    // Resolved: the pending marker is gone (data-fetch is undefined once
+    // complete — ProductRow never renders data-fetch="complete").
+    await expect(card).not.toHaveAttribute("data-fetch", "pending");
   } finally {
     fixture.close();
   }
