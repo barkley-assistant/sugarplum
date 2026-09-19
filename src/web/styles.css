@@ -2055,7 +2055,6 @@ button.row-open:hover {
   position: relative;
 }
 
-.detail-close,
 .detail-menu-trigger {
   border-radius: var(--r-full);
   border: 1px solid var(--border-2);
@@ -2085,6 +2084,10 @@ button.row-open:hover {
 
 .item-page .detail-header {
   padding: 0 0 var(--sp-3);
+  /* #72: the close icon is gone, so the overflow trigger is the header's only
+     child — keep it right-aligned (space-between would left-align it).
+     position: relative stays: it is the .menu-sheet popover's anchor. */
+  justify-content: flex-end;
 }
 
 .item-page .detail-scroll {
