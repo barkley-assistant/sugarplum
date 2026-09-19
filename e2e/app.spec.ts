@@ -2094,3 +2094,98 @@ test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ pa
   await expect(page.getByRole("menuitem", { name: "Settings" })).toBeVisible();
   await page.keyboard.press("Escape");
 });
+
+test("20: quiet ghost icon buttons — no standing chrome, soft hover (#75)", async ({ page }) => {
+  // #75: the round ⋮ and the top-bar chips drop their standing fill/border
+  // and read as quiet ghosts: transparent resting state, muted icon, soft
+  // --surface-2 tint on hover. The avatar keeps its plum circle (brand);
+  // only its wrapper chrome disappears. Focus-visible, aria-labels, 44px
+  // targets and every existing selector are untouched.
+
+  const bg = (el: Locator) => el.evaluate((e) => getComputedStyle(e).backgroundColor);
+  const borderColor = (el: Locator) => el.evaluate((e) => getComputedStyle(e).borderColor);
+  const NONE = "rgba(0, 0, 0, 0)"; // Chromium's transparent
+
+  // The serial suite has items by now, but seed one when test 20 runs alone
+  // (the filtered RED/GREEN runs do) so the desktop header cluster exists.
+  const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as { id: string };
+  const itemsUrl = `${BASE}/api/users/${me.id}/wishlist`;
+  let list = (await (await page.request.get(itemsUrl)).json()) as Array<{ id: string }>;
+  if (list.length === 0) {
+    await page.request.post(`${BASE}/api/wishlist/items`, { data: { title: "Quiet probe" } });
+    list = (await (await page.request.get(itemsUrl)).json()) as Array<{ id: string }>;
+  }
+  const itemId = list[0]!.id;
+
+  for (const colorScheme of ["light", "dark"] as const) {
+    // Exact token values per scheme (tokens.css:15/23, 143/150).
+    const surface2 = colorScheme === "light" ? "rgb(244, 244, 245)" : "rgb(38, 33, 48)";
+    const border = colorScheme === "light" ? "rgb(228, 228, 231)" : "rgb(42, 36, 56)";
+
+    await page.emulateMedia({ colorScheme });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(`${BASE}/`);
+    await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+
+    // --- Desktop top-bar chips, scoped to .topbar-actions so the EmptyState's
+    // primary "Add item" (AppPage.tsx:479, plum fill, correct as-is) can never
+    // be mistaken for the header chip on an empty feed.
+    const cluster = page.locator(".topbar-actions");
+    await expect(cluster).toBeVisible(); // feed is non-empty by test 20 in this serial suite
+    const add = cluster.getByRole("button", { name: "Add item", exact: true });
+    const share = cluster.getByRole("button", { name: "Share my list", exact: true });
+    for (const [name, btn] of [["Add item", add], ["Share", share]] as const) {
+      expect(await bg(btn), `${colorScheme}/${name}: no standing fill`).toBe(NONE);
+      expect(await borderColor(btn), `${colorScheme}/${name}: no standing border`).toBe(NONE);
+    }
+    // 44px target survives the quieting.
+    expect((await add.boundingBox())!.height, `${colorScheme}: Add item target >= 44px`)
+      .toBeGreaterThanOrEqual(44);
+
+    // --- Ghost chip hover (the rule that changes most): soft tint + hairline
+    // replace the old plum border + transparent background. Polled because
+    // .icon-btn transitions background/border (the first probe can land
+    // mid-interpolation).
+    await add.hover();
+    await expect.poll(() => bg(add), { message: `${colorScheme}/Add item hover tint` }).toBe(surface2);
+    await expect.poll(() => borderColor(add), { message: `${colorScheme}/Add item hover hairline (no plum)` }).toBe(border);
+    await page.mouse.move(0, 0); // leave hover before the next probe
+
+    // --- Avatar chip: transparent wrapper; hover = soft tint + hairline, and
+    // specifically NOT a plum border flash (the global button:hover leak,
+    // plan §1.3 trap 2, must stay dead in both schemes).
+    const avatar = page.locator('.user-menu-button[aria-label="Admin"]');
+    expect(await bg(avatar), `${colorScheme}/avatar: no standing fill`).toBe(NONE);
+    expect(await borderColor(avatar), `${colorScheme}/avatar: no standing border`).toBe(NONE);
+    await avatar.hover();
+    await expect.poll(() => bg(avatar), { message: `${colorScheme}/avatar hover tint` }).toBe(surface2);
+    await expect.poll(() => borderColor(avatar), { message: `${colorScheme}/avatar hover hairline (no plum)` }).toBe(border);
+    await page.mouse.move(0, 0); // leave hover before the next probe
+
+    // --- Detail ⋮: transparent circle standing; quiet hover tint from
+    // .icon-btn:hover (the trigger carries "icon-btn detail-menu-trigger").
+    // Two-step idiom from test 4e2 (app.spec.ts:532-534): the wishlist route
+    // is /api/users/:id (wishlist.ts:253) — there is no "me" literal route.
+    await page.goto(`${BASE}/items/${itemId}`);
+    const menuBtn = page.locator(".detail-menu-trigger");
+    await expect(menuBtn).toBeVisible();
+    expect(await bg(menuBtn), `${colorScheme}/⋮: no standing fill`).toBe(NONE);
+    expect(await borderColor(menuBtn), `${colorScheme}/⋮: no standing border`).toBe(NONE);
+    await menuBtn.hover();
+    await expect.poll(() => bg(menuBtn), { message: `${colorScheme}/⋮ hover tint` }).toBe(surface2);
+    // No cleanup needed: hover is discarded by the next loop's page.goto.
+    // (The ⋮ menu opens on CLICK, not hover — nothing is left open. Do NOT
+    // press Escape here: #72's back-dismiss would navigate away.)
+  }
+
+  // Focus-visible ring contract unchanged (spot-check one representative):
+  // focusing the Add chip shows the plum ring exactly as before.
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(`${BASE}/`);
+  const add = page.locator(".topbar-actions").getByRole("button", { name: "Add item", exact: true });
+  await add.focus();
+  await expect(add).toBeFocused();
+  const outline = await add.evaluate((e) => getComputedStyle(e).outlineColor);
+  expect(outline).toContain("124, 58, 237"); // --plum-500 light #7c3aed = rgb(124,58,237)
+});
