@@ -2611,3 +2611,150 @@ test("23: bottom action bar persists on every authenticated route (#95)", async 
   const revoke = await page.request.delete(`${BASE}/api/share`);
   expect([200, 204]).toContain(revoke.status());
 });
+
+test("24: item row and reset row share their slot at every width (#97)", async ({ page }) => {
+  const created = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Width probe", priceCents: "12.34", currency: "GBP" },
+  });
+  expect(created.status()).toBe(201);
+  const item = (await created.json()) as { id: string };
+
+  /** Every control in the item form's title/price/currency row, plus the row.
+   *  #97's standard: a control's width comes from the row (its slot), never
+   *  from an engine-intrinsic input/select metric. */
+  const itemRow = () =>
+    page.evaluate(() => {
+      const row = document.getElementById("item-title")?.closest(".field-row");
+      if (!row) throw new Error("item field-row missing");
+      const rr = row.getBoundingClientRect();
+      const boxes: Record<string, { width: number; top: number; bottom: number; right: number }> = {};
+      for (const el of Array.from(row.querySelectorAll("input, select"))) {
+        const r = el.getBoundingClientRect();
+        boxes[el.id] = { width: r.width, top: r.top, bottom: r.bottom, right: r.right };
+      }
+      return { rowWidth: rr.width, rowRight: rr.right, boxes };
+    });
+
+  for (const width of [360, 390, 430, 768, 1024, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${BASE}/items/${item.id}/edit`);
+    await expect(page.getByLabel("Title")).toBeVisible();
+
+    const { rowWidth, boxes } = await itemRow();
+    const title = boxes["item-title"];
+    const price = boxes["item-price"];
+    const currency = boxes["item-currency"];
+    // Price and Currency are siblings, so they are equal at every width — the
+    // mobile grid's two halves, the desktop row's two compact slots.
+    expect(Math.abs(price.width - currency.width), `price vs currency at ${width}px`)
+      .toBeLessThanOrEqual(1);
+    if (width <= 430) {
+      // Mobile: the mobile grid stacks Title across the full row.
+      expect(Math.abs(title.width - rowWidth), `title spans the row at ${width}px`)
+        .toBeLessThanOrEqual(1);
+    } else {
+      // Desktop: Title keeps the dominant share (2:1:1). On main this pair was
+      // 231px vs 86px — two engine metrics, neither derived from the row.
+      expect(title.width, `title dominant at ${width}px`).toBeGreaterThan(price.width);
+      expect(price.width, `price is slot-derived at ${width}px`).toBeGreaterThan(140);
+      expect(price.width, `price is slot-derived at ${width}px`).toBeLessThan(300);
+    }
+    const probe = await horizontalEscapes(page);
+    expect(probe.docOverflow, `document overflow at ${width}px`).toBe(false);
+    expect(probe.offenders, `true escapes at ${width}px`).toEqual([]);
+  }
+
+  // 4-field case (Other-currency open) at the desktop reading column: three
+  // equal compact slots, Title still dominant. On main the engine metrics made
+  // this 231/86/231 and crushed Title to 135px.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${BASE}/items/${item.id}/edit`);
+  await page.getByLabel("Currency").selectOption("Other");
+  await expect(page.locator("#item-other-currency")).toBeVisible();
+  const wide = await itemRow();
+  const other = wide.boxes["item-other-currency"];
+  expect(Math.abs(other.width - wide.boxes["item-price"].width), "other-currency vs price at 1280px")
+    .toBeLessThanOrEqual(1);
+  expect(Math.abs(other.width - wide.boxes["item-currency"].width), "other-currency vs currency at 1280px")
+    .toBeLessThanOrEqual(1);
+  expect(wide.boxes["item-title"].width, "title dominant with 4 fields at 1280px")
+    .toBeGreaterThan(other.width);
+
+  // Same page, resized: the SPA keeps Other selected, and the 4th field spans
+  // the full row instead of orphaning in a half-cell.
+  await page.setViewportSize({ width: 390, height: 844 });
+  const narrow = await itemRow();
+  expect(narrow.boxes["item-other-currency"], "other-currency present at 390px").toBeTruthy();
+  expect(
+    Math.abs(narrow.boxes["item-other-currency"].width - narrow.rowWidth),
+    "other-currency spans the row at 390px",
+  ).toBeLessThanOrEqual(1);
+
+  /** The admin reset-password row: the input plus its two buttons. */
+  const resetRow = () =>
+    page.evaluate(() => {
+      const input = document.getElementById("reset-password");
+      const row = input?.closest(".reset-form-row");
+      if (!input || !row) throw new Error("reset row missing");
+      const ir = input.getBoundingClientRect();
+      const rr = row.getBoundingClientRect();
+      const buttons = Array.from(row.querySelectorAll("button")).map((b) => {
+        const r = b.getBoundingClientRect();
+        return { width: r.width, top: r.top };
+      });
+      return {
+        rowWidth: rr.width,
+        rowRight: rr.right,
+        input: { width: ir.width, top: ir.top, bottom: ir.bottom, right: ir.right },
+        buttons,
+      };
+    });
+
+  const openReset = async (width: number) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${BASE}/settings`);
+    await page.getByRole("button", { name: "Reset password" }).first().click();
+    await expect(page.locator("#reset-password")).toBeVisible();
+  };
+  const closeReset = () =>
+    page.locator(".reset-form").getByRole("button", { name: "Cancel" }).click();
+
+  // Phone rhythm: the input owns its line and the buttons split the next one.
+  // At 430 on main the row squeezed the input to 183px and wrapped Cancel alone.
+  for (const width of [360, 390, 430]) {
+    await openReset(width);
+    const m = await resetRow();
+    expect(Math.abs(m.input.width - m.rowWidth), `reset input spans its line at ${width}px`)
+      .toBeLessThanOrEqual(1);
+    expect(m.input.bottom, `input sits above the buttons at ${width}px`)
+      .toBeLessThanOrEqual(m.buttons[0].top);
+    if (width >= 390) {
+      // nowrap clamps "Set password" at 360, so equality is asserted from 390 up.
+      expect(Math.abs(m.buttons[0].width - m.buttons[1].width), `reset buttons equal at ${width}px`)
+        .toBeLessThanOrEqual(1);
+    } else {
+      expect(m.buttons[0].top, "reset buttons share one line at 360px").toBe(m.buttons[1].top);
+      expect(m.buttons[0].width + m.buttons[1].width, "reset buttons fill the line at 360px")
+        .toBeGreaterThan(m.input.width * 0.9);
+    }
+    const probe = await horizontalEscapes(page);
+    expect(probe.docOverflow, `document overflow at ${width}px (reset row)`).toBe(false);
+    await closeReset();
+  }
+
+  // Desktop keeps the shipped rhythm: input grows, both buttons on its line.
+  for (const width of [768, 1024, 1280]) {
+    await openReset(width);
+    const m = await resetRow();
+    expect(m.input.right, `reset input leaves room for the buttons at ${width}px`)
+      .toBeLessThan(m.rowRight - 1);
+    for (const button of m.buttons) {
+      expect(Math.abs(button.top - m.input.top), `button centred on the input line at ${width}px`)
+        .toBeLessThan(3);
+    }
+    await closeReset();
+  }
+
+  const removed = await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
+  expect([200, 204]).toContain(removed.status());
+});

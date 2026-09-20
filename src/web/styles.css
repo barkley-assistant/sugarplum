@@ -1143,6 +1143,18 @@ button.filter-chip {
   min-width: 0;
 }
 
+/* #97: a compact (non-grow) field in a row takes half a growing field's
+   share, with flex-basis 0 so every slot is derived from the row itself —
+   never from engine-intrinsic input/select metrics (the create-user password
+   pinned at the 231px input metric; the item form's price 231px vs currency
+   86px). Compact siblings are equals by construction, and a basis-0 row can
+   no longer wrap raggedly on desktop. Inert below 640px: the item-form rows
+   are grids there (max-width: 639px block below) and grid items ignore flex
+   properties. */
+.field-row .field:not(.grow) {
+  flex: 0.5 1 0;
+}
+
 .form-actions {
   display: flex;
   gap: var(--sp-2);
@@ -1256,6 +1268,14 @@ button.filter-chip {
   }
 
   .item-form .field-row .field.grow {
+    grid-column: 1 / -1;
+  }
+
+  /* #97: with Other-currency open the row's compact fields are three —
+     auto-placement would orphan the third in a half-cell. The 4th child is
+     other-currency only when rendered (child order is fixed: title, price,
+     currency, [other]); when absent, this matches nothing. */
+  .item-form .field-row .field:not(.grow):nth-child(4) {
     grid-column: 1 / -1;
   }
 }
@@ -1425,6 +1445,21 @@ button.filter-chip {
 
 .reset-form-row button {
   min-height: 40px;
+}
+
+/* #97: phone rhythm for the reset row — the input owns its line and the two
+   buttons split the next line as equal halves, instead of the 430px orphan
+   where Cancel wrapped alone under a squeezed input. Desktop (>=640) is
+   unchanged: the input grows and the buttons sit content-width on its line. */
+@media (max-width: 639px) {
+  .reset-form-row input {
+    flex-basis: 100%;
+  }
+
+  .reset-form-row button {
+    flex: 1 1 0;
+    white-space: nowrap;
+  }
 }
 
 .admin-table-wrap {
