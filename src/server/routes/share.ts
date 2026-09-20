@@ -12,7 +12,7 @@ import {
 import { RateLimiter } from "../auth/rate-limit";
 import { SESSION_COOKIE, getSessionUser, type SessionUser } from "../auth/sessions";
 import { serveItemImage } from "../images";
-import { formatPrice, parseTags } from "./wishlist";
+import { formatPrice, parseTags, priceStatsFor } from "./wishlist";
 
 /**
  * Public share links (wave 10).
@@ -27,6 +27,10 @@ import { formatPrice, parseTags } from "./wishlist";
 
 export interface ShareRoutesConfig {
   imagesDir: string;
+  /** Max observations in the 90-day series handed to the share surface — the
+   *  same operator knob the owner routes use (config.trackSeriesCap), so both
+   *  surfaces derive their trend from the identical series. */
+  seriesCap: number;
 }
 
 interface ShareItemRow {
@@ -34,6 +38,7 @@ interface ShareItemRow {
   title: string;
   url: string | null;
   image_path: string | null;
+  image_source: string | null;
   price_cents: number | null;
   currency: string | null;
   notes: string | null;
@@ -77,14 +82,21 @@ function optionalSessionUser(db: Database, req: RouteRequest): SessionUser | nul
   return token ? getSessionUser(db, token).user : null;
 }
 
-/** The share surface transmits no claim, hint, provenance or internal
- *  fields — only the columns below are ever read. */
+/** The share surface transmits no claim, hint, price-provenance or internal
+ *  fields — only the columns below are ever read. `image_source` is the one
+ *  provenance flag that crosses the boundary: it is a product fact (where the
+ *  listing image came from), never a path and never owner identity. */
 const SHARE_ITEM_SELECT = `
-  SELECT id, title, url, image_path, price_cents, currency, notes, tags, site_name,
-         purchased, sort_order, created_at
+  SELECT id, title, url, image_path, image_source, price_cents, currency, notes, tags,
+         site_name, purchased, sort_order, created_at
     FROM wishlist_items`;
 
-function toShareItem(row: ShareItemRow, hidePurchased: boolean): ShareItem {
+function toShareItem(
+  db: Database,
+  row: ShareItemRow,
+  hidePurchased: boolean,
+  seriesCap: number,
+): ShareItem {
   return {
     id: row.id,
     title: row.title,
@@ -94,6 +106,13 @@ function toShareItem(row: ShareItemRow, hidePurchased: boolean): ShareItem {
     notes: row.notes,
     tags: parseTags(row.tags),
     siteName: row.site_name,
+    createdAt: row.created_at,
+    // Derived PRODUCT facts, not owner data: the ledger has no owner column,
+    // so the same stats are sent to every viewer (see the privacy note on
+    // ShareItem). priceStatsFor is the owner route's own function — one
+    // derivation, no second implementation to drift.
+    priceStats: priceStatsFor(db, row.id, seriesCap),
+    imageSource: row.image_source,
     hasImage: row.image_path !== null,
     // THE INVARIANT: the owner's copy of the share view carries purchased:
     // false even when the row says 1. Server-side projection, not client
@@ -166,7 +185,7 @@ export function shareRoutes(db: Database, limiter: RateLimiter, cfg: ShareRoutes
         return jsonOk({
           ownerDisplayName: user.display_name,
           viewerIsOwner,
-          items: rows.map((row) => toShareItem(row, viewerIsOwner)),
+          items: rows.map((row) => toShareItem(db, row, viewerIsOwner, cfg.seriesCap)),
         } satisfies ShareView);
       },
     },

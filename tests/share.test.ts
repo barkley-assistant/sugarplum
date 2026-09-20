@@ -157,6 +157,15 @@ describe("anonymous share view", () => {
     expect(item.hasImage).toBe(false);
     expect(item.purchased).toBe(false);
 
+    // #90 informational parity: the added date, the derived price stats and
+    // the image provenance flag ARE product facts — sent to anonymous viewers
+    // so the share sheet can render the same sections as the owner page.
+    expect(item.createdAt).toBeTruthy();
+    expect(item.priceStats).not.toBeNull();
+    expect(item.priceStats?.lowestCents).toBe("12.50"); // the manual add price
+    expect(item.priceStats?.atAddCents).toBe("12.50");
+    expect(item.imageSource).toBeNull(); // no stored image on this item
+
     // Shape test — the security contract as data:
     const payload = JSON.stringify(view);
     for (const forbidden of [
@@ -165,7 +174,6 @@ describe("anonymous share view", () => {
       "claimed_by", // claim state: never on the share surface
       "hintPrice",
       "hintSource",
-      "priceStats",
       "cheaperUrl",
       "priceSource", // owner-only data
       "username",
@@ -178,12 +186,72 @@ describe("anonymous share view", () => {
       "sortOrder",
       "fetchState",
       "imagePath",
-      "imageSource",
       "user_id",
       "userId",
     ]) {
       expect(payload).not.toContain(forbidden);
     }
+  });
+
+  test("#90: share priceStats + createdAt match the owner's for an item with history", async () => {
+    const ownerId = await loginAsAdmin();
+    const item = await seedItem("Parity probe", { priceCents: "19.99", currency: "GBP" });
+
+    // One older, lower observation (the same ledger the owner reads). The
+    // manual add price is the only other row, so the earliest observation —
+    // "at add" — is this one.
+    const twoDaysAgo = new Date(Date.now() - 2 * 86_400_000).toISOString();
+    app.app.db
+      .query(
+        `INSERT INTO price_history (id, item_id, price_cents, currency, source, observed_at)
+         VALUES (?, ?, ?, ?, 'scrape', ?)`,
+      )
+      .run(crypto.randomUUID(), item.id, 1599, "GBP", twoDaysAgo);
+
+    const token = await activeToken();
+    const stranger = app.newJar();
+    const view = (await (await stranger.request("GET", `/api/share/${token}`)).json()) as ShareView;
+    const shared = view.items[0];
+
+    // The numbers are real, not just equal: lowest + at-add come from the
+    // ledger, and the series carries both observations.
+    expect(shared.priceStats?.lowestCents).toBe("15.99");
+    expect(shared.priceStats?.atAddCents).toBe("15.99");
+    expect(shared.priceStats?.series).toHaveLength(2);
+    expect(shared.createdAt).toBeTruthy();
+
+    // …and they are the SAME derivation the owner sees (one function, two
+    // surfaces) — parity is the contract, not a coincidence.
+    const ownList = (await (
+      await admin.request("GET", `/api/users/${ownerId}/wishlist`)
+    ).json()) as OwnedItem[];
+    const owned = ownList.find((candidate) => candidate.id === item.id) as OwnedItem;
+    expect(shared.priceStats).toEqual(owned.priceStats);
+    expect(shared.createdAt).toBe(owned.createdAt);
+  });
+
+  test("#90: no history → priceStats null; the owner projection still hides purchased", async () => {
+    await loginAsAdmin();
+    const item = await seedItem("Nothing yet");
+    const token = await activeToken();
+
+    // An anonymous friend marks it purchased…
+    expect((await purchase(token, item.id)).status).toBe(200);
+
+    // …the owner's own copy of the share view still projects it out (the
+    // invariant survives the larger DTO), and an empty ledger reads as null —
+    // never an invented series.
+    const ownView = (await (await admin.request("GET", `/api/share/${token}`)).json()) as ShareView;
+    expect(ownView.viewerIsOwner).toBe(true);
+    expect(ownView.items[0].purchased).toBe(false);
+    expect(ownView.items[0].priceStats).toBeNull();
+
+    const anonView = (await (
+      await app.newJar().request("GET", `/api/share/${token}`)
+    ).json()) as ShareView;
+    expect(anonView.items[0].priceStats).toBeNull();
+    expect(anonView.items[0].createdAt).toBeTruthy();
+    expect(anonView.items[0].imageSource).toBeNull();
   });
 
   test("404 after revoke — view, and unknown tokens look identical", async () => {

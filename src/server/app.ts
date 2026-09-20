@@ -113,7 +113,10 @@ export function createApp(config: Config): App {
         searxngUrl: config.searxngUrl,
         seriesCap: config.trackSeriesCap,
       }),
-      ...shareRoutes(db, shareLimiter, { imagesDir: config.imagesDir }),
+      ...shareRoutes(db, shareLimiter, {
+        imagesDir: config.imagesDir,
+        seriesCap: config.trackSeriesCap,
+      }),
       ...imageRoutes(db, config.imagesDir),
       ...healthRoutes(),
     } as AnyRouteTable),
