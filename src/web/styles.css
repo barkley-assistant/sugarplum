@@ -72,7 +72,7 @@ button {
   min-height: 44px;
   padding: 0.55rem 1rem;
   border: 1px solid var(--plum-600);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-control);
   background: var(--plum-600);
   color: #fff;
   cursor: pointer;
@@ -107,7 +107,7 @@ button.is-busy::after {
   height: 12px;
   border: 2px solid var(--border-2);
   border-top-color: var(--plum-500);
-  border-radius: 50%;
+  border-radius: var(--r-pill);
   animation: spin 600ms linear infinite;
 }
 
@@ -141,7 +141,7 @@ button.danger:hover {
 
 /* Settings + login submits adopt the detail surface's pill CTA grammar. */
 button.settings-submit {
-  border-radius: var(--r-full);
+  border-radius: var(--r-pill);
   font-weight: 600;
   padding: 0 var(--sp-5);
 }
@@ -154,7 +154,7 @@ button.chip {
   background: var(--chip-bg);
   color: var(--chip-text);
   border: 1px solid var(--chip-border);
-  border-radius: var(--r-full);
+  border-radius: var(--r-pill);
   font-size: var(--text-sm);
   white-space: nowrap;
   transition: background-color var(--ease-ui), border-color var(--ease-ui), color var(--ease-ui);
@@ -183,7 +183,7 @@ textarea {
   font: inherit;
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--border-2);
-  border-radius: var(--r-input);
+  border-radius: var(--r-control);
   background: var(--surface);
   color: var(--text);
   width: 100%;
@@ -280,7 +280,7 @@ label {
   padding: 0;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-control);
   color: var(--text-2);
   cursor: pointer;
   flex-shrink: 0;
@@ -293,12 +293,13 @@ label {
   color: var(--text);
 }
 
-/* #75: ghost = no standing chrome. Transparent like .icon-btn, same soft
-   hover tint + hairline reveal (see .icon-btn:hover); only the shape
-   (--r-md) keeps it distinct from the default --r-sm box. */
+/* #75/#88: ghost = no standing chrome. Transparent like .icon-btn, same soft
+   hover tint + hairline reveal (see .icon-btn:hover). It shares the one
+   control radius (--r-control): #75's distinctiveness came from the absence
+   of a fill, not from a second radius for the same surface type. */
 .icon-btn--ghost {
   border-color: transparent;
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
   background: transparent;
   color: var(--text-2);
 }
@@ -336,7 +337,7 @@ label {
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-card);
   padding: 1rem;
 }
 
@@ -356,7 +357,7 @@ label {
   flex-direction: column;
   gap: 0.6rem;
   padding: var(--sp-6);
-  border-radius: var(--r-xl);
+  border-radius: var(--r-card);
 }
 
 .auth-lockup {
@@ -369,7 +370,7 @@ label {
 .auth-lockup img {
   width: 48px;
   height: 48px;
-  border-radius: var(--r-md);
+  border-radius: var(--r-control);
 }
 
 .auth-lockup .muted {
@@ -457,7 +458,7 @@ a.brand:hover {
   padding: var(--section-pad);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--section-radius);
+  border-radius: var(--r-card);
   min-width: 0;
 }
 
@@ -469,7 +470,7 @@ a.brand:hover {
 .brand-mark {
   width: 28px;
   height: 28px;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-control);
   flex-shrink: 0;
 }
 
@@ -514,7 +515,7 @@ a.brand:hover {
   padding: var(--sp-2);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-control);
   color: var(--text);
   transition: background-color var(--ease-ui), border-color var(--ease-ui);
 }
@@ -532,7 +533,7 @@ a.brand:hover {
   height: 36px;
   min-width: 36px;
   min-height: 36px;
-  border-radius: var(--r-full);
+  border-radius: var(--r-pill);
   background: var(--plum-600);
   color: #fff;
   font-size: var(--text-sm);
@@ -548,7 +549,7 @@ a.brand:hover {
   min-width: 200px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-card);
   box-shadow: var(--shadow-overlay);
   padding: var(--sp-2);
   display: flex;
@@ -565,7 +566,7 @@ a.brand:hover {
   min-height: 44px;
   padding: 0.5rem var(--sp-3);
   border: none;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-control);
   background: transparent;
   color: var(--text);
   text-align: left;
@@ -644,7 +645,7 @@ a.brand:hover {
   min-height: 0;
   padding: 0;
   border: none;
-  border-radius: 0;
+  border-radius: var(--r-flat);
   background: transparent;
   color: var(--text);
   font-size: inherit;
@@ -731,7 +732,7 @@ button.filter-chip {
   min-height: 36px;
   padding: 0 12px;
   font-size: var(--text-sm);
-  border-radius: var(--r-full);
+  border-radius: var(--r-pill);
 }
 
 /* ---------- Item list + cards ---------- */
@@ -756,7 +757,7 @@ button.filter-chip {
 .item-thumb {
   width: var(--row-thumb);
   height: var(--row-thumb);
-  border-radius: var(--r-md);
+  border-radius: var(--r-thumb);
   object-fit: cover;
   background: var(--surface-2);
   flex-shrink: 0;
@@ -848,7 +849,7 @@ button.filter-chip {
   font-size: var(--text-xs);
   color: var(--text-2);
   background: var(--surface-2);
-  border-radius: var(--r-full);
+  border-radius: var(--r-pill);
   padding: 0.15rem 0.55rem;
   line-height: 1.4;
 }
@@ -881,7 +882,7 @@ button.filter-chip {
   font-weight: 500;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: var(--r-full);
+  border-radius: var(--r-pill);
   color: var(--plum-600);
   cursor: pointer;
   white-space: nowrap;
@@ -914,7 +915,7 @@ button.filter-chip {
   border: none;
   background: transparent;
   color: var(--text-3);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-control);
   cursor: grab;
   touch-action: none;
   transition: background-color var(--ease-ui), color var(--ease-ui);
@@ -997,13 +998,13 @@ button.filter-chip {
   padding: var(--row-pad-y) var(--row-pad-x);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: var(--r-md);
+  border-radius: var(--r-flat);
 }
 
 .skeleton-thumb {
   width: var(--skel-thumb);
   height: var(--skel-thumb);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-thumb);
   background: var(--surface-2);
   flex-shrink: 0;
 }
@@ -1018,7 +1019,7 @@ button.filter-chip {
 
 .skeleton-line {
   height: 12px;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-control);
   background: var(--surface-2);
 }
 
@@ -1041,7 +1042,7 @@ button.filter-chip {
   padding: var(--section-pad);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--section-radius);
+  border-radius: var(--r-card);
 }
 
 /* Login auth-check skeleton (SPA #61): the same card chrome recipe as
@@ -1188,7 +1189,7 @@ button.filter-chip {
 .sheet {
   background: var(--surface-3);
   border: 1px solid var(--border);
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  border-radius: var(--r-sheet-top);
   padding: var(--sp-5) var(--sp-4) var(--sp-4);
   width: 100%;
   max-height: 92vh;
@@ -1229,7 +1230,7 @@ button.filter-chip {
      this single top border into a clipped rounded outline (#62, seen in the
      page screenshots). */
   border-top: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: var(--r-flat);
   color: var(--text-2);
   font-size: var(--text-sm);
   text-align: left;
@@ -1287,7 +1288,7 @@ button.filter-chip {
 
   .sheet {
     max-width: 560px;
-    border-radius: var(--r-lg);
+    border-radius: var(--r-card);
     animation: fade-up var(--ease-overlay);
   }
 }
@@ -1314,7 +1315,7 @@ button.filter-chip {
   background: var(--surface);
   border: 1px solid var(--border);
   border-left: 3px solid var(--success);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-card);
   box-shadow: var(--shadow-overlay);
   padding: var(--sp-3) var(--sp-4);
   font-size: var(--text-sm);
@@ -1357,7 +1358,7 @@ button.filter-chip {
 .confirm-dialog {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-card);
   box-shadow: var(--shadow-overlay);
   padding: var(--sp-5);
   max-width: 420px;
@@ -1427,7 +1428,7 @@ button.filter-chip {
   gap: var(--sp-2);
   padding: var(--sp-3);
   border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-card);
   background: var(--surface-2);
 }
 
@@ -1559,7 +1560,7 @@ button.filter-chip {
   padding: 0;
   background: transparent;
   border: none;
-  border-radius: 0;
+  border-radius: var(--r-flat);
   min-width: 0;
 }
 
@@ -1668,7 +1669,7 @@ button.filter-chip {
   font-size: var(--text-xs);
   font-weight: 500;
   line-height: 1.4;
-  border-radius: var(--r-full);
+  border-radius: var(--r-pill);
   padding: 0.15rem 0.55rem;
   white-space: nowrap;
 }
@@ -1758,7 +1759,7 @@ button.filter-chip {
   justify-content: center;
   width: 20px;
   height: 16px;
-  border-radius: 5px;
+  border-radius: var(--r-pill);
   background: var(--delta-down-chip);
   color: var(--delta-down);
 }
@@ -1782,7 +1783,7 @@ button.filter-chip {
   background: transparent;
   border: none;
   border-bottom: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: var(--r-flat);
   transition: background-color var(--ease-row);
 }
 
@@ -1887,6 +1888,9 @@ button.row-open:hover {
   border-color: transparent;
 }
 
+/* #88: `inherit` is the one non-token radius, and it is functional — this
+   focus overlay must track whatever box the row/button has, so it can never
+   drift from a surface token (see the tokens.css radius map). */
 .row-open::after {
   content: "";
   position: absolute;
@@ -1923,7 +1927,7 @@ button.row-open:hover {
   width: var(--row-thumb);
   height: var(--row-thumb);
   aspect-ratio: 1;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-thumb);
   object-fit: cover;
   background: var(--surface-2);
   flex-shrink: 0;
@@ -1932,7 +1936,7 @@ button.row-open:hover {
 .product-img-fallback {
   width: var(--row-thumb);
   height: var(--row-thumb);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-thumb);
   background: var(--surface-2);
   flex-shrink: 0;
 }
@@ -2032,7 +2036,7 @@ button.row-open:hover {
   max-height: var(--detail-sheet-max-h);
   padding: 0;
   padding-bottom: var(--safe-bottom);
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  border-radius: var(--r-sheet-top);
   overflow: hidden;
 }
 
@@ -2044,7 +2048,7 @@ button.row-open:hover {
   .sheet-overlay .sheet--detail {
     width: 100%;
     max-width: 100%;
-    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    border-radius: var(--r-sheet-top);
     animation: slide-up var(--ease-overlay);
   }
 
@@ -2054,7 +2058,7 @@ button.row-open:hover {
 .detail-handle {
   width: var(--detail-handle-w);
   height: var(--detail-handle-h);
-  border-radius: var(--r-full);
+  border-radius: var(--r-pill);
   background: var(--text-3);
   margin: 8px auto 0;
   opacity: 0.5;
@@ -2075,7 +2079,7 @@ button.row-open:hover {
    distinct. Hover comes from .icon-btn:hover, which this element already
    carries via its "icon-btn detail-menu-trigger" class pair. */
 .detail-menu-trigger {
-  border-radius: var(--r-full);
+  border-radius: var(--r-pill);
   border: 1px solid transparent;
   background: transparent;
 }
@@ -2128,7 +2132,7 @@ button.row-open:hover {
   width: var(--detail-thumb);
   height: var(--detail-thumb);
   flex: 0 0 var(--detail-thumb);
-  border-radius: var(--r-md);
+  border-radius: var(--r-thumb);
   object-fit: cover;
 }
 
@@ -2200,7 +2204,7 @@ button.row-open:hover {
 .detail-edit-btn {
   flex: 1 1 0;
   min-height: 44px;
-  border-radius: var(--r-full);
+  border-radius: var(--r-pill);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2233,7 +2237,7 @@ button.row-open:hover {
 .detail-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-card);
   padding: 14px 16px;
   min-width: 0;
 }
@@ -2313,7 +2317,7 @@ button.row-open:hover {
   padding: 8px 0;
   border: none;
   border-top: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: var(--r-flat);
   background: none;
   color: var(--text);
   font-size: var(--text-base);
@@ -2399,7 +2403,7 @@ button.row-open:hover {
   gap: 2px;
   padding: 2px;
   background: var(--surface-2);
-  border-radius: var(--r-full);
+  border-radius: var(--r-control);
 }
 
 .window-seg button {
@@ -2407,7 +2411,7 @@ button.row-open:hover {
   min-height: 44px;
   padding: 0 10px;
   border: 1px solid transparent;
-  border-radius: var(--r-full);
+  border-radius: var(--r-control);
   background: transparent;
   color: var(--text-3);
   font-size: var(--text-xs);
@@ -2640,7 +2644,7 @@ button.row-open:hover {
     padding: 6px 0 4px;
     margin: 0;
     border: none;
-    border-radius: 0;
+    border-radius: var(--r-flat);
     background: transparent;
     color: var(--text-2);
     font-size: var(--text-xs);
@@ -2660,7 +2664,7 @@ button.row-open:hover {
   .action-bar-item:focus-visible {
     outline: var(--focus-visible);
     outline-offset: var(--ring-offset);
-    border-radius: var(--r-sm);
+    border-radius: var(--r-control);
   }
 
   .action-bar-item svg {
@@ -2684,7 +2688,7 @@ button.row-open:hover {
     content: "";
     width: 4px;
     height: 4px;
-    border-radius: var(--r-full);
+    border-radius: var(--r-pill);
     background: var(--plum-500);
   }
 

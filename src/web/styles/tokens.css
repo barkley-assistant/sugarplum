@@ -51,6 +51,29 @@
   --r-xl: 24px;
   --r-full: 999px;
 
+  /* ---------- Radius language (#88): one token per surface type ----------
+     The primitives above stay the scale; every SURFACE rule uses a surface
+     token, never a primitive directly. Map:
+     --r-flat      0            feed rows, hairline disclosures, bottom-bar items
+     --r-control   --r-sm   8   buttons, inputs, icon buttons, menu items,
+                                segmented control, drag handle, skeleton lines
+     --r-thumb     --r-md  12   product thumbnails + fallbacks + skeleton thumbs
+     --r-card      --r-lg  16   cards, sections, popovers, dialogs, toasts,
+                                centered (dialog-position) sheets, auth card
+     --r-sheet-top --r-xl  24   bottom sheets: top corners only (bottom flush)
+     --r-pill      --r-full 999 chips, badges, claim buttons, avatars, handle,
+                                spinner, dots, pill CTAs
+     Exceptions (documented, intentional):
+     - .row-open::after uses `inherit` — the focus overlay must track its box.
+     - PriceGraph.tsx tooltip rx="6" — SVG has no border-radius; control tier.
+     Dark theme: radius tokens are theme-independent; no dark overrides. */
+  --r-flat: 0px;
+  --r-control: var(--r-sm);
+  --r-thumb: var(--r-md);
+  --r-card: var(--r-lg);
+  --r-sheet-top: var(--r-xl) var(--r-xl) 0 0;
+  --r-pill: var(--r-full);
+
   --font-system:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
     Arial, sans-serif;
@@ -116,10 +139,8 @@
   --skel-row-gap: var(--list-gap);
   --empty-pad-y: var(--sp-6);
   --empty-pad-x: var(--sp-4);
-  --r-input: var(--r-sm);
   --section-gap: var(--sp-5);
   --section-pad: var(--sp-5);
-  --section-radius: var(--r-md);
   --ease-ui: 120ms ease;
 
   --safe-top: env(safe-area-inset-top);
