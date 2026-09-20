@@ -28,7 +28,6 @@ import {
   writeStoredSummary,
 } from "../me-store";
 import { EmptyState } from "./EmptyState";
-import { ActionBar } from "./ActionBar";
 import { FilterChips } from "./FilterChips";
 import { ItemList, type OwnerRef } from "./ItemList";
 import { ShareMenu } from "./ShareMenu";
@@ -622,35 +621,6 @@ export function AppPage() {
           item={toGuestDetail(guestItem)}
           onClose={() => setGuestItemId(null)}
         />
-      )}
-
-      {/* #73: mobile action bar. Gated on width only — the Share ITEM inside
-          it is what follows #45's "there is a list to share" rule, so an
-          empty mobile feed still has Add and Settings (the avatar menu no
-          longer carries Settings on mobile).
-
-          The ShareMenu element is the same component the desktop cluster
-          mounts, one per width: on mobile it portals its sheet to
-          document.body, so this DOM position is irrelevant (on desktop the
-          popover stays inside .share-anchor, which anchors it). */}
-      {!isDesktop && (
-        <>
-          <ActionBar
-            shareTriggerRef={shareTriggerRef}
-            shareOpen={shareOpen}
-            shareAvailable={showOwnerActions}
-            onShareClick={() => setShareOpen((v) => !v)}
-            onAdd={() => navigate("/add")}
-            onSettings={goToSettings}
-          />
-          {showOwnerActions && (
-            <ShareMenu
-              open={shareOpen}
-              onClose={() => setShareOpen(false)}
-              triggerRef={shareTriggerRef}
-            />
-          )}
-        </>
       )}
     </AppShell>
   );

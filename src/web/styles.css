@@ -2557,7 +2557,8 @@ button.row-open:hover {
 }
 
 /* ============================================================
-   #73 — Mobile bottom action bar (owner feed only, <640px)
+   #73/#95 — Mobile bottom action bar (persistent shell chrome,
+   authenticated routes, <640px)
    Mockup grammar: borderless icon+label buttons, outline icons,
    one hairline top divider, the app background, safe-area aware.
    ============================================================ */
@@ -2636,9 +2637,10 @@ button.row-open:hover {
     white-space: nowrap; /* three labels at 360px keep their thirds */
   }
 
-  /* DORMANT: the mockup's current-tab accent, kept as a hook for a future
-     cross-route navigator. Nothing sets .is-current today — this bar is an
-     action bar where no item can truthfully be the current page. */
+  /* #95: the bar destination matching the current route carries
+     .is-current (aria-current="page" mirrors it in the DOM) — the accent
+     #73 left dormant for exactly this. The feed and the item pages are
+     not bar destinations, so they mark nothing. */
   .action-bar-item.is-current {
     color: var(--plum-500);
   }
@@ -2652,9 +2654,10 @@ button.row-open:hover {
   }
 
   /* Occlusion guard: the bar is fixed, and .app-main is the last
-     scroll-flow element on the feed. Reserve the chrome + safe-area there.
-     :has scopes the reservation to pages that actually render the bar (only
-     the owner feed does), so /add, /settings etc. keep their plain rhythm. */
+     scroll-flow element on every page (#94 removed the app footer). Reserve
+     the chrome + safe-area there. :has scopes the reservation to pages that
+     actually render the bar — which, since #95 mounts the bar in the Root
+     shell on EVERY authenticated route, is every authenticated page. */
   #root:has(.action-bar) .app-main {
     padding-bottom: calc(var(--sp-4) + var(--action-bar-h) + var(--safe-bottom));
   }
