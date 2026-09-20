@@ -337,7 +337,7 @@ label {
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-card);
   padding: 1rem;
 }
 
@@ -357,7 +357,7 @@ label {
   flex-direction: column;
   gap: 0.6rem;
   padding: var(--sp-6);
-  border-radius: var(--r-xl);
+  border-radius: var(--r-card);
 }
 
 .auth-lockup {
@@ -458,7 +458,7 @@ a.brand:hover {
   padding: var(--section-pad);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--section-radius);
+  border-radius: var(--r-card);
   min-width: 0;
 }
 
@@ -549,7 +549,7 @@ a.brand:hover {
   min-width: 200px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-card);
   box-shadow: var(--shadow-overlay);
   padding: var(--sp-2);
   display: flex;
@@ -1042,7 +1042,7 @@ button.filter-chip {
   padding: var(--section-pad);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--section-radius);
+  border-radius: var(--r-card);
 }
 
 /* Login auth-check skeleton (SPA #61): the same card chrome recipe as
@@ -1288,7 +1288,7 @@ button.filter-chip {
 
   .sheet {
     max-width: 560px;
-    border-radius: var(--r-lg);
+    border-radius: var(--r-card);
     animation: fade-up var(--ease-overlay);
   }
 }
@@ -1315,7 +1315,7 @@ button.filter-chip {
   background: var(--surface);
   border: 1px solid var(--border);
   border-left: 3px solid var(--success);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-card);
   box-shadow: var(--shadow-overlay);
   padding: var(--sp-3) var(--sp-4);
   font-size: var(--text-sm);
@@ -1358,7 +1358,7 @@ button.filter-chip {
 .confirm-dialog {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-card);
   box-shadow: var(--shadow-overlay);
   padding: var(--sp-5);
   max-width: 420px;
@@ -1428,7 +1428,7 @@ button.filter-chip {
   gap: var(--sp-2);
   padding: var(--sp-3);
   border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-card);
   background: var(--surface-2);
 }
 
@@ -2234,7 +2234,7 @@ button.row-open:hover {
 .detail-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-card);
   padding: 14px 16px;
   min-width: 0;
 }

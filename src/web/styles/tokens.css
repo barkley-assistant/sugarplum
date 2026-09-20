@@ -141,7 +141,6 @@
   --empty-pad-x: var(--sp-4);
   --section-gap: var(--sp-5);
   --section-pad: var(--sp-5);
-  --section-radius: var(--r-md);
   --ease-ui: 120ms ease;
 
   --safe-top: env(safe-area-inset-top);
