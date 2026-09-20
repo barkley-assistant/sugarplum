@@ -254,6 +254,7 @@ test("12: create-user row shares its slot at every width, both themes (#97)", as
       return {
         rowWidth: rr.width,
         rowLeft: rr.left,
+        rowRight: rr.right,
         username: box("new-username"),
         displayName: box("new-display-name"),
         password: box("new-password"),
@@ -300,6 +301,8 @@ test("12: create-user row shares its slot at every width, both themes (#97)", as
       for (const [name, field] of fields) {
         expect(Math.abs(field.width - m.rowWidth), `${name} spans the row at ${width}px`)
           .toBeLessThanOrEqual(1);
+        expect(Math.abs(field.left - m.rowLeft), `${name} is flush left at ${width}px`)
+          .toBeLessThanOrEqual(1);
       }
     } else {
       // Desktop: three equal slot-derived thirds. On main Password pinned to the
@@ -307,6 +310,17 @@ test("12: create-user row shares its slot at every width, both themes (#97)", as
       const widths = fields.map(([, field]) => field.width);
       expect(Math.max(...widths) - Math.min(...widths), `create-user fields equal at ${width}px`)
         .toBeLessThanOrEqual(1);
+      // The row reads left to right with no overlap and no gap at the right edge.
+      expect(Math.abs(m.username.left - m.rowLeft), `row starts at the first field at ${width}px`)
+        .toBeLessThanOrEqual(1);
+      expect(m.username.left, `username before display name at ${width}px`)
+        .toBeLessThan(m.displayName.left);
+      expect(m.displayName.left, `display name before password at ${width}px`)
+        .toBeLessThan(m.password.left);
+      expect(
+        Math.abs(m.password.left + m.password.width - m.rowRight),
+        `row ends at the last field at ${width}px`,
+      ).toBeLessThanOrEqual(1);
     }
     expect(await docOverflow(), `document overflow at ${width}px`).toBe(false);
 
