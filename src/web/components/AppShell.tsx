@@ -3,10 +3,6 @@ import { S } from "../strings";
 import { navigate } from "../router";
 import { SkeletonList } from "./SkeletonList";
 
-/** Canonical public repo URL (from `git remote get-url origin`). The footer
- *  links here — small and unobtrusive, never a call to action. */
-export const GITHUB_URL = "https://github.com/barkley-assistant/sugarplum";
-
 interface AppShellProps {
   /** Right side of the topbar (the UserMenu). */
   headerRight?: ReactNode;
@@ -51,8 +47,8 @@ function Brand({ href, linkLabel }: { href?: string; linkLabel?: string }) {
 }
 
 /** One app shell for App, Settings and Share: sticky topbar (brand +
- *  actions + user menu), fluid main column, quiet footer with the GitHub
- *  source link. Login keeps its own auth layout. */
+ *  actions + user menu) and a fluid main column. Login keeps its own auth
+ *  layout. */
 export function AppShell({
   headerRight,
   headerActions,
@@ -72,17 +68,11 @@ export function AppShell({
         </div>
       </header>
       <div className="app-main">{children}</div>
-      <footer className="app-footer">
-        <span>{S.app.tagline}</span>
-        <a href={GITHUB_URL} rel="noreferrer" aria-label={S.app.githubLabel}>
-          {S.app.footerSource}
-        </a>
-      </footer>
     </main>
   );
 }
 
-/** Skeleton shell for the boot path (keeps the topbar + footer shape). */
+/** Skeleton shell for the boot path (keeps the topbar + list shape). */
 export function AppShellLoading() {
   return (
     <AppShell>
