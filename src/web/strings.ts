@@ -9,8 +9,6 @@ export const S = {
     name: "sugarplum",
     tagline: "Private wishlists, shared with people you trust.",
     loading: "Loading…",
-    footerSource: "Source on GitHub",
-    githubLabel: "Sugarplum source on GitHub",
   },
   auth: {
     signIn: "Sign in",
