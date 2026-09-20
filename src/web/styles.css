@@ -645,7 +645,7 @@ a.brand:hover {
   min-height: 0;
   padding: 0;
   border: none;
-  border-radius: 0;
+  border-radius: var(--r-flat);
   background: transparent;
   color: var(--text);
   font-size: inherit;
@@ -757,7 +757,7 @@ button.filter-chip {
 .item-thumb {
   width: var(--row-thumb);
   height: var(--row-thumb);
-  border-radius: var(--r-md);
+  border-radius: var(--r-thumb);
   object-fit: cover;
   background: var(--surface-2);
   flex-shrink: 0;
@@ -998,13 +998,13 @@ button.filter-chip {
   padding: var(--row-pad-y) var(--row-pad-x);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: var(--r-md);
+  border-radius: var(--r-flat);
 }
 
 .skeleton-thumb {
   width: var(--skel-thumb);
   height: var(--skel-thumb);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-thumb);
   background: var(--surface-2);
   flex-shrink: 0;
 }
@@ -1189,7 +1189,7 @@ button.filter-chip {
 .sheet {
   background: var(--surface-3);
   border: 1px solid var(--border);
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  border-radius: var(--r-sheet-top);
   padding: var(--sp-5) var(--sp-4) var(--sp-4);
   width: 100%;
   max-height: 92vh;
@@ -1230,7 +1230,7 @@ button.filter-chip {
      this single top border into a clipped rounded outline (#62, seen in the
      page screenshots). */
   border-top: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: var(--r-flat);
   color: var(--text-2);
   font-size: var(--text-sm);
   text-align: left;
@@ -1560,7 +1560,7 @@ button.filter-chip {
   padding: 0;
   background: transparent;
   border: none;
-  border-radius: 0;
+  border-radius: var(--r-flat);
   min-width: 0;
 }
 
@@ -1783,7 +1783,7 @@ button.filter-chip {
   background: transparent;
   border: none;
   border-bottom: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: var(--r-flat);
   transition: background-color var(--ease-row);
 }
 
@@ -1888,6 +1888,9 @@ button.row-open:hover {
   border-color: transparent;
 }
 
+/* #88: `inherit` is the one non-token radius, and it is functional — this
+   focus overlay must track whatever box the row/button has, so it can never
+   drift from a surface token (see the tokens.css radius map). */
 .row-open::after {
   content: "";
   position: absolute;
@@ -1924,7 +1927,7 @@ button.row-open:hover {
   width: var(--row-thumb);
   height: var(--row-thumb);
   aspect-ratio: 1;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-thumb);
   object-fit: cover;
   background: var(--surface-2);
   flex-shrink: 0;
@@ -1933,7 +1936,7 @@ button.row-open:hover {
 .product-img-fallback {
   width: var(--row-thumb);
   height: var(--row-thumb);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-thumb);
   background: var(--surface-2);
   flex-shrink: 0;
 }
@@ -2033,7 +2036,7 @@ button.row-open:hover {
   max-height: var(--detail-sheet-max-h);
   padding: 0;
   padding-bottom: var(--safe-bottom);
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  border-radius: var(--r-sheet-top);
   overflow: hidden;
 }
 
@@ -2045,7 +2048,7 @@ button.row-open:hover {
   .sheet-overlay .sheet--detail {
     width: 100%;
     max-width: 100%;
-    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    border-radius: var(--r-sheet-top);
     animation: slide-up var(--ease-overlay);
   }
 
@@ -2129,7 +2132,7 @@ button.row-open:hover {
   width: var(--detail-thumb);
   height: var(--detail-thumb);
   flex: 0 0 var(--detail-thumb);
-  border-radius: var(--r-md);
+  border-radius: var(--r-thumb);
   object-fit: cover;
 }
 
@@ -2314,7 +2317,7 @@ button.row-open:hover {
   padding: 8px 0;
   border: none;
   border-top: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: var(--r-flat);
   background: none;
   color: var(--text);
   font-size: var(--text-base);
@@ -2641,7 +2644,7 @@ button.row-open:hover {
     padding: 6px 0 4px;
     margin: 0;
     border: none;
-    border-radius: 0;
+    border-radius: var(--r-flat);
     background: transparent;
     color: var(--text-2);
     font-size: var(--text-xs);
