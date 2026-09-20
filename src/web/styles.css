@@ -1923,26 +1923,11 @@ button.row-open:hover {
   color: var(--text-2);
 }
 
-/* ---------- App shell: header actions + footer ---------- */
+/* ---------- App shell: header actions ---------- */
 .topbar-actions {
   display: flex;
   align-items: center;
   gap: var(--sp-1);
-}
-
-.app-footer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-2);
-  padding: var(--sp-4);
-  font-size: var(--text-xs);
-  color: var(--text-3);
-}
-
-.app-footer a {
-  color: var(--text-3);
 }
 
 /* ---------- List layout: single fluid column ---------- */
@@ -2666,11 +2651,11 @@ button.row-open:hover {
     background: var(--plum-500);
   }
 
-  /* Occlusion guard: the bar is fixed, and the footer is the last
+  /* Occlusion guard: the bar is fixed, and .app-main is the last
      scroll-flow element on the feed. Reserve the chrome + safe-area there.
      :has scopes the reservation to pages that actually render the bar (only
      the owner feed does), so /add, /settings etc. keep their plain rhythm. */
-  #root:has(.action-bar) .app-footer {
+  #root:has(.action-bar) .app-main {
     padding-bottom: calc(var(--sp-4) + var(--action-bar-h) + var(--safe-bottom));
   }
 
