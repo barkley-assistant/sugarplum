@@ -203,7 +203,7 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
               onChange={(e) => setDisplayName(e.target.value)}
             />
           </div>
-          <div className="field">
+          <div className="field grow">
             <label htmlFor="new-password">{S.admin.password}</label>
             <input
               id="new-password"
