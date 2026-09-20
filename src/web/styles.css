@@ -745,11 +745,16 @@ button.filter-chip {
   gap: 0;
 }
 
+/* #89: no `overflow: hidden` here. The legacy rounded-card clip died with the
+   card stack, and anchored popovers must escape the row (see
+   `.item-card:has(.overflow-popover)` below). Removing it keeps ONE source of
+   truth for row overflow — re-declaring `overflow: visible` in the compact row
+   rule would leave two equal-specificity declarations fighting per-property
+   forever. */
 .item-card {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  overflow: hidden;
   min-width: 0;
   transition: box-shadow var(--ease), transform var(--ease), background-color var(--ease-ui);
 }
@@ -1785,6 +1790,17 @@ button.filter-chip {
   border-bottom: 1px solid var(--border);
   border-radius: var(--r-flat);
   transition: background-color var(--ease-row);
+}
+
+/* #89: while this row's overflow menu is open, lift the whole row above its
+   sibling rows. The popover's own z-index is trapped inside this row's
+   `.product-row-actions` stacking context (z-1); the following row's identical
+   context ties and wins on DOM order, painting its action cluster over the
+   popover's right band. Lifting the row hoists the whole subtree at once, and
+   10 sits between rows (z-1 actions, z-5 dragging) and the fixed chrome
+   (topbar 20, sheets 50, toasts 60). */
+.item-card:has(.overflow-popover) {
+  z-index: 10;
 }
 
 .item-card:hover {
