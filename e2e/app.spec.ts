@@ -2019,10 +2019,20 @@ test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ pa
       await page.keyboard.press("Shift+Tab");
       await expect(bar.getByRole("button", { name: "Share my list" })).toBeFocused();
 
-      // Settings navigates to /settings, where the bar does not exist.
+      // Settings navigates to /settings, where the bar PERSISTS (#95: it is
+      // shell chrome now, not a feed-only control) and Settings carries the
+      // current-destination accent.
       await bar.getByRole("button", { name: "Settings" }).click();
       await expect(page).toHaveURL(/\/settings$/);
-      await expect(page.locator(".action-bar")).toHaveCount(0);
+      const barOnSettings = page.getByRole("navigation", { name: "Primary actions" });
+      await expect(barOnSettings).toBeVisible();
+      await expect(barOnSettings.locator(".action-bar-item")).toHaveCount(3);
+      const settingsBtn = barOnSettings.getByRole("button", { name: "Settings" });
+      await expect(settingsBtn).toHaveAttribute("aria-current", "page");
+      await expect(settingsBtn).toHaveClass(/is-current/);
+      await expect(
+        barOnSettings.getByRole("button", { name: "Add item" }),
+      ).not.toHaveAttribute("aria-current");
       await page.goBack();
       await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
 
@@ -2041,13 +2051,21 @@ test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ pa
         "false",
       );
 
-      // Add navigates to /add client-side (no document load) and the bar is
-      // absent there.
+      // Add navigates to /add client-side (no document load) and the bar
+      // persists there with Add as the current destination (#95).
       const loadsBefore = await loads(page);
       await bar.getByRole("button", { name: "Add item" }).click();
       await expect(page).toHaveURL(`${BASE}/add`);
       expect(await loads(page)).toBe(loadsBefore);
-      await expect(page.locator(".action-bar")).toHaveCount(0);
+      const barOnAdd = page.getByRole("navigation", { name: "Primary actions" });
+      await expect(barOnAdd).toBeVisible();
+      await expect(barOnAdd.getByRole("button", { name: "Add item" })).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
+      await expect(barOnAdd.getByRole("button", { name: "Settings" })).not.toHaveAttribute(
+        "aria-current",
+      );
       await page.goBack();
       await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
     }
@@ -2443,6 +2461,153 @@ test("22: owner purchased mark — mark, badge, unmark, and privacy (#76)", asyn
     .getByRole("menuitem", { name: "Unmark purchased" })
     .click();
   await expect(card.locator(".owner-purchased-badge")).toHaveCount(0);
+  const revoke = await page.request.delete(`${BASE}/api/share`);
+  expect([200, 204]).toContain(revoke.status());
+});
+
+test("23: bottom action bar persists on every authenticated route (#95)", async ({
+  page,
+  browser,
+}) => {
+  // Seed a probe item for the /items/:id + /items/:id/edit legs.
+  const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Bar persistence probe" },
+  });
+  expect(seeded.status()).toBe(201);
+  const probe = (await seeded.json()) as { id: string };
+
+  // --- A. /settings at every mobile width, both schemes. --------------
+  // #95's core: the bar is shell chrome, so a NON-feed route keeps it, and
+  // Settings — the route's own destination — carries the accent while Add
+  // does not.
+  for (const scheme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    for (const width of [360, 390, 430]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(`${BASE}/settings`);
+      await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+
+      const bar = page.getByRole("navigation", { name: "Primary actions" });
+      await expect(bar, `no bar on /settings @${width}/${scheme}`).toBeVisible();
+      // The issue's e2e row: from /settings the bar still offers all three.
+      for (const name of ["Add item", "Share my list", "Settings"]) {
+        await expect(bar.getByRole("button", { name })).toBeVisible();
+      }
+
+      const settingsBtn = bar.getByRole("button", { name: "Settings" });
+      const addBtn = bar.getByRole("button", { name: "Add item" });
+      await expect(settingsBtn).toHaveAttribute("aria-current", "page");
+      await expect(settingsBtn).toHaveClass(/is-current/);
+      await expect(addBtn).not.toHaveAttribute("aria-current");
+      await expect(addBtn).not.toHaveClass(/is-current/);
+      // Painted, not just classed — and AA in both schemes (plan §1.9).
+      expect(
+        await settingsBtn.evaluate((el) => getComputedStyle(el).color),
+        `accent not painted @${width}/${scheme}`,
+      ).not.toBe(await addBtn.evaluate((el) => getComputedStyle(el).color));
+      expect(await contrast(settingsBtn), `accent contrast @${width}/${scheme}`)
+        .toBeGreaterThanOrEqual(4.5);
+
+      // No occlusion on a non-feed page: at the bottom of the scroll the
+      // last settings section must clear the bar's top edge (the :has()
+      // reservation now applies on every page that renders the bar).
+      const clearance = await page.evaluate(() => {
+        const barEl = document.querySelector(".action-bar");
+        const sections = document.querySelectorAll(".settings-section");
+        const content = sections.length ? sections[sections.length - 1] : null;
+        if (!barEl || !content) throw new Error("bar/settings section missing");
+        window.scrollTo(0, document.body.scrollHeight);
+        return {
+          barTop: barEl.getBoundingClientRect().top,
+          contentBottom: content.getBoundingClientRect().bottom,
+        };
+      });
+      expect(clearance.contentBottom, `occluded @${width}/${scheme}`).toBeLessThanOrEqual(
+        clearance.barTop,
+      );
+
+      const probeOverflow = await horizontalEscapes(page);
+      expect(probeOverflow.docOverflow, `overflow @${width}/${scheme}`).toBe(false);
+      expect(probeOverflow.offenders, `escapes @${width}/${scheme}`).toEqual([]);
+    }
+  }
+  await page.emulateMedia({ colorScheme: "light" }); // restore ambient scheme
+
+  // --- B. The bar's Share works from /settings. ------------------------
+  // ShareMenu fetches /api/share itself and portals its mobile sheet, so the
+  // trigger is route-independent — SharePanel is usable from any page.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${BASE}/settings`);
+  const bar = page.getByRole("navigation", { name: "Primary actions" });
+  await bar.getByRole("button", { name: "Share my list" }).click();
+  const shareSheet = page.getByRole("dialog", { name: "Share my list" });
+  await expect(shareSheet).toHaveClass(/sheet--share/);
+  await expect(shareSheet.getByRole("button", { name: /Create link|New link/ })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(shareSheet).toHaveCount(0);
+  await expect(bar.getByRole("button", { name: "Share my list" })).toBeFocused();
+
+  // --- C. /add keeps the bar, Add is current, current-tab tap is a no-op.
+  await bar.getByRole("button", { name: "Add item" }).click();
+  await expect(page).toHaveURL(`${BASE}/add`);
+  const addBar = page.getByRole("navigation", { name: "Primary actions" });
+  await expect(addBar.getByRole("button", { name: "Add item" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(addBar.getByRole("button", { name: "Settings" })).not.toHaveAttribute(
+    "aria-current",
+  );
+  // Tapping the CURRENT destination must not navigate: a same-URL navigate()
+  // would push a duplicate history entry and scroll a half-filled form to its
+  // top (router.ts). Assert both signals, polled — the suite has no timeouts.
+  const historyBefore = await page.evaluate(() => history.length);
+  await page.evaluate(() => window.scrollTo(0, 200));
+  const scrollBefore = await page.evaluate(() => window.scrollY);
+  await addBar.getByRole("button", { name: "Add item" }).click();
+  await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 1_500 }).toBe(
+    scrollBefore,
+  );
+  expect(await page.evaluate(() => history.length), "duplicate history entry").toBe(historyBefore);
+  await expect(page).toHaveURL(`${BASE}/add`);
+
+  // --- D. Item + edit pages keep the bar; nothing is "current" there. --
+  // They are content routes, not bar destinations — painting Add there is the
+  // lie #73's D2 rejected.
+  for (const path of [`/items/${probe.id}`, `/items/${probe.id}/edit`]) {
+    await page.goto(`${BASE}${path}`);
+    const routeBar = page.getByRole("navigation", { name: "Primary actions" });
+    await expect(routeBar, `no bar on ${path}`).toBeVisible();
+    for (const name of ["Add item", "Share my list", "Settings"]) {
+      await expect(routeBar.getByRole("button", { name })).not.toHaveAttribute("aria-current");
+    }
+  }
+
+  // --- E. No bar on the anonymous share view (D4) or on /login (D2). ---
+  const created = await page.request.post(`${BASE}/api/share`);
+  expect(created.status()).toBe(201);
+  const { token } = (await created.json()) as { token: string };
+  const anon = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  try {
+    const anonPage = await anon.newPage();
+    await anonPage.goto(`${BASE}/share/${token}`);
+    await expect(anonPage.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+    await expect(anonPage.locator(".action-bar"), "bar on the anon share view").toHaveCount(0);
+
+    await anonPage.goto(`${BASE}/login`); // the anon context has no session
+    await expect(anonPage.locator(".auth-card")).toBeVisible();
+    await expect(anonPage.locator(".action-bar"), "bar on /login").toHaveCount(0);
+  } finally {
+    await anon.close();
+  }
+
+  // --- F. Desktop untouched: no bar on a non-feed route either. --------
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${BASE}/settings`);
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.locator(".action-bar")).toHaveCount(0);
+
+  // Board hygiene: leave no live share link for later tests.
   const revoke = await page.request.delete(`${BASE}/api/share`);
   expect([200, 204]).toContain(revoke.status());
 });
