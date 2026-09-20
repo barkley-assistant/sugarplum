@@ -1503,6 +1503,13 @@ button.filter-chip {
   font-size: var(--text-sm);
 }
 
+/* Tagline on the public share view: the quiet context line the app footer
+   used to carry (issue #94). `muted` supplies --text-2. */
+.share-tagline {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
 /* Accent on top of .claimed-badge: "Purchased" on a shared list. */
 .share-purchased-badge {
   color: var(--share-accent);
