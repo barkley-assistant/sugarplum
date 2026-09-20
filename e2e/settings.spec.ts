@@ -237,3 +237,106 @@ test("11: settings submits carry the amethyst pill grammar", async ({ page }) =>
     expect(rendered.height).toBeGreaterThanOrEqual(44);
   }
 });
+
+test("12: create-user row shares its slot at every width, both themes (#97)", async ({ page }) => {
+  /** The admin create-user row: the row plus its three fields. */
+  const createRow = () =>
+    page.evaluate(() => {
+      const row = document.getElementById("new-username")?.closest(".field-row");
+      if (!row) throw new Error("create-user field-row missing");
+      const rr = row.getBoundingClientRect();
+      const box = (id: string) => {
+        const el = document.getElementById(id);
+        if (!el) throw new Error(`#${id} missing`);
+        const r = el.getBoundingClientRect();
+        return { width: r.width, left: r.left };
+      };
+      return {
+        rowWidth: rr.width,
+        rowLeft: rr.left,
+        username: box("new-username"),
+        displayName: box("new-display-name"),
+        password: box("new-password"),
+      };
+    });
+
+  const passwordRow = () =>
+    page.evaluate(() => {
+      const row = document.getElementById("settings-new-password")?.closest(".field-row");
+      if (!row) throw new Error("settings password field-row missing");
+      const rr = row.getBoundingClientRect();
+      const box = (id: string) => {
+        const el = document.getElementById(id);
+        if (!el) throw new Error(`#${id} missing`);
+        return el.getBoundingClientRect().width;
+      };
+      return {
+        rowWidth: rr.width,
+        next: box("settings-new-password"),
+        confirm: box("settings-confirm-password"),
+      };
+    });
+
+  const docOverflow = () =>
+    page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+
+  const openSettings = async (width: number) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${BASE}/settings`);
+    await expect(page.getByRole("heading", { name: "Create user", level: 4 })).toBeVisible();
+  };
+
+  for (const width of [360, 390, 430, 768, 1024, 1280]) {
+    await openSettings(width);
+    const m = await createRow();
+    const fields = [
+      ["username", m.username],
+      ["display name", m.displayName],
+      ["password", m.password],
+    ] as const;
+    if (width <= 430) {
+      // Mobile: all three stack full-width (the mobile grid spans every .grow).
+      // On main Password sat in one grid cell at 133-168px vs the row's 278-348.
+      for (const [name, field] of fields) {
+        expect(Math.abs(field.width - m.rowWidth), `${name} spans the row at ${width}px`)
+          .toBeLessThanOrEqual(1);
+      }
+    } else {
+      // Desktop: three equal slot-derived thirds. On main Password pinned to the
+      // 231px input metric beside two 215px siblings.
+      const widths = fields.map(([, field]) => field.width);
+      expect(Math.max(...widths) - Math.min(...widths), `create-user fields equal at ${width}px`)
+        .toBeLessThanOrEqual(1);
+    }
+    expect(await docOverflow(), `document overflow at ${width}px`).toBe(false);
+
+    // Witness: the settings password row (the reference pattern) is unchanged.
+    const pw = await passwordRow();
+    if (width <= 430) {
+      expect(Math.abs(pw.next - pw.rowWidth), `new password spans the row at ${width}px`)
+        .toBeLessThanOrEqual(1);
+      expect(Math.abs(pw.confirm - pw.rowWidth), `confirm password spans the row at ${width}px`)
+        .toBeLessThanOrEqual(1);
+    } else {
+      expect(Math.abs(pw.next - pw.confirm), `settings password pair equal at ${width}px`)
+        .toBeLessThanOrEqual(1);
+    }
+  }
+
+  // Both schemes render the same geometry at the phone width (the stylesheet
+  // has no scheme-specific layout rule, and this proves it).
+  for (const scheme of ["dark", "light"] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await openSettings(390);
+    const m = await createRow();
+    for (const [name, field] of [
+      ["username", m.username],
+      ["display name", m.displayName],
+      ["password", m.password],
+    ] as const) {
+      expect(Math.abs(field.width - m.rowWidth), `${name} spans the row at 390px ${scheme}`)
+        .toBeLessThanOrEqual(1);
+    }
+    expect(await docOverflow(), `document overflow at 390px ${scheme}`).toBe(false);
+  }
+});
