@@ -1,0 +1,520 @@
+{
+  "feed-390-light": {
+    "button.settings-submit": null,
+    "button.chip": {
+      "border-radius": "999px"
+    },
+    "button.filter-chip": {
+      "border-radius": "999px"
+    },
+    ".icon-btn": {
+      "border-radius": "8px"
+    },
+    ".icon-btn--ghost": null,
+    ".user-menu-button": {
+      "border-radius": "8px"
+    },
+    ".user-avatar-trigger": {
+      "border-radius": "999px"
+    },
+    ".brand-mark": {
+      "border-radius": "8px"
+    },
+    ".list-switcher-trigger": {
+      "border-radius": "0px"
+    },
+    ".item-card": {
+      "border-radius": "0px"
+    },
+    ".row-open::after": {
+      "border-radius": "8px"
+    },
+    ".item-thumb": {
+      "border-radius": "12px"
+    },
+    ".product-img": {
+      "border-radius": "12px"
+    },
+    ".product-img-fallback": null,
+    ".drag-handle": null,
+    ".tag-pill": null,
+    ".claim-btn": null,
+    ".status": null,
+    ".delta-arrow": {
+      "border-radius": "999px"
+    },
+    ".action-bar-item": {
+      "border-radius": "0px"
+    },
+    ".action-bar-item.is-current::after": null
+  },
+  "tokens-light": {
+    "--r-sm": "8px",
+    "--r-md": "12px",
+    "--r-lg": "16px",
+    "--r-xl": "24px",
+    "--r-full": "999px",
+    "--r-flat": "0px",
+    "--r-control": "8px",
+    "--r-thumb": "12px",
+    "--r-card": "16px",
+    "--r-sheet-top": "24px 24px 0 0",
+    "--r-pill": "999px",
+    "--r-input": "(unset)",
+    "--section-radius": "(unset)"
+  },
+  "menu-390-light": {
+    ".menu-sheet": null,
+    ".menu-item": {
+      "border-radius": "8px"
+    },
+    ".switcher-row": null
+  },
+  "feed-1280-light": {
+    "button.settings-submit": null,
+    "button.chip": {
+      "border-radius": "999px"
+    },
+    "button.filter-chip": {
+      "border-radius": "999px"
+    },
+    ".icon-btn": {
+      "border-radius": "8px"
+    },
+    ".icon-btn--ghost": {
+      "border-radius": "8px"
+    },
+    ".user-menu-button": {
+      "border-radius": "8px"
+    },
+    ".user-avatar-trigger": {
+      "border-radius": "999px"
+    },
+    ".brand-mark": {
+      "border-radius": "8px"
+    },
+    ".list-switcher-trigger": {
+      "border-radius": "0px"
+    },
+    ".item-card": {
+      "border-radius": "0px"
+    },
+    ".row-open::after": {
+      "border-radius": "8px"
+    },
+    ".item-thumb": {
+      "border-radius": "12px"
+    },
+    ".product-img": {
+      "border-radius": "12px"
+    },
+    ".product-img-fallback": null,
+    ".drag-handle": null,
+    ".tag-pill": null,
+    ".claim-btn": null,
+    ".status": null,
+    ".delta-arrow": {
+      "border-radius": "999px"
+    },
+    ".action-bar-item": null,
+    ".action-bar-item.is-current::after": null
+  },
+  "menu-1280-light": {
+    ".menu-sheet": {
+      "border-radius": "16px"
+    },
+    ".menu-item": {
+      "border-radius": "8px"
+    },
+    ".switcher-row": null
+  },
+  "item-390-light": {
+    ".detail-hero .item-thumb": {
+      "border-radius": "12px"
+    },
+    ".detail-card": {
+      "border-radius": "16px"
+    },
+    ".detail-open-btn": {
+      "border-radius": "999px"
+    },
+    ".detail-edit-btn": {
+      "border-radius": "999px"
+    },
+    ".detail-handle": null,
+    ".detail-menu-trigger": {
+      "border-radius": "999px"
+    },
+    ".window-seg": {
+      "border-radius": "8px"
+    },
+    ".window-seg button": {
+      "border-radius": "8px"
+    },
+    ".hints-toggle": {
+      "border-radius": "0px"
+    },
+    ".price-graph-caption": {
+      "border-radius": "0px"
+    }
+  },
+  "item-1280-light": {
+    ".detail-hero .item-thumb": {
+      "border-radius": "12px"
+    },
+    ".detail-card": {
+      "border-radius": "16px"
+    },
+    ".detail-open-btn": {
+      "border-radius": "999px"
+    },
+    ".detail-edit-btn": {
+      "border-radius": "999px"
+    },
+    ".detail-handle": null,
+    ".detail-menu-trigger": {
+      "border-radius": "999px"
+    },
+    ".window-seg": {
+      "border-radius": "8px"
+    },
+    ".window-seg button": {
+      "border-radius": "8px"
+    },
+    ".hints-toggle": {
+      "border-radius": "0px"
+    },
+    ".price-graph-caption": {
+      "border-radius": "0px"
+    }
+  },
+  "settings-1280-light": {
+    ".settings-section": {
+      "border-radius": "16px"
+    },
+    ".reset-form": null,
+    ".settings-submit": {
+      "border-radius": "999px"
+    },
+    ".admin-table td button.secondary": {
+      "border-radius": "8px"
+    },
+    ".admin-table td button.danger": {
+      "border-radius": "8px"
+    },
+    ".card": null
+  },
+  "confirm-1280-light": {
+    ".confirm-dialog": {
+      "border-radius": "16px"
+    }
+  },
+  "toast-1280-light": {
+    ".toast": {
+      "border-radius": "16px"
+    }
+  },
+  "otherfeed-768-light": {
+    ".item-card": {
+      "border-radius": "0px"
+    },
+    ".item-thumb": {
+      "border-radius": "12px"
+    },
+    ".product-img": {
+      "border-radius": "12px"
+    },
+    ".claim-btn": {
+      "border-radius": "999px"
+    },
+    ".status": null,
+    ".tag-pill": null,
+    ".filter-chip": null,
+    ".chip": null,
+    ".delta-arrow": null
+  },
+  "sheet-768-light": {
+    ".sheet--detail": {
+      "border-radius": "24px 24px 0px 0px"
+    },
+    ".detail-handle": {
+      "border-radius": "999px"
+    },
+    ".detail-card": {
+      "border-radius": "16px"
+    },
+    ".detail-open-btn": {
+      "border-radius": "999px"
+    }
+  },
+  "login-390-light": {
+    ".auth-card": {
+      "border-radius": "16px"
+    },
+    ".auth-lockup img": {
+      "border-radius": "8px"
+    },
+    ".settings-submit": {
+      "border-radius": "999px"
+    }
+  },
+  "feed-390-dark": {
+    "button.settings-submit": null,
+    "button.chip": {
+      "border-radius": "999px"
+    },
+    "button.filter-chip": {
+      "border-radius": "999px"
+    },
+    ".icon-btn": {
+      "border-radius": "8px"
+    },
+    ".icon-btn--ghost": null,
+    ".user-menu-button": {
+      "border-radius": "8px"
+    },
+    ".user-avatar-trigger": {
+      "border-radius": "999px"
+    },
+    ".brand-mark": {
+      "border-radius": "8px"
+    },
+    ".list-switcher-trigger": {
+      "border-radius": "0px"
+    },
+    ".item-card": {
+      "border-radius": "0px"
+    },
+    ".row-open::after": {
+      "border-radius": "8px"
+    },
+    ".item-thumb": {
+      "border-radius": "12px"
+    },
+    ".product-img": {
+      "border-radius": "12px"
+    },
+    ".product-img-fallback": null,
+    ".drag-handle": null,
+    ".tag-pill": null,
+    ".claim-btn": null,
+    ".status": null,
+    ".delta-arrow": {
+      "border-radius": "999px"
+    },
+    ".action-bar-item": {
+      "border-radius": "0px"
+    },
+    ".action-bar-item.is-current::after": null
+  },
+  "tokens-dark": {
+    "--r-sm": "8px",
+    "--r-md": "12px",
+    "--r-lg": "16px",
+    "--r-xl": "24px",
+    "--r-full": "999px",
+    "--r-flat": "0px",
+    "--r-control": "8px",
+    "--r-thumb": "12px",
+    "--r-card": "16px",
+    "--r-sheet-top": "24px 24px 0 0",
+    "--r-pill": "999px",
+    "--r-input": "(unset)",
+    "--section-radius": "(unset)"
+  },
+  "menu-390-dark": {
+    ".menu-sheet": null,
+    ".menu-item": {
+      "border-radius": "8px"
+    },
+    ".switcher-row": null
+  },
+  "feed-1280-dark": {
+    "button.settings-submit": null,
+    "button.chip": {
+      "border-radius": "999px"
+    },
+    "button.filter-chip": {
+      "border-radius": "999px"
+    },
+    ".icon-btn": {
+      "border-radius": "8px"
+    },
+    ".icon-btn--ghost": {
+      "border-radius": "8px"
+    },
+    ".user-menu-button": {
+      "border-radius": "8px"
+    },
+    ".user-avatar-trigger": {
+      "border-radius": "999px"
+    },
+    ".brand-mark": {
+      "border-radius": "8px"
+    },
+    ".list-switcher-trigger": {
+      "border-radius": "0px"
+    },
+    ".item-card": {
+      "border-radius": "0px"
+    },
+    ".row-open::after": {
+      "border-radius": "8px"
+    },
+    ".item-thumb": {
+      "border-radius": "12px"
+    },
+    ".product-img": {
+      "border-radius": "12px"
+    },
+    ".product-img-fallback": null,
+    ".drag-handle": null,
+    ".tag-pill": null,
+    ".claim-btn": null,
+    ".status": null,
+    ".delta-arrow": {
+      "border-radius": "999px"
+    },
+    ".action-bar-item": null,
+    ".action-bar-item.is-current::after": null
+  },
+  "menu-1280-dark": {
+    ".menu-sheet": {
+      "border-radius": "16px"
+    },
+    ".menu-item": {
+      "border-radius": "8px"
+    },
+    ".switcher-row": null
+  },
+  "item-390-dark": {
+    ".detail-hero .item-thumb": {
+      "border-radius": "12px"
+    },
+    ".detail-card": {
+      "border-radius": "16px"
+    },
+    ".detail-open-btn": {
+      "border-radius": "999px"
+    },
+    ".detail-edit-btn": {
+      "border-radius": "999px"
+    },
+    ".detail-handle": null,
+    ".detail-menu-trigger": {
+      "border-radius": "999px"
+    },
+    ".window-seg": {
+      "border-radius": "8px"
+    },
+    ".window-seg button": {
+      "border-radius": "8px"
+    },
+    ".hints-toggle": {
+      "border-radius": "0px"
+    },
+    ".price-graph-caption": {
+      "border-radius": "0px"
+    }
+  },
+  "item-1280-dark": {
+    ".detail-hero .item-thumb": {
+      "border-radius": "12px"
+    },
+    ".detail-card": {
+      "border-radius": "16px"
+    },
+    ".detail-open-btn": {
+      "border-radius": "999px"
+    },
+    ".detail-edit-btn": {
+      "border-radius": "999px"
+    },
+    ".detail-handle": null,
+    ".detail-menu-trigger": {
+      "border-radius": "999px"
+    },
+    ".window-seg": {
+      "border-radius": "8px"
+    },
+    ".window-seg button": {
+      "border-radius": "8px"
+    },
+    ".hints-toggle": {
+      "border-radius": "0px"
+    },
+    ".price-graph-caption": {
+      "border-radius": "0px"
+    }
+  },
+  "settings-1280-dark": {
+    ".settings-section": {
+      "border-radius": "16px"
+    },
+    ".reset-form": null,
+    ".settings-submit": {
+      "border-radius": "999px"
+    },
+    ".admin-table td button.secondary": {
+      "border-radius": "8px"
+    },
+    ".admin-table td button.danger": {
+      "border-radius": "8px"
+    },
+    ".card": null
+  },
+  "confirm-1280-dark": {
+    ".confirm-dialog": {
+      "border-radius": "16px"
+    }
+  },
+  "toast-1280-dark": {
+    ".toast": {
+      "border-radius": "16px"
+    }
+  },
+  "otherfeed-768-dark": {
+    ".item-card": {
+      "border-radius": "0px"
+    },
+    ".item-thumb": {
+      "border-radius": "12px"
+    },
+    ".product-img": {
+      "border-radius": "12px"
+    },
+    ".claim-btn": {
+      "border-radius": "999px"
+    },
+    ".status": null,
+    ".tag-pill": null,
+    ".filter-chip": null,
+    ".chip": null,
+    ".delta-arrow": null
+  },
+  "sheet-768-dark": {
+    ".sheet--detail": {
+      "border-radius": "24px 24px 0px 0px"
+    },
+    ".detail-handle": {
+      "border-radius": "999px"
+    },
+    ".detail-card": {
+      "border-radius": "16px"
+    },
+    ".detail-open-btn": {
+      "border-radius": "999px"
+    }
+  },
+  "login-390-dark": {
+    ".auth-card": {
+      "border-radius": "16px"
+    },
+    ".auth-lockup img": {
+      "border-radius": "8px"
+    },
+    ".settings-submit": {
+      "border-radius": "999px"
+    }
+  }
+}
