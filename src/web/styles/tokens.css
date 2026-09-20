@@ -126,7 +126,7 @@
   --safe-bottom: env(safe-area-inset-bottom);
 
   /* #73: mobile bottom action bar — chrome height excluding safe-area.
-     Shared by the bar (min-height) and the footer reservation + toast
+     Shared by the bar (min-height) and the .app-main reservation + toast
      lift, so the three can never drift. */
   --action-bar-h: 56px;
 

@@ -117,6 +117,7 @@ export function SharePage({ token }: { token: string }) {
       <PageHeader title={S.list.heading(view.ownerDisplayName)} count={view.items.length} />
       <p className="muted share-note">{S.share.sharedByNote}</p>
       {view.viewerIsOwner && <p className="muted share-note">{S.share.ownerViewingOwn}</p>}
+      <p className="share-tagline muted">{S.app.tagline}</p>
       {view.items.length === 0 ? (
         <EmptyState title={S.empty.other(view.ownerDisplayName)} />
       ) : (

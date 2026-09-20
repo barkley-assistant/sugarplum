@@ -1235,11 +1235,19 @@ test("10: dark mode flips the surface tokens", async ({ page }) => {
   expect(bg).not.toBe("rgb(250, 250, 250)"); // --bg light: #fafafa
 
   // A10 retuned the dark muted text (--text-3) and the primary fill
-  // (--plum-600); both are locked here through the rendered ratio.
-  const muted = page.locator(".app-footer a");
+  // (--plum-600); both are locked here through the rendered ratio. The
+  // --text-3 anchor is the item page's .detail-footer — the feed has no
+  // guaranteed --text-3 element at rest since #94 dropped the app footer.
+  const card = page.locator(".item-card", {
+    has: page.getByRole("heading", { name: "History probe" }),
+  });
+  await card.getByRole("button", { name: "History probe", exact: true }).click();
+  await expect(page).toHaveURL(/\/items\/[0-9a-f-]{36}$/);
+  const muted = page.locator(".item-page .detail-footer");
   await expect(muted).toBeVisible();
   expect(await contrast(muted), "dark muted text").toBeGreaterThanOrEqual(4.5);
 
+  await page.goto(`${BASE}/`);
   await page.getByRole("button", { name: "Add item" }).first().click();
   const submit = page.getByRole("button", { name: "Add item" });
   await expect(submit).toBeVisible();
@@ -1271,11 +1279,6 @@ test("12: AA contrast sweep holds in both schemes", async ({ page, browser }) =>
     await page.emulateMedia({ colorScheme });
     await page.goto(`${BASE}/`);
     await expect(rowButton).toBeVisible();
-
-    // Muted text (--text-3) on the page background.
-    const muted = page.locator(".app-footer a");
-    await expect(muted).toBeVisible();
-    expect(await contrast(muted), `${colorScheme}: muted text`).toBeGreaterThanOrEqual(4.5);
 
     // Primary CTA: white on the plum fill in either scheme.
     await page.getByRole("button", { name: "Add item" }).first().click();
@@ -1959,22 +1962,24 @@ test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ pa
     expect(Math.round(barBox?.y ?? 0) + Math.round(barBox?.height ?? 0)).toBe(844); // flush to the bottom
 
     // No occlusion: the bar is fixed over the last 56px of the viewport, so
-    // at the bottom of the scroll the footer's CONTENT must still clear the
-    // bar's top edge — the reserved footer padding is what buys that space.
-    // (The footer's BOX always ends at the viewport bottom; its content is
-    // what would be swallowed without the reservation.)
+    // at the bottom of the scroll the last feed row must still clear the
+    // bar's top edge — the padding reserved on .app-main (the last
+    // scroll-flow element now that #94 dropped the app footer) buys that
+    // space. `.app-main`'s BOX ends at the viewport bottom; its content is
+    // what would be swallowed without the reservation.
     const clearance = await page.evaluate(() => {
       const barEl = document.querySelector(".action-bar");
-      const footer = document.querySelector(".app-footer");
-      if (!barEl || !footer) throw new Error("bar/footer missing");
+      const main = document.querySelector(".app-main");
+      if (!barEl || !main) throw new Error("bar/main missing");
       window.scrollTo(0, document.body.scrollHeight);
-      const content = footer.querySelector("a") ?? footer;
+      const rows = main.querySelectorAll(".item-card");
+      const content = rows.length ? rows[rows.length - 1] : main;
       return {
         barTop: barEl.getBoundingClientRect().top,
         contentBottom: content.getBoundingClientRect().bottom,
       };
     });
-    expect(clearance.contentBottom, `footer content occluded at ${width}px`).toBeLessThanOrEqual(
+    expect(clearance.contentBottom, `last row occluded at ${width}px`).toBeLessThanOrEqual(
       clearance.barTop,
     );
 

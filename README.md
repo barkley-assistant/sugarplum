@@ -144,3 +144,7 @@ cutover) lives in `docs/operations.md`.
 ## Roadmap
 
 Later waves add the PWA install + share target and the price-history UI.
+
+## Source
+
+https://github.com/barkley-assistant/sugarplum
