@@ -1665,10 +1665,15 @@ test("15e: anonymous guest sheet shows details and confirmed purchase state", as
     await expect(sheet).toBeVisible();
     await expect(sheet.getByText("Size medium")).toBeVisible();
     await expect(sheet.getByText("Kitchen")).toBeVisible();
-    await expect(sheet.getByText("£19.99")).toBeVisible();
+    // #90 added the "Lowest £19.99" meta line, so the hero price match must
+    // say WHICH "£19.99" it means.
+    await expect(sheet.locator(".detail-price")).toHaveText("£19.99");
     await expect(sheet.getByRole("link", { name: /Open product/ })).toHaveCount(0); // no url seeded
     await expect(sheet.getByRole("button", { name: "Edit item" })).toHaveCount(0);
     await expect(sheet.locator(".price-graph")).toHaveCount(0);
+    // #90: the "More information" card is gated on the item's own URL — this
+    // seed has none, so the card (and its "View on…" row) stays absent.
+    await expect(sheet.locator(".detail-more-card")).toHaveCount(0);
     await expect(sheet.getByRole("button", { name: "More actions" })).toHaveCount(0);
     // #72: no close icon on the sheet; the app back button dismisses it
     // gesture equivalent) with focus returning to the opener row.
@@ -1696,6 +1701,111 @@ test("15e: anonymous guest sheet shows details and confirmed purchase state", as
   } finally {
     await anon.close();
     // Leave no live link behind for later specs.
+    await page.request.delete(`${BASE}/api/share`);
+  }
+});
+
+test("15f: anonymous share sheet shows price history and more info, no owner actions", async ({
+  page,
+  browser,
+}) => {
+  // Two manual observations (the add price, then a drop) so the graph is
+  // drawable, and a URL so the "More information" card + the footer source
+  // exist. The PATCH carries the URL: only POST-with-url enqueues a scrape,
+  // so the title stays exactly as seeded.
+  const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: {
+      title: "Share parity probe",
+      notes: "Size large",
+      tags: ["Kitchen"],
+      priceCents: "19.99",
+      currency: "GBP",
+    },
+  });
+  expect(seeded.status()).toBe(201);
+  const item = (await seeded.json()) as { id: string };
+  const patched = await page.request.patch(`${BASE}/api/wishlist/items/${item.id}`, {
+    data: { priceCents: "14.99", url: "https://example.com/probe" },
+  });
+  expect(patched.status()).toBe(200);
+
+  const created = await page.request.post(`${BASE}/api/share`);
+  expect(created.status()).toBe(201);
+  const token = ((await created.json()) as { token: string }).token;
+
+  // reduce: the sheet's entry animation must never race the geometry probes.
+  const anon = await browser.newContext({ reducedMotion: "reduce" });
+  const anonPage = await anon.newPage();
+  try {
+    await anonPage.goto(`${BASE}/share/${token}`);
+    const card = anonPage.locator(".item-card", {
+      has: anonPage.getByRole("heading", { name: "Share parity probe" }),
+    });
+    await card.getByRole("button", { name: "Share parity probe" }).click();
+    const sheet = anonPage.getByRole("dialog", { name: "Share parity probe" });
+    await expect(sheet).toBeVisible();
+
+    // Price parity with the owner page: the lowest/at-add context and the
+    // drawable graph (two observations, one currency).
+    await expect(sheet.getByText("Lowest £14.99")).toBeVisible();
+    await expect(sheet.getByText("£5.00 since added")).toBeVisible();
+    const history = sheet.locator(".detail-history-card");
+    await expect(history).toBeVisible();
+    await expect(history.getByRole("heading", { name: "Price history" })).toBeVisible();
+    await expect(history.locator(".price-graph")).toBeVisible();
+    await expect(history.getByRole("group", { name: "Trend window" })).toBeVisible();
+    await expect(history.getByRole("button", { name: "30d", exact: true }))
+      .toHaveAttribute("aria-pressed", "true");
+
+    // "More information" — the item's OWN link and a copy affordance. The live
+    // prices-elsewhere search is an owner-only route: never on this surface.
+    const more = sheet.locator(".detail-more-card");
+    await expect(more).toBeVisible();
+    await expect(more.getByRole("link", { name: "View on example.com" })).toBeVisible();
+    await expect(more.getByRole("button", { name: "Copy link" })).toBeVisible();
+    await expect(sheet.getByText("Check prices elsewhere")).toHaveCount(0);
+    await expect(sheet.getByText("Prices seen elsewhere (unverified)")).toHaveCount(0);
+
+    // Footer: the added date AND the source host.
+    const footer = sheet.locator(".detail-footer");
+    await expect(footer).toContainText(/^Added /);
+    await expect(footer.locator(".detail-footer-source")).toHaveText("example.com");
+
+    // Owner actions stay owner-only.
+    for (const name of ["Edit item", "Re-check price", "Reset purchased mark", "More actions"]) {
+      await expect(sheet.getByRole("button", { name })).toHaveCount(0);
+    }
+
+    // The parity sections must clear the phone width too. The shared overflow
+    // probe (test 9) opens an item with NO url, so it never renders this
+    // card — this is the only place the "More information" row is measured.
+    // A SEPARATE 360px context: resizing the desktop drawer mid-flight would
+    // measure the variant swap, not the phone sheet.
+    const phone = await browser.newContext({
+      viewport: { width: 360, height: 800 },
+      reducedMotion: "reduce",
+    });
+    const phonePage = await phone.newPage();
+    try {
+      await phonePage.goto(`${BASE}/share/${token}`);
+      await phonePage
+        .locator(".item-card", { has: phonePage.getByRole("heading", { name: "Share parity probe" }) })
+        .getByRole("button", { name: "Share parity probe" })
+        .click();
+      const phoneSheet = phonePage.getByRole("dialog", { name: "Share parity probe" });
+      await expect(phoneSheet).toBeVisible();
+      await expect(phoneSheet.locator(".detail-more-card")).toBeVisible();
+      await settleEntryAnimation(phoneSheet);
+      const probe = await horizontalEscapes(phonePage);
+      expect(probe.docOverflow, "share sheet overflow at 360px").toBe(false);
+      expect(probe.offenders, "share sheet escapes at 360px").toEqual([]);
+    } finally {
+      await phone.close();
+    }
+  } finally {
+    await anon.close();
+    // Leave no seeded row and no live link behind for later specs.
+    await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
     await page.request.delete(`${BASE}/api/share`);
   }
 });

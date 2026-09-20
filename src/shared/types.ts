@@ -134,7 +134,12 @@ export interface PublicItem extends CommonItem {
 }
 
 /** Anonymous share view of an item. A dedicated DTO: never OwnedItem (owner
- *  data) and never PublicItem (claim state). */
+ *  data) and never PublicItem (claim state).
+ *
+ *  The informational fields (priceStats, createdAt, imageSource) are PRODUCT
+ *  facts and are sent to every viewer, the owner included — the ledger and the
+ *  row carry no owner identity. The only owner-sensitive field on this DTO is
+ *  `purchased`, which the server projects out for the owner. */
 export interface ShareItem {
   id: string;
   title: string;
@@ -144,6 +149,15 @@ export interface ShareItem {
   notes: string | null;
   tags: string[];
   siteName: string | null;
+  /** Added date — the share footer shows it, like the owner's item page. */
+  createdAt: string;
+  /** Lowest + earliest observation from price_history, plus the capped 90-day
+   *  series and server-derived trend; null when the item has no history. The
+   *  same derivation the owner's list uses. */
+  priceStats: PriceStats | null;
+  /** Where the stored image came from: 'direct' | 'search' | null. A
+   *  provenance flag for the footer — never the image path. */
+  imageSource: string | null;
   /** True when the item has a stored image; bytes are served token-scoped
    *  at /api/share/:token/items/:id/image (never the item-scoped path). */
   hasImage: boolean;

@@ -417,7 +417,12 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
     cleanTitle(titleTag);
 
   return {
-    title: rawTitle === null ? null : stripStoreTitleNoise(rawTitle, siteToken),
+    // HTMLRewriter hands og:/twitter:/<title> values back raw, so a title that
+    // spells an ampersand as `&amp;` was stored verbatim and rendered as the
+    // literal text "&amp;" on EVERY surface (list, item page, share view).
+    // Decode after the store-token strip: the strip matches literal text, so
+    // decoding last can never re-introduce promo noise it just removed.
+    title: rawTitle === null ? null : decodeHtmlEntities(stripStoreTitleNoise(rawTitle, siteToken)),
     priceCents:
       parsePriceToCents(og["og:price:amount"]) ??
       parsePriceToCents(product["product:price:amount"]) ??

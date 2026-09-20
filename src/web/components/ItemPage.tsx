@@ -9,6 +9,7 @@ import { useBootMe } from "../use-boot-me";
 import { usePageFocus } from "../use-page-focus";
 import { pruneFeedSnapshotItem } from "../feed-handoff";
 import { AppShell } from "./AppShell";
+import { DetailMeta } from "./DetailMeta";
 import { EmptyState } from "./EmptyState";
 import { HintsPanel } from "./HintsPanel";
 import { DotsIcon } from "./IconButton";
@@ -272,21 +273,7 @@ export function ItemPage({ id }: { id: string }) {
               ) : (
                 hintPrice && <span className="detail-price detail-price--hint">~{hintPrice}</span>
               )}
-              {(meta || delta) && (
-                <div className="detail-meta">
-                  {meta && <span>{meta}</span>}
-                  {meta && delta && <span className="detail-meta-sep" aria-hidden="true" />}
-                  {delta && (
-                    <span className="price-delta" data-direction={delta.direction}>
-                      <span className="delta-arrow" aria-hidden="true">
-                        <DeltaArrow direction={delta.direction} />
-                      </span>
-                      <span className="visually-hidden">{delta.direction === "down" ? "Down " : "Up "}</span>
-                      <span className="delta-copy">{S.item.deltaSinceAdd(delta.amount)}</span>
-                    </span>
-                  )}
-                </div>
-              )}
+              {(meta || delta) && <DetailMeta meta={meta} delta={delta} />}
             </div>
           </div>
 
@@ -417,8 +404,4 @@ function LinkIcon() {
 
 function ChevronRightIcon() {
   return <Icon size={16}><path d="m7.5 4 5 6-5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></Icon>;
-}
-
-function DeltaArrow({ direction }: { direction: "down" | "up" }) {
-  return <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d={direction === "down" ? "M5 1.5v7M1.5 5 5 8.5 8.5 5" : "M5 8.5v-7M1.5 5 5 1.5 8.5 5"} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }

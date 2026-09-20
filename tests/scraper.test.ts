@@ -66,6 +66,22 @@ describe("extractProduct", () => {
     expect(p.title).toBe("Baldur's Gate 3");
     expect(p.siteName).toBe("Steam"); // og:site joins the siteName chain
   });
+  test("#90: named entity in og:title is decoded (not stored as &amp;)", async () => {
+    const html = `<!DOCTYPE html><html><head>
+    <meta property="og:title" content="Toys &amp; Games">
+    <meta property="og:site_name" content="Amazon.co.uk">
+    <title>Toys &amp; Games</title>
+  </head><body></body></html>`;
+    const p = await extractProduct(html, "https://www.amazon.co.uk/dp/B0DLGMVR4C");
+    expect(p.title).toBe("Toys & Games");
+  });
+  test("#90: numeric character reference in og:title is decoded", async () => {
+    const html = `<!DOCTYPE html><html><head>
+    <meta property="og:title" content="Caf&#233; Set &#8364;24">
+  </head><body></body></html>`;
+    const p = await extractProduct(html, "https://shop.example.com/cafe");
+    expect(p.title).toBe("Café Set €24");
+  });
 });
 
 describe("extractProduct DOM fallback tier (no og/json-ld pages)", () => {
