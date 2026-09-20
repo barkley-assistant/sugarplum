@@ -1778,7 +1778,7 @@ button.filter-chip {
 .item-card {
   position: relative;
   gap: 0;
-  padding: var(--sp-3) var(--sp-1);
+  padding: var(--sp-3) var(--row-pad-x);
   background: transparent;
   border: none;
   border-bottom: 1px solid var(--border);
