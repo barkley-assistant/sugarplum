@@ -456,22 +456,6 @@ export function AppPage() {
     return row ? { id: row.userId, displayName: row.displayName } : ownRef;
   }
 
-  const renderPeekGrip = (id: string) => {
-    const props = reorder.getHandleProps(id);
-    return (
-      <button
-        type="button"
-        {...props}
-        tabIndex={-1}
-        className={`${props.className} drag-handle--peek`}
-      >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M3 4h10M3 8h10M3 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      </button>
-    );
-  };
-
   function renderList() {
     if (viewing) {
       const owner = ownerRefFor(viewing);
@@ -542,7 +526,6 @@ export function AppPage() {
               )
             : undefined
         }
-        renderPeekGrip={!reordering && !activeTag && ownItems.length > 1 ? renderPeekGrip : undefined}
         draggingId={reordering ? reorder.draggingId : undefined}
       />
     );

@@ -26,8 +26,6 @@ interface ItemListProps {
   onOpenDetails?: (id: string) => void;
   /** Owner-only reorder handle rendered in explicit reorder mode. */
   renderDragHandle?: (id: string) => ReactNode;
-  /** Owner-only pointer shortcut revealed on desktop row hover. */
-  renderPeekGrip?: (id: string) => ReactNode;
   /** Id of the card currently lifted by the reorder state machine. */
   draggingId?: string | null;
 }
@@ -46,7 +44,6 @@ export function ItemList({
   onUnmarkOwnerPurchased,
   onOpenDetails,
   renderDragHandle,
-  renderPeekGrip,
   draggingId,
 }: ItemListProps) {
   if (items.length === 0) return null;
@@ -67,7 +64,6 @@ export function ItemList({
           onUnmarkOwnerPurchased={onUnmarkOwnerPurchased}
           onOpenDetails={onOpenDetails}
           dragHandle={renderDragHandle?.(item.id)}
-          peekGrip={renderPeekGrip?.(item.id)}
           dragging={draggingId === item.id}
         />
       ))}

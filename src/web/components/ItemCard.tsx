@@ -32,8 +32,6 @@ interface ItemCardProps {
   onOpenDetails?: (id: string) => void;
   /** Drag handle slot, rendered only in explicit reorder mode. */
   dragHandle?: ReactNode;
-  /** Desktop hover shortcut for starting a pointer reorder. */
-  peekGrip?: ReactNode;
   /** True while this card is lifted by the reorder state machine. */
   dragging?: boolean;
 }
@@ -54,7 +52,6 @@ export function ItemCard({
   onUnmarkOwnerPurchased,
   onOpenDetails,
   dragHandle,
-  peekGrip,
   dragging,
 }: ItemCardProps) {
   const confirm = useConfirm();
@@ -188,9 +185,7 @@ export function ItemCard({
       />
     ) : undefined;
 
-  const ownerRowActions = dragHandle ? undefined : (
-    <>{peekGrip}{ownerActions}</>
-  );
+  const ownerRowActions = dragHandle ? undefined : ownerActions;
 
   const publicActions = !viewerIsOwner ? (
     <>
