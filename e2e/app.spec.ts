@@ -2758,3 +2758,107 @@ test("24: item row and reset row share their slot at every width (#97)", async (
   const removed = await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
   expect([200, 204]).toContain(removed.status());
 });
+
+test("25: row insets content --row-pad-x (12px) at every width, all surfaces (#87)", async ({ page, browser }) => {
+  const seeded: string[] = [];
+  for (const spec of [
+    { title: "Inset probe A", priceCents: "12.34", currency: "GBP" },
+    { title: "Inset probe B", priceCents: "56.78", currency: "GBP" },
+  ]) {
+    const res = await page.request.post(`${BASE}/api/wishlist/items`, { data: spec });
+    expect(res.status()).toBe(201);
+    seeded.push(((await res.json()) as { id: string }).id);
+  }
+
+  /** Resolved row geometry: content-box inset (left) + actions trigger
+   *  inset (right) + the 44px touch floor. The grid's thumb column is flush
+   *  with the content box, so grid.left - row.left === padding-left === the
+   *  thumbnail's inset whenever a thumb renders. */
+  const rowGeometry = (row: Locator) =>
+    row.evaluate((el) => {
+      const cs = getComputedStyle(el);
+      const rowRect = el.getBoundingClientRect();
+      const grid = el.querySelector<HTMLElement>(".product-row-grid");
+      if (!grid) throw new Error("product-row-grid missing");
+      const trigger = el.querySelector<HTMLElement>(".product-row-actions .icon-btn");
+      const triggerRect = trigger?.getBoundingClientRect();
+      return {
+        padLeft: parseFloat(cs.paddingLeft),
+        padRight: parseFloat(cs.paddingRight),
+        contentInset: grid.getBoundingClientRect().left - rowRect.left,
+        actionsInset: triggerRect ? rowRect.right - triggerRect.right : null,
+        triggerW: triggerRect?.width ?? null,
+        triggerH: triggerRect?.height ?? null,
+      };
+    });
+
+  // --- Owner feed: the full walk, five widths × both schemes. ---
+  for (const scheme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    for (const width of [360, 390, 430, 768, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.reload();
+      const row = page.locator(`.item-card[data-item-id="${seeded[0]}"]`);
+      await expect(row).toBeVisible();
+      const m = await rowGeometry(row);
+      expect(m.padLeft, `pad-left @${width}/${scheme}`).toBe(12);
+      expect(m.padRight, `pad-right @${width}/${scheme}`).toBe(12);
+      expect(m.contentInset, `grid starts at padding edge @${width}/${scheme}`).toBe(12);
+      expect(m.actionsInset, `⋮ trigger inset from row right @${width}/${scheme}`).toBe(12);
+      expect(m.triggerW, `⋮ trigger width @${width}/${scheme}`).toBeGreaterThanOrEqual(44);
+      expect(m.triggerH, `⋮ trigger height @${width}/${scheme}`).toBeGreaterThanOrEqual(44);
+      const probe = await horizontalEscapes(page);
+      expect(probe.docOverflow, `doc overflow @${width}/${scheme}`).toBe(false);
+      expect(probe.offenders, `true escapes @${width}/${scheme}`).toEqual([]);
+    }
+  }
+  await page.emulateMedia({ colorScheme: "light" });
+
+  // --- Reorder mode: same row, handle column added — inset unchanged. ---
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  await page.getByRole("button", { name: "Reorder", exact: true }).click();
+  await expect(page.locator(".item-card.is-reordering").first()).toBeVisible();
+  const reordering = page.locator(`.item-card.is-reordering[data-item-id="${seeded[0]}"]`);
+  await expect(reordering).toBeVisible();
+  const rm = await rowGeometry(reordering);
+  expect(rm.padLeft, "reordering row keeps 12px").toBe(12);
+  expect(rm.padRight, "reordering row right inset").toBe(12);
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+
+  // --- Anonymous share view: same .item-card class, inherited. ---
+  const shared = await page.request.post(`${BASE}/api/share`);
+  expect(shared.status()).toBe(201);
+  const shareToken = ((await shared.json()) as { token: string }).token;
+  const anon = await browser.newContext({ viewport: { width: 360, height: 844 } });
+  try {
+    for (const width of [360, 1280]) {
+      const anonPage = await anon.newPage();
+      await anonPage.setViewportSize({ width, height: 844 });
+      await anonPage.goto(`${BASE}/share/${shareToken}`);
+      await expect(anonPage.locator(`.item-card[data-item-id="${seeded[0]}"]`)).toBeVisible();
+      const m = await anonPage.evaluate((id: string) => {
+        const row = document.querySelector<HTMLElement>(`.item-card[data-item-id="${id}"]`);
+        if (!row) throw new Error("share row missing");
+        const cs = getComputedStyle(row);
+        return { padLeft: parseFloat(cs.paddingLeft), padRight: parseFloat(cs.paddingRight) };
+      }, seeded[0]);
+      expect(m.padLeft, `share pad-left @${width}`).toBe(12);
+      expect(m.padRight, `share pad-right @${width}`).toBe(12);
+      const probe = await horizontalEscapes(anonPage);
+      expect(probe.docOverflow, `share doc overflow @${width}`).toBe(false);
+      expect(probe.offenders, `share escapes @${width}`).toEqual([]);
+      await anonPage.close();
+    }
+  } finally {
+    await anon.close();
+  }
+  const revoked = await page.request.delete(`${BASE}/api/share`);
+  expect([200, 204]).toContain(revoked.status());
+
+  // Hand the board back clean (test 15 expects no active share link).
+  for (const id of seeded) {
+    const removed = await page.request.delete(`${BASE}/api/wishlist/items/${id}`);
+    expect([200, 204]).toContain(removed.status());
+  }
+});
