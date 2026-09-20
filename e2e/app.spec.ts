@@ -882,33 +882,38 @@ test("5c: pointer drag in reorder mode persists after reload", async ({ page }) 
   await expect(page.locator(".drag-handle:visible")).toHaveCount(0);
 });
 
-test("5d: desktop hover reveals a reorder grip without entering mode", async ({ page }) => {
+test("5d: desktop rows show no drag affordance outside reorder mode (#93)", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.reload();
-  const firstCard = page.locator(".item-card").first();
   const lastCard = page.locator(".item-card").last();
-  const grip = lastCard.locator(".drag-handle--peek");
-  await expect(grip).toBeHidden();
   await expect(page.locator(".item-card.is-reordering")).toHaveCount(0);
-  await lastCard.hover();
-  await expect(grip).toBeVisible();
-  // The desktop peek grip carries the same per-item label (A10).
-  const lastTitle = (await lastCard.locator(".item-title").innerText()).trim();
-  await expect(grip).toHaveAccessibleName(`Move "${lastTitle}"`);
 
+  // Hover and focus-within must not conjure any drag affordance.
+  await expect(lastCard.locator(".drag-handle")).toHaveCount(0);
+  await lastCard.hover();
+  await expect(lastCard.locator(".drag-handle")).toHaveCount(0);
+  await lastCard.locator(".row-open").focus();
+  await expect(lastCard.locator(".drag-handle")).toHaveCount(0);
+
+  // Kebab is the only action left on a non-reordering row.
+  await expect(lastCard.getByRole("button", { name: "More actions" })).toBeVisible();
+
+  // Reorder mode remains the one path in, and its drag still persists.
   const titles = page.locator(".item-card .item-title");
   const before = await titles.allTextContents();
-  await grip.dragTo(firstCard);
+  await page.getByRole("button", { name: "Reorder", exact: true }).click();
+  await expect(page.locator(".item-list .drag-handle:visible").first()).toBeVisible();
+  await page.locator(".item-list .drag-handle").last().dragTo(page.locator(".item-card").first());
   await expect(titles.first()).toHaveText(before[before.length - 1]);
-  await expect(page.locator(".item-card.is-reordering")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Reorder", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await expect(page.locator(".drag-handle:visible")).toHaveCount(0);
   await page.reload();
   await expect(page.locator(".item-card .item-title").first()).toHaveText(before[before.length - 1]);
 });
 
-test("5e: #70 desktop hover — title paints nothing, grip overlaps nothing", async ({ page }) => {
-  // Two priced rows so hover state, price-cluster geometry and reorder are
-  // all exercised (priceCents/currency shape per test 18's API usage).
+test("5e: #70 desktop hover — title paints nothing, rows overflow nowhere", async ({ page }) => {
+  // Two priced rows so hover state and price-cluster geometry are exercised
+  // (priceCents/currency shape per test 18's API usage).
   for (const [title, price] of [["Hover probe A", "19.99"], ["Hover probe B", "9.99"]] as const) {
     const res = await page.request.post(`${BASE}/api/wishlist/items`, {
       data: { title, priceCents: price, currency: "USD" },
@@ -920,47 +925,24 @@ test("5e: #70 desktop hover — title paints nothing, grip overlaps nothing", as
   for (const width of [1024, 1280]) {
     await page.setViewportSize({ width, height: 800 });
     // Mouse park: the PREVIOUS iteration may leave the pointer over a card
-    // at stale viewport coordinates — clear hover so toBeHidden() is
+    // at stale viewport coordinates — clear hover so assertions are
     // deterministic (the suite's own pattern, e.g. test 5's mouse.move(0,0)).
     await page.mouse.move(0, 0);
     const card = page.locator(".item-card", { hasText: "Hover probe A" }).first();
     const open = card.locator(".row-open");
-    const grip = card.locator(".drag-handle--peek");
 
-    await expect(grip).toBeHidden();
-    await card.hover();
-    await expect(grip).toBeVisible();
-
-    // Fix 1: hover the TITLE BUTTON itself — the global button:hover only
-    // paints when the button is the hovered element. Card hover persists
-    // (button is inside the card), so the grip stays visible throughout.
+    // #70 Fix 1: hover the TITLE BUTTON itself — the global button:hover
+    // only paints when the button is the hovered element.
     await open.hover();
     const btnBg = await open.evaluate((el) => getComputedStyle(el).backgroundColor);
     expect(btnBg, `title paint at ${width}px`).toBe("rgba(0, 0, 0, 0)");
 
-    // Fix 2: no native tooltip attribute.
+    // #70 Fix 2: no native tooltip attribute.
     expect(await open.getAttribute("title")).toBeNull();
 
-    // Fix 3: the grip participates in the actions flex row — static, so it
-    // cannot overlap anything. Compute-style is the portable proof.
-    const pos = await grip.evaluate((el) => getComputedStyle(el).position);
-    expect(pos, `grip position at ${width}px`).toBe("static");
-
-    // And the geometry agrees: the grip must sit entirely RIGHT of the price
-    // column (its left edge at or past price's right edge). NB the OLD
-    // absolute code fails this (-44px offset intrudes 32px into price).
-    const clear = await card.evaluate((el) => {
-      const g = el.querySelector(".drag-handle--peek");
-      const p = el.querySelector(".product-row-price");
-      if (!g || !p) throw new Error("grip/price missing");
-      const gr = g.getBoundingClientRect();
-      const pr = p.getBoundingClientRect();
-      return gr.left >= pr.right - 0.5; // true == no intrusion into price
-    });
-    expect(clear, `grip clear of price at ${width}px`).toBe(true);
-
-    // Keyboard contract: peek grip stays a pointer shortcut (tabIndex -1).
-    expect(await grip.getAttribute("tabindex")).toBe("-1");
+    // #93: no drag affordance renders on this row at all (was: grip
+    // position/geometry probes — the grip no longer exists).
+    await expect(card.locator(".drag-handle")).toHaveCount(0);
 
     // No horizontal escape introduced at this width.
     const probe = await horizontalEscapes(page);
