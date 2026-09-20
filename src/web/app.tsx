@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { useEffect } from "react";
 import { AppPage } from "./components/AppPage";
+import { AppBottomBar } from "./components/AppBottomBar";
 import { AddPage } from "./components/AddPage";
 import { ItemPage } from "./components/ItemPage";
 import { ItemEditPage } from "./components/ItemEditPage";
@@ -73,7 +74,15 @@ function Root() {
   }, [route]);
   return (
     <ToastProvider>
-      <ConfirmProvider>{viewFor(route)}</ConfirmProvider>
+      <ConfirmProvider>
+        {viewFor(route)}
+        {/* #95: persistent shell chrome — one mount, every authenticated
+            route; AppBottomBar gates width + route itself (no bar on
+            /share/:token or /login). Rendered after the route view so the
+            bar is last in the natural Tab order, closing each page's tab
+            order exactly as #73's feed contract did. */}
+        <AppBottomBar route={route} />
+      </ConfirmProvider>
     </ToastProvider>
   );
 }
