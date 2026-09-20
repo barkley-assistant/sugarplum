@@ -942,26 +942,6 @@ button.filter-chip {
   background: var(--surface-2);
 }
 
-/* Desktop shortcut: a peek grip beside the kebab on row hover/focus. It
-   reserves real space in the actions column (so it can never overlap the
-   price) and stays out of the tab order (pointer shortcut only). */
-.drag-handle--peek {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  .item-card:not(.is-reordering) .drag-handle--peek {
-    display: inline-flex;
-    visibility: hidden;
-    background: var(--surface);
-  }
-
-  .item-card:not(.is-reordering):hover .drag-handle--peek,
-  .item-card:not(.is-reordering):focus-within .drag-handle--peek {
-    visibility: visible;
-  }
-}
-
 .item-card.dragging {
   box-shadow: var(--shadow-overlay);
   transform: scale(1.02);
