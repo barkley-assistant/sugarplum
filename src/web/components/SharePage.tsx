@@ -170,10 +170,11 @@ export function SharePage({ token }: { token: string }) {
 }
 
 /** Maps the anonymous share projection (ShareItem) into the guest detail
- *  sheet's normalized shape. Every field read here exists on ShareItem — the
- *  DTO carries no owner data, no claim state and no createdAt, so the sheet
- *  cannot render one. The image stays token-scoped: a share viewer must never
- *  reach the session-scoped item image route. */
+ *  sheet's normalized shape. Every field read here exists on ShareItem, which
+ *  carries the added date and the derived price stats (product facts, sent to
+ *  every viewer) but no owner data and no claim state. The image stays
+ *  token-scoped: a share viewer must never reach the session-scoped item
+ *  image route. */
 function toGuestDetail(item: ShareItem, token: string): GuestItemDetail {
   return {
     id: item.id,
@@ -185,6 +186,9 @@ function toGuestDetail(item: ShareItem, token: string): GuestItemDetail {
     tags: item.tags,
     siteName: item.siteName,
     imageSrc: item.hasImage ? `/api/share/${token}/items/${item.id}/image` : undefined,
+    createdAt: item.createdAt,
+    priceStats: item.priceStats,
+    imageSource: item.imageSource,
     purchased: item.purchased,
   };
 }

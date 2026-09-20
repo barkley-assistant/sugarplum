@@ -271,6 +271,13 @@ export function ItemCard({
   );
 }
 
+/** Direction + amount of the move since the item was added. Integer cents
+ *  only — no float money arithmetic. */
+export interface PriceDelta {
+  direction: "down" | "up";
+  amount: string;
+}
+
 /** The direction and amount since added, or null when there is
  *  nothing honest to say: no history, no current price, no change, or a
  *  currency mismatch (mixed-currency deltas are not computed). Integer cents
@@ -279,7 +286,7 @@ export function priceDelta(
   currentDecimal: string | null,
   currentCurrency: string | null,
   stats: PriceStats | null,
-): { direction: "down" | "up"; amount: string } | null {
+): PriceDelta | null {
   if (!stats || stats.atAddCents === null || currentDecimal === null) return null;
   const current = toCents(currentDecimal);
   const atAdd = toCents(stats.atAddCents);
