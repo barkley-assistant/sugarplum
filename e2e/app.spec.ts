@@ -2862,3 +2862,133 @@ test("25: row insets content --row-pad-x (12px) at every width, all surfaces (#8
     expect([200, 204]).toContain(removed.status());
   }
 });
+
+test("26: row overflow menu floats above the list at desktop widths (#89)", async ({ page, browser }) => {
+  const seeded: string[] = [];
+  for (const spec of [
+    { title: "Popover probe A", priceCents: "19.99", currency: "GBP" },
+    { title: "Popover probe B", priceCents: "24.50", currency: "GBP" },
+  ]) {
+    const res = await page.request.post(`${BASE}/api/wishlist/items`, { data: spec });
+    expect(res.status()).toBe(201);
+    seeded.push(((await res.json()) as { id: string }).id);
+  }
+  await page.reload();
+
+  // The open row needs a FOLLOWING sibling row: that is where the pre-fix
+  // "steal band" came from (the next row's z-1 action cluster ties on z with
+  // the open row's and wins on DOM order, painting over the popover's right
+  // edge). Row 0 of the feed always has one.
+  expect(await page.locator(".item-card").count()).toBeGreaterThanOrEqual(2);
+  const openRowId = await page.locator(".item-card").first().getAttribute("data-item-id");
+  expect(openRowId).toBeTruthy();
+
+  const triggerOf = (p: Page, rowId: string) =>
+    p.locator(`.item-card[data-item-id="${rowId}"]`).getByRole("button", { name: "More actions" });
+  const popoverOf = (p: Page, rowId: string) =>
+    p.locator(`.item-card[data-item-id="${rowId}"] .overflow-popover`);
+
+  /** Hit-test sweep: every menu item is sampled with `elementFromPoint` at
+   *  5/25/50/75/95% of its width, mid-height. This is the only probe that sees
+   *  BOTH defects of #89 — the ancestor clip (an `overflow: hidden` row slices
+   *  the popover, so the point belongs to whatever paints there instead) and
+   *  the paint-order steal (a following row's action cluster covering the
+   *  popover's right band). Playwright's `click()` sees neither: it scrolls
+   *  `overflow: hidden` ancestors into view first, so click-based tests passed
+   *  on the broken build. */
+  const sweepPopover = (p: Page, rowId: string) =>
+    p.evaluate((id: string) => {
+      const row = document.querySelector<HTMLElement>(`.item-card[data-item-id="${id}"]`);
+      if (!row) throw new Error("row missing");
+      const popover = row.querySelector<HTMLElement>(".overflow-popover");
+      if (!popover) throw new Error("desktop popover missing");
+      const items = Array.from(popover.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+      const describe = (el: HTMLElement | null) =>
+        el ? `${el.tagName}.${typeof el.className === "string" ? el.className : el.getAttribute("class")}` : "none";
+      const bad: string[] = [];
+      for (const item of items) {
+        const r = item.getBoundingClientRect();
+        for (const frac of [0.05, 0.25, 0.5, 0.75, 0.95]) {
+          const hit = document.elementFromPoint(
+            r.left + r.width * frac,
+            r.top + r.height / 2,
+          ) as HTMLElement | null;
+          if (!hit || (hit !== item && !item.contains(hit))) {
+            bad.push(`"${item.textContent?.trim()}" @${frac}: ${describe(hit)}`);
+          }
+        }
+      }
+      const rowBox = row.getBoundingClientRect();
+      const popoverBox = popover.getBoundingClientRect();
+      const doc = document.documentElement;
+      return {
+        itemCount: items.length,
+        bad,
+        overflow: getComputedStyle(row).overflow,
+        extendsBelowRow: Math.round(popoverBox.bottom - rowBox.bottom),
+        docOverflow: doc.scrollWidth > doc.clientWidth,
+      };
+    }, rowId);
+
+  // --- Owner feed: the popover must survive a following sibling row. ---
+  for (const width of [768, 1024, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.reload();
+    await triggerOf(page, openRowId!).click();
+    const popover = popoverOf(page, openRowId!);
+    await expect(popover).toBeVisible();
+    const m = await sweepPopover(page, openRowId!);
+    expect(m.itemCount, `menu rows @${width}`).toBeGreaterThanOrEqual(4);
+    expect(m.bad, `hit-test escapes @${width}`).toEqual([]);
+    expect(m.overflow, `computed row overflow @${width}`).toBe("visible");
+    expect(m.extendsBelowRow, `popover past the row bottom @${width}`).toBeGreaterThan(16);
+    expect(m.docOverflow, `doc overflow @${width}`).toBe(false);
+    // Keyboard contract untouched: Escape closes, focus returns to the trigger.
+    await page.keyboard.press("Escape");
+    await expect(popover).toHaveCount(0);
+    await expect(triggerOf(page, openRowId!)).toBeFocused();
+  }
+
+  // --- Anonymous share view: same row markup, same defect, no owner around. ---
+  const shared = await page.request.post(`${BASE}/api/share`);
+  expect(shared.status()).toBe(201);
+  const shareToken = ((await shared.json()) as { token: string }).token;
+  const anon = await browser.newContext({ viewport: { width: 1024, height: 900 } });
+  try {
+    const anonPage = await anon.newPage();
+    await anonPage.goto(`${BASE}/share/${shareToken}`);
+    const anonRowId = await anonPage.locator(".item-card").first().getAttribute("data-item-id");
+    expect(anonRowId, "share row carries its id").toBeTruthy();
+    await triggerOf(anonPage, anonRowId!).click();
+    const anonPopover = popoverOf(anonPage, anonRowId!);
+    await expect(anonPopover).toBeVisible();
+    const m = await sweepPopover(anonPage, anonRowId!);
+    expect(m.itemCount, "anonymous menu rows").toBeGreaterThanOrEqual(1);
+    expect(m.bad, "anonymous hit-test escapes").toEqual([]);
+    expect(m.overflow, "anonymous computed row overflow").toBe("visible");
+    expect(m.docOverflow, "anonymous doc overflow").toBe(false);
+  } finally {
+    await anon.close();
+  }
+  const revoked = await page.request.delete(`${BASE}/api/share`);
+  expect([200, 204]).toContain(revoked.status());
+
+  // --- Mobile sanity: <640px still portals the bottom sheet, not a popover. ---
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  await triggerOf(page, seeded[0]).click();
+  const sheet = page.getByRole("dialog", { name: "More actions" });
+  await expect(sheet).toBeVisible();
+  // The desktop branch's class is absent; the one menu lives inside the sheet.
+  await expect(page.locator(".overflow-popover")).toHaveCount(0);
+  await expect(sheet.locator('[role="menu"]')).toHaveCount(1);
+  await expect(sheet.getByRole("menuitem", { name: "Cancel" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(sheet).toHaveCount(0);
+
+  // Hand the board back clean (test 15 expects no active share link).
+  for (const id of seeded) {
+    const removed = await page.request.delete(`${BASE}/api/wishlist/items/${id}`);
+    expect([200, 204]).toContain(removed.status());
+  }
+});
