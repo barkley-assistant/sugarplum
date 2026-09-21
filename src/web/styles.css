@@ -994,13 +994,6 @@ button.filter-chip {
   color: var(--text-3);
 }
 
-/* User-menu toggle row: label left, On/Off state right. */
-.menu-item-state {
-  margin-left: auto;
-  color: var(--text-3);
-  font-size: var(--text-xs);
-}
-
 .tags {
   display: flex;
   flex-wrap: wrap;
