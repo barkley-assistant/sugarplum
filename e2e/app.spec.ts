@@ -419,6 +419,73 @@ test("3e: add from the page returns to the feed scrolled to the new row", async 
     .toBe(true);
 });
 
+test("3f: #112 add-page disclosure hover stays neutral and readable, both schemes", async ({ page }) => {
+  // The /add disclosure is a quiet hairline row, not a control the user
+  // commits to — the global button:hover (0,1,1) used to out-specify its
+  // class reset (0,1,0) and paint it a solid plum bar under the --text-2
+  // label: 1.16:1 light / 2.66:1 dark, far below AA. Verified collapsed and
+  // expanded, in both schemes, plus the keyboard path and the untouched CTA.
+  const NONE = "rgba(0, 0, 0, 0)";
+  const LABEL = { light: "rgb(109, 40, 217)", dark: "rgb(167, 139, 250)" } as const;
+  const HAIRLINE = { light: "rgb(228, 228, 231)", dark: "rgb(42, 36, 56)" } as const;
+  const CTA = { light: "rgb(91, 33, 182)", dark: "rgb(109, 78, 209)" } as const;
+  const value = (locator: Locator, prop: string) =>
+    locator.evaluate((el, p) => getComputedStyle(el).getPropertyValue(p), prop);
+
+  for (const scheme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`${BASE}/add`);
+    const disclose = page.getByRole("button", { name: "Add details manually" });
+    await expect(disclose).toBeVisible();
+
+    // Collapsed + hovered: no bar, the label accent clears AA, and the
+    // hairline stays the token instead of the plum-700 the global hover
+    // repaints. The row transitions color (--ease, 150ms) — settle first.
+    await page.mouse.move(0, 0);
+    await disclose.hover();
+    await settleEntryAnimation(disclose);
+    expect(await value(disclose, "background-color"), `${scheme}: collapsed hover paints no bar`).toBe(NONE);
+    expect(await value(disclose, "color"), `${scheme}: collapsed hover label accent`).toBe(LABEL[scheme]);
+    expect(await contrast(disclose), `${scheme}: collapsed hover label AA`).toBeGreaterThanOrEqual(4.5);
+    expect(await value(disclose, "border-top-color"), `${scheme}: collapsed hairline`).toBe(HAIRLINE[scheme]);
+
+    // Expanded + hovered: the same class rule has to hold with the form open.
+    await disclose.click();
+    await expect(page.getByLabel("Title")).toBeVisible();
+    await page.mouse.move(0, 0);
+    await disclose.hover();
+    await settleEntryAnimation(disclose);
+    expect(await value(disclose, "background-color"), `${scheme}: expanded hover paints no bar`).toBe(NONE);
+    expect(await contrast(disclose), `${scheme}: expanded hover label AA`).toBeGreaterThanOrEqual(4.5);
+    expect(await value(disclose, "border-top-color"), `${scheme}: expanded hairline`).toBe(HAIRLINE[scheme]);
+    // The caret carries no color of its own: it rides the row's.
+    expect(await value(page.locator(".add-disclose-caret"), "color"), `${scheme}: caret follows the row`).toBe(LABEL[scheme]);
+
+    // Issue non-negotiable: the primary CTA keeps its violet treatment.
+    const submit = page.locator(".add-submit");
+    await page.mouse.move(0, 0);
+    await submit.hover();
+    await settleEntryAnimation(submit);
+    expect(await value(submit, "background-color"), `${scheme}: CTA hover intact`).toBe(CTA[scheme]);
+  }
+
+  // Keyboard: the disclosure stays a Tab stop (DOM order on /add is URL field
+  // -> primary submit -> disclosure), focus alone never paints the bar, and
+  // the global focus ring is drawn.
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto(`${BASE}/add`);
+  await page.mouse.move(0, 0);
+  const disclose = page.getByRole("button", { name: "Add details manually" });
+  await expect(disclose).toBeVisible();
+  for (let i = 0; i < 3; i++) await page.keyboard.press("Tab");
+  await expect(disclose, "the disclosure is the third Tab stop").toBeFocused();
+  expect(await value(disclose, "background-color"), "keyboard focus paints no bar").toBe(NONE);
+  expect(await value(disclose, "outline-style"), "keyboard focus keeps the ring").toBe("solid");
+  expect(await value(disclose, "outline-width"), "keyboard focus ring width").toBe("2px");
+  expect(await value(disclose, "outline-color"), "keyboard focus ring color").toBe("rgb(124, 58, 237)");
+});
+
 test("3d: failed enrichment remains recoverable through Retry fetch", async ({ page }) => {
   const created = await page.request.post(`${BASE}/api/wishlist/items`, {
     data: { title: "Recoverable item", url: "https://127.0.0.1:1/unreachable" },
