@@ -59,7 +59,7 @@ export function AddPage({ search }: AddPageProps) {
   return (
     <AppShell brandHref="/" brandLinkLabel={S.settings.backToList}>
       <div className="add-page">
-        <h1 ref={headingRef} tabIndex={-1} className="page-title">{S.form.addTitle}</h1>
+        <h1 ref={headingRef} tabIndex={-1} className="page-title page-title--form">{S.form.addTitle}</h1>
         <ItemForm
           mode="add"
           submitLabel={S.list.addItem}

@@ -84,19 +84,32 @@ export function AppShellLoading() {
 /** Content-driven page heading: title + tabular count. Page-level actions
  *  (add/share icons, filters, share panel) compose beside it. `headingRef`
  *  lets a page focus its heading on boot (usePageFocus) — the route-change
- *  announcement without a keyboard or a scroll jump. */
+ *  announcement without a keyboard or a scroll jump.
+ *
+ *  `variant="form"` switches the heading to the page scale (--text-page)
+ *  instead of the feed's display scale: a form screen's title is a waypoint,
+ *  and the #131 brief asks for a phone-sensible H1 there. List surfaces
+ *  (feed, share view) keep the default. */
 export function PageHeader({
   title,
   count,
   headingRef,
+  variant,
 }: {
   title: string;
   count?: number;
   headingRef?: Ref<HTMLHeadingElement>;
+  variant?: "form";
 }) {
   return (
     <div className="list-heading">
-      <h2 className="page-title" ref={headingRef} tabIndex={-1}>{title}</h2>
+      <h2
+        className={variant === "form" ? "page-title page-title--form" : "page-title"}
+        ref={headingRef}
+        tabIndex={-1}
+      >
+        {title}
+      </h2>
       {count !== undefined && <span className="count">{S.list.itemCount(count)}</span>}
     </div>
   );

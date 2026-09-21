@@ -120,6 +120,9 @@ button.is-busy::after {
 button.secondary {
   background: var(--surface);
   color: var(--text);
+  /* #131 note: the quiet grammar keeps --border-2 (1.48:1). It is a
+     text-labelled control, so 1.4.11 does not require a 3:1 boundary here —
+     --border-field is reserved for the field/switch boundaries (D4). */
   border-color: var(--border-2);
 }
 
@@ -139,7 +142,10 @@ button.danger:hover {
   border-color: var(--danger);
 }
 
-/* Settings + login submits adopt the detail surface's pill CTA grammar. */
+/* Settings + login submits adopt the detail surface's pill CTA grammar.
+   #131: this is the PRIMARY settings CTA grammar (Save, login sign-in). The
+   password submit moved to the shared `button.secondary` grammar so a screen
+   carries one primary action. */
 button.settings-submit {
   border-radius: var(--r-pill);
   font-weight: 600;
@@ -182,7 +188,10 @@ select,
 textarea {
   font: inherit;
   padding: 0.55rem 0.7rem;
-  border: 1px solid var(--border-2);
+  /* #131: a 1px --border-2 outline reads 1.48:1 on --surface — invisible.
+     --border-field clears the WCAG 1.4.11 3:1 non-text minimum (3.57:1
+     light / 3.70:1 dark) without turning the field into a heavy box. */
+  border: 1px solid var(--border-field);
   border-radius: var(--r-control);
   background: var(--surface);
   color: var(--text);
@@ -455,7 +464,10 @@ a.brand:hover {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  padding: var(--section-pad);
+  /* #131: vertical padding on the 8px grid (--section-pad = --sp-4), the
+     horizontal gutter stays --sp-5. Tighter cards are what lifts the
+     Preferences toggles above the 390px fold. */
+  padding: var(--section-pad) var(--sp-5);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-card);
@@ -594,7 +606,9 @@ a.brand:hover {
   height: 26px;
   border-radius: var(--r-pill);
   background: var(--surface-2);
-  border: 1px solid var(--border-2);
+  /* #131: the off track is a control boundary too — same 3:1 field outline
+     as inputs. The ON state replaces it with the plum fill below. */
+  border: 1px solid var(--border-field);
   transition: background-color var(--ease-ui), border-color var(--ease-ui);
 }
 
@@ -757,6 +771,14 @@ a.brand:hover {
   font-weight: 700;
 }
 
+/* #131: form screens (settings, admin users, add/edit) take the page scale
+   instead of the feed's display scale. Same weight and tag; only the size
+   steps down, so the heading ladder and the focus contract are unchanged. */
+.page-title--form {
+  font-size: var(--text-page);
+  line-height: var(--lh-page);
+}
+
 /* #62: the page heading is focused programmatically on mount (usePageFocus)
    so a screen reader announces the route change. It is not keyboard-reachable
    (tabindex="-1"), so the shared focus ring only paints a box around the
@@ -770,6 +792,9 @@ a.brand:hover {
   font-variant-numeric: tabular-nums;
   font-size: var(--text-sm);
   color: var(--text-2);
+  /* #131: the count is one short phrase — it must never break mid-line.
+     Before this, a squeezed heading row split "6 items" into two pale lines. */
+  white-space: nowrap;
 }
 
 /* A8: temporary Reorder/Done action in the list heading. */
@@ -785,6 +810,17 @@ a.brand:hover {
   font-size: var(--text-sm);
 }
 
+/* Count + action pair. Below 640px it is its own line under the title
+   (count left, action right); from 640px its children join the heading's
+   own column layout, so the desktop composition is unchanged. */
+.list-heading-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
 /* ---------- Amethyst A2: wishlist heading switcher ---------- */
 .list-switcher {
   position: relative;
@@ -798,7 +834,8 @@ a.brand:hover {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
-  flex-wrap: wrap;
+  /* #131: no wrap point. The title span is the only thing that wraps, so the
+     caret can never be pushed onto a line of its own below the title. */
   max-width: 100%;
   min-height: 0;
   padding: 0;
@@ -811,6 +848,12 @@ a.brand:hover {
   line-height: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+/* The title text is the single wrapping child; it may shrink to the line box
+   width while the caret keeps its 16px. */
+.list-switcher-name {
+  min-width: 0;
 }
 
 .list-switcher-trigger:hover {
@@ -860,11 +903,31 @@ a.brand:hover {
   white-space: nowrap;
 }
 
+/* #131: below 640px the heading is two lines — the switcher trigger owns
+   line 1 (long titles wrap inside .list-switcher-name, caret stays inline),
+   the meta row owns line 2 (count left, action right). Nothing shares a line
+   with the count any more, so it cannot be squeezed into a wrap. */
+@media (max-width: 639px) {
+  .list-switcher .list-heading {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-1);
+  }
+}
+
 @media (min-width: 640px) {
   .list-switcher .list-heading {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--sp-1);
+  }
+
+  /* Desktop keeps the pre-#131 three-child column: the meta wrapper
+     disappears from the box tree, so count and action behave exactly as
+     direct children of .list-heading. A plain div wrapper (no semantics, no
+     text of its own) is the safe case for display: contents. */
+  .list-heading-meta {
+    display: contents;
   }
 }
 
@@ -1226,7 +1289,8 @@ button.filter-chip {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  padding: var(--section-pad);
+  /* Mirrors .settings-section's box (the boot → page swap must not shift). */
+  padding: var(--section-pad) var(--sp-5);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-card);
@@ -1262,7 +1326,7 @@ button.filter-chip {
 
 .skeleton-hero {
   display: flex;
-  gap: 16px;
+  gap: var(--sp-4);
   align-items: flex-start;
 }
 
@@ -2270,7 +2334,7 @@ button.row-open:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px 0;
+  padding: var(--sp-2) var(--sp-4) 0;
   flex: 0 0 auto;
   position: relative;
 }
@@ -2290,7 +2354,9 @@ button.row-open:hover {
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 16px 20px 24px;
+  /* 20px stays literal: it is not on the 8px scale, and 16/24 would move
+     the guest detail sheet's composition. Same-value tokens only (#131 T5). */
+  padding: var(--sp-4) 20px var(--sp-6);
   display: flex;
   flex-direction: column;
   gap: var(--detail-section-gap);
@@ -2322,7 +2388,7 @@ button.row-open:hover {
 
 .detail-hero {
   display: flex;
-  gap: 16px;
+  gap: var(--sp-4);
   align-items: flex-start;
   min-width: 0;
 }
@@ -2341,7 +2407,7 @@ button.row-open:hover {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: var(--sp-1);
   min-width: 0;
   padding-top: 1px;
 }
@@ -2378,7 +2444,7 @@ button.row-open:hover {
 .detail-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--sp-2);
   flex-wrap: wrap;
   font-size: var(--text-sm);
   color: var(--text-2);
@@ -2439,6 +2505,8 @@ button.row-open:hover {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-card);
+  /* Sub-grid literal (14px): not on the 8px scale; 12/16 would re-flow the
+     card. Left literal on purpose (#131 T5). */
   padding: 14px 16px;
   min-width: 0;
 }
@@ -2451,7 +2519,7 @@ button.row-open:hover {
 }
 
 .detail-card-head { justify-content: space-between; }
-.detail-card-heading { gap: 8px; }
+.detail-card-heading { gap: var(--sp-2); }
 .detail-card-heading svg { color: var(--text-2); flex: 0 0 auto; }
 
 .detail-card-title {
@@ -2484,7 +2552,7 @@ button.row-open:hover {
   margin-top: 8px;
 }
 
-.detail-more-card > .detail-card-heading { margin-bottom: 4px; }
+.detail-more-card > .detail-card-heading { margin-bottom: var(--sp-1); }
 
 .detail-row {
   display: flex;
