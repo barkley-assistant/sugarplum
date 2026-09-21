@@ -33,6 +33,38 @@ async function loads(page: Page): Promise<number> {
   return page.evaluate(() => Number(sessionStorage.getItem("docLoads") ?? 0));
 }
 
+/** #102: one external product link. Every one of them must be a plain anchor
+ *  with `target="_blank"`, an explicit `noopener noreferrer`, and a per-element
+ *  `no-referrer` policy — the mechanism through which the OS hands the URL to
+ *  the system default browser in a NEW browsing context. */
+async function expectHandoffAnchor(link: Locator, label: string): Promise<void> {
+  await expect(link, label).toBeVisible();
+  await expect(link, label).toHaveAttribute("target", "_blank");
+  const rel = ((await link.getAttribute("rel")) ?? "").split(/\s+/);
+  expect(rel, `${label}: rel`).toEqual(expect.arrayContaining(["noopener", "noreferrer"]));
+  expect(await link.getAttribute("referrerpolicy"), `${label}: referrerpolicy`).toBe("no-referrer");
+  // A real anchor (not a button/window.open stand-in): href present, http(s).
+  expect(
+    await link.evaluate(
+      (el) => el.tagName === "A" && /^https?:\/\//.test(el.getAttribute("href") ?? ""),
+    ),
+    `${label}: plain external anchor`,
+  ).toBe(true);
+}
+
+/** #102: click an external anchor and prove it LEFT the SPA. A new browsing
+ *  context opens and the SPA document neither navigates nor re-loads. Where the
+ *  popup finally lands is the browser's business (the e2e host may have no
+ *  route to the merchant), so what is asserted is the handoff contract. */
+async function expectHandoffClick(page: Page, link: Locator, context: string): Promise<void> {
+  const urlBefore = page.url();
+  const loadsBefore = await loads(page);
+  const [popup] = await Promise.all([page.waitForEvent("popup"), link.click()]);
+  await popup.close();
+  expect(page.url(), `${context}: the SPA document stayed put`).toBe(urlBefore);
+  expect(await loads(page), `${context}: no extra document load`).toBe(loadsBefore);
+}
+
 /** Every test gets a fresh context, so log the admin in up front. */
 test.beforeEach(async ({ page }) => {
   // One addInitScript per fresh page: it runs on every document load.
@@ -3273,6 +3305,114 @@ test("26: row overflow menu floats above the list at desktop widths (#89)", asyn
   // Hand the board back clean (test 15 expects no active share link).
   for (const id of seeded) {
     const removed = await page.request.delete(`${BASE}/api/wishlist/items/${id}`);
+    expect([200, 204]).toContain(removed.status());
+  }
+});
+
+/** #102: every external product link on every surface is a clean handoff
+ *  anchor. The web layer cannot pick the OS browser app; what it CAN guarantee
+ *  is that the tap leaves the PWA context for the system instead of being
+ *  routed in-app — a plain `target="_blank"` anchor, never intercepted. */
+test("27: external product links hand off, never route in-app (#102)", async ({ page, browser }) => {
+  const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: {
+      title: "Handoff probe",
+      url: "https://example.com/handoff-probe",
+      priceCents: "31.50",
+      currency: "GBP",
+    },
+  });
+  expect(seeded.status()).toBe(201);
+  const item = (await seeded.json()) as { id: string };
+
+  try {
+    // The document-level policy is the second half of the privacy contract
+    // (the per-anchor attribute is the first): no Referer leaks to the merchant.
+    const shell = await page.request.get(`${BASE}/items/${item.id}`);
+    expect(shell.headers()["referrer-policy"], "document referrer policy").toBe("no-referrer");
+
+    await page.goto(`${BASE}/items/${item.id}`);
+    const itemPage = page.locator(".item-page");
+    await expect(itemPage.locator(".detail-title")).toHaveText("Handoff probe");
+
+    // --- Owner item page: "Open product" + "View at merchant". ---
+    const open = itemPage.getByRole("link", { name: "Open product" });
+    await expect(open).toBeVisible();
+    await expectHandoffAnchor(open, "ItemPage / Open product");
+    await expectHandoffAnchor(
+      itemPage.getByRole("link", { name: "View on example.com" }),
+      "ItemPage / View at merchant",
+    );
+
+    // --- Owner item page: a hints candidate (the third surface). The live
+    // search is unconfigured in e2e (503 -> the honesty state), and the
+    // installed service worker claims the client, so a page.route stub cannot
+    // see the owner-only POST. A dedicated SERVICE-WORKER-FREE context lets the
+    // stub land, so the RENDERED candidate anchor can be asserted. ---
+    const raw = await browser.newContext({ serviceWorkers: "block" });
+    try {
+      const rawPage = await raw.newPage();
+      await login(rawPage, "admin", "admin-password");
+      await rawPage.route("**/api/wishlist/items/*/hints", (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            hints: [
+              {
+                priceCents: "2750",
+                currency: "GBP",
+                sourceUrl: "https://other.example.com/p/1",
+                sourceTitle: "Other shop",
+              },
+            ],
+            disabled: false,
+          }),
+        }),
+      );
+      await rawPage.goto(`${BASE}/items/${item.id}`);
+      const rawItemPage = rawPage.locator(".item-page");
+      await rawItemPage.getByRole("button", { name: "Check prices elsewhere" }).click();
+      const candidate = rawItemPage.locator(".hints-row a");
+      await expect(candidate).toHaveCount(1);
+      await expectHandoffAnchor(candidate, "HintsPanel / prices elsewhere");
+    } finally {
+      await raw.close();
+    }
+
+    // --- The handoff itself: a NEW browsing context, and an SPA that stays put.
+    await expectHandoffClick(page, open, "item page");
+
+    // --- Anonymous share surface: the same two anchors, same contract.
+    const shared = await page.request.post(`${BASE}/api/share`);
+    expect(shared.status()).toBe(201);
+    const token = ((await shared.json()) as { token: string }).token;
+    const anon = await browser.newContext({ reducedMotion: "reduce" });
+    try {
+      const anonPage = await anon.newPage();
+      await anonPage.goto(`${BASE}/share/${token}`);
+      await anonPage
+        .locator(".item-card", { has: anonPage.getByRole("heading", { name: "Handoff probe" }) })
+        .getByRole("button", { name: "Handoff probe" })
+        .click();
+      const sheet = anonPage.getByRole("dialog", { name: "Handoff probe" });
+      await expect(sheet).toBeVisible();
+      const guestOpen = sheet.getByRole("link", { name: "Open product" });
+      await expect(guestOpen).toBeVisible();
+      await expectHandoffAnchor(guestOpen, "Guest sheet / Open product");
+      await expectHandoffAnchor(
+        sheet.getByRole("link", { name: "View on example.com" }),
+        "Guest sheet / View at merchant",
+      );
+      await expectHandoffClick(anonPage, guestOpen, "guest sheet");
+      await expect(sheet, "the guest sheet survives the handoff").toBeVisible();
+    } finally {
+      await anon.close();
+      const revoked = await page.request.delete(`${BASE}/api/share`);
+      expect([200, 204]).toContain(revoked.status());
+    }
+  } finally {
+    const removed = await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
     expect([200, 204]).toContain(removed.status());
   }
 });
