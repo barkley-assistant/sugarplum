@@ -545,6 +545,22 @@ test("12: create-user row shares its slot at every width, both themes (#97)", as
     }
     expect(await docOverflow(), `document overflow at ${width}px`).toBe(false);
 
+    // #116: the Admin checkbox row is the control — the <label> wraps the input,
+    // so the whole row is the touch target. 21px on main; the 44px floor now
+    // lives on the row while the native box grows to a 20px visual (the switch
+    // thumb's size) so the tick reads at arm's length.
+    const checkbox = await page.evaluate(() => {
+      const label = document.querySelector(".checkbox");
+      const input = label?.querySelector("input");
+      if (!label || !input) throw new Error("admin checkbox missing");
+      const lr = label.getBoundingClientRect();
+      const ir = input.getBoundingClientRect();
+      return { label: Math.round(lr.height * 10) / 10, box: Math.round(ir.width), boxHeight: Math.round(ir.height) };
+    });
+    expect(checkbox.label, `admin checkbox row at ${width}px`).toBeGreaterThanOrEqual(44);
+    expect(checkbox.box, `admin checkbox box at ${width}px`).toBe(20);
+    expect(checkbox.boxHeight, `admin checkbox box height at ${width}px`).toBe(20);
+
     // Witness: the settings password row (the reference pattern, which stayed
     // on /settings) is unchanged.
     await page.goto(`${BASE}/settings`);

@@ -3103,7 +3103,7 @@ test("24: item row and reset row share their slot at every width (#97)", async (
       const rr = row.getBoundingClientRect();
       const buttons = Array.from(row.querySelectorAll("button")).map((b) => {
         const r = b.getBoundingClientRect();
-        return { width: r.width, top: r.top };
+        return { width: r.width, top: r.top, height: r.height };
       });
       return {
         rowWidth: rr.width,
@@ -3144,7 +3144,26 @@ test("24: item row and reset row share their slot at every width (#97)", async (
     }
     const probe = await horizontalEscapes(page);
     expect(probe.docOverflow, `document overflow at ${width}px (reset row)`).toBe(false);
+    // #116: the reset pair (Set password / Cancel) keeps the app-wide 44px
+    // touch floor — destructive-family buttons measured 40.6px on main.
+    for (const button of m.buttons) {
+      expect(button.height, `reset button height at ${width}px`).toBeGreaterThanOrEqual(44);
+    }
     await closeReset();
+  }
+
+  // #116: the admin row actions (Deactivate / Delete / Reset password) are the
+  // same family — 40.6px on main, ≥44px now.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${BASE}/settings/users`);
+  const adminActionHeights = await page.evaluate(() =>
+    Array.from(document.querySelectorAll(".admin-actions button")).map(
+      (b) => Math.round(b.getBoundingClientRect().height * 10) / 10,
+    ),
+  );
+  expect(adminActionHeights.length, "admin row actions render").toBeGreaterThan(0);
+  for (const height of adminActionHeights) {
+    expect(height, "admin row action height").toBeGreaterThanOrEqual(44);
   }
 
   // Desktop keeps the shipped rhythm: input grows, both buttons on its line.
@@ -3505,6 +3524,109 @@ test("27: external product links hand off, never route in-app (#102)", async ({ 
       const revoked = await page.request.delete(`${BASE}/api/share`);
       expect([200, 204]).toContain(revoked.status());
     }
+  } finally {
+    const removed = await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
+    expect([200, 204]).toContain(removed.status());
+  }
+});
+
+/** #116: how tall a control's hit area really is, measured by walking
+ *  elementFromPoint outward from the element's own box. Deliberately
+ *  mechanism-agnostic: a grown box (chips, Reorder) and an absolutely
+ *  positioned ::after overlay (brand lockup, list switcher) both report their
+ *  true target height, so this pins the 44px standard instead of the
+ *  technique. Chromium hit-tests an element's own pseudo-element boxes as that
+ *  element — the rule both overlays rely on. */
+async function hitExtent(page: Page, selector: string) {
+  return page.evaluate((sel) => {
+    const el = document.querySelector(sel);
+    if (!el) throw new Error(`${sel} missing`);
+    const r = el.getBoundingClientRect();
+    const x = r.left + Math.min(r.width / 2, 60);
+    const hits = (y: number) => {
+      const hit = document.elementFromPoint(x, y);
+      return hit === el || !!hit?.closest(sel);
+    };
+    let top = r.top;
+    let bottom = r.bottom;
+    for (let i = 0; i < 40 && hits(top - 0.5); i += 1) top -= 0.5;
+    for (let i = 0; i < 40 && hits(bottom + 0.5); i += 1) bottom += 0.5;
+    return {
+      boxHeight: Math.round(r.height * 10) / 10,
+      hitHeight: Math.round((bottom - top) * 10) / 10,
+      hitTop: top,
+      x,
+    };
+  }, selector);
+}
+
+test("28: recurring mobile controls keep the app-wide 44px touch floor (#116)", async ({ page }) => {
+  // The filter row only renders when the list has tags (FilterChips returns
+  // null otherwise), so seed one tagged item like the other specs do.
+  const created = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Touch probe", priceCents: "9.99", currency: "GBP", tags: ["Touch probe"] },
+  });
+  expect(created.status()).toBe(201);
+  const item = (await created.json()) as { id: string };
+
+  try {
+    for (const width of [360, 390, 430, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(`${BASE}/`);
+      await expect(page.getByRole("heading", { name: /wishlist/ }).first()).toBeVisible();
+
+      // Tier 1 — grown boxes. On main these measured 36px.
+      const chip = page.locator("button.filter-chip").first();
+      await expect(chip, `filter chips at ${width}px`).toBeVisible();
+      expect(Math.round((await chip.boundingBox())!.height), `chip height at ${width}px`)
+        .toBeGreaterThanOrEqual(44);
+      const reorder = page.getByRole("button", { name: "Reorder", exact: true });
+      expect(Math.round((await reorder.boundingBox())!.height), `Reorder height at ${width}px`)
+        .toBeGreaterThanOrEqual(44);
+
+      // Tier 2 — hit overlays. The brand lockup is the only back affordance on
+      // the non-feed routes (28px on main) and the switcher trigger's rendered
+      // height IS the title's line box (#131 pins that), so both grow their
+      // target while their boxes stay put.
+      const brand = await hitExtent(page, ".brand");
+      expect(brand.boxHeight, `brand stays a 28px lockup at ${width}px`).toBeLessThan(29);
+      expect(brand.hitHeight, `brand hit area at ${width}px`).toBeGreaterThanOrEqual(44);
+      const trigger = await hitExtent(page, ".list-switcher-trigger");
+      expect(trigger.boxHeight, `switcher box is still the title line at ${width}px`).toBeLessThan(34.5);
+      expect(trigger.hitHeight, `switcher hit area at ${width}px`).toBeGreaterThanOrEqual(44);
+
+      const probe = await horizontalEscapes(page);
+      expect(probe.docOverflow, `document overflow at ${width}px (touch floor)`).toBe(false);
+      expect(probe.offenders, `true escapes at ${width}px (touch floor)`).toEqual([]);
+    }
+
+    // The overlays are real targets, not just geometry: a tap 3px inside the
+    // switcher's padded band opens the popover…
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${BASE}/`);
+    const switcher = await hitExtent(page, ".list-switcher-trigger");
+    await page.mouse.click(switcher.x, switcher.hitTop + 3);
+    await expect(page.locator(".list-switcher-trigger")).toHaveAttribute("aria-expanded", "true");
+    await page.keyboard.press("Escape");
+
+    // …and on a non-feed route the same tap on the lockup takes the documented
+    // Back-to-list route (the lockup is the ONLY back affordance there).
+    await page.goto(`${BASE}/settings`);
+    const lockup = await hitExtent(page, ".brand");
+    expect(lockup.hitHeight, "brand hit area on /settings").toBeGreaterThanOrEqual(44);
+    await page.mouse.click(lockup.x, lockup.hitTop + 3);
+    await expect(page).toHaveURL(`${BASE}/`);
+    // …and the padded band did not grow the bar it lives in (#116 §F risk 1:
+    // the topbar is min-height driven, so a grown lockup box WOULD have pushed
+    // the 52px routes — /add, /items/:id, /items/:id/edit, /share/:token — to 57).
+    await page.goto(`${BASE}/add`);
+    await expect(page.locator(".brand")).toBeVisible();
+    const bar = await page.evaluate(() => ({
+      topbar: document.querySelector(".topbar")!.getBoundingClientRect().height,
+      brand: document.querySelector(".brand")!.getBoundingClientRect().height,
+    }));
+    expect(Math.round(bar.topbar), "the add-page topbar keeps its shipped height").toBe(52);
+    expect(Math.round(bar.brand), "the lockup box is untouched").toBe(28);
   } finally {
     const removed = await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
     expect([200, 204]).toContain(removed.status());

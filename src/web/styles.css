@@ -439,6 +439,24 @@ label {
   align-items: center;
   gap: var(--sp-2);
   min-width: 0;
+  /* #116: anchors the ::after hit overlay below to the lockup box. */
+  position: relative;
+}
+
+/* #116: on every non-feed page the lockup IS the back affordance (aria-label
+   "Back to list"), and 28px is the app's shortest real target. A grown box is
+   not free there: the topbar is min-height-driven and only four routes carry a
+   54px sibling (.topbar-right), so /add, /items/:id, /items/:id/edit and
+   /share/:token render 52px and a 44px lockup box pushed them to 57px
+   (measured). A padded hit overlay gives the same 44px target (28 + 2x8) with
+   the topbar height byte-identical on every route, and taps land on the lockup
+   itself. The overlay stays inside the bar's own padding band (brand top
+   11.5 -> 3.5, bottom 39.5 -> 47.5 of the 52px bar), so it steals no taps from
+   the page below. */
+.brand::after {
+  content: "";
+  position: absolute;
+  inset: -8px 0;
 }
 
 /* The settings page renders the brand as a home link; keep it visually
@@ -805,7 +823,9 @@ a.brand:hover {
 }
 
 .list-heading-action .compact-action {
-  min-height: 36px;
+  /* #116: matches the app-wide touch floor; the meta row has the slack
+     (measured +8px, no 360px overflow). */
+  min-height: 44px;
   padding: 0 12px;
   font-size: var(--text-sm);
 }
@@ -848,6 +868,9 @@ a.brand:hover {
   line-height: inherit;
   text-align: left;
   cursor: pointer;
+  /* #116: anchors the ::after hit overlay (below) to the TRIGGER box, not the
+     heading wrapper — the parent .list-switcher is already relative. */
+  position: relative;
 }
 
 /* The title text is the single wrapping child; it may shrink to the line box
@@ -860,6 +883,18 @@ a.brand:hover {
   background: transparent;
   color: var(--text);
   border: none;
+}
+
+/* #116: 44px hit area without touching the #131 composition contract — the
+   trigger's rendered height IS the title's line box (pinned by e2e), so the
+   target grows via an absolutely-positioned overlay instead of the box.
+   A 33.6px title line + 12px vertical = 45.6px effective; multi-line titles
+   are already past 44. Neighbours measured non-interactive: 16px to the
+   topbar above, 17.9px to the count row below — no tap theft. */
+.list-switcher-trigger::after {
+  content: "";
+  position: absolute;
+  inset: -6px -8px;
 }
 
 .list-switcher-caret {
@@ -950,7 +985,10 @@ a.brand:hover {
 
 button.filter-chip {
   flex-shrink: 0;
-  min-height: 36px;
+  /* #116: same 44px floor as button.chip (styles.css:158) — the filter row is
+     the app's most-thumbed control and the row has the slack (measured +8px,
+     no 360px overflow). */
+  min-height: 44px;
   padding: 0 12px;
   font-size: var(--text-sm);
   border-radius: var(--r-pill);
@@ -1414,6 +1452,9 @@ button.filter-chip {
 
 .checkbox {
   display: flex;
+  /* #116: the label row IS the control (it wraps the input, so tapping the
+     text toggles) — 21px was the app's shortest real target. */
+  min-height: 44px;
   align-items: center;
   gap: var(--sp-2);
   font-size: var(--text-sm);
@@ -1421,8 +1462,12 @@ button.filter-chip {
 }
 
 .checkbox input {
-  width: auto;
+  /* #116: 20px matches the switch thumb grammar and stays legible at arm's
+     length; the 44px label row above is the hit target, not the box. */
+  width: 20px;
+  height: 20px;
   min-height: auto;
+  flex-shrink: 0;
 }
 
 /* Overlay sheet (add/edit item): full-screen on mobile, centered on ≥640px */
@@ -1670,7 +1715,9 @@ button.filter-chip {
 }
 
 .admin-actions button {
-  min-height: 40px;
+  /* #116: destructive ops (Deactivate/Delete) — the row scrolls, so the
+     +3.4px per button costs nothing. */
+  min-height: 44px;
 }
 
 .reset-form {
@@ -1696,7 +1743,9 @@ button.filter-chip {
 }
 
 .reset-form-row button {
-  min-height: 40px;
+  /* #116: same family as the admin row actions above; sub-floor at its own
+     declared 40px. */
+  min-height: 44px;
 }
 
 /* #97: phone rhythm for the reset row — the input owns its line and the two
