@@ -156,12 +156,16 @@ export function ListSwitcher({ currentName, rows, currentUserId, count, onSelect
             aria-controls={open && desktop ? surfaceId : undefined}
             onClick={() => setOpen((value) => !value)}
           >
-            {S.list.heading(currentName)}
+            <span className="list-switcher-name">{S.list.heading(currentName)}</span>
             <CaretIcon />
           </button>
         </h2>
-        {count !== undefined && <span className="count">{S.list.itemCount(count)}</span>}
-        {action && <div className="list-heading-action">{action}</div>}
+        {(count !== undefined || action) && (
+          <div className="list-heading-meta">
+            {count !== undefined && <span className="count">{S.list.itemCount(count)}</span>}
+            {action && <div className="list-heading-action">{action}</div>}
+          </div>
+        )}
       </div>
 
       {open && desktop ? (

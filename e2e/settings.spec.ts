@@ -350,24 +350,110 @@ test("10: heading ladder — one h2 per settings screen", async ({ page }) => {
   await assertNoSkippedLevels();
 });
 
-test("11: settings submits carry the amethyst pill grammar", async ({ page }) => {
+test("11: settings CTAs — one primary pill, one quiet secondary (#131)", async ({ page }) => {
   await page.goto(`${BASE}/settings`);
-  for (const name of ["Save", "Set new password"]) {
-    const button = page.getByRole("button", { name, exact: true });
-    await expect(button).toBeVisible();
-    await expect(button).toHaveClass(/settings-submit/);
-    const rendered = await button.evaluate((el) => {
-      const cs = getComputedStyle(el);
-      return {
-        radius: cs.borderRadius,
-        weight: Number(cs.fontWeight),
-        height: el.getBoundingClientRect().height,
-      };
-    });
-    expect(rendered.radius).toBe("999px"); // --r-full
-    expect(rendered.weight).toBeGreaterThanOrEqual(600);
-    expect(rendered.height).toBeGreaterThanOrEqual(44);
-  }
+
+  // Save keeps the amethyst pill grammar: it is the page's single primary CTA.
+  const save = page.getByRole("button", { name: "Save", exact: true });
+  await expect(save).toBeVisible();
+  await expect(save).toHaveClass(/settings-submit/);
+  const saveRendered = await save.evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return {
+      radius: cs.borderRadius,
+      weight: Number(cs.fontWeight),
+      height: el.getBoundingClientRect().height,
+    };
+  });
+  expect(saveRendered.radius).toBe("999px"); // --r-full
+  expect(saveRendered.weight).toBeGreaterThanOrEqual(600);
+  expect(saveRendered.height).toBeGreaterThanOrEqual(44);
+
+  // The password submit is demoted to the shared secondary grammar — a quiet,
+  // bordered control rather than a second full-width plum pill.
+  const password = page.getByRole("button", { name: "Set new password", exact: true });
+  await expect(password).toBeVisible();
+  await expect(password).not.toHaveClass(/settings-submit/);
+  const quiet = await password.evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return {
+      radius: cs.borderRadius,
+      borderWidth: parseFloat(cs.borderTopWidth),
+      borderColor: cs.borderTopColor,
+      background: cs.backgroundColor,
+      height: el.getBoundingClientRect().height,
+      surface: getComputedStyle(document.documentElement).getPropertyValue("--surface").trim(),
+      surface2: getComputedStyle(document.documentElement).getPropertyValue("--surface-2").trim(),
+      text3: getComputedStyle(document.documentElement).getPropertyValue("--text-3").trim(),
+      pillToken: getComputedStyle(document.documentElement).getPropertyValue("--plum-600").trim(),
+    };
+  });
+  // Token values come back as authored (the bundler collapses #ffffff to
+  // #fff), so normalise the shorthand before comparing with a computed rgb().
+  const rgb = (value: string): string => {
+    const hex = value.trim().replace("#", "");
+    const full = hex.length === 3 ? hex.split("").map((c) => c + c).join("") : hex;
+    const [r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16));
+    return `rgb(${r}, ${g}, ${b})`;
+  };
+  expect(quiet.radius).toBe("8px"); // --r-control, NOT the pill
+  expect(quiet.borderWidth).toBe(1);
+  // Quiet grammar, not a second primary: no plum, no pill.
+  expect(quiet.borderColor).not.toBe(rgb(quiet.pillToken));
+  expect(quiet.background).toBe(rgb(quiet.surface));
+  expect(quiet.height).toBeGreaterThanOrEqual(44);
+  // Hover is a visible state change, not a no-op.
+  await password.hover();
+  await expect
+    .poll(() => password.evaluate((el) => getComputedStyle(el).backgroundColor))
+    .toBe(rgb(quiet.surface2));
+  await expect
+    .poll(() => password.evaluate((el) => getComputedStyle(el).borderTopColor))
+    .toBe(rgb(quiet.text3));
+
+  // #131: the page heading is the page scale (22px), not the feed's
+  // display-scale list title (28px).
+  const settingsHeading = page.getByRole("heading", { name: ACCOUNT, level: 2, exact: true });
+  expect(await settingsHeading.evaluate((el) => getComputedStyle(el).fontSize)).toBe("22px");
+  await page.goto(`${BASE}/`);
+  const feedTitle = page.locator(".list-switcher .page-title");
+  await expect(feedTitle).toBeVisible();
+  expect(await feedTitle.evaluate((el) => getComputedStyle(el).fontSize)).toBe("28px");
+
+  // The OFF switch track is a control boundary too (WCAG 1.4.11, 3:1) — it
+  // rides the same --border-field token as the form fields.
+  await setUserManagement(page, false);
+  await page.goto(`${BASE}/settings`);
+  const offTrack = page.locator('.toggle-row[aria-checked="false"] .switch-track').first();
+  await expect(offTrack).toBeVisible();
+  await page.mouse.move(2, 2); // resting state: :hover darkens this border
+  const boundary = await offTrack.evaluate((el) => {
+    const numbers = (s: string): number[] => (s.match(/[\d.]+/g) ?? []).map(Number);
+    const parse = (s: string): number[] => numbers(s).slice(0, 3);
+    const opaque = (s: string): boolean => numbers(s).length < 4 || numbers(s)[3] === 1;
+    const lum = (rgb: number[]): number => {
+      const [r, g, b] = rgb.map((v) => {
+        v /= 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const border = parse(getComputedStyle(el).borderTopColor);
+    let node: Element | null = el;
+    let bg = [255, 255, 255];
+    while (node) {
+      const cs = getComputedStyle(node);
+      if (opaque(cs.backgroundColor)) {
+        bg = parse(cs.backgroundColor);
+        break;
+      }
+      node = node.parentElement;
+    }
+    const lb = lum(border);
+    const lg = lum(bg);
+    return (Math.max(lb, lg) + 0.05) / (Math.min(lb, lg) + 0.05);
+  });
+  expect(boundary, "off switch track boundary").toBeGreaterThanOrEqual(3);
 });
 
 test("12: create-user row shares its slot at every width, both themes (#97)", async ({ page }) => {

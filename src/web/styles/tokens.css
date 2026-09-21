@@ -22,6 +22,12 @@
   --text-3: #6b6b74;
   --border: #e4e4e7;
   --border-2: #d4d4d8;
+  /* Form-field outline (#131). WCAG 1.4.11 asks 3:1 of a control's boundary
+     against its background; --border-2 measures 1.48:1 on --surface, so
+     fields were effectively borderless. This value is 3.57:1 on --surface,
+     3.25:1 on --surface-2 and 3.42:1 on --bg — it is a FIELD outline only.
+     Separator hairlines keep --border/--border-2 (3:1 would read as a box). */
+  --border-field: #87878d;
   --success: #16a34a;
   --danger: #dc2626;
   --danger-surface: #fef2f2;
@@ -36,7 +42,29 @@
   --text-xl: 1.25rem;
   --text-display: 1.75rem;
   --lh-display: 1.2;
+  /* Form-page heading (settings, admin users, add/edit): a page title on a
+     phone, not the feed's brand-scale --text-display title. The two are
+     separate tokens so a list surface can never inherit the form scale (or
+     the other way round) by accident. */
+  --text-page: 1.375rem;
+  --lh-page: 1.3;
 
+  /* ---------- Spacing rhythm (#131): one 8px-based scale ----------
+     --sp-1   4px  sub-grid only: icon gaps, meta separators, tight stacks
+     --sp-2   8px  inside-control rhythm: label → field, row gaps, chip row
+     --sp-3  12px  stacks inside a card: form fields, card body groups
+     --sp-4  16px  card padding (vertical), card → card gap, page gutter
+     --sp-5  24px  card padding (horizontal), wide-screen page gutter
+     --sp-6  32px  empty-state padding, page top rhythm
+     --sp-7  48px  large standalone blocks
+     Named surfaces (what a feature rule should consume):
+     --section-gap   the gap BETWEEN section cards
+     --section-pad   the vertical padding INSIDE a section card
+     --row-gap / --row-pad-y / --row-pad-x   compact feed-row system
+     --empty-pad-y / --empty-pad-x           empty-state block
+     Sub-grid literals stay literal by design (2px grid gaps, 10px
+     --row-pad-y, 6px --topbar-pad-y, 14px .detail-card padding): they are
+     fine-tuning below the 4px step, not rhythm violations. */
   --sp-1: 4px;
   --sp-2: 8px;
   --sp-3: 12px;
@@ -55,14 +83,17 @@
      The primitives above stay the scale; every SURFACE rule uses a surface
      token, never a primitive directly. Map:
      --r-flat      0            feed rows, hairline disclosures, bottom-bar items
-     --r-control   --r-sm   8   buttons, inputs, icon buttons, menu items,
-                                segmented control, drag handle, skeleton lines
+     --r-control   --r-sm   8   buttons (incl. the settings/login submit), inputs,
+                                selects, icon buttons, menu items, brand mark
+                                (logo / PWA icon lockup), segmented control,
+                                drag handle, skeleton lines
      --r-thumb     --r-md  12   product thumbnails + fallbacks + skeleton thumbs
      --r-card      --r-lg  16   cards, sections, popovers, dialogs, toasts,
                                 centered (dialog-position) sheets, auth card
      --r-sheet-top --r-xl  24   bottom sheets: top corners only (bottom flush)
      --r-pill      --r-full 999 chips, badges, claim buttons, avatars, handle,
-                                spinner, dots, pill CTAs
+                                spinner, dots, pill CTAs (settings Save,
+                                login sign-in), switch track + thumb
      Exceptions (documented, intentional):
      - .row-open::after uses `inherit` — the focus overlay must track its box.
      - PriceGraph.tsx tooltip rx="6" — SVG has no border-radius; control tier.
@@ -139,8 +170,12 @@
   --skel-row-gap: var(--list-gap);
   --empty-pad-y: var(--sp-6);
   --empty-pad-x: var(--sp-4);
-  --section-gap: var(--sp-5);
-  --section-pad: var(--sp-5);
+  /* #131: card → card gap and card padding vertical, both on the 8px grid.
+     The horizontal card padding stays --sp-5 (see the .settings-section /
+     .skeleton-section rules); the tighter vertical step lifts the settings
+     toggles ~40px so the Preferences card clears the 390px fold. */
+  --section-gap: var(--sp-4);
+  --section-pad: var(--sp-4);
   --ease-ui: 120ms ease;
 
   --safe-top: env(safe-area-inset-top);
@@ -174,6 +209,10 @@
     --text-3: #94909F;
     --border: #2A2438;
     --border-2: #3A3350;
+    /* 3.70:1 on --surface, 3.26:1 on --surface-2, 3.43:1 on --surface-3 —
+       the same field-outline contract as light. --border-2 above is
+       1.49:1 and stays the separator hairline. */
+    --border-field: #756ba2;
     --plum-800: #561E9A;
     /* White label on these fills: 5.74:1 (700) / 4.88:1 (600), both AA. */
     --plum-700: #6D4ED1;

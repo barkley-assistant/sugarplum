@@ -173,6 +173,39 @@ async function contrast(locator: Locator): Promise<number> {
   });
 }
 
+/** #131 (WCAG 1.4.11, non-text): the ratio of a control's own boundary
+ *  (borderTopColor) against the first opaque background behind it. Text
+ *  contrast is `contrast()` above; this is the field/control-outline probe —
+ *  3:1 is the minimum for a boundary that has to be perceivable. */
+async function boundaryContrast(locator: Locator): Promise<number> {
+  return locator.evaluate((el) => {
+    const numbers = (s: string): number[] => (s.match(/[\d.]+/g) ?? []).map(Number);
+    const parse = (s: string): number[] => numbers(s).slice(0, 3);
+    const opaque = (s: string): boolean => numbers(s).length < 4 || numbers(s)[3] === 1;
+    const lum = (rgb: number[]): number => {
+      const [r, g, b] = rgb.map((v) => {
+        v /= 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const border = parse(getComputedStyle(el).borderTopColor);
+    let node: Element | null = el;
+    let bg = [255, 255, 255];
+    while (node) {
+      const cs = getComputedStyle(node);
+      if (opaque(cs.backgroundColor)) {
+        bg = parse(cs.backgroundColor);
+        break;
+      }
+      node = node.parentElement;
+    }
+    const lb = lum(border);
+    const lg = lum(bg);
+    return (Math.max(lb, lg) + 0.05) / (Math.min(lb, lg) + 0.05);
+  });
+}
+
 /** Index of the last card fully inside the viewport, kept clear of the topbar
  *  and of the bottom edge (where the drag's auto-scroll would engage). The
  *  suite's feed is long by the time these run: the LAST row is often below the
@@ -1472,11 +1505,72 @@ test("12: AA contrast sweep holds in both schemes", async ({ page, browser }) =>
     await page.goto(`${BASE}/`);
     await expect(rowButton).toBeVisible();
 
+    // #131: the mobile feed header is composed, not squeezed — the count is
+    // one line and the caret ends the title line instead of being pushed onto
+    // a line of its own below it. On the pre-#131 composition at 360px the
+    // count wrapped to two lines (42px tall) and the caret sat at the START of
+    // a line of its own under the title (left edge x=16, right edge 32, while
+    // the trigger's right edge was 195.7).
+    const desktopViewport = page.viewportSize();
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.goto(`${BASE}/`);
+    await expect(page.getByRole("heading", { name: /wishlist/ }).first()).toBeVisible();
+    const header = await page.evaluate(() => {
+      const rect = (sel: string) => {
+        const el = document.querySelector(sel);
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, height: r.height };
+      };
+      const count = document.querySelector(".list-heading .count");
+      let countLines = 0;
+      if (count) {
+        const range = document.createRange();
+        range.selectNodeContents(count);
+        countLines = Array.from(range.getClientRects()).filter((x) => x.height > 4).length;
+      }
+      return {
+        trigger: rect(".list-switcher-trigger"),
+        name: rect(".list-switcher-name"),
+        caret: rect(".list-switcher-caret"),
+        count: rect(".list-heading .count"),
+        countLines,
+      };
+    });
+    expect(header.count, `${colorScheme}: the count renders at 360px`).not.toBeNull();
+    expect(header.count!.height, `${colorScheme}: count is one line at 360px`).toBeLessThan(30);
+    expect(header.countLines, `${colorScheme}: count line boxes at 360px`).toBe(1);
+    expect(header.name, `${colorScheme}: the title owns a wrapping span`).not.toBeNull();
+    // The caret adds no line of its own: the trigger is exactly as tall as the
+    // title text block it wraps.
+    expect(header.trigger!.height, `${colorScheme}: trigger height = title block height`)
+      .toBeCloseTo(header.name!.height, 0);
+    // …and it ends the title line, flush against the trigger's right edge.
+    expect(header.caret!.right, `${colorScheme}: caret ends the title line`)
+      .toBeCloseTo(header.trigger!.right, 0);
+    // …and it rides inside the title's own box (vertically centered on it).
+    expect(header.caret!.top, `${colorScheme}: caret top inside the title box`)
+      .toBeGreaterThanOrEqual(header.name!.top - 0.5);
+    expect(header.caret!.bottom, `${colorScheme}: caret bottom inside the title box`)
+      .toBeLessThanOrEqual(header.name!.bottom + 0.5);
+    expect(header.caret!.right - header.caret!.left, `${colorScheme}: caret keeps its 16px box`)
+      .toBeCloseTo(16, 1);
+    await page.setViewportSize(desktopViewport ?? { width: 1280, height: 720 });
+    await page.goto(`${BASE}/`);
+    await expect(rowButton).toBeVisible();
+
     // Primary CTA: white on the plum fill in either scheme.
     await page.getByRole("button", { name: "Add item" }).first().click();
     const submit = page.getByRole("button", { name: "Add item" });
     await expect(submit).toBeVisible();
     expect(await contrast(submit), `${colorScheme}: primary button`).toBeGreaterThanOrEqual(4.5);
+
+    // #131: a form field's own boundary must be perceivable — WCAG 1.4.11
+    // asks 3:1 for non-text UI boundaries, and the old --border-2 outline
+    // measured 1.48:1 on white / 1.49:1 on the dark surface.
+    const urlField = page.locator("#item-url");
+    await expect(urlField).toBeVisible();
+    expect(await boundaryContrast(urlField), `${colorScheme}: field boundary`).toBeGreaterThanOrEqual(3);
     await page.getByRole("button", { name: "Cancel" }).click();
     await expect(page).toHaveURL(`${BASE}/`);
 

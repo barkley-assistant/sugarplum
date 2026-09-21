@@ -135,7 +135,7 @@ export function SettingsPage() {
       brandHref="/"
       headerRight={<SettingsUserMenu displayName={me.displayName || me.username} />}
     >
-      <PageHeader title={S.settings.titleAccount} headingRef={headingRef} />
+      <PageHeader title={S.settings.titleAccount} headingRef={headingRef} variant="form" />
 
       <div className="settings-stack">
         <section className="settings-section" aria-label={S.settings.account}>
@@ -197,7 +197,10 @@ export function SettingsPage() {
               </div>
             </div>
             {passwordError && <p className="error" role="alert">{passwordError}</p>}
-            <button type="submit" className="settings-submit" disabled={passwordBusy}>
+            {/* #131: the password change is the cautious, occasional action —
+                it wears the shared secondary grammar so the Save button above
+                stays the page's single primary CTA. */}
+            <button type="submit" className="secondary" disabled={passwordBusy}>
               {passwordBusy ? S.form.saving : S.settings.setPassword}
             </button>
           </form>

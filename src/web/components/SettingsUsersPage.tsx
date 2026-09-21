@@ -63,7 +63,7 @@ export function SettingsUsersPage() {
       brandHref="/"
       headerRight={<SettingsUserMenu displayName={boot.me.displayName || boot.me.username} />}
     >
-      <PageHeader title={S.settings.titleUsers} headingRef={headingRef} />
+      <PageHeader title={S.settings.titleUsers} headingRef={headingRef} variant="form" />
 
       <div className="settings-screen-head">
         <button type="button" className="back-link" onClick={() => navigate("/settings")}>

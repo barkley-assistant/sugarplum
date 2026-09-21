@@ -83,7 +83,7 @@ export function ItemEditPage({ id }: { id: string }) {
   return (
     <AppShell brandHref="/" brandLinkLabel={S.settings.backToList}>
       <div className="add-page">
-        <h1 ref={headingRef} tabIndex={-1} className="page-title">{S.item.edit}</h1>
+        <h1 ref={headingRef} tabIndex={-1} className="page-title page-title--form">{S.item.edit}</h1>
         <ItemForm
           initial={item}
           submitLabel={S.form.save}
