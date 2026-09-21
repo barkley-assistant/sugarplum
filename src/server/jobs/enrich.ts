@@ -7,6 +7,7 @@
 import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { scrapeProduct, type ScrapeStrategyName } from "../scraper";
+import { recordScrapeOutcome } from "../scraper/learned";
 import { buildSearchQuery, searchImageHint, searchPriceHint, type PriceHint } from "../searxng";
 import { downloadImage } from "../images";
 import type { StealthDeps } from "../scraper/stealth";
@@ -89,7 +90,15 @@ export function createEnrichmentQueue(deps: EnrichmentDeps): EnrichmentQueue {
       fetchImpl: deps.fetchImpl,
       allowPrivate: deps.allowPrivate,
       stealth: deps.stealth,
+      // #103: the same db the worker owns — learned overrides are consulted
+      // per fetch and the outcome is recorded below.
+      learnedDb: deps.db,
     });
+
+    // Learning side effect: record the chain's outcome (promotion, decay,
+    // demotion) BEFORE the item write, so a learning failure can never block
+    // the item's own state. `recordScrapeOutcome` never throws.
+    recordScrapeOutcome(deps.db, row.url, result.steps);
 
     const strategy: ScrapeStrategyName = result.strategy ?? "plain";
     console.info(
@@ -98,6 +107,15 @@ export function createEnrichmentQueue(deps: EnrichmentDeps): EnrichmentQueue {
       strategy,
       result.ok ? "ok" : result.reason,
     );
+    if (result.steps.length > 1) {
+      // The escalation trace (#103): a plain success is a single step, an
+      // escalated fetch shows both, a learned stealth-first fetch shows one.
+      console.info(
+        "[enrich] item %s: chain=%s",
+        itemId,
+        result.steps.map((s) => `${s.strategy}:${s.ok ? "ok" : (s.reason ?? "fail")}`).join(" → "),
+      );
+    }
 
     if (result.ok) {
       await applyScrape(deps, row, result.product);
