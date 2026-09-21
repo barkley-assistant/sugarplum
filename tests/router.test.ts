@@ -25,6 +25,24 @@ describe("parseRoute", () => {
   });
 });
 
+// #96: the settings area is three exact-match routes. Anything else under
+// /settings stays an unknown path (home), same philosophy as the malformed
+// share token / item id guards above.
+describe("parseRoute — #96 settings screens", () => {
+  test("/settings/users and /settings/users/new parse as their own routes", () => {
+    expect(parseRoute("/settings/users", "")).toEqual({ name: "settingsUsers" });
+    expect(parseRoute("/settings/users/new", "")).toEqual({ name: "settingsUserNew" });
+  });
+  test("/settings/users/new never parses as the users table", () => {
+    expect(parseRoute("/settings/users/new", "")).not.toEqual({ name: "settingsUsers" });
+  });
+  test("other /settings sub-paths fall through to home", () => {
+    expect(parseRoute("/settings/users/x", "")).toEqual({ name: "home" });
+    expect(parseRoute("/settings/users/new/x", "")).toEqual({ name: "home" });
+    expect(parseRoute("/settings/", "")).toEqual({ name: "home" });
+  });
+});
+
 // #62: the add / item / edit flows became real routes. The id pattern is the
 // lowercase-hex randomUUID shape (the /share token guard's precedent): a
 // malformed id falls through to home, exactly like a malformed share token.
