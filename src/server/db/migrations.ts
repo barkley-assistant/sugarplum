@@ -163,6 +163,29 @@ ALTER TABLE wishlist_items ADD COLUMN owner_purchased_at TEXT;
 ALTER TABLE users ADD COLUMN show_user_management INTEGER NOT NULL DEFAULT 0;
 `,
   },
+  {
+    version: 9,
+    sql: `
+-- #103: learned scrape overrides for unregistered hosts. A row is created by
+-- the FIRST qualifying escalation as a candidate (strategies NULL, learned_at
+-- NULL — evidence only, no behaviour change); at the 3rd escalation
+-- strategies becomes '["stealth-browser","plain"]' and learned_at is stamped
+-- (promoted). resolveChain consults ONLY rows where strategies IS NOT NULL,
+-- and only when resolveOverride(url) is undefined — the committed registry
+-- always wins. Decay/revalidation demotes by clearing strategies (NULL again),
+-- so a demoted row is a candidate with last_demoted_at set. No backfill: the
+-- table starts empty.
+CREATE TABLE scrape_learned_overrides (
+  hostname           TEXT PRIMARY KEY,
+  strategies         TEXT,
+  escalation_count   INTEGER NOT NULL DEFAULT 0,
+  learned_at         TEXT,
+  last_escalated_at  TEXT NOT NULL DEFAULT '',
+  last_demoted_at    TEXT,
+  successful_stealth_fetches INTEGER NOT NULL DEFAULT 0
+);
+`,
+  },
 ];
 
 export function runMigrations(db: Database): void {
