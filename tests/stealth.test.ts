@@ -649,4 +649,53 @@ describe("stealth client", () => {
     },
     15_000,
   );
+
+  test(
+    "default runner drains a large verdict: a ~2MB JSON payload survives the pipe (#103)",
+    async () => {
+      // Regression: the runner used `new Response(stream).text()`, which only
+      // resolves at EOF, then raced it against a fixed 250ms window. EOF lags
+      // a clean exit (the helper's detached Xvfb reaper inherits the pipe's
+      // write end), so a real ~1MB page verdict came back as an empty string
+      // and the pipeline reported `stealth-parse-error`. A fake helper that
+      // prints a 2MB verdict exercises exactly that path without a browser.
+      const dir = mkdtempSync(join(tmpdir(), "sugarplum-stealth-drain-"));
+      const script = join(dir, "big-verdict.js");
+      writeFileSync(
+        script,
+        [
+          'import { spawn } from "node:child_process";',
+          'console.log(JSON.stringify({ ok: true, html: "x".repeat(2_000_000), finalUrl: process.argv[2] }));',
+          // The real helper forks a DETACHED Xvfb reaper that inherits the
+          // pipe's write end, so the runner sees EOF only ~0.5s AFTER the
+          // helper exits. This child reproduces that: without it the payload
+          // and the EOF arrive inside the old 250ms drain window and the race
+          // never fires.
+          'const child = spawn(process.execPath, ["-e", "setTimeout(() => {}, 700)"], {',
+          '  stdio: ["ignore", "inherit", "ignore"],',
+          "  detached: true,",
+          "});",
+          "child.unref();",
+          "",
+        ].join("\n"),
+      );
+
+      const result = await stealthFetch("https://example.com/x", {
+        // The bun binary stands in for the venv python: the runner only needs
+        // an existing executable that reads the script as argv[1] and prints
+        // one JSON line.
+        pythonBin: process.execPath,
+        scriptPath: script,
+        profilesDir: dir,
+        timeoutMs: 5000,
+        allowPrivate: true,
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.html.length).toBe(2_000_000);
+      expect(result.finalUrl).toBe("https://example.com/x");
+    },
+    15_000,
+  );
 });
