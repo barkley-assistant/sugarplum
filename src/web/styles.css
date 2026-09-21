@@ -444,14 +444,15 @@ label {
 }
 
 /* #116: on every non-feed page the lockup IS the back affordance (aria-label
-   "Back to list"), and 28px is the app's shortest real target. §F risk 1: a
-   grown box is NOT free — the topbar is min-height-driven and only 4 routes
-   carry a 54px sibling (.topbar-right), so /add, /items/:id, /items/:id/edit
-   and /share/:token render 52px and would grow to 57px. A padded hit overlay
-   gives the same 44px target (28 + 2x8) with the topbar byte-identical on
-   every route; taps land on the lockup itself. The overlay stays inside the
-   topbar's own padding band (measured: brand top 11.5 -> 3.5, bottom 39.5 ->
-   47.5 in the 52px bar), so it steals no taps from the page below. */
+   "Back to list"), and 28px is the app's shortest real target. A grown box is
+   not free there: the topbar is min-height-driven and only four routes carry a
+   54px sibling (.topbar-right), so /add, /items/:id, /items/:id/edit and
+   /share/:token render 52px and a 44px lockup box pushed them to 57px
+   (measured). A padded hit overlay gives the same 44px target (28 + 2x8) with
+   the topbar height byte-identical on every route, and taps land on the lockup
+   itself. The overlay stays inside the bar's own padding band (brand top
+   11.5 -> 3.5, bottom 39.5 -> 47.5 of the 52px bar), so it steals no taps from
+   the page below. */
 .brand::after {
   content: "";
   position: absolute;
