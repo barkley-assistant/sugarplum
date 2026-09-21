@@ -1532,6 +1532,18 @@ button.filter-chip {
   text-align: left;
 }
 
+/* #112: the global button:hover (0,1,1) out-specifies this class reset
+   (0,1,0) and painted the row a solid plum bar the grey label could not
+   survive on (1.16:1 light / 2.66:1 dark). Same defence as .row-open (#70)
+   and .hints-toggle: stay neutral on hover, accent the label plum, and pin
+   the hairline so the global border-color repaint cannot leak violet into
+   it. No aria-expanded condition — the row stays hoverable open. */
+.add-disclose:hover {
+  background: none;
+  border-top-color: var(--border);
+  color: var(--plum-600);
+}
+
 .add-disclose-caret {
   font-size: 1.15rem;
   line-height: 1;
@@ -2901,7 +2913,8 @@ button.row-open:hover {
   a,
   .detail-edit-link,
   .detail-row:hover,
-  .detail-hints .hints-toggle:hover {
+  .detail-hints .hints-toggle:hover,
+  .add-disclose:hover {
     color: var(--plum-500);
   }
 
