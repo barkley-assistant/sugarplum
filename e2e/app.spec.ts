@@ -3778,3 +3778,114 @@ test("29: edit form — non-preset currency shows Other + seeded code input (#11
   }
   await page.goto(`${BASE}/`);
 });
+
+/** #115: every painted state of a text-bearing danger control must clear AA.
+ *  At rest the label is --danger (4.83:1 on --surface light / 6.40:1 dark);
+ *  hovered it kept --danger over its own --danger-surface tint and fell to
+ *  4.41:1 in light — below the 4.5:1 the control's own text needs. The fix
+ *  routes the hover label through --danger-strong (5.91:1 light / 9.05:1
+ *  dark). This spec pins BOTH states of all four rendered danger affordances
+ *  — row-menu delete, share revoke, the destructive confirm, and the admin
+ *  users delete — in both schemes. */
+const DANGER_REST = { light: "rgb(220, 38, 38)", dark: "rgb(248, 113, 113)" } as const;
+const DANGER_HOVER = { light: "rgb(185, 28, 28)", dark: "rgb(252, 165, 165)" } as const;
+
+test("30: danger hover clears AA in both schemes (#115)", async ({ page }) => {
+  const itemRes = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Danger probe", priceCents: "12.00", currency: "GBP" },
+  });
+  expect(itemRes.status()).toBe(201);
+  const item = (await itemRes.json()) as { id: string };
+
+  // The share revoke button only renders when a link exists.
+  const shareRes = await page.request.post(`${BASE}/api/share`);
+  expect(shareRes.status()).toBe(201);
+
+  // A throwaway admin-table row to hover (never confirmed, so never deleted).
+  const userRes = await page.request.post(`${BASE}/api/users`, {
+    data: {
+      username: "danger-probe-guest",
+      password: "danger-probe-pass",
+      displayName: "Danger probe",
+    },
+  });
+  expect(userRes.status()).toBe(201);
+  const guest = (await userRes.json()) as { id: string };
+
+  // #98: the users table is opt-in — turn the pref on for the admin row probe
+  // and hand it back off in the finally block.
+  const uiOn = await page.request.put(`${BASE}/api/auth/me/settings`, {
+    data: { showUserManagement: true },
+  });
+  expect(uiOn.status()).toBe(200);
+
+  const value = (locator: Locator, prop: string) =>
+    locator.evaluate((el, p) => getComputedStyle(el).getPropertyValue(p), prop);
+
+  /** Both painted states of one danger affordance: the rest label is --danger,
+   *  the hovered label is --danger-strong, and each clears 4.5:1 against the
+   *  first opaque background behind it (the control's own hover tint). */
+  async function expectDanger(scheme: "light" | "dark", label: string, locator: Locator) {
+    await page.mouse.move(0, 0);
+    expect(await value(locator, "color"), `${scheme}: ${label} rest label`).toBe(DANGER_REST[scheme]);
+    expect(await contrast(locator), `${scheme}: ${label} rest AA`).toBeGreaterThanOrEqual(4.5);
+    await locator.hover();
+    await settleEntryAnimation(locator);
+    expect(await value(locator, "color"), `${scheme}: ${label} hover label`).toBe(DANGER_HOVER[scheme]);
+    expect(await contrast(locator), `${scheme}: ${label} hover AA`).toBeGreaterThanOrEqual(4.5);
+  }
+
+  try {
+    for (const scheme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page.goto(`${BASE}/`);
+
+      // 1. Feed row overflow menu — the danger "Delete" row (.menu-item-danger).
+      const card = page.locator(`.item-card[data-item-id="${item.id}"]`);
+      await card.getByRole("button", { name: "More actions" }).click();
+      const popover = card.locator(".overflow-popover");
+      const menuDelete = popover.getByRole("menuitem", { name: "Delete" });
+      await expect(menuDelete).toBeVisible();
+      await expectDanger(scheme, "row menu delete", menuDelete);
+
+      // 2. Destructive confirm — selecting the row delete opens the alertdialog
+      //    whose confirm button is the other button.danger call site.
+      await menuDelete.click();
+      const confirm = page.getByRole("alertdialog");
+      await expect(confirm).toBeVisible();
+      const confirmDelete = confirm.getByRole("button", { name: "Delete" });
+      await expectDanger(scheme, "confirm delete", confirmDelete);
+      await confirm.getByRole("button", { name: "Cancel" }).click();
+      await expect(confirm).toHaveCount(0);
+
+      // 3. Share popover — the "Revoke link" button (button.danger).
+      await page.getByRole("button", { name: "Share my list" }).click();
+      const sharePopover = page.getByRole("dialog", { name: "Share my list" });
+      const revoke = sharePopover.getByRole("button", { name: "Revoke link" });
+      await expect(revoke).toBeVisible();
+      await expectDanger(scheme, "share revoke", revoke);
+      await page.keyboard.press("Escape");
+      await expect(sharePopover).toHaveCount(0);
+
+      // 4. Admin users table — the per-row "Delete" button.
+      await page.goto(`${BASE}/settings/users`);
+      const adminRow = page.locator(".admin-table tbody tr", { hasText: "danger-probe-guest" });
+      const adminDelete = adminRow.getByRole("button", { name: "Delete" });
+      await expect(adminDelete).toBeVisible();
+      await expectDanger(scheme, "admin delete", adminDelete);
+    }
+  } finally {
+    // Hand the board back clean: no probe item, no live share link (test 15's
+    // contract), no probe user in the admin table, user-management pref off.
+    const uiOff = await page.request.put(`${BASE}/api/auth/me/settings`, {
+      data: { showUserManagement: false },
+    });
+    expect(uiOff.status()).toBe(200);
+    await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
+    await page.request.delete(`${BASE}/api/share`);
+    await page.request.delete(`${BASE}/api/users/${guest.id}`);
+  }
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto(`${BASE}/`);
+});

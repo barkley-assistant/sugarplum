@@ -31,6 +31,11 @@
   --success: #16a34a;
   --danger: #dc2626;
   --danger-surface: #fef2f2;
+  /* #115: hover label for danger controls. --danger on --danger-surface is
+     4.41:1 in light (AA wants 4.5:1 for the control's text); red-700 clears
+     5.91:1. Dark flips the ladder: "stronger" is lighter, so red-300
+     (#fca5a5) reads 9.05:1 on the dark --danger-surface. */
+  --danger-strong: #b91c1c;
   /* Purchased badge on a shared list — distinct from the green claim badge. */
   --share-accent: #6d28d9;
   --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.12);
@@ -224,6 +229,7 @@
     --status-claimed: #3FD97F;
     --danger: #f87171;
     --danger-surface: #2b1517;
+    --danger-strong: #fca5a5;
     --share-accent: #c4b5fd;
     --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.5);
     --surface-row-hover: var(--surface-2);

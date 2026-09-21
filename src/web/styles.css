@@ -140,6 +140,8 @@ button.danger {
 button.danger:hover {
   background: var(--danger-surface);
   border-color: var(--danger);
+  /* #115: the label must survive its own hover tint — 4.41:1 -> 5.91:1. */
+  color: var(--danger-strong);
 }
 
 /* Settings + login submits adopt the detail surface's pill CTA grammar.
@@ -1929,6 +1931,8 @@ button.filter-chip {
 
 .menu-item-danger:hover {
   background: var(--danger-surface);
+  /* #115: same pair as button.danger:hover — the label must clear AA. */
+  color: var(--danger-strong);
 }
 
 .overflow-sheet-list {
