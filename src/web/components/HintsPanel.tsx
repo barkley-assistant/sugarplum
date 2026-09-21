@@ -42,7 +42,13 @@ export function HintsPanel({ itemId, open, onToggle, hintState }: HintsPanelProp
             <div className="hints-rows">
               {hintState.hints.map((candidate) => (
                 <div className="hints-row" key={candidate.sourceUrl}>
-                  <a href={candidate.sourceUrl} target="_blank" rel="noreferrer" title={candidate.sourceTitle}>
+                  <a
+                    href={candidate.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    referrerPolicy="no-referrer"
+                    title={candidate.sourceTitle}
+                  >
                     <span className="hint-price-now">{formatPrice(candidate.priceCents, candidate.currency)}</span>
                     <span className="hint-host">{urlHost(candidate.sourceUrl)}</span>
                     <span className="hint-note">{S.item.hintCandidateNote}</span>

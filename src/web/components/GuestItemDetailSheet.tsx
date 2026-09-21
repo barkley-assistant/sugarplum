@@ -125,7 +125,13 @@ export function GuestItemDetailSheet({ item, onClose }: GuestItemDetailSheetProp
 
         {item.url && (
           <div className="detail-actions">
-            <a className="detail-open-btn" href={item.url} target="_blank" rel="noreferrer">
+            <a
+              className="detail-open-btn"
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              referrerPolicy="no-referrer"
+            >
               <ExternalLinkIcon />
               {S.detail.openProduct}
             </a>
@@ -166,7 +172,13 @@ export function GuestItemDetailSheet({ item, onClose }: GuestItemDetailSheetProp
               <LinkIcon />
               <h3 className="detail-card-title">{S.detail.moreInfoTitle}</h3>
             </div>
-            <a className="detail-row" href={item.url} target="_blank" rel="noreferrer">
+            <a
+              className="detail-row"
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              referrerPolicy="no-referrer"
+            >
               <ExternalLinkIcon />
               <span>{S.detail.viewOn(site ?? urlHost(item.url))}</span>
               <ChevronRightIcon />
