@@ -34,7 +34,14 @@ interface AppBottomBarProps {
  *  are content routes, and painting Add there would be the lie #73's D2
  *  rejected. Tapping the already-current destination is a no-op: a same-URL
  *  navigate() would push a duplicate history entry and scroll a half-filled
- *  form to its top (router.ts). */
+ *  form to its top (router.ts).
+ *
+ *  #96 keeps the destination match EXACT (deliberately, not by accident): the
+ *  settings area has sub-routes (/settings/users, /settings/users/new) and
+ *  family-matching them would light the accent there while `go()` no-ops on
+ *  the same destination — a lit-but-dead Settings button stranding the user
+ *  on the sub-screen. Exact match means the button is never "current" off
+ *  /settings, so it stays a live way back to the account screen. */
 export function AppBottomBar({ route }: AppBottomBarProps) {
   const isDesktop = useMedia("(min-width: 640px)");
   const [shareOpen, setShareOpen] = useState(false);

@@ -9,45 +9,17 @@ interface AdminPanelProps {
   onChanged: () => void | Promise<void>;
 }
 
+/** #96: the users table + inline reset-password form only. The create-user
+ *  form moved to its own screen (/settings/users/new); the panel keeps its
+ *  {users, onChanged} contract and surfaces action failures (the last-admin
+ *  409 among them) in the same alert paragraph the form used to carry. */
 export function AdminPanel({ users, onChanged }: AdminPanelProps) {
-  const [username, setUsername] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [password, setPassword] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [resettingId, setResettingId] = useState<string | null>(null);
   const [resetPassword, setResetPassword] = useState("");
   const confirm = useConfirm();
   const toast = useToast();
-
-  async function createUser(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, displayName: displayName || undefined, isAdmin }),
-      });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as { error?: string } | null;
-        setError(body?.error ?? S.admin.createFailed);
-        return;
-      }
-      setUsername("");
-      setDisplayName("");
-      setPassword("");
-      setIsAdmin(false);
-      await onChanged();
-    } catch {
-      setError(S.admin.networkError);
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function act(path: string, method = "POST", body?: unknown) {
     setError(null);
@@ -158,6 +130,8 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
         </table>
       </div>
 
+      {error && <p className="error" role="alert">{error}</p>}
+
       {resettingId && (
         <form className="reset-form" onSubmit={(e) => submitReset(e, resettingId)}>
           <label htmlFor="reset-password">{S.admin.newPasswordFor}</label>
@@ -180,49 +154,6 @@ export function AdminPanel({ users, onChanged }: AdminPanelProps) {
           </div>
         </form>
       )}
-
-      <h4>{S.admin.createUser}</h4>
-      <form className="item-form" onSubmit={createUser}>
-        <div className="field-row">
-          <div className="field grow">
-            <label htmlFor="new-username">{S.admin.username}</label>
-            <input
-              id="new-username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </div>
-          <div className="field grow">
-            <label htmlFor="new-display-name">{S.admin.displayName}</label>
-            <input
-              id="new-display-name"
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-            />
-          </div>
-          <div className="field grow">
-            <label htmlFor="new-password">{S.admin.password}</label>
-            <input
-              id="new-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-        </div>
-        <label className="checkbox">
-          <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} />
-          {S.admin.isAdmin}
-        </label>
-        {error && <p className="error" role="alert">{error}</p>}
-        <button type="submit" disabled={busy}>
-          {busy ? S.admin.creating : S.admin.createUser}
-        </button>
-      </form>
     </section>
   );
 }
