@@ -141,6 +141,57 @@ async function contrast(locator: Locator): Promise<number> {
   });
 }
 
+/** Index of the last card fully inside the viewport, kept clear of the topbar
+ *  and of the bottom edge (where the drag's auto-scroll would engage). The
+ *  suite's feed is long by the time these run: the LAST row is often below the
+ *  fold, and a pointer event aimed off-viewport never reaches its handle. */
+async function lastVisibleIndex(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll<HTMLElement>(".item-card"));
+    let index = 1;
+    rows.forEach((row, i) => {
+      const rect = row.getBoundingClientRect();
+      if (rect.top > 64 && rect.bottom < window.innerHeight - 96) index = i;
+    });
+    return index;
+  });
+}
+
+/** Lift card `index` by its handle and move the pointer just past the midpoint
+ *  of the row above it, so the drop moves it exactly one slot. Returns the
+ *  pointer position, for the release. */
+async function liftAndDragUpOne(page: Page, index: number): Promise<{ x: number; y: number }> {
+  const box = await page.locator(".item-list .drag-handle").nth(index).boundingBox();
+  const x = box!.x + box!.width / 2;
+  const y = box!.y + box!.height / 2;
+  const crossing = await page.evaluate((i: number) => {
+    const rows = Array.from(document.querySelectorAll<HTMLElement>(".item-card"));
+    const above = rows[i - 1].getBoundingClientRect();
+    return above.top + above.height / 2;
+  }, index);
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x, crossing - 2, { steps: 6 });
+  return { x, y };
+}
+
+/** Card ids in DOM order. */
+const cardIds = (page: Page): Promise<string[]> =>
+  page.evaluate(() =>
+    Array.from(document.querySelectorAll<HTMLElement>(".item-card")).map(
+      (el) => el.dataset.itemId as string,
+    ),
+  );
+
+/** `ids` with the entry at `index` moved one slot up — what a one-crossing drag
+ *  produces. */
+function movedUpOne(ids: string[], index: number): string[] {
+  const next = [...ids];
+  const [moved] = next.splice(index, 1);
+  next.splice(index - 1, 0, moved);
+  return next;
+}
+
 test("1: login lands on the app shell with the own empty state", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Nothing saved yet." })).toBeVisible();
   await expect(page.getByText("Paste a product link to start your list.")).toBeVisible();
@@ -959,6 +1010,100 @@ test("5e: #70 desktop hover — title paints nothing, rows overflow nowhere", as
   const darkBg = await open.evaluate((el) => getComputedStyle(el).backgroundColor);
   expect(darkBg, "title paint dark").toBe("rgba(0, 0, 0, 0)");
   await page.emulateMedia({ colorScheme: "light" });
+});
+
+test("5f: fluid drag — the card tracks the pointer while the DOM order stays frozen (#91)", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  for (const title of ["Tracked one", "Tracked two", "Tracked three"]) {
+    const res = await page.request.post(`${BASE}/api/wishlist/items`, { data: { title } });
+    expect(res.status()).toBe(201);
+  }
+  await page.reload();
+  await page.getByRole("button", { name: "Reorder", exact: true }).click();
+  await expect(page.locator(".item-card.is-reordering").first()).toBeVisible();
+
+  const before = await cardIds(page);
+  expect(before.length).toBeGreaterThanOrEqual(3);
+  const index = await lastVisibleIndex(page);
+  expect(index, "a fully visible row to grab").toBeGreaterThanOrEqual(1);
+  const expected = movedUpOne(before, index);
+
+  await liftAndDragUpOne(page, index);
+
+  // Mid-drag: the lifted card has an inline transform (it follows the pointer),
+  // the row it passed has shifted, exactly one row is lifted — and the DOM
+  // order has NOT moved: that is the frozen-DOM invariant the transform math
+  // depends on. The scale is part of the same inline transform (CSS cannot own
+  // it: an inline transform replaces a class-level one).
+  await expect
+    .poll(() => page.evaluate(() => document.querySelector<HTMLElement>(".item-card.dragging")?.style.transform ?? ""))
+    .toContain("translate3d");
+  const mid = await page.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll<HTMLElement>(".item-card"));
+    const lifted = rows.find((r) => r.classList.contains("dragging"));
+    return {
+      lifted: rows.filter((r) => r.classList.contains("dragging")).length,
+      liftedTransform: lifted?.style.transform ?? "",
+      shifted: rows.filter((r) => !r.classList.contains("dragging") && r.style.transform !== "").length,
+      order: rows.map((r) => r.dataset.itemId),
+      overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      listClass: document.querySelector(".item-list")?.className ?? "",
+    };
+  });
+  expect(mid.lifted, "exactly one lifted row").toBe(1);
+  expect(mid.liftedTransform).toContain("scale(1.02)");
+  expect(mid.shifted, "the rows in between shifted out of the way").toBeGreaterThanOrEqual(1);
+  expect(mid.order, "the DOM order does not move mid-drag").toEqual(before);
+  expect(mid.overflow, "a scaled row in the gutter overflows nothing").toBe(false);
+  expect(mid.listClass).toContain("is-dragging");
+
+  await page.mouse.up();
+  await expect.poll(() => cardIds(page)).toEqual(expected);
+  // Every inline transform is gone once the order is React's again.
+  const settled = await page.evaluate(() =>
+    Array.from(document.querySelectorAll<HTMLElement>(".item-card")).map((r) => r.style.transform),
+  );
+  expect(settled).toEqual(before.map(() => ""));
+  expect(await page.locator(".item-card.dropping").count()).toBe(0);
+
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await page.reload();
+  await expect.poll(() => cardIds(page)).toEqual(expected);
+});
+
+test("5g: reduced motion — reorder stays instant and writes no transforms (#91)", async ({ page }) => {
+  const created = await page.request.post(`${BASE}/api/wishlist/items`, { data: { title: "Calm probe" } });
+  expect(created.status()).toBe(201);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.reload();
+  await page.getByRole("button", { name: "Reorder", exact: true }).click();
+  await expect(page.locator(".item-card.is-reordering").first()).toBeVisible();
+
+  const before = await cardIds(page);
+  const index = await lastVisibleIndex(page);
+  const expected = movedUpOne(before, index);
+
+  await liftAndDragUpOne(page, index);
+  await page.waitForTimeout(120);
+
+  // No lift, no translation, no sibling slide: the list re-renders in the new
+  // order as the pointer crosses, exactly as it did before #91.
+  const mid = await page.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll<HTMLElement>(".item-card"));
+    return {
+      transforms: rows.map((r) => r.style.transform).filter((t) => t !== ""),
+      order: rows.map((r) => r.dataset.itemId),
+    };
+  });
+  expect(mid.transforms, "reduced motion writes no inline transform").toEqual([]);
+  expect(mid.order, "the crossing re-orders immediately").toEqual(expected);
+
+  await page.mouse.up();
+  await expect.poll(() => cardIds(page)).toEqual(expected);
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.reload();
+  await expect.poll(() => cardIds(page)).toEqual(expected);
 });
 
 test("6b: heading switcher opens a sheet and switches lists", async ({ page, browser }) => {
