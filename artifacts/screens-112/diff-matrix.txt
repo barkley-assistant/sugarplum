@@ -1,0 +1,34 @@
+add-collapsed-hover-dark-1280.png: 31681 differing px, bbox (279, 267, 1000, 311)
+add-collapsed-hover-dark-360.png: 14433 differing px, bbox (15, 267, 344, 311)
+add-collapsed-hover-dark-390.png: 15752 differing px, bbox (16, 267, 374, 311)
+add-collapsed-hover-dark-430.png: 17513 differing px, bbox (15, 267, 414, 311)
+add-collapsed-hover-dark-768.png: 32384 differing px, bbox (16, 267, 752, 311)
+add-collapsed-hover-light-1280.png: 31680 differing px, bbox (280, 267, 1000, 311)
+add-collapsed-hover-light-360.png: 14434 differing px, bbox (15, 267, 344, 311)
+add-collapsed-hover-light-390.png: 15753 differing px, bbox (15, 267, 374, 311)
+add-collapsed-hover-light-430.png: 17512 differing px, bbox (16, 267, 414, 311)
+add-collapsed-hover-light-768.png: 32384 differing px, bbox (16, 267, 752, 311)
+add-collapsed-rest-dark-1280.png: 0 differing px, bbox None
+add-collapsed-rest-dark-360.png: 0 differing px, bbox None
+add-collapsed-rest-dark-390.png: 0 differing px, bbox None
+add-collapsed-rest-dark-430.png: 0 differing px, bbox None
+add-collapsed-rest-dark-768.png: 0 differing px, bbox None
+add-collapsed-rest-light-1280.png: 0 differing px, bbox None
+add-collapsed-rest-light-360.png: 0 differing px, bbox None
+add-collapsed-rest-light-390.png: 0 differing px, bbox None
+add-collapsed-rest-light-430.png: 0 differing px, bbox None
+add-collapsed-rest-light-768.png: 0 differing px, bbox None
+add-cta-hover-dark-390.png: 34 differing px, bbox (16, 179, 374, 491)
+add-cta-hover-light-390.png: 33 differing px, bbox (16, 179, 374, 491)
+add-expanded-hover-dark-1280.png: 31691 differing px, bbox (279, 267, 1000, 506)
+add-expanded-hover-dark-360.png: 14435 differing px, bbox (15, 267, 344, 384)
+add-expanded-hover-dark-390.png: 15755 differing px, bbox (15, 267, 374, 384)
+add-expanded-hover-dark-430.png: 17529 differing px, bbox (15, 267, 414, 506)
+add-expanded-hover-dark-768.png: 32396 differing px, bbox (15, 267, 752, 506)
+add-expanded-hover-light-1280.png: 31691 differing px, bbox (279, 267, 1000, 506)
+add-expanded-hover-light-360.png: 14447 differing px, bbox (15, 267, 344, 491)
+add-expanded-hover-light-390.png: 15754 differing px, bbox (15, 267, 374, 384)
+add-expanded-hover-light-430.png: 17530 differing px, bbox (15, 267, 414, 506)
+add-expanded-hover-light-768.png: 32418 differing px, bbox (15, 267, 752, 506)
+
+Total captures per side: 32
