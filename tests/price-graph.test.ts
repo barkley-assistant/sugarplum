@@ -4,6 +4,7 @@ import {
   graphScale,
   gridlineValues,
   sameCurrencySeries,
+  trendCaption,
   trendCents,
   xLabels,
 } from "../src/web/components/PriceHistoryCard";
@@ -25,6 +26,17 @@ describe("adviceLabel", () => {
     expect(adviceLabel("trending-down")).toBe("Trending down — could wait");
     expect(adviceLabel("stable")).toBe("Stable");
     expect(adviceLabel("insufficient")).toBe("Not enough history yet");
+  });
+});
+
+describe("trendCaption", () => {
+  // #118: a drawn chart with no derivable trend must never read as the
+  // empty-state contradiction.
+  test("null trend and insufficient advice both watch; real advices pass through", () => {
+    expect(trendCaption(null)).toBe("Watching for a trend");
+    expect(trendCaption({ direction: "stable", advice: "insufficient", daysSinceDrop: null })).toBe("Watching for a trend");
+    expect(trendCaption({ direction: "falling", advice: "near-30d-low", daysSinceDrop: 2 })).toBe("At 30-day low");
+    expect(trendCaption({ direction: "rising", advice: "near-30d-high", daysSinceDrop: null })).toBe("Near 30-day high");
   });
 });
 

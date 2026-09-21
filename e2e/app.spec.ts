@@ -582,7 +582,7 @@ test("4c: row opens the item page; overflow does not", async ({ page }) => {
   await expect(history.locator(".price-graph")).toHaveAttribute("aria-label", /now £10\.00/);
   await expect(history.locator(".price-graph")).toHaveAttribute("aria-label", /lowest £10\.00/);
   await expect(history.locator(".price-graph")).toContainText("£10.00");
-  await expect(history.locator(".price-graph-caption")).toHaveText("Not enough history yet");
+  await expect(history.locator(".price-graph-caption")).toHaveText("Watching for a trend");
   await history.getByRole("button", { name: "90d", exact: true }).click();
   await expect(history.getByRole("button", { name: "90d", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect.poll(() => page.evaluate(() => localStorage.getItem("sugarplum.trend-window"))).toBe("90d");
@@ -2109,6 +2109,10 @@ test("15f: anonymous share sheet shows price history and more info, no owner act
     await expect(history.getByRole("group", { name: "Trend window" })).toBeVisible();
     await expect(history.getByRole("button", { name: "30d", exact: true }))
       .toHaveAttribute("aria-pressed", "true");
+    // #118: the share sheet renders the same component — a drawn chart with no
+    // derivable trend is captioned with the watching copy, not the empty-state
+    // literal.
+    await expect(history.locator(".price-graph-caption")).toHaveText("Watching for a trend");
 
     // "More information" — the item's OWN link and a copy affordance. The live
     // prices-elsewhere search is an owner-only route: never on this surface.
@@ -3888,4 +3892,37 @@ test("30: danger hover clears AA in both schemes (#115)", async ({ page }) => {
   }
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto(`${BASE}/`);
+});
+
+test("31: #118 — empty state keeps the literal, drawn charts never do", async ({ page }) => {
+  // Seed via the API the way 4b does: an item whose ONLY history row is one
+  // observation (series.length 1 < 2 → drawable false → empty state).
+  const created = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Caption probe", priceCents: "7.25", currency: "GBP" },
+  });
+  expect(created.status()).toBe(201);
+  const item = (await created.json()) as { id: string };
+  const detail = `${BASE}/items/${item.id}`;
+  try {
+    await page.goto(detail);
+    const history = page.locator(".detail-history-card");
+    await expect(history.locator(".price-history-empty")).toHaveText("Not enough history yet");
+    // The watching copy and the chart are absent from the empty state.
+    await expect(history.locator(".price-graph")).toHaveCount(0);
+    await expect(history.locator(".price-graph-caption")).toHaveCount(0);
+    await expect(history.getByText("Watching for a trend")).toHaveCount(0);
+    // The literal is gone from every drawn-chart caption on this account:
+    // the 4b "History probe" item (same-day pair, insufficient trend).
+    const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as { id: string };
+    const list = (await (await page.request.get(`${BASE}/api/users/${me.id}/wishlist`)).json()) as Array<{ id: string; title: string }>;
+    const probe = list.find((entry) => entry.title === "History probe");
+    expect(probe).toBeTruthy();
+    await page.goto(`${BASE}/items/${probe!.id}`);
+    const drawn = page.locator(".detail-history-card");
+    await expect(drawn.locator(".price-graph")).toBeVisible();
+    await expect(drawn.locator(".price-graph-caption")).toHaveText("Watching for a trend");
+    await expect(drawn.getByText("Not enough history yet")).toHaveCount(0);
+  } finally {
+    await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
+  }
 });
