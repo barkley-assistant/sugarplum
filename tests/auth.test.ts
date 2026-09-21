@@ -147,11 +147,15 @@ describe("auth flow (integration)", () => {
       username: string;
       displayName: string;
       isAdmin: boolean;
+      showUserManagement: boolean;
     };
     expect(body.username).toBe("admin");
     expect(body.displayName).toBe("Admin");
     expect(body.isAdmin).toBe(true);
     expect(typeof body.id).toBe("string");
+    // #98: the admin-facing UI gate is opt-in — the bootstrap admin starts
+    // hidden, which is the default the whole feature rides on.
+    expect(body.showUserManagement).toBe(false);
   });
 
   test("logout: 204, cookie cleared, subsequent me → 401", async () => {

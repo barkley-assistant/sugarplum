@@ -13,6 +13,9 @@ export interface SessionUser {
   hintsEnabled: boolean;
   /** Daily price-tracking opt-in (users.price_tracking_enabled, default on). */
   priceTrackingEnabled: boolean;
+  /** #98: admin UI-exposure opt-in (users.show_user_management, default off).
+   *  UI gating only — never consulted by /api/users* authorization. */
+  showUserManagement: boolean;
 }
 
 export function newSessionToken(): string {
@@ -54,7 +57,8 @@ export function getSessionUser(
       `SELECT s.expires_at AS expires_at, s.created_at AS created_at,
               u.id AS id, u.username AS username, u.display_name AS display_name,
               u.is_admin AS is_admin, u.is_active AS is_active, u.hints_enabled AS hints_enabled,
-              u.price_tracking_enabled AS price_tracking_enabled
+              u.price_tracking_enabled AS price_tracking_enabled,
+              u.show_user_management AS show_user_management
        FROM sessions s JOIN users u ON u.id = s.user_id
        WHERE s.token = ?`,
     )
@@ -69,6 +73,7 @@ export function getSessionUser(
         is_active: number;
         hints_enabled: number;
         price_tracking_enabled: number;
+        show_user_management: number;
       }
     | undefined;
 
@@ -103,6 +108,7 @@ export function getSessionUser(
       isActive: row.is_active === 1,
       hintsEnabled: row.hints_enabled === 1,
       priceTrackingEnabled: row.price_tracking_enabled === 1,
+      showUserManagement: row.show_user_management === 1,
     },
     renewed,
   };

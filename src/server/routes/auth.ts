@@ -14,7 +14,10 @@ import {
 import type { Config } from "../config";
 
 export function meOf(
-  user: Pick<SessionUser, "id" | "username" | "displayName" | "isAdmin" | "hintsEnabled" | "priceTrackingEnabled">,
+  user: Pick<
+    SessionUser,
+    "id" | "username" | "displayName" | "isAdmin" | "hintsEnabled" | "priceTrackingEnabled" | "showUserManagement"
+  >,
 ) {
   return {
     id: user.id,
@@ -23,6 +26,7 @@ export function meOf(
     isAdmin: user.isAdmin,
     hintsEnabled: user.hintsEnabled,
     priceTrackingEnabled: user.priceTrackingEnabled,
+    showUserManagement: user.showUserManagement,
   };
 }
 
@@ -35,6 +39,7 @@ interface UserRow {
   is_active: number;
   hints_enabled: number;
   price_tracking_enabled: number;
+  show_user_management: number;
 }
 
 export function authRoutes(
@@ -81,7 +86,7 @@ export function authRoutes(
         const user = db
           .query(
             `SELECT id, username, display_name, password_hash, is_admin, is_active, hints_enabled,
-                    price_tracking_enabled
+                    price_tracking_enabled, show_user_management
              FROM users WHERE username = ?`,
           )
           .get(username) as UserRow | undefined;
@@ -115,6 +120,7 @@ export function authRoutes(
               isAdmin: user.is_admin === 1,
               hintsEnabled: user.hints_enabled === 1,
               priceTrackingEnabled: user.price_tracking_enabled === 1,
+              showUserManagement: user.show_user_management === 1,
             }),
           ),
           {
@@ -142,13 +148,22 @@ export function authRoutes(
       GET: requireSession(db, (_req, user) => jsonOk(meOf(user))),
     },
     "/api/auth/me/settings": {
-      /** Self-only settings. Both knobs are per-user, default-on, and must
-       *  hold across devices, so they live in the users row. Either or both
-       *  may be set in one call; at least one must be present. */
+      /** Self-only settings. Three per-user knobs, all persisted on the users
+       *  row so they hold across devices: two default-on behavior gates
+       *  (hints, daily tracking) and the #98 admin UI-exposure opt-in
+       *  (default off). Any subset may be set in one call; at least one must be
+       *  present. Deliberately role-agnostic: a member setting
+       *  showUserManagement gains nothing, because every consumer ANDs it with
+       *  isAdmin and /api/users* keeps 403ing them (the preference is UI
+       *  exposure, never authorization). */
       PUT: requireSession(db, async (req, user) => {
-        let body: { hintsEnabled?: unknown; priceTrackingEnabled?: unknown };
+        let body: { hintsEnabled?: unknown; priceTrackingEnabled?: unknown; showUserManagement?: unknown };
         try {
-          body = (await req.json()) as { hintsEnabled?: unknown; priceTrackingEnabled?: unknown };
+          body = (await req.json()) as {
+            hintsEnabled?: unknown;
+            priceTrackingEnabled?: unknown;
+            showUserManagement?: unknown;
+          };
         } catch {
           return jsonError(400, "Invalid JSON body");
         }
@@ -158,7 +173,14 @@ export function authRoutes(
         if (body.priceTrackingEnabled !== undefined && typeof body.priceTrackingEnabled !== "boolean") {
           return jsonError(400, "priceTrackingEnabled must be a boolean");
         }
-        if (body.hintsEnabled === undefined && body.priceTrackingEnabled === undefined) {
+        if (body.showUserManagement !== undefined && typeof body.showUserManagement !== "boolean") {
+          return jsonError(400, "showUserManagement must be a boolean");
+        }
+        if (
+          body.hintsEnabled === undefined &&
+          body.priceTrackingEnabled === undefined &&
+          body.showUserManagement === undefined
+        ) {
           return jsonError(400, "Nothing to update");
         }
         const next = { ...user };
@@ -175,6 +197,13 @@ export function authRoutes(
             user.id,
           ]);
           next.priceTrackingEnabled = body.priceTrackingEnabled;
+        }
+        if (body.showUserManagement !== undefined) {
+          db.run("UPDATE users SET show_user_management = ? WHERE id = ?", [
+            body.showUserManagement ? 1 : 0,
+            user.id,
+          ]);
+          next.showUserManagement = body.showUserManagement;
         }
         return jsonOk(meOf(next));
       }),

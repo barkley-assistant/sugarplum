@@ -112,3 +112,39 @@ describe("last-admin guard", () => {
     expect(del.status).toBe(204);
   });
 });
+
+describe("#98: the showUserManagement preference is UI exposure, never authorization", () => {
+  test("admin with the preference off keeps the management API; a member who opts in still gets 403", async () => {
+    await loginAsAdmin();
+
+    // Explicitly off (which is also the default): /api/users* must stay usable
+    // headlessly — hiding the screens never disables the API.
+    const off = await admin.request("PUT", "/api/auth/me/settings", { showUserManagement: false });
+    expect(off.status).toBe(200);
+    expect(((await off.json()) as { showUserManagement: boolean }).showUserManagement).toBe(false);
+    const listed = await admin.request("GET", "/api/users");
+    expect(listed.status).toBe(200);
+
+    // A member may set their own preference (the settings route is
+    // role-agnostic like its two siblings) and gains nothing by it.
+    const created = await admin.request("POST", "/api/users", {
+      username: "pref-member",
+      password: "pref-member-pass",
+    });
+    expect(created.status).toBe(201);
+
+    const member = app.newJar();
+    const login = await member.request("POST", "/api/auth/login", {
+      username: "pref-member",
+      password: "pref-member-pass",
+    });
+    expect(login.status).toBe(200);
+
+    const optedIn = await member.request("PUT", "/api/auth/me/settings", { showUserManagement: true });
+    expect(optedIn.status).toBe(200);
+    expect(((await optedIn.json()) as { showUserManagement: boolean }).showUserManagement).toBe(true);
+
+    const forbidden = await member.request("GET", "/api/users");
+    expect(forbidden.status).toBe(403);
+  });
+});
