@@ -93,3 +93,19 @@ export function GearIcon() {
     </svg>
   );
 }
+
+/** Disclosure chevron for subordinate navigation rows (#96 settings area).
+ *  Same language as the other icons: 20px box, 1.8px stroke, currentColor. */
+export function ChevronRightIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="m8 5 5 5-5 5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
