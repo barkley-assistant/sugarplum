@@ -25,6 +25,18 @@ interface ItemFormProps {
 
 const CURRENCIES = ["GBP", "USD", "EUR"];
 
+/** #114: split a stored currency code into the form's two state slots — a
+ *  preset stays in `currency`; anything else becomes "Other" + the raw code
+ *  in `otherCurrency`, so the code input mounts visible AND filled. */
+export function seedCurrency(stored: string | null | undefined): {
+  currency: string;
+  otherCurrency: string;
+} {
+  const code = stored ?? "GBP";
+  if (CURRENCIES.includes(code)) return { currency: code, otherCurrency: "" };
+  return { currency: S.form.currencyOther, otherCurrency: code };
+}
+
 export function ItemForm({
   initial,
   initialValues,
@@ -36,8 +48,10 @@ export function ItemForm({
   const [title, setTitle] = useState(initialValues?.title ?? initial?.title ?? "");
   const [url, setUrl] = useState(initialValues?.url ?? initial?.url ?? "");
   const [priceCents, setPriceCents] = useState(initial?.priceCents ?? "");
-  const [currency, setCurrency] = useState(initial?.currency ?? "GBP");
-  const [otherCurrency, setOtherCurrency] = useState("");
+  const [currency, setCurrency] = useState(() => seedCurrency(initial?.currency).currency);
+  const [otherCurrency, setOtherCurrency] = useState(
+    () => seedCurrency(initial?.currency).otherCurrency,
+  );
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [tags, setTags] = useState((initial?.tags ?? []).join(", "));
   const [cheaperUrl, setCheaperUrl] = useState(initial?.cheaperUrl ?? "");

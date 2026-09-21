@@ -3699,3 +3699,82 @@ test("28: recurring mobile controls keep the app-wide 44px touch floor (#116)", 
     expect([200, 204]).toContain(removed.status());
   }
 });
+
+/** #114: the issue reported an edit form whose stored currency is not in the
+ *  preset list (GBP/USD/EUR) — the select read "Other" with NO code field, so
+ *  the stored code was neither visible nor correctable (probe:
+ *  `selectValue: "Other"`, `codeVisible: 0`). This spec inverts that probe on
+ *  the same shape of item and walks the whole round-trip through the form. */
+test("29: edit form — non-preset currency shows Other + seeded code input (#114)", async ({ page }) => {
+  const created = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "SEK round-trip probe", priceCents: "349.00", currency: "SEK" },
+  });
+  expect(created.status()).toBe(201);
+  const item = (await created.json()) as { id: string };
+
+  try {
+    // --- The defect, inverted: the select reads Other AND the code input is
+    // visible and pre-filled with the stored code (codeVisible was 0).
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${BASE}/items/${item.id}/edit`);
+    await expect(page.getByLabel("Currency")).toHaveValue("Other");
+    const code = page.locator("#item-other-currency");
+    await expect(code).toBeVisible();
+    await expect(code).toHaveValue("SEK");
+
+    // --- Correctability: edit the code, save, reload — the new code sticks.
+    await code.fill("NOK");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page).toHaveURL(`${BASE}/items/${item.id}`);
+    await page.goto(`${BASE}/items/${item.id}/edit`);
+    await expect(page.getByLabel("Currency")).toHaveValue("Other");
+    await expect(page.locator("#item-other-currency")).toHaveValue("NOK");
+
+    // --- An unchanged save keeps the code (the omit-when-empty seam works).
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page).toHaveURL(`${BASE}/items/${item.id}`);
+    await page.goto(`${BASE}/items/${item.id}/edit`);
+    await expect(page.locator("#item-other-currency")).toHaveValue("NOK");
+
+    // --- Clearing the code input and saving must NOT destroy the stored code:
+    // ItemEditPage omits an empty currency from the PATCH, so the server keeps
+    // it. A custom code is correctable, never silently clearable.
+    await page.locator("#item-other-currency").fill("");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page).toHaveURL(`${BASE}/items/${item.id}`);
+    await page.goto(`${BASE}/items/${item.id}/edit`);
+    await expect(page.locator("#item-other-currency")).toHaveValue("NOK");
+
+    // --- Preset switch hides the input; re-picking Other keeps the slot.
+    await page.getByLabel("Currency").selectOption("USD");
+    await expect(page.locator("#item-other-currency")).toHaveCount(0);
+    await page.getByLabel("Currency").selectOption("Other");
+    await expect(page.locator("#item-other-currency")).toBeVisible();
+    await expect(page.locator("#item-other-currency")).toHaveValue("NOK");
+
+    // --- The 4-field row MOUNTED BY DATA (test 24 only reaches it by hand)
+    // keeps the page inside the viewport at every shipping width.
+    for (const width of [360, 390, 430, 768, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(`${BASE}/items/${item.id}/edit`);
+      await expect(page.locator("#item-other-currency")).toBeVisible();
+      const probe = await horizontalEscapes(page);
+      expect(probe.docOverflow, `edit page overflow at ${width}px`).toBe(false);
+      expect(probe.offenders, `edit page escapes at ${width}px`).toEqual([]);
+    }
+
+    // --- Add flow untouched: no initial item → GBP, no code input until the
+    // user picks Other (and then it starts empty, with nothing to seed).
+    await page.goto(`${BASE}/add`);
+    await page.getByRole("button", { name: "Add details manually" }).click();
+    await expect(page.getByLabel("Currency")).toHaveValue("GBP");
+    await expect(page.locator("#item-other-currency")).toHaveCount(0);
+    await page.getByLabel("Currency").selectOption("Other");
+    await expect(page.locator("#item-other-currency")).toBeVisible();
+    await expect(page.locator("#item-other-currency")).toHaveValue("");
+  } finally {
+    const removed = await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
+    expect([200, 204]).toContain(removed.status());
+  }
+  await page.goto(`${BASE}/`);
+});
