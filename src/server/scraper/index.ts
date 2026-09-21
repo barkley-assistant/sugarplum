@@ -150,7 +150,11 @@ export async function scrapeProduct(url: string, deps: ScrapeDeps): Promise<Scra
   let lastFailure: ScrapeVerdict | undefined;
   for (const strategy of chain.strategies) {
     const outcome = await runStrategy(url, strategy, deps);
-    steps.push(outcome.ok ? { strategy, ok: true } : { strategy, ok: false, reason: outcome.reason });
+    steps.push(
+      outcome.ok
+        ? { strategy, ok: true }
+        : { strategy, ok: false, reason: outcome.reason, heuristic: outcome.heuristic },
+    );
     if (outcome.ok) return { ...outcome, steps };
     lastFailure = outcome;
     // Auto-escalation is only worth a browser launch when the plain verdict is

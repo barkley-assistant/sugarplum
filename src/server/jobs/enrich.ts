@@ -113,7 +113,9 @@ export function createEnrichmentQueue(deps: EnrichmentDeps): EnrichmentQueue {
       console.info(
         "[enrich] item %s: chain=%s",
         itemId,
-        result.steps.map((s) => `${s.strategy}:${s.ok ? "ok" : (s.reason ?? "fail")}`).join(" → "),
+        result.steps
+          .map((s) => `${s.strategy}:${s.ok ? "ok" : [s.reason, s.heuristic].filter(Boolean).join("/")}`)
+          .join(" → "),
       );
     }
 

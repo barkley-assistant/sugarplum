@@ -48,6 +48,9 @@ export interface ScrapeStep {
   ok: boolean;
   /** Set on a failed step — that strategy's own verdict. */
   reason?: FetchFailure["reason"];
+  /** Set on a failed step — the matched (or synthetic) heuristic name, e.g.
+   *  "captcha" or "stealth-timeout". Never page content. */
+  heuristic?: string;
 }
 
 export interface LearnedOverride {
