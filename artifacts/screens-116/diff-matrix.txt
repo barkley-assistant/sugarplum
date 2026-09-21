@@ -1,0 +1,95 @@
+# #116 before/after pixel-diff matrix
+
+after/  = branch fix/touch-targets, dist rebuilt from the branch styles.css
+          (verified: the entry CSS chunk the bundle serves declares
+          'button.filter-chip { min-height: 44px }' and '.brand { position: relative }').
+before/ = the same build plus an adopted stylesheet that restates main's
+          pre-change declarations (CSP style-src 'self' blocks inline <style>):
+          chips 36, compact-action 36, admin-actions button 40, reset-form-row
+          button 40, .brand with no min-height/no pseudo, switcher trigger
+          unpositioned with no pseudo, checkbox row without min-height and
+          'input { width: auto }'.
+
+Method validation (real-main/): 6 surfaces captured against a CLEAN build of
+origin/main's styles.css (rm -rf dist/public first, entry chunk verified as
+36px). Real-main vs before/ differs only by the avatar-AA noise documented
+below; real-main vs after/ shows exactly the intended control changes:
+  settings @360 light   0 px      (the lockup hit overlay is invisible)
+  share @390 light      0 px      (share surface untouched)
+  feed @390 light   19607 px      chips + Reorder at 44, content below shifts
+  users @360 light   7326 px      admin row actions 40.6 -> 44
+  newuser @360 light 19994 px     checkbox row 21 -> 44, box 13 -> 20
+
+## Capture noise: 78-81 px of avatar antialiasing in the topbar
+
+Five of the six real-main captures differ from before/ by 78-81 px inside
+(299,17,335,49) @360 / (329,17,364,49) @390 - the 36px user avatar's white
+initial on --plum-600 in the sticky topbar. Probes:
+  - same-stylesheet captures in one browser session are byte-identical (0 px)
+  - the box geometry is identical between the two builds (avatar 299/15/36x36,
+    menu 290/6/54x54, brand 16/19/117.8x28, topbar 360x67) and the glyph's fill
+    colour is identical - only AA fringe colours differ
+  - it is not stable across browser launches (78-81 px at 360 and 390 in
+    cross-session comparisons, 0 px in some sessions)
+  - the plan's own fallback mechanism (a real padded lockup box) produces the
+    same 81 px, and a no-op restatement of the brand rule produces 0 px
+  => topbar text rasterisation noise, not the #116 change.
+
+identical captures: 30 of 56
+
+add-dark-390.png                         0 px  bbox=None
+add-light-390.png                        0 px  bbox=None
+detail-dark-1280.png                     0 px  bbox=None
+detail-dark-360.png                      0 px  bbox=None
+detail-dark-390.png                      0 px  bbox=None
+detail-dark-430.png                      0 px  bbox=None
+detail-dark-768.png                      0 px  bbox=None
+detail-light-1280.png                    0 px  bbox=None
+detail-light-360.png                     0 px  bbox=None
+detail-light-390.png                     0 px  bbox=None
+detail-light-430.png                     0 px  bbox=None
+detail-light-768.png                     0 px  bbox=None
+edit-dark-390.png                        0 px  bbox=None
+edit-light-390.png                       0 px  bbox=None
+feed-long-name-dark-390.png          19922 px  bbox=(15, 206, 374, 626)
+feed-long-name-light-390.png         19528 px  bbox=(16, 206, 374, 626)
+feed-own-dark-1280.png               24555 px  bbox=(126, 162, 1154, 552)
+feed-own-dark-360.png                19838 px  bbox=(15, 17, 344, 559)
+feed-own-dark-390.png                19925 px  bbox=(15, 138, 374, 559)
+feed-own-dark-430.png                20165 px  bbox=(15, 138, 414, 559)
+feed-own-dark-768.png                21753 px  bbox=(16, 163, 752, 584)
+feed-own-light-1280.png              24023 px  bbox=(126, 162, 1154, 552)
+feed-own-light-360.png               19430 px  bbox=(16, 17, 344, 559)
+feed-own-light-390.png               19529 px  bbox=(16, 138, 374, 559)
+feed-own-light-430.png               19769 px  bbox=(16, 138, 414, 559)
+feed-own-light-768.png               21359 px  bbox=(16, 163, 752, 584)
+login-dark-1280.png                      0 px  bbox=None
+login-dark-390.png                       0 px  bbox=None
+login-light-1280.png                     0 px  bbox=None
+login-light-390.png                      0 px  bbox=None
+newuser-dark-360.png                 20526 px  bbox=(16, 17, 344, 591)
+newuser-dark-390.png                 22323 px  bbox=(16, 474, 374, 591)
+newuser-light-360.png                20075 px  bbox=(16, 17, 344, 591)
+newuser-light-390.png                21884 px  bbox=(16, 474, 374, 591)
+settings-dark-1280.png                   0 px  bbox=None
+settings-dark-360.png                   93 px  bbox=(299, 17, 335, 49)
+settings-dark-390.png                    0 px  bbox=None
+settings-dark-430.png                    0 px  bbox=None
+settings-dark-768.png                    0 px  bbox=None
+settings-light-1280.png                  0 px  bbox=None
+settings-light-360.png                  81 px  bbox=(299, 17, 335, 49)
+settings-light-390.png                   0 px  bbox=None
+settings-light-430.png                   0 px  bbox=None
+settings-light-768.png                   0 px  bbox=None
+share-dark-390.png                       0 px  bbox=None
+share-dark-768.png                       0 px  bbox=None
+share-light-390.png                      0 px  bbox=None
+share-light-768.png                      0 px  bbox=None
+users-dark-360.png                    7470 px  bbox=(16, 17, 344, 521)
+users-dark-390.png                    8587 px  bbox=(16, 287, 374, 465)
+users-dark-430.png                    9169 px  bbox=(16, 287, 414, 465)
+users-dark-768.png                    8297 px  bbox=(16, 220, 752, 343)
+users-light-360.png                   7407 px  bbox=(16, 17, 344, 521)
+users-light-390.png                   8517 px  bbox=(16, 287, 374, 465)
+users-light-430.png                   9114 px  bbox=(16, 287, 414, 465)
+users-light-768.png                   8267 px  bbox=(16, 287, 752, 343)
