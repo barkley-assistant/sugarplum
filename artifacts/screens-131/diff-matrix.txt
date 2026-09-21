@@ -1,0 +1,47 @@
+surface                            changed                    diff bbox                     
+add-dark-390.png                   65508px changed (4.67%)    bbox=(31, 146, 748, 744)       region 717x598
+add-light-390.png                  65346px changed (4.65%)    bbox=(31, 146, 748, 744)       region 717x598
+detail-dark-1280.png               0px changed (0.00%)                                       
+detail-dark-390.png                0px changed (0.00%)                                       
+detail-light-1280.png              0px changed (0.00%)                                       
+detail-light-390.png               0px changed (0.00%)                                       
+feed-long-name-dark-360.png        36500px changed (2.82%)    bbox=(31, 198, 688, 1018)      region 657x820
+feed-long-name-dark-390.png        25589px changed (1.82%)    bbox=(32, 198, 748, 1018)      region 716x820
+feed-long-name-dark-430.png        26549px changed (1.72%)    bbox=(32, 198, 828, 1018)      region 796x820
+feed-long-name-light-360.png       36140px changed (2.79%)    bbox=(31, 198, 688, 1018)      region 657x820
+feed-long-name-light-390.png       25229px changed (1.80%)    bbox=(32, 198, 748, 1018)      region 716x820
+feed-long-name-light-430.png       26189px changed (1.69%)    bbox=(32, 198, 828, 1018)      region 796x820
+feed-own-dark-1280.png             0px changed (0.00%)                                       
+feed-own-dark-360.png              87093px changed (6.72%)    bbox=(31, 174, 688, 1572)      region 657x1398
+feed-own-dark-390.png              82096px changed (5.85%)    bbox=(31, 174, 748, 1506)      region 717x1332
+feed-own-dark-430.png              85076px changed (5.50%)    bbox=(31, 174, 828, 1506)      region 797x1332
+feed-own-dark-768.png              0px changed (0.00%)                                       
+feed-own-light-1280.png            0px changed (0.00%)                                       
+feed-own-light-360.png             86408px changed (6.67%)    bbox=(31, 174, 688, 1572)      region 657x1398
+feed-own-light-390.png             81404px changed (5.80%)    bbox=(31, 174, 748, 1506)      region 717x1332
+feed-own-light-430.png             84377px changed (5.45%)    bbox=(31, 174, 828, 1506)      region 797x1332
+feed-own-light-768.png             0px changed (0.00%)                                       
+login-dark-1280.png                5476px changed (0.11%)     bbox=(986, 974, 1574, 1238)    region 588x264
+login-dark-390.png                 5444px changed (0.39%)     bbox=(98, 874, 682, 1138)      region 584x264
+login-light-1280.png               5470px changed (0.11%)     bbox=(986, 974, 1574, 1238)    region 588x264
+login-light-390.png                5438px changed (0.39%)     bbox=(98, 874, 682, 1138)      region 584x264
+settings-dark-1280.png             1006922px changed (19.67%) bbox=(252, 174, 2308, 1838)    region 2056x1664
+settings-dark-360.png              268911px changed (20.75%)  bbox=(32, 176, 688, 1686)      region 656x1510
+settings-dark-390.png              288351px changed (20.54%)  bbox=(32, 176, 748, 1686)      region 716x1510
+settings-dark-430.png              314269px changed (20.30%)  bbox=(32, 176, 828, 1686)      region 796x1510
+settings-dark-768.png              740617px changed (24.11%)  bbox=(32, 176, 1504, 1840)     region 1472x1664
+settings-light-1280.png            1002585px changed (19.58%) bbox=(252, 174, 2308, 1838)    region 2056x1664
+settings-light-360.png             265255px changed (20.47%)  bbox=(32, 176, 688, 1686)      region 656x1510
+settings-light-390.png             284695px changed (20.28%)  bbox=(32, 176, 748, 1686)      region 716x1510
+settings-light-430.png             310614px changed (20.07%)  bbox=(32, 176, 828, 1686)      region 796x1510
+settings-light-768.png             736265px changed (23.97%)  bbox=(32, 176, 1504, 1840)     region 1472x1664
+settings-new-user-dark-390.png     147480px changed (10.50%)  bbox=(32, 177, 748, 1194)      region 716x1017
+settings-new-user-light-390.png    146065px changed (10.40%)  bbox=(32, 177, 748, 1194)      region 716x1017
+settings-users-dark-390.png        123693px changed (8.81%)   bbox=(32, 177, 748, 1326)      region 716x1149
+settings-users-light-390.png       123650px changed (8.81%)   bbox=(32, 177, 748, 1326)      region 716x1149
+share-dark-1280.png                0px changed (0.00%)                                       
+share-dark-390.png                 1695px changed (0.12%)     bbox=(658, 167, 748, 231)      region 90x64
+share-dark-768.png                 0px changed (0.00%)                                       
+share-light-1280.png               0px changed (0.00%)                                       
+share-light-390.png                1675px changed (0.12%)     bbox=(658, 167, 748, 231)      region 90x64
+share-light-768.png                0px changed (0.00%)                                       
