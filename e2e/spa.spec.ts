@@ -45,7 +45,7 @@ test("s1: feed → settings is client-side; URL + no document reload", async ({ 
   await page.locator('.user-menu-button[aria-label="Admin"]').click();
   await page.getByRole("menuitem", { name: "Settings" }).click();
   await expect(page).toHaveURL(/\/settings$/);
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Account & Preferences", level: 2 })).toBeVisible();
   // The boot skeleton has settled by now (SectionRenderer replaced it).
   await expect(page.locator(".skeleton-settings")).toHaveCount(0);
   expect(await loads(page)).toBe(before); // INV-4: no document reload
@@ -78,7 +78,7 @@ test("s2: settings route renders its boot skeleton before content", async ({ pag
 
   await page.locator('.user-menu-button[aria-label="Admin"]').click();
   await page.getByRole("menuitem", { name: "Settings" }).click();
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Account & Preferences", level: 2 })).toBeVisible();
   expect(
     await page.evaluate(
       () => (window as unknown as { __sawSettingsSkeleton: { saw: boolean } }).__sawSettingsSkeleton.saw,
@@ -89,7 +89,7 @@ test("s2: settings route renders its boot skeleton before content", async ({ pag
 
 test("s3: brand link returns home client-side", async ({ page }) => {
   await page.goto(`${BASE}/settings`);
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Account & Preferences", level: 2 })).toBeVisible();
   const before = await loads(page);
   await page.getByRole("link", { name: "Back to list" }).click();
   await expect(page).toHaveURL(`${BASE}/`);
@@ -115,7 +115,7 @@ test("s4: login view: anonymous sees the form; authed user is bounced to app", a
     await anonPage.getByLabel("Password").fill("admin-password");
     await anonPage.getByRole("button", { name: "Sign in" }).click();
     await expect(anonPage).toHaveURL(/\/settings$/);
-    await expect(anonPage.getByRole("heading", { name: "Settings" })).toBeVisible();
+    await expect(anonPage.getByRole("heading", { name: "Account & Preferences", level: 2 })).toBeVisible();
   } finally {
     await anon.close();
   }
@@ -179,5 +179,5 @@ test("s8: back/forward popstate restores routes", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
   await page.goForward();
   await expect(page).toHaveURL(/\/settings$/);
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Account & Preferences", level: 2 })).toBeVisible();
 });

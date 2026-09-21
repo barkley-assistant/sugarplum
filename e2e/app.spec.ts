@@ -1337,17 +1337,23 @@ test("9: no horizontal overflow at 360-1280px across surfaces", async ({ page, b
     await expect(sheet).toHaveCount(0);
   }
 
-  // A10: Settings and Login are their own surfaces and clear the same bar.
-  // Settings is the admin's page here, so the user table (the widest content)
-  // is exercised, including its own scroll containment at 360px.
+  // A10: the settings screens and Login are their own surfaces and clear the
+  // same bar. The admin user table (the widest content, including its own
+  // scroll containment at 360px) lives on /settings/users as of #96.
   for (const width of [360, 768, 1280]) {
     await page.setViewportSize({ width, height: 800 });
-    await page.goto(`${BASE}/settings`);
-    await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
-    await expect(page.locator(".admin-table")).toBeVisible();
-    const probe = await horizontalEscapes(page);
-    expect(probe.docOverflow, `settings overflow at ${width}px`).toBe(false);
-    expect(probe.offenders, `settings escapes at ${width}px`).toEqual([]);
+    for (const screen of [
+      { path: "/settings", heading: "Account & Preferences", table: false },
+      { path: "/settings/users", heading: "Users", table: true },
+      { path: "/settings/users/new", heading: "New user", table: false },
+    ]) {
+      await page.goto(`${BASE}${screen.path}`);
+      await expect(page.getByRole("heading", { name: screen.heading, level: 2 })).toBeVisible();
+      if (screen.table) await expect(page.locator(".admin-table")).toBeVisible();
+      const probe = await horizontalEscapes(page);
+      expect(probe.docOverflow, `${screen.path} overflow at ${width}px`).toBe(false);
+      expect(probe.offenders, `${screen.path} escapes at ${width}px`).toEqual([]);
+    }
   }
 
   // The login card is the one surface with no session: probe it anonymously.
@@ -2740,7 +2746,7 @@ test("23: bottom action bar persists on every authenticated route (#95)", async 
     for (const width of [360, 390, 430]) {
       await page.setViewportSize({ width, height: 844 });
       await page.goto(`${BASE}/settings`);
-      await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Account & Preferences", level: 2 })).toBeVisible();
 
       const bar = page.getByRole("navigation", { name: "Primary actions" });
       await expect(bar, `no bar on /settings @${width}/${scheme}`).toBeVisible();
@@ -2859,7 +2865,7 @@ test("23: bottom action bar persists on every authenticated route (#95)", async 
   // --- F. Desktop untouched: no bar on a non-feed route either. --------
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto(`${BASE}/settings`);
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Account & Preferences", level: 2 })).toBeVisible();
   await expect(page.locator(".action-bar")).toHaveCount(0);
 
   // Board hygiene: leave no live share link for later tests.
@@ -2967,7 +2973,9 @@ test("24: item row and reset row share their slot at every width (#97)", async (
 
   const openReset = async (width: number) => {
     await page.setViewportSize({ width, height: 844 });
-    await page.goto(`${BASE}/settings`);
+    // #96: the admin table (and its inline reset form) lives on the Users
+    // screen; the row geometry contract is unchanged.
+    await page.goto(`${BASE}/settings/users`);
     await page.getByRole("button", { name: "Reset password" }).first().click();
     await expect(page.locator("#reset-password")).toBeVisible();
   };
