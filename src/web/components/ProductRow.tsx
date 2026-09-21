@@ -21,6 +21,8 @@ interface ProductRowProps {
   reorderHandle?: ReactNode;
   /** True while this row is lifted by the reorder state machine. */
   dragging?: boolean;
+  /** True while this row is settling into its final slot after a drop. */
+  dropping?: boolean;
   /** Owner-only enrichment state; omitted on public/share rows. */
   fetchState?: "pending" | "complete" | "failed";
 }
@@ -40,11 +42,12 @@ export function ProductRow({
   actions,
   reorderHandle,
   dragging = false,
+  dropping = false,
   fetchState,
 }: ProductRowProps) {
   return (
     <li
-      className={`card item-card${purchased ? " is-purchased" : ""}${dragging ? " dragging" : ""}${reorderHandle ? " is-reordering" : ""}`}
+      className={`card item-card${purchased ? " is-purchased" : ""}${dragging ? " dragging" : ""}${dropping ? " dropping" : ""}${reorderHandle ? " is-reordering" : ""}`}
       data-item-id={id}
       data-fetch={fetchState && fetchState !== "complete" ? fetchState : undefined}
     >

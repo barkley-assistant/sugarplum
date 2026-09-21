@@ -948,14 +948,45 @@ button.filter-chip {
   background: var(--surface-2);
 }
 
-.item-card.dragging {
+/* #91: the lifted row and the row settling into its slot after a drop share
+   the same raise, so the shadow survives the slide. The translate itself is
+   written inline every frame by src/web/reorder.ts — an inline transform
+   replaces anything a class could declare here, so JS composes translate +
+   scale and these rules own only the paint. */
+.item-card.dragging,
+.item-card.dropping {
   box-shadow: var(--shadow-overlay);
-  transform: scale(1.02);
   position: relative;
   z-index: 5;
   opacity: 0.95;
   border-color: var(--border-2);
   background: var(--surface);
+  will-change: transform;
+}
+
+/* Following the pointer must never lag: no transform transition while lifted
+   (the shadow and opacity ease in on lift instead). */
+.item-card.dragging {
+  transition: box-shadow var(--ease), opacity var(--ease);
+}
+
+/* Settling: here the transform IS the animation — pointer position to slot. */
+.item-card.dropping {
+  transition: transform var(--ease), box-shadow var(--ease), opacity var(--ease);
+}
+
+/* Rows animate their transforms only while a drag is live. Scoping it to
+   `.is-dragging` is what keeps the end-of-drop handoff instant: the hook
+   clears every inline transform in the same frame the list re-renders in its
+   new order, and an armed transform transition would animate that cleared
+   translate — a visible re-flash of the old gaps. */
+.item-list.is-dragging .item-card:not(.dragging) {
+  transition: transform var(--ease), background-color var(--ease-row), box-shadow var(--ease);
+}
+
+/* A mouse drag passes over other rows; without this it selects their text. */
+.item-list:has(.item-card.dragging) {
+  user-select: none;
 }
 
 /* ---------- Empty states + skeletons ---------- */
@@ -1789,7 +1820,10 @@ button.filter-chip {
   border: none;
   border-bottom: 1px solid var(--border);
   border-radius: var(--r-flat);
-  transition: background-color var(--ease-row);
+  /* box-shadow too: the lift's shadow fades out on the handoff frame, when the
+     drag classes come off (see the drag states above). TRANSFORM is
+     deliberately absent — it is scoped to a live drag. */
+  transition: background-color var(--ease-row), box-shadow var(--ease);
 }
 
 /* #89: while this row's overflow menu is open, lift the whole row above its

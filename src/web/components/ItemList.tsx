@@ -28,6 +28,8 @@ interface ItemListProps {
   renderDragHandle?: (id: string) => ReactNode;
   /** Id of the card currently lifted by the reorder state machine. */
   draggingId?: string | null;
+  /** Id of the card currently settling into its slot after a drop. */
+  droppingId?: string | null;
 }
 
 /** Renders the ordered list of cards. Empty lists return null — the caller
@@ -45,11 +47,16 @@ export function ItemList({
   onOpenDetails,
   renderDragHandle,
   draggingId,
+  droppingId,
 }: ItemListProps) {
   if (items.length === 0) return null;
 
   return (
-    <ul className="item-list">
+    // #91: `.is-dragging` scopes the row transform transitions to a live drag
+    // (styles.css) — that is what lets the drop handoff clear every inline
+    // transform in the same frame the list re-renders, with nothing armed to
+    // animate the layout move.
+    <ul className={`item-list${draggingId ? " is-dragging" : ""}`}>
       {items.map((item) => (
         <ItemCard
           key={item.id}
@@ -65,6 +72,7 @@ export function ItemList({
           onOpenDetails={onOpenDetails}
           dragHandle={renderDragHandle?.(item.id)}
           dragging={draggingId === item.id}
+          dropping={droppingId === item.id}
         />
       ))}
     </ul>
