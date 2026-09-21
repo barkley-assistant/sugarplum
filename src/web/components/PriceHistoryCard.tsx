@@ -31,6 +31,15 @@ export function adviceLabel(advice: PriceTrend["advice"]): string {
   }
 }
 
+/** Caption under a DRAWN chart: the advice label when the server derived a
+ *  real signal, the watching copy when it did not (null trend or the
+ *  insufficient advice). #118: "Not enough history yet" renders ONLY in the
+ *  no-chart empty state, never under a drawn chart. */
+export function trendCaption(trend: PriceTrend | null): string {
+  if (!trend || trend.advice === "insufficient") return S.trend.watching;
+  return adviceLabel(trend.advice);
+}
+
 /** A mixed-currency series is not comparable and is never drawn. */
 export function sameCurrencySeries(series: PricePoint[], currency: string | null): boolean {
   const code = (currency ?? "").trim().toUpperCase();
@@ -104,9 +113,7 @@ export function PriceHistoryCard({ stats, currency }: PriceHistoryCardProps) {
             currency={currency}
             ariaLabel={S.priceHistory.graphLabel(windowLabel, currentLabel, lowestLabel)}
           />
-          <p className="price-graph-caption">
-            {stats.trend ? adviceLabel(stats.trend.advice) : S.trend.insufficient}
-          </p>
+          <p className="price-graph-caption">{trendCaption(stats.trend)}</p>
         </>
       ) : (
         <p className="price-history-empty">{S.trend.insufficient}</p>

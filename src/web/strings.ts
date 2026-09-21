@@ -110,6 +110,10 @@ export const S = {
     trendingDown: "Trending down — could wait",
     stable: "Stable",
     insufficient: "Not enough history yet",
+    /** #118: caption under a DRAWN chart when no trend is derivable yet.
+     *  The literal "insufficient" copy stays exclusive to the no-chart
+     *  empty state. */
+    watching: "Watching for a trend",
   },
   priceHistory: {
     title: "Price history",
