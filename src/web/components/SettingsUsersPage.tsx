@@ -62,7 +62,11 @@ export function SettingsUsersPage() {
           <span aria-hidden="true">←</span>
           {S.settings.backToAccount}
         </button>
-        <button type="button" onClick={() => navigate("/settings/users/new")}>
+        <button
+          type="button"
+          className="settings-head-action"
+          onClick={() => navigate("/settings/users/new")}
+        >
           {S.settings.newUser}
         </button>
       </div>

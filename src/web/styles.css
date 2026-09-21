@@ -480,6 +480,12 @@ a.brand:hover {
   margin-bottom: var(--section-gap);
 }
 
+/* When the head wraps at 360px the action keeps the right edge it has on one
+   line instead of landing at the flex start under the back link. */
+.settings-screen-head .settings-head-action {
+  margin-left: auto;
+}
+
 /* Subordinate navigation rendered as a button (the settings area has no
    middle-click contract to honour): quiet at rest, underline on hover. */
 .back-link {
@@ -533,6 +539,12 @@ a.brand:hover {
   color: var(--text-3);
 }
 
+/* A card holding a single navigation row: the row owns its own padding, so
+   the card keeps only the breathing room around it. */
+.settings-section.settings-nav-section {
+  padding: var(--sp-2);
+}
+
 /* Real toggle switch (#96): the ROW is the control — 44px hit area, single
    Tab stop, label left and track right, like the platform settings rows it
    replaces. State comes from aria-checked on the row, so the visual can
@@ -561,6 +573,14 @@ a.brand:hover {
 
 .toggle-row:hover {
   background: var(--surface-2);
+}
+
+/* An off track is --surface-2, the same token the row hovers to, so hovering
+   the row would dissolve the track's silhouette. Strengthen the ring on an
+   OFF switch while the row is hovered (the grammar button.secondary:hover
+   uses); the ON state keeps its plum fill untouched. */
+.toggle-row[aria-checked="false"]:hover .switch-track {
+  border-color: var(--text-3);
 }
 
 .toggle-label {
