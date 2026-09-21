@@ -1,0 +1,16 @@
+add-other-dark-390.png: 0 differing px
+add-other-light-390.png: 0 differing px
+edit-gbp-dark-1280.png: 0 differing px
+edit-gbp-dark-390.png: 0 differing px
+edit-gbp-light-1280.png: 0 differing px
+edit-gbp-light-390.png: 0 differing px
+edit-sek-dark-1280.png: 6676 differing px, bbox (546, 203, 1000, 268)
+edit-sek-dark-360.png: 42884 differing px, bbox (15, 365, 344, 752)
+edit-sek-dark-390.png: 45644 differing px, bbox (15, 365, 374, 752)
+edit-sek-dark-430.png: 49324 differing px, bbox (15, 365, 414, 752)
+edit-sek-dark-768.png: 6688 differing px, bbox (288, 203, 752, 268)
+edit-sek-light-1280.png: 6609 differing px, bbox (546, 203, 999, 268)
+edit-sek-light-360.png: 42867 differing px, bbox (15, 365, 344, 752)
+edit-sek-light-390.png: 45627 differing px, bbox (15, 365, 374, 752)
+edit-sek-light-430.png: 49307 differing px, bbox (15, 365, 414, 752)
+edit-sek-light-768.png: 6625 differing px, bbox (288, 203, 751, 268)

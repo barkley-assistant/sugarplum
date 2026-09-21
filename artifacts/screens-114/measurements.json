@@ -1,0 +1,422 @@
+{
+  "seeded": {
+    "sek": "8bc64f5d-08f7-4ef9-85c3-22ec882110e4",
+    "gbp": "77ba4707-5086-4d5f-88a4-9dfc72047eb8"
+  },
+  "edit-sek-light-360": {
+    "selectValue": "Other",
+    "codePresent": true,
+    "codeVisible": true,
+    "codeValue": "SEK",
+    "codeWidth": 328,
+    "rowWidth": 328,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 328
+      },
+      {
+        "id": "item-price",
+        "width": 158
+      },
+      {
+        "id": "item-currency",
+        "width": 158
+      },
+      {
+        "id": "item-other-currency",
+        "width": 328
+      }
+    ],
+    "docOverflow": false
+  },
+  "edit-sek-light-390": {
+    "selectValue": "Other",
+    "codePresent": true,
+    "codeVisible": true,
+    "codeValue": "SEK",
+    "codeWidth": 358,
+    "rowWidth": 358,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 358
+      },
+      {
+        "id": "item-price",
+        "width": 173
+      },
+      {
+        "id": "item-currency",
+        "width": 173
+      },
+      {
+        "id": "item-other-currency",
+        "width": 358
+      }
+    ],
+    "docOverflow": false
+  },
+  "edit-sek-light-430": {
+    "selectValue": "Other",
+    "codePresent": true,
+    "codeVisible": true,
+    "codeValue": "SEK",
+    "codeWidth": 398,
+    "rowWidth": 398,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 398
+      },
+      {
+        "id": "item-price",
+        "width": 193
+      },
+      {
+        "id": "item-currency",
+        "width": 193
+      },
+      {
+        "id": "item-other-currency",
+        "width": 398
+      }
+    ],
+    "docOverflow": false
+  },
+  "edit-sek-light-768": {
+    "selectValue": "Other",
+    "codePresent": true,
+    "codeVisible": true,
+    "codeValue": "SEK",
+    "codeWidth": 140,
+    "rowWidth": 736,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 280
+      },
+      {
+        "id": "item-price",
+        "width": 140
+      },
+      {
+        "id": "item-currency",
+        "width": 140
+      },
+      {
+        "id": "item-other-currency",
+        "width": 140
+      }
+    ],
+    "docOverflow": false
+  },
+  "edit-sek-light-1280": {
+    "selectValue": "Other",
+    "codePresent": true,
+    "codeVisible": true,
+    "codeValue": "SEK",
+    "codeWidth": 137,
+    "rowWidth": 720,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 274
+      },
+      {
+        "id": "item-price",
+        "width": 137
+      },
+      {
+        "id": "item-currency",
+        "width": 137
+      },
+      {
+        "id": "item-other-currency",
+        "width": 137
+      }
+    ],
+    "docOverflow": false
+  },
+  "edit-gbp-light-390": {
+    "selectValue": "GBP",
+    "codePresent": false,
+    "codeVisible": false,
+    "codeValue": null,
+    "codeWidth": null,
+    "rowWidth": 358,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 358
+      },
+      {
+        "id": "item-price",
+        "width": 173
+      },
+      {
+        "id": "item-currency",
+        "width": 173
+      }
+    ],
+    "docOverflow": false
+  },
+  "edit-gbp-light-1280": {
+    "selectValue": "GBP",
+    "codePresent": false,
+    "codeVisible": false,
+    "codeValue": null,
+    "codeWidth": null,
+    "rowWidth": 720,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 348
+      },
+      {
+        "id": "item-price",
+        "width": 174
+      },
+      {
+        "id": "item-currency",
+        "width": 174
+      }
+    ],
+    "docOverflow": false
+  },
+  "add-other-light-390": {
+    "selectValue": "Other",
+    "codePresent": true,
+    "codeVisible": true,
+    "codeValue": "",
+    "codeWidth": 358,
+    "rowWidth": 358,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 358
+      },
+      {
+        "id": "item-price",
+        "width": 173
+      },
+      {
+        "id": "item-currency",
+        "width": 173
+      },
+      {
+        "id": "item-other-currency",
+        "width": 358
+      }
+    ],
+    "docOverflow": false
+  },
+  "edit-sek-dark-360": {
+    "selectValue": "Other",
+    "codePresent": true,
+    "codeVisible": true,
+    "codeValue": "SEK",
+    "codeWidth": 328,
+    "rowWidth": 328,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 328
+      },
+      {
+        "id": "item-price",
+        "width": 158
+      },
+      {
+        "id": "item-currency",
+        "width": 158
+      },
+      {
+        "id": "item-other-currency",
+        "width": 328
+      }
+    ],
+    "docOverflow": false
+  },
+  "edit-sek-dark-390": {
+    "selectValue": "Other",
+    "codePresent": true,
+    "codeVisible": true,
+    "codeValue": "SEK",
+    "codeWidth": 358,
+    "rowWidth": 358,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 358
+      },
+      {
+        "id": "item-price",
+        "width": 173
+      },
+      {
+        "id": "item-currency",
+        "width": 173
+      },
+      {
+        "id": "item-other-currency",
+        "width": 358
+      }
+    ],
+    "docOverflow": false
+  },
+  "edit-sek-dark-430": {
+    "selectValue": "Other",
+    "codePresent": true,
+    "codeVisible": true,
+    "codeValue": "SEK",
+    "codeWidth": 398,
+    "rowWidth": 398,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 398
+      },
+      {
+        "id": "item-price",
+        "width": 193
+      },
+      {
+        "id": "item-currency",
+        "width": 193
+      },
+      {
+        "id": "item-other-currency",
+        "width": 398
+      }
+    ],
+    "docOverflow": false
+  },
+  "edit-sek-dark-768": {
+    "selectValue": "Other",
+    "codePresent": true,
+    "codeVisible": true,
+    "codeValue": "SEK",
+    "codeWidth": 140,
+    "rowWidth": 736,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 280
+      },
+      {
+        "id": "item-price",
+        "width": 140
+      },
+      {
+        "id": "item-currency",
+        "width": 140
+      },
+      {
+        "id": "item-other-currency",
+        "width": 140
+      }
+    ],
+    "docOverflow": false
+  },
+  "edit-sek-dark-1280": {
+    "selectValue": "Other",
+    "codePresent": true,
+    "codeVisible": true,
+    "codeValue": "SEK",
+    "codeWidth": 137,
+    "rowWidth": 720,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 274
+      },
+      {
+        "id": "item-price",
+        "width": 137
+      },
+      {
+        "id": "item-currency",
+        "width": 137
+      },
+      {
+        "id": "item-other-currency",
+        "width": 137
+      }
+    ],
+    "docOverflow": false
+  },
+  "edit-gbp-dark-390": {
+    "selectValue": "GBP",
+    "codePresent": false,
+    "codeVisible": false,
+    "codeValue": null,
+    "codeWidth": null,
+    "rowWidth": 358,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 358
+      },
+      {
+        "id": "item-price",
+        "width": 173
+      },
+      {
+        "id": "item-currency",
+        "width": 173
+      }
+    ],
+    "docOverflow": false
+  },
+  "edit-gbp-dark-1280": {
+    "selectValue": "GBP",
+    "codePresent": false,
+    "codeVisible": false,
+    "codeValue": null,
+    "codeWidth": null,
+    "rowWidth": 720,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 348
+      },
+      {
+        "id": "item-price",
+        "width": 174
+      },
+      {
+        "id": "item-currency",
+        "width": 174
+      }
+    ],
+    "docOverflow": false
+  },
+  "add-other-dark-390": {
+    "selectValue": "Other",
+    "codePresent": true,
+    "codeVisible": true,
+    "codeValue": "",
+    "codeWidth": 358,
+    "rowWidth": 358,
+    "fields": [
+      {
+        "id": "item-title",
+        "width": 358
+      },
+      {
+        "id": "item-price",
+        "width": 173
+      },
+      {
+        "id": "item-currency",
+        "width": 173
+      },
+      {
+        "id": "item-other-currency",
+        "width": 358
+      }
+    ],
+    "docOverflow": false
+  }
+}
