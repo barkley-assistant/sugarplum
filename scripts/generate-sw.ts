@@ -11,7 +11,18 @@ import { join } from "node:path";
  *  a new build atomically swaps the shell cache.
  */
 
-const SHELL_ROUTES = ["/", "/login", "/add", "/settings"];
+/** Shell routes: precached (install-time fetch) AND served cache-first for
+ *  navigations, so they work offline. /settings/users and /settings/users/new
+ *  are the #96 admin screens of the settings area — they need their own
+ *  entries or an offline navigation there would miss the shell. */
+const SHELL_ROUTES = [
+  "/",
+  "/login",
+  "/add",
+  "/settings",
+  "/settings/users",
+  "/settings/users/new",
+];
 const PWA_ASSETS = [
   "/manifest.webmanifest",
   "/assets/brand/pwa/icon-192.png",
