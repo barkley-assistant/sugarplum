@@ -24,18 +24,18 @@ afterAll(() => {
 describe("db migrations", () => {
   test("migrations are idempotent", () => {
     const version = db.query("PRAGMA user_version").get() as { user_version: number };
-    expect(version.user_version).toBe(8);
+    expect(version.user_version).toBe(9);
 
     // Re-run migrations on the same connection (and a second open) — no-op.
     runMigrations(db);
     const again = openDatabase(dbPath);
-    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 8 });
+    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 9 });
     again.close();
   });
 
   test("v2 (enrichment state) + v3 (image provenance) + v4 (price provenance) + v5 (share) + v6 (tracking) + v7 (owner mark) + v8 (admin ui gate) columns exist on an upgraded db", () => {
     const v = db.query("PRAGMA user_version").get() as { user_version: number };
-    expect(v.user_version).toBe(8);
+    expect(v.user_version).toBe(9);
     const cols = db.query("PRAGMA table_info(wishlist_items)").all() as { name: string }[];
     for (const c of [
       "fetch_state",
@@ -91,7 +91,7 @@ describe("db migrations", () => {
         "Old item",
       ]);
       runMigrations(fresh);
-      expect((fresh.query("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(8);
+      expect((fresh.query("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(9);
       const row = fresh
         .query(
           `SELECT fetch_state, site_name, hint_price_cents, image_source, price_source, cheaper_url
@@ -174,6 +174,28 @@ describe("db migrations", () => {
         .query("SELECT show_user_management FROM users WHERE id = ?")
         .get("v2-upgrade-user") as { show_user_management: number };
       expect(gatedUser.show_user_management).toBe(0);
+
+      // v9: the learned-override table is brand new — created empty, no
+      // backfill, and invisible to every pre-#103 code path.
+      const learnedCols = fresh.query("PRAGMA table_info(scrape_learned_overrides)").all() as {
+        name: string;
+        dflt_value: string | null;
+      }[];
+      for (const c of [
+        "hostname",
+        "strategies",
+        "escalation_count",
+        "learned_at",
+        "last_escalated_at",
+        "last_demoted_at",
+        "successful_stealth_fetches",
+      ]) {
+        expect(learnedCols.some((x) => x.name === c)).toBe(true);
+      }
+      const emptyLearned = fresh
+        .query("SELECT COUNT(*) AS n FROM scrape_learned_overrides")
+        .get() as { n: number };
+      expect(emptyLearned.n).toBe(0);
     } finally {
       fresh.close();
       rmSync(freshPath, { force: true });
@@ -185,7 +207,14 @@ describe("db migrations", () => {
       .query("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
       .all() as { name: string }[];
     const names = tables.map((t) => t.name);
-    for (const expected of ["users", "sessions", "wishlist_items", "price_history"]) {
+    for (const expected of [
+      "users",
+      "sessions",
+      "wishlist_items",
+      "price_history",
+      "share_tokens",
+      "scrape_learned_overrides",
+    ]) {
       expect(names).toContain(expected);
     }
   });

@@ -97,6 +97,12 @@ function withLock<T>(fn: () => Promise<T>): Promise<T> {
 
 const DEFAULT_TERM_GRACE_MS = 15_000;
 const SIGKILL_DELAY_MS = 5_000;
+/** Bounded stdout drain AFTER the process is gone. A killed process can leave
+ *  the pipe open for good, so it gets a short window; a clean exit gets enough
+ *  time for the helper's multi-hundred-KB JSON verdict to land (its detached
+ *  Xvfb reaper holds the pipe's write end for ~0.5s after the helper exits). */
+const KILLED_DRAIN_MS = 250;
+const CLEAN_EXIT_DRAIN_MS = 5_000;
 
 interface DefaultRunnerOpts {
   /** Wraps `process.kill`; tests inject a recorder. */
@@ -155,13 +161,26 @@ async function defaultRunner(
     }
   }, timeoutMs + termGraceMs + killDelayMs);
 
-  // Read stdout concurrently with waiting for exit. After exit, give it a
-  // brief drain window — if SIGKILL has detached the pipe's EOF, return
-  // what we have rather than hanging the runner.
+  // Read stdout concurrently with waiting for exit. Reading INCREMENTALLY
+  // matters: `new Response(stream).text()` only resolves at EOF, and EOF lags
+  // a clean exit — the helper's detached Xvfb reaper inherits the pipe's write
+  // end and exits ~0.5s after its parent. A ~1MB verdict showed up as 0 bytes
+  // at a fixed drain deadline that way (eBay pages, #103).
+  //
+  // After exit, give the reader a bounded drain window. A KILLED process can
+  // leave the pipe open for good, so that path gets the short window; a clean
+  // exit gets enough time for the payload to land.
   let stdoutText = "";
   const readPromise = (async () => {
     try {
-      stdoutText = await new Response(proc.stdout).text();
+      const reader = proc.stdout.getReader();
+      const decoder = new TextDecoder();
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        stdoutText += decoder.decode(value, { stream: true });
+      }
+      stdoutText += decoder.decode();
     } catch {
       /* ignore — pipe error after kill */
     }
@@ -171,9 +190,8 @@ async function defaultRunner(
   clearTimeout(termTimer);
   clearTimeout(killTimer);
 
-  // Reader may still be parked on a pipe whose EOF never came (SIGKILL).
-  // Race against a short window so the runner always returns.
-  await Promise.race([readPromise, Bun.sleep(250)]);
+  const drainMs = killed ? KILLED_DRAIN_MS : CLEAN_EXIT_DRAIN_MS;
+  await Promise.race([readPromise, Bun.sleep(drainMs)]);
 
   return {
     stdout: stdoutText,
