@@ -1,0 +1,562 @@
+[
+  {
+    "surface": "menu",
+    "state": "hover",
+    "theme": "light",
+    "width": 360,
+    "file": "menu-hover-light-360.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "menu",
+    "state": "hover",
+    "theme": "light",
+    "width": 390,
+    "file": "menu-hover-light-390.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "menu",
+    "state": "rest",
+    "theme": "light",
+    "width": 390,
+    "file": "menu-rest-light-390.png",
+    "color": "rgb(220, 38, 38)",
+    "background": "rgb(255, 255, 255)",
+    "ratio": 4.829
+  },
+  {
+    "surface": "menu",
+    "state": "hover",
+    "theme": "light",
+    "width": 430,
+    "file": "menu-hover-light-430.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "menu",
+    "state": "hover",
+    "theme": "light",
+    "width": 768,
+    "file": "menu-hover-light-768.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "menu",
+    "state": "hover",
+    "theme": "light",
+    "width": 1280,
+    "file": "menu-hover-light-1280.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "menu",
+    "state": "rest",
+    "theme": "light",
+    "width": 1280,
+    "file": "menu-rest-light-1280.png",
+    "color": "rgb(220, 38, 38)",
+    "background": "rgb(255, 255, 255)",
+    "ratio": 4.829
+  },
+  {
+    "surface": "confirm",
+    "state": "hover",
+    "theme": "light",
+    "width": 360,
+    "file": "confirm-hover-light-360.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "confirm",
+    "state": "hover",
+    "theme": "light",
+    "width": 390,
+    "file": "confirm-hover-light-390.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "confirm",
+    "state": "rest",
+    "theme": "light",
+    "width": 390,
+    "file": "confirm-rest-light-390.png",
+    "color": "rgb(220, 38, 38)",
+    "background": "rgb(255, 255, 255)",
+    "ratio": 4.829
+  },
+  {
+    "surface": "confirm",
+    "state": "hover",
+    "theme": "light",
+    "width": 430,
+    "file": "confirm-hover-light-430.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "confirm",
+    "state": "hover",
+    "theme": "light",
+    "width": 768,
+    "file": "confirm-hover-light-768.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "confirm",
+    "state": "hover",
+    "theme": "light",
+    "width": 1280,
+    "file": "confirm-hover-light-1280.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "confirm",
+    "state": "rest",
+    "theme": "light",
+    "width": 1280,
+    "file": "confirm-rest-light-1280.png",
+    "color": "rgb(220, 38, 38)",
+    "background": "rgb(255, 255, 255)",
+    "ratio": 4.829
+  },
+  {
+    "surface": "share",
+    "state": "hover",
+    "theme": "light",
+    "width": 360,
+    "file": "share-hover-light-360.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "share",
+    "state": "hover",
+    "theme": "light",
+    "width": 390,
+    "file": "share-hover-light-390.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "share",
+    "state": "rest",
+    "theme": "light",
+    "width": 390,
+    "file": "share-rest-light-390.png",
+    "color": "rgb(220, 38, 38)",
+    "background": "rgb(255, 255, 255)",
+    "ratio": 4.829
+  },
+  {
+    "surface": "share",
+    "state": "hover",
+    "theme": "light",
+    "width": 430,
+    "file": "share-hover-light-430.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "share",
+    "state": "hover",
+    "theme": "light",
+    "width": 768,
+    "file": "share-hover-light-768.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "share",
+    "state": "hover",
+    "theme": "light",
+    "width": 1280,
+    "file": "share-hover-light-1280.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "share",
+    "state": "rest",
+    "theme": "light",
+    "width": 1280,
+    "file": "share-rest-light-1280.png",
+    "color": "rgb(220, 38, 38)",
+    "background": "rgb(255, 255, 255)",
+    "ratio": 4.829
+  },
+  {
+    "surface": "admin",
+    "state": "hover",
+    "theme": "light",
+    "width": 360,
+    "file": "admin-hover-light-360.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "admin",
+    "state": "hover",
+    "theme": "light",
+    "width": 390,
+    "file": "admin-hover-light-390.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "admin",
+    "state": "rest",
+    "theme": "light",
+    "width": 390,
+    "file": "admin-rest-light-390.png",
+    "color": "rgb(220, 38, 38)",
+    "background": "rgb(255, 255, 255)",
+    "ratio": 4.829
+  },
+  {
+    "surface": "admin",
+    "state": "hover",
+    "theme": "light",
+    "width": 430,
+    "file": "admin-hover-light-430.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "admin",
+    "state": "hover",
+    "theme": "light",
+    "width": 768,
+    "file": "admin-hover-light-768.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "admin",
+    "state": "hover",
+    "theme": "light",
+    "width": 1280,
+    "file": "admin-hover-light-1280.png",
+    "color": "rgb(185, 28, 28)",
+    "background": "rgb(254, 242, 242)",
+    "ratio": 5.915
+  },
+  {
+    "surface": "admin",
+    "state": "rest",
+    "theme": "light",
+    "width": 1280,
+    "file": "admin-rest-light-1280.png",
+    "color": "rgb(220, 38, 38)",
+    "background": "rgb(255, 255, 255)",
+    "ratio": 4.829
+  },
+  {
+    "surface": "menu",
+    "state": "hover",
+    "theme": "dark",
+    "width": 360,
+    "file": "menu-hover-dark-360.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "menu",
+    "state": "hover",
+    "theme": "dark",
+    "width": 390,
+    "file": "menu-hover-dark-390.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "menu",
+    "state": "rest",
+    "theme": "dark",
+    "width": 390,
+    "file": "menu-rest-dark-390.png",
+    "color": "rgb(248, 113, 113)",
+    "background": "rgb(36, 27, 49)",
+    "ratio": 5.949
+  },
+  {
+    "surface": "menu",
+    "state": "hover",
+    "theme": "dark",
+    "width": 430,
+    "file": "menu-hover-dark-430.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "menu",
+    "state": "hover",
+    "theme": "dark",
+    "width": 768,
+    "file": "menu-hover-dark-768.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "menu",
+    "state": "hover",
+    "theme": "dark",
+    "width": 1280,
+    "file": "menu-hover-dark-1280.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "menu",
+    "state": "rest",
+    "theme": "dark",
+    "width": 1280,
+    "file": "menu-rest-dark-1280.png",
+    "color": "rgb(248, 113, 113)",
+    "background": "rgb(27, 22, 35)",
+    "ratio": 6.403
+  },
+  {
+    "surface": "confirm",
+    "state": "hover",
+    "theme": "dark",
+    "width": 360,
+    "file": "confirm-hover-dark-360.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "confirm",
+    "state": "hover",
+    "theme": "dark",
+    "width": 390,
+    "file": "confirm-hover-dark-390.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "confirm",
+    "state": "rest",
+    "theme": "dark",
+    "width": 390,
+    "file": "confirm-rest-dark-390.png",
+    "color": "rgb(248, 113, 113)",
+    "background": "rgb(27, 22, 35)",
+    "ratio": 6.403
+  },
+  {
+    "surface": "confirm",
+    "state": "hover",
+    "theme": "dark",
+    "width": 430,
+    "file": "confirm-hover-dark-430.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "confirm",
+    "state": "hover",
+    "theme": "dark",
+    "width": 768,
+    "file": "confirm-hover-dark-768.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "confirm",
+    "state": "hover",
+    "theme": "dark",
+    "width": 1280,
+    "file": "confirm-hover-dark-1280.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "confirm",
+    "state": "rest",
+    "theme": "dark",
+    "width": 1280,
+    "file": "confirm-rest-dark-1280.png",
+    "color": "rgb(248, 113, 113)",
+    "background": "rgb(27, 22, 35)",
+    "ratio": 6.403
+  },
+  {
+    "surface": "share",
+    "state": "hover",
+    "theme": "dark",
+    "width": 360,
+    "file": "share-hover-dark-360.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "share",
+    "state": "hover",
+    "theme": "dark",
+    "width": 390,
+    "file": "share-hover-dark-390.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "share",
+    "state": "rest",
+    "theme": "dark",
+    "width": 390,
+    "file": "share-rest-dark-390.png",
+    "color": "rgb(248, 113, 113)",
+    "background": "rgb(27, 22, 35)",
+    "ratio": 6.403
+  },
+  {
+    "surface": "share",
+    "state": "hover",
+    "theme": "dark",
+    "width": 430,
+    "file": "share-hover-dark-430.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "share",
+    "state": "hover",
+    "theme": "dark",
+    "width": 768,
+    "file": "share-hover-dark-768.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "share",
+    "state": "hover",
+    "theme": "dark",
+    "width": 1280,
+    "file": "share-hover-dark-1280.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "share",
+    "state": "rest",
+    "theme": "dark",
+    "width": 1280,
+    "file": "share-rest-dark-1280.png",
+    "color": "rgb(248, 113, 113)",
+    "background": "rgb(27, 22, 35)",
+    "ratio": 6.403
+  },
+  {
+    "surface": "admin",
+    "state": "hover",
+    "theme": "dark",
+    "width": 360,
+    "file": "admin-hover-dark-360.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "admin",
+    "state": "hover",
+    "theme": "dark",
+    "width": 390,
+    "file": "admin-hover-dark-390.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "admin",
+    "state": "rest",
+    "theme": "dark",
+    "width": 390,
+    "file": "admin-rest-dark-390.png",
+    "color": "rgb(248, 113, 113)",
+    "background": "rgb(27, 22, 35)",
+    "ratio": 6.403
+  },
+  {
+    "surface": "admin",
+    "state": "hover",
+    "theme": "dark",
+    "width": 430,
+    "file": "admin-hover-dark-430.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "admin",
+    "state": "hover",
+    "theme": "dark",
+    "width": 768,
+    "file": "admin-hover-dark-768.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "admin",
+    "state": "hover",
+    "theme": "dark",
+    "width": 1280,
+    "file": "admin-hover-dark-1280.png",
+    "color": "rgb(252, 165, 165)",
+    "background": "rgb(43, 21, 23)",
+    "ratio": 9.052
+  },
+  {
+    "surface": "admin",
+    "state": "rest",
+    "theme": "dark",
+    "width": 1280,
+    "file": "admin-rest-dark-1280.png",
+    "color": "rgb(248, 113, 113)",
+    "background": "rgb(27, 22, 35)",
+    "ratio": 6.403
+  }
+]

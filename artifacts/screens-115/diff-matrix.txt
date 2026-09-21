@@ -1,0 +1,57 @@
+captures=56 differing=45 identical=11
+admin-hover-dark-1280.png	311	(888, 348, 929, 359)
+admin-hover-dark-360.png	313	(226, 649, 267, 660)
+admin-hover-dark-390.png	313	(256, 593, 297, 604)
+admin-hover-dark-430.png	308	(282, 593, 323, 604)
+admin-hover-dark-768.png	300	(641, 349, 682, 360)
+admin-hover-light-1280.png	305	(888, 348, 929, 359)
+admin-hover-light-360.png	302	(227, 649, 267, 660)
+admin-hover-light-390.png	302	(257, 593, 297, 604)
+admin-hover-light-430.png	299	(282, 593, 323, 604)
+admin-hover-light-768.png	301	(641, 349, 682, 360)
+admin-rest-dark-1280.png	0	None
+admin-rest-dark-390.png	20	(16, 220, 374, 226)
+admin-rest-light-1280.png	0	None
+admin-rest-light-390.png	0	None
+confirm-hover-dark-1280.png	308	(763, 477, 808, 489)
+confirm-hover-dark-360.png	308	(257, 449, 302, 461)
+confirm-hover-dark-390.png	308	(287, 449, 332, 461)
+confirm-hover-dark-430.png	308	(327, 449, 372, 461)
+confirm-hover-dark-768.png	308	(507, 477, 552, 489)
+confirm-hover-light-1280.png	302	(763, 477, 808, 489)
+confirm-hover-light-360.png	302	(257, 449, 302, 461)
+confirm-hover-light-390.png	302	(287, 449, 332, 461)
+confirm-hover-light-430.png	302	(327, 449, 372, 461)
+confirm-hover-light-768.png	302	(507, 477, 552, 489)
+confirm-rest-dark-1280.png	0	None
+confirm-rest-dark-390.png	0	None
+confirm-rest-light-1280.png	0	None
+confirm-rest-light-390.png	0	None
+menu-hover-dark-1280.png	301	(963, 417, 1004, 428)
+menu-hover-dark-360.png	303	(30, 737, 75, 749)
+menu-hover-dark-390.png	303	(30, 737, 75, 749)
+menu-hover-dark-430.png	303	(30, 737, 75, 749)
+menu-hover-dark-768.png	301	(561, 405, 602, 416)
+menu-hover-light-1280.png	303	(963, 417, 1004, 428)
+menu-hover-light-360.png	298	(30, 737, 75, 749)
+menu-hover-light-390.png	298	(30, 737, 75, 749)
+menu-hover-light-430.png	298	(30, 737, 75, 749)
+menu-hover-light-768.png	303	(561, 405, 602, 416)
+menu-rest-dark-1280.png	0	None
+menu-rest-dark-390.png	0	None
+menu-rest-light-1280.png	0	None
+menu-rest-light-390.png	0	None
+share-hover-dark-1280.png	704	(979, 213, 1065, 279)
+share-hover-dark-360.png	704	(137, 744, 223, 810)
+share-hover-dark-390.png	928	(137, 743, 253, 810)
+share-hover-dark-430.png	1253	(137, 743, 293, 810)
+share-hover-dark-768.png	704	(467, 213, 553, 279)
+share-hover-light-1280.png	695	(979, 213, 1065, 279)
+share-hover-light-360.png	695	(137, 744, 223, 810)
+share-hover-light-390.png	919	(137, 743, 253, 810)
+share-hover-light-430.png	1244	(137, 743, 293, 810)
+share-hover-light-768.png	695	(467, 213, 553, 279)
+share-rest-dark-1280.png	180	(1000, 213, 1065, 223)
+share-rest-dark-390.png	468	(119, 743, 253, 827)
+share-rest-light-1280.png	180	(1000, 213, 1065, 223)
+share-rest-light-390.png	404	(158, 743, 253, 754)
