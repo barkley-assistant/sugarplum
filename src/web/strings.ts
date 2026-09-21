@@ -95,6 +95,8 @@ export const S = {
     preferences: "Preferences",
     hintsToggle: "Show unverified price hints",
     trackToggle: "Track prices daily",
+    /** #98: the admin-only opt-in that reveals the user-management area. */
+    usersToggle: "Show user management",
     on: "On",
     off: "Off",
   },

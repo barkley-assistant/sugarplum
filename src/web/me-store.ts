@@ -22,6 +22,11 @@ export function readStoredMe(): Me | null {
         // server defaults) so the offline shell matches a fresh session.
         hintsEnabled: parsed.hintsEnabled !== false,
         priceTrackingEnabled: parsed.priceTrackingEnabled !== false,
+        // #98 fail-closed: an identity cached before this feature shipped has
+        // no field, and must never surface the admin UI. (The other two
+        // default ON because their server defaults are ON; this one defaults
+        // OFF for exactly the same reason.)
+        showUserManagement: parsed.showUserManagement === true,
       };
     }
   } catch {
