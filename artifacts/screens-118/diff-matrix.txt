@@ -1,0 +1,33 @@
+capture	differing_pixels	bbox (before vs after)
+drawn-dark-1280.png	973	(296, 703, 418, 715)
+drawn-dark-360.png	973	(32, 532, 154, 544)
+drawn-dark-390.png	973	(32, 545, 154, 557)
+drawn-dark-430.png	973	(32, 562, 154, 574)
+drawn-dark-768.png	973	(32, 710, 154, 722)
+drawn-light-1280.png	973	(296, 703, 418, 715)
+drawn-light-360.png	973	(32, 532, 154, 544)
+drawn-light-390.png	973	(32, 545, 154, 557)
+drawn-light-430.png	973	(32, 562, 154, 574)
+drawn-light-768.png	973	(32, 710, 154, 722)
+empty-dark-1280.png	0	None
+empty-dark-360.png	0	None
+empty-dark-390.png	0	None
+empty-dark-430.png	0	None
+empty-dark-768.png	0	None
+empty-light-1280.png	0	None
+empty-light-360.png	0	None
+empty-light-390.png	0	None
+empty-light-430.png	0	None
+empty-light-768.png	0	None
+share-drawn-dark-390.png	817	(38, 749, 158, 761)
+share-drawn-light-390.png	826	(38, 749, 158, 761)
+signal-dark-1280.png	0	None
+signal-dark-360.png	0	None
+signal-dark-390.png	0	None
+signal-dark-430.png	0	None
+signal-dark-768.png	0	None
+signal-light-1280.png	0	None
+signal-light-360.png	0	None
+signal-light-390.png	0	None
+signal-light-430.png	0	None
+signal-light-768.png	0	None

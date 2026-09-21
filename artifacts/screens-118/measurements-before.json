@@ -1,0 +1,290 @@
+[
+  {
+    "surface": "drawn",
+    "theme": "light",
+    "width": 360,
+    "file": "drawn-light-360.png",
+    "caption": "Not enough history yet",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "signal",
+    "theme": "light",
+    "width": 360,
+    "file": "signal-light-360.png",
+    "caption": "At 30-day low",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "empty",
+    "theme": "light",
+    "width": 360,
+    "file": "empty-light-360.png",
+    "caption": null,
+    "graph": false,
+    "empty": "Not enough history yet"
+  },
+  {
+    "surface": "drawn",
+    "theme": "light",
+    "width": 390,
+    "file": "drawn-light-390.png",
+    "caption": "Not enough history yet",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "signal",
+    "theme": "light",
+    "width": 390,
+    "file": "signal-light-390.png",
+    "caption": "At 30-day low",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "empty",
+    "theme": "light",
+    "width": 390,
+    "file": "empty-light-390.png",
+    "caption": null,
+    "graph": false,
+    "empty": "Not enough history yet"
+  },
+  {
+    "surface": "drawn",
+    "theme": "light",
+    "width": 430,
+    "file": "drawn-light-430.png",
+    "caption": "Not enough history yet",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "signal",
+    "theme": "light",
+    "width": 430,
+    "file": "signal-light-430.png",
+    "caption": "At 30-day low",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "empty",
+    "theme": "light",
+    "width": 430,
+    "file": "empty-light-430.png",
+    "caption": null,
+    "graph": false,
+    "empty": "Not enough history yet"
+  },
+  {
+    "surface": "drawn",
+    "theme": "light",
+    "width": 768,
+    "file": "drawn-light-768.png",
+    "caption": "Not enough history yet",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "signal",
+    "theme": "light",
+    "width": 768,
+    "file": "signal-light-768.png",
+    "caption": "At 30-day low",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "empty",
+    "theme": "light",
+    "width": 768,
+    "file": "empty-light-768.png",
+    "caption": null,
+    "graph": false,
+    "empty": "Not enough history yet"
+  },
+  {
+    "surface": "drawn",
+    "theme": "light",
+    "width": 1280,
+    "file": "drawn-light-1280.png",
+    "caption": "Not enough history yet",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "signal",
+    "theme": "light",
+    "width": 1280,
+    "file": "signal-light-1280.png",
+    "caption": "At 30-day low",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "empty",
+    "theme": "light",
+    "width": 1280,
+    "file": "empty-light-1280.png",
+    "caption": null,
+    "graph": false,
+    "empty": "Not enough history yet"
+  },
+  {
+    "surface": "drawn",
+    "theme": "dark",
+    "width": 360,
+    "file": "drawn-dark-360.png",
+    "caption": "Not enough history yet",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "signal",
+    "theme": "dark",
+    "width": 360,
+    "file": "signal-dark-360.png",
+    "caption": "At 30-day low",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "empty",
+    "theme": "dark",
+    "width": 360,
+    "file": "empty-dark-360.png",
+    "caption": null,
+    "graph": false,
+    "empty": "Not enough history yet"
+  },
+  {
+    "surface": "drawn",
+    "theme": "dark",
+    "width": 390,
+    "file": "drawn-dark-390.png",
+    "caption": "Not enough history yet",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "signal",
+    "theme": "dark",
+    "width": 390,
+    "file": "signal-dark-390.png",
+    "caption": "At 30-day low",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "empty",
+    "theme": "dark",
+    "width": 390,
+    "file": "empty-dark-390.png",
+    "caption": null,
+    "graph": false,
+    "empty": "Not enough history yet"
+  },
+  {
+    "surface": "drawn",
+    "theme": "dark",
+    "width": 430,
+    "file": "drawn-dark-430.png",
+    "caption": "Not enough history yet",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "signal",
+    "theme": "dark",
+    "width": 430,
+    "file": "signal-dark-430.png",
+    "caption": "At 30-day low",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "empty",
+    "theme": "dark",
+    "width": 430,
+    "file": "empty-dark-430.png",
+    "caption": null,
+    "graph": false,
+    "empty": "Not enough history yet"
+  },
+  {
+    "surface": "drawn",
+    "theme": "dark",
+    "width": 768,
+    "file": "drawn-dark-768.png",
+    "caption": "Not enough history yet",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "signal",
+    "theme": "dark",
+    "width": 768,
+    "file": "signal-dark-768.png",
+    "caption": "At 30-day low",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "empty",
+    "theme": "dark",
+    "width": 768,
+    "file": "empty-dark-768.png",
+    "caption": null,
+    "graph": false,
+    "empty": "Not enough history yet"
+  },
+  {
+    "surface": "drawn",
+    "theme": "dark",
+    "width": 1280,
+    "file": "drawn-dark-1280.png",
+    "caption": "Not enough history yet",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "signal",
+    "theme": "dark",
+    "width": 1280,
+    "file": "signal-dark-1280.png",
+    "caption": "At 30-day low",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "empty",
+    "theme": "dark",
+    "width": 1280,
+    "file": "empty-dark-1280.png",
+    "caption": null,
+    "graph": false,
+    "empty": "Not enough history yet"
+  },
+  {
+    "surface": "share-drawn",
+    "theme": "light",
+    "width": 390,
+    "file": "share-drawn-light-390.png",
+    "caption": "Not enough history yet",
+    "graph": true,
+    "empty": null
+  },
+  {
+    "surface": "share-drawn",
+    "theme": "dark",
+    "width": 390,
+    "file": "share-drawn-dark-390.png",
+    "caption": "Not enough history yet",
+    "graph": true,
+    "empty": null
+  }
+]
