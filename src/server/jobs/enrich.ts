@@ -107,9 +107,12 @@ export function createEnrichmentQueue(deps: EnrichmentDeps): EnrichmentQueue {
       strategy,
       result.ok ? "ok" : result.reason,
     );
-    if (result.steps.length > 1) {
-      // The escalation trace (#103): a plain success is a single step, an
-      // escalated fetch shows both, a learned stealth-first fetch shows one.
+    // The escalation trace (#103): a plain success is the boring case and stays
+    // quiet, but anything that escalated — or that started on a non-plain
+    // strategy (a learned override, a registry chain) — is logged explicitly,
+    // so "this host went stealth-first with no plain attempt" is visible.
+    const firstStep = result.steps[0];
+    if (result.steps.length > 1 || (firstStep && firstStep.strategy !== "plain")) {
       console.info(
         "[enrich] item %s: chain=%s",
         itemId,
