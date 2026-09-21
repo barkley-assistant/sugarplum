@@ -214,7 +214,7 @@ export function SettingsPage() {
         </section>
 
         {me.isAdmin && (
-          <section className="settings-section" aria-label={S.settings.usersEntry}>
+          <section className="settings-section settings-nav-section" aria-label={S.settings.usersEntry}>
             <button
               type="button"
               className="settings-nav-row"
