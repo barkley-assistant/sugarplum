@@ -34,6 +34,8 @@ interface ItemCardProps {
   dragHandle?: ReactNode;
   /** True while this card is lifted by the reorder state machine. */
   dragging?: boolean;
+  /** True while this card is settling into its final slot after a drop. */
+  dropping?: boolean;
 }
 
 /** Owner + public row, composed from the shared primitives. The price helper
@@ -53,6 +55,7 @@ export function ItemCard({
   onOpenDetails,
   dragHandle,
   dragging,
+  dropping,
 }: ItemCardProps) {
   const confirm = useConfirm();
   const toast = useToast();
@@ -218,6 +221,7 @@ export function ItemCard({
       onOpen={onOpenDetails ? () => onOpenDetails(item.id) : undefined}
       reorderHandle={dragHandle}
       dragging={dragging}
+      dropping={dropping}
       purchased={viewerIsOwner && ownerItem.ownerPurchased === true}
       image={
         item.imagePath ? (

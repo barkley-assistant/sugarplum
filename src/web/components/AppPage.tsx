@@ -526,6 +526,7 @@ export function AppPage() {
             : undefined
         }
         draggingId={reordering ? reorder.draggingId : undefined}
+        droppingId={reordering ? reorder.droppingId : undefined}
       />
     );
   }
