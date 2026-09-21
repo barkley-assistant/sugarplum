@@ -467,6 +467,164 @@ a.brand:hover {
   margin: 0;
 }
 
+/* ---------- #96 settings area: screen head, nav rows, toggle switches ------ */
+
+/* Back-link left, page action right (the Users screen's New user button).
+   Wraps instead of overflowing at 360px. */
+.settings-screen-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-bottom: var(--section-gap);
+}
+
+/* When the head wraps at 360px the action keeps the right edge it has on one
+   line instead of landing at the flex start under the back link. */
+.settings-screen-head .settings-head-action {
+  margin-left: auto;
+}
+
+/* Subordinate navigation rendered as a button (the settings area has no
+   middle-click contract to honour): quiet at rest, underline on hover. */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--r-control);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  text-align: left;
+  transition: color var(--ease-ui);
+}
+
+.back-link:hover {
+  background: none;
+  color: var(--text);
+  text-decoration: underline;
+}
+
+/* The /settings → /settings/users entry: same row grammar as the preference
+   rows above it (full width, 44px, quiet hover), chevron marking it as
+   navigation rather than a control. */
+.settings-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-3);
+  background: none;
+  border: none;
+  border-radius: var(--r-control);
+  color: var(--text);
+  font-size: var(--text-sm);
+  text-align: left;
+  transition: background-color var(--ease-ui);
+}
+
+.settings-nav-row:hover {
+  background: var(--surface-2);
+}
+
+.settings-nav-row .settings-nav-chevron {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--text-3);
+}
+
+/* A card holding a single navigation row: the row owns its own padding, so
+   the card keeps only the breathing room around it. */
+.settings-section.settings-nav-section {
+  padding: var(--sp-2);
+}
+
+/* Real toggle switch (#96): the ROW is the control — 44px hit area, single
+   Tab stop, label left and track right, like the platform settings rows it
+   replaces. State comes from aria-checked on the row, so the visual can
+   never drift from what assistive tech reports. Track is 44x26 with a 1px
+   border, so the 20px thumb sits 3px from every outer edge (2px inside the
+   padding box + the 1px border) and slides translateX(18px) to the on
+   position. Colours are tokens only; the thumb is the surface colour while
+   off and white on the plum fill while on. The transitions are plain CSS so
+   the global prefers-reduced-motion kill-switch neutralises them. */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-3);
+  background: none;
+  border: none;
+  border-radius: var(--r-control);
+  color: var(--text);
+  font-size: var(--text-sm);
+  text-align: left;
+  transition: background-color var(--ease-ui);
+}
+
+.toggle-row:hover {
+  background: var(--surface-2);
+}
+
+/* An off track is --surface-2, the same token the row hovers to, so hovering
+   the row would dissolve the track's silhouette. Strengthen the ring on an
+   OFF switch while the row is hovered (the grammar button.secondary:hover
+   uses); the ON state keeps its plum fill untouched. */
+.toggle-row[aria-checked="false"]:hover .switch-track {
+  border-color: var(--text-3);
+}
+
+.toggle-label {
+  min-width: 0;
+}
+
+.switch-track {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  transition: background-color var(--ease-ui), border-color var(--ease-ui);
+}
+
+.switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  transition:
+    transform var(--ease-ui),
+    background-color var(--ease-ui),
+    border-color var(--ease-ui);
+}
+
+.toggle-row[aria-checked="true"] .switch-track {
+  background: var(--plum-600);
+  border-color: var(--plum-600);
+}
+
+.toggle-row[aria-checked="true"] .switch-track::after {
+  transform: translateX(18px);
+  background: #fff;
+  border-color: transparent;
+}
+
 .brand-mark {
   width: 28px;
   height: 28px;
@@ -834,13 +992,6 @@ button.filter-chip {
   margin: 0;
   font-size: var(--text-xs);
   color: var(--text-3);
-}
-
-/* User-menu toggle row: label left, On/Off state right. */
-.menu-item-state {
-  margin-left: auto;
-  color: var(--text-3);
-  font-size: var(--text-xs);
 }
 
 .tags {

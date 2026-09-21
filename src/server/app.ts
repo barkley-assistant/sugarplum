@@ -191,7 +191,11 @@ async function handleNonApiRequest(req: Request): Promise<Response> {
   // renders the shell; the app then requires login as usual and prefills the
   // add-item form from ?url= / ?title=. /share/<token> is the wave-10 public
   // link: the shell boots, then the SPA renders the anonymous share view.
-  // /settings is the wave-19 account + user-management page: same shell.
+  // /settings is the wave-19 account + user-management area: same shell.
+  // /settings/users and /settings/users/new (#96) are the admin screens of
+  // that area — exact paths, not a /settings/ prefix: an unknown /settings
+  // sub-path must keep 404ing here exactly as the router sends it home
+  // client-side.
   // /login is an in-SPA view (issue #61): one HTML entry for every route.
   // /items/* (issue #62) is the owner item page + edit page: a deep link or a
   // refresh must serve the SPA shell, not 404 against a nonexistent file.
@@ -200,6 +204,8 @@ async function handleNonApiRequest(req: Request): Promise<Response> {
   else if (url.pathname === "/login") relative = "index.html";
   else if (url.pathname === "/add") relative = "index.html";
   else if (url.pathname === "/settings") relative = "index.html";
+  else if (url.pathname === "/settings/users") relative = "index.html";
+  else if (url.pathname === "/settings/users/new") relative = "index.html";
   else if (url.pathname.startsWith("/share/")) relative = "index.html";
   else if (url.pathname.startsWith("/items/")) relative = "index.html";
   else relative = url.pathname.slice(1);

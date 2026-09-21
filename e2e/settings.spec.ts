@@ -26,24 +26,47 @@ async function openMenu(page: Page, buttonName: string): Promise<void> {
   await page.locator(`.user-menu-button[aria-label="${buttonName}"]`).click();
 }
 
+/** The three settings screens' page headings (#96): one h2 per screen. */
+const ACCOUNT = "Account & Preferences";
+const USERS = "Users";
+const NEW_USER = "New user";
+
+/** Document-load counter (INV-4), same probe spa.spec uses: a soft navigation
+ *  never reloads the document, so the counter only moves on a real load. */
+async function loads(page: Page): Promise<number> {
+  return page.evaluate(() => Number(sessionStorage.getItem("docLoads") ?? 0));
+}
+
 test.beforeEach(async ({ page }) => {
   await login(page, "admin", "admin-password");
 });
 
-test("1: admin on /settings sees Account and Users sections", async ({ page }) => {
+test("1: admin /settings is Account & Preferences; the Users entry opens the table", async ({ page }) => {
   await page.goto(`${BASE}/settings`);
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Account" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Users" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: ACCOUNT, level: 2 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Account", level: 3 })).toBeVisible();
   await expect(page.locator("#settings-display-name")).toBeVisible();
   await expect(page.locator("#settings-current-password")).toBeVisible();
-  // The user table lists the bootstrap admin.
+  await expect(page.getByRole("heading", { name: "Preferences", level: 3 })).toBeVisible();
+
+  // The admin table and the create-user form no longer live on this screen.
+  await expect(page.locator(".admin-table")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Create user" })).toHaveCount(0);
+
+  // Admins get an entry row through to the Users screen.
+  await page.getByRole("button", { name: USERS, exact: true }).click();
+  await expect(page).toHaveURL(`${BASE}/settings/users`);
+  await expect(page.getByRole("heading", { name: USERS, level: 2 })).toBeVisible();
+
+  // The user table lists the bootstrap admin; the screen head carries the
+  // page-level New user action and the way back.
   const table = page.locator(".admin-table");
   await expect(table.locator("tbody tr", { hasText: "admin" }).first()).toBeVisible();
-  await expect(page.getByRole("button", { name: "Create user" })).toBeVisible();
+  await expect(page.getByRole("button", { name: NEW_USER, exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Back to Account & Preferences" })).toBeVisible();
 });
 
-test("2: member on /settings sees Account only; /api/users is 403", async ({ page, request }) => {
+test("2: member: Account & Preferences only; users screens bounce; /api/users is 403", async ({ page, request }) => {
   await page.request.post(`${BASE}/api/users`, {
     data: { username: MEMBER.username, password: MEMBER.password, displayName: "Settings Member" },
   });
@@ -52,25 +75,30 @@ test("2: member on /settings sees Account only; /api/users is 403", async ({ pag
   try {
     await login(ctx, MEMBER.username, MEMBER.password);
     await ctx.goto(`${BASE}/settings`);
-    await expect(ctx.getByRole("heading", { name: "Settings" })).toBeVisible();
-    await expect(ctx.getByRole("heading", { name: "Account" })).toBeVisible();
-    await expect(ctx.getByRole("heading", { name: "Users" })).toHaveCount(0);
+    await expect(ctx.getByRole("heading", { name: ACCOUNT, level: 2 })).toBeVisible();
+    await expect(ctx.getByRole("heading", { name: "Account", level: 3 })).toBeVisible();
+    await expect(ctx.getByRole("heading", { name: "Preferences", level: 3 })).toBeVisible();
+
+    // No admin surface anywhere on the member's account screen.
+    await expect(ctx.getByRole("button", { name: USERS, exact: true })).toHaveCount(0);
     await expect(ctx.locator(".admin-table")).toHaveCount(0);
 
+    // Deep links to the admin screens land back on /settings (the client gate
+    // replaces the history entry, so Back cannot return to them either).
+    for (const path of ["/settings/users", "/settings/users/new"]) {
+      await ctx.goto(`${BASE}${path}`);
+      await expect(ctx).toHaveURL(`${BASE}/settings`);
+      await expect(ctx.getByRole("heading", { name: ACCOUNT, level: 2 })).toBeVisible();
+      await expect(ctx.locator(".admin-table")).toHaveCount(0);
+    }
+
+    // The server is the enforcement — the redirect above is only UX.
     const users = await request.get(`${BASE}/api/users`);
     expect(users.status()).toBe(401); // no session on the raw request fixture
+    const forbidden = await ctx.request.get(`${BASE}/api/users`);
+    expect(forbidden.status()).toBe(403); // the member's own session: 403, not 401
   } finally {
     await ctx.close();
-  }
-
-  // Same assertion with the member's session: 403, not 401.
-  const memberApi = await page.context().newPage();
-  try {
-    await login(memberApi, MEMBER.username, MEMBER.password);
-    const forbidden = await memberApi.request.get(`${BASE}/api/users`);
-    expect(forbidden.status()).toBe(403);
-  } finally {
-    await memberApi.close();
   }
 });
 
@@ -86,8 +114,8 @@ test("3: main page has no admin controls", async ({ page }) => {
   await expect(page.getByRole("menuitem", { name: "Settings" })).toBeVisible();
 });
 
-test("4: last-admin guard surfaces in the settings Users section", async ({ page }) => {
-  await page.goto(`${BASE}/settings`);
+test("4: last-admin guard surfaces on the Users screen", async ({ page }) => {
+  await page.goto(`${BASE}/settings/users`);
   await expect(page.locator(".admin-table")).toBeVisible();
   const adminRow = page.locator(".admin-table tbody tr", { hasText: "admin" }).first();
   await adminRow.getByRole("button", { name: "Deactivate" }).click();
@@ -155,67 +183,120 @@ test("7: menu navigates to settings and the brand navigates home", async ({ page
   await openMenu(page, "Admin");
   await page.getByRole("menuitem", { name: "Settings" }).click();
   await expect(page).toHaveURL(`${BASE}/settings`);
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: ACCOUNT, level: 2 })).toBeVisible();
 
   await page.getByRole("link", { name: "Back to list" }).click();
   await expect(page).toHaveURL(`${BASE}/`);
   await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
 });
 
-test("8: /settings loads offline from the shell cache", async ({ page, context }) => {
-  await page.goto(`${BASE}/settings`);
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+test("8: all three settings routes load offline from the shell cache", async ({ page, context }) => {
+  const screens = [
+    { path: "/settings", heading: ACCOUNT },
+    { path: "/settings/users", heading: USERS },
+    { path: "/settings/users/new", heading: NEW_USER },
+  ];
+
+  // Online first: the shell cache installs and the identity is stored.
+  for (const screen of screens) {
+    await page.goto(`${BASE}${screen.path}`);
+    await expect(page.getByRole("heading", { name: screen.heading, level: 2 })).toBeVisible();
+  }
 
   await context.setOffline(true);
   try {
-    await page.goto(`${BASE}/settings`);
-    // Cached shell boots from localStorage identity — no browser offline page.
-    await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+    for (const screen of screens) {
+      await page.goto(`${BASE}${screen.path}`);
+      // Cached shell boots from the stored identity — no browser offline page.
+      await expect(page.getByRole("heading", { name: screen.heading, level: 2 })).toBeVisible();
+    }
   } finally {
     await context.setOffline(false);
   }
 });
 
-test("9: preference rows are real switches that round-trip", async ({ page }) => {
+test("9: preference switches are real switches and round-trip (click + keyboard)", async ({ page }) => {
   await page.goto(`${BASE}/settings`);
   const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as { hintsEnabled: boolean };
   const hints = page.getByRole("switch", { name: /Show unverified price hints/ });
   await expect(page.getByRole("switch", { name: /Track prices daily/ })).toBeVisible();
   await expect(hints).toHaveAttribute("aria-checked", String(me.hintsEnabled));
-  // role=menuitemcheckbox is invalid outside a menu: the old role is gone.
-  await expect(page.getByRole("menuitemcheckbox")).toHaveCount(0);
+  // The On/Off text affordance the old rows carried is gone: the row parses as
+  // one switch, and only the track communicates the state (#96).
+  await expect(page.locator(".menu-item-state")).toHaveCount(0);
+  await expect(page.locator(".toggle-row .switch-track")).toHaveCount(2);
+
+  // The visual: a 44x26 track whose thumb sits left when off and slides to the
+  // right when on, driven by aria-checked — not an On/Off text row (#96).
+  const track = hints.locator(".switch-track");
+  const box = await track.boundingBox();
+  expect(Math.round(box?.width ?? 0)).toBe(44);
+  expect(Math.round(box?.height ?? 0)).toBe(26);
+  const thumbX = () =>
+    track.evaluate((el) => {
+      const transform = getComputedStyle(el, "::after").transform;
+      return transform === "none" ? 0 : Number(transform.split(",")[4]);
+    });
+  const trackFill = () => track.evaluate((el) => getComputedStyle(el).backgroundColor);
+
+  const startX = me.hintsEnabled ? 18 : 0;
+  await expect.poll(thumbX).toBe(startX);
+  const fillAtStart = await trackFill();
 
   await hints.click();
   await expect(hints).toHaveAttribute("aria-checked", String(!me.hintsEnabled));
+  await expect.poll(thumbX).toBe(startX === 0 ? 18 : 0);
+  expect(await trackFill()).not.toBe(fillAtStart);
+
+  // Keyboard: Space on the focused row toggles it (native button semantics).
+  await hints.focus();
+  await page.keyboard.press("Space");
+  await expect(hints).toHaveAttribute("aria-checked", String(me.hintsEnabled));
   await page.reload();
   await expect(page.getByRole("switch", { name: /Show unverified price hints/ }))
-    .toHaveAttribute("aria-checked", String(!me.hintsEnabled));
+    .toHaveAttribute("aria-checked", String(me.hintsEnabled));
 
   // Leave the operator's setting as it was for the remaining specs.
+  await page.getByRole("switch", { name: /Show unverified price hints/ }).click();
+  await expect(page.getByRole("switch", { name: /Show unverified price hints/ }))
+    .toHaveAttribute("aria-checked", String(!me.hintsEnabled));
   await page.getByRole("switch", { name: /Show unverified price hints/ }).click();
   await expect(page.getByRole("switch", { name: /Show unverified price hints/ }))
     .toHaveAttribute("aria-checked", String(me.hintsEnabled));
 });
 
-test("10: heading ladder has one h2 and unique section headings", async ({ page }) => {
+test("10: heading ladder — one h2 per settings screen", async ({ page }) => {
+  /** No level is skipped anywhere on the page (the brand mark is the h1). */
+  const assertNoSkippedLevels = async () => {
+    const levels = await page.evaluate(() =>
+      Array.from(document.querySelectorAll("h1, h2, h3, h4, h5, h6")).map((el) => Number(el.tagName[1])),
+    );
+    expect(levels[0]).toBe(1);
+    for (let i = 1; i < levels.length; i++) {
+      expect(levels[i] - levels[i - 1], `heading ladder ${levels[i - 1]} -> ${levels[i]}`)
+        .toBeLessThanOrEqual(1);
+    }
+  };
+
   await page.goto(`${BASE}/settings`);
-  await expect(page.getByRole("heading", { name: "Settings", exact: true })).toHaveCount(1);
-  for (const name of ["Account", "Change password", "Preferences", "Users"]) {
+  await expect(page.getByRole("heading", { name: ACCOUNT, level: 2, exact: true })).toHaveCount(1);
+  for (const name of ["Account", "Change password", "Preferences"]) {
     await expect(page.getByRole("heading", { name, exact: true, level: 3 })).toHaveCount(1);
   }
-  // The Users section is named once (h3), not twice.
-  await expect(page.getByRole("heading", { name: "Users", level: 2 })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Create user", level: 4 })).toBeVisible();
+  // The admin table and its h4 left this screen.
+  await expect(page.getByRole("heading", { name: "Create user" })).toHaveCount(0);
+  await assertNoSkippedLevels();
 
-  // No level is skipped anywhere on the page.
-  const levels = await page.evaluate(() =>
-    Array.from(document.querySelectorAll("h1, h2, h3, h4, h5, h6")).map((el) => Number(el.tagName[1])),
-  );
-  expect(levels[0]).toBe(1);
-  for (let i = 1; i < levels.length; i++) {
-    expect(levels[i] - levels[i - 1], `heading ladder ${levels[i - 1]} -> ${levels[i]}`)
-      .toBeLessThanOrEqual(1);
-  }
+  await page.goto(`${BASE}/settings/users`);
+  await expect(page.getByRole("heading", { name: USERS, level: 2, exact: true })).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: USERS, exact: true })).toHaveCount(1); // h2 only
+  await expect(page.getByRole("heading", { name: "Create user" })).toHaveCount(0);
+  await assertNoSkippedLevels();
+
+  await page.goto(`${BASE}/settings/users/new`);
+  await expect(page.getByRole("heading", { name: NEW_USER, level: 2, exact: true })).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: NEW_USER, exact: true })).toHaveCount(1); // h2 only
+  await assertNoSkippedLevels();
 });
 
 test("11: settings submits carry the amethyst pill grammar", async ({ page }) => {
@@ -239,7 +320,7 @@ test("11: settings submits carry the amethyst pill grammar", async ({ page }) =>
 });
 
 test("12: create-user row shares its slot at every width, both themes (#97)", async ({ page }) => {
-  /** The admin create-user row: the row plus its three fields. */
+  /** The create-user row: the row plus its three fields. */
   const createRow = () =>
     page.evaluate(() => {
       const row = document.getElementById("new-username")?.closest(".field-row");
@@ -281,14 +362,15 @@ test("12: create-user row shares its slot at every width, both themes (#97)", as
   const docOverflow = () =>
     page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
 
-  const openSettings = async (width: number) => {
+  const openCreateUser = async (width: number) => {
     await page.setViewportSize({ width, height: 844 });
-    await page.goto(`${BASE}/settings`);
-    await expect(page.getByRole("heading", { name: "Create user", level: 4 })).toBeVisible();
+    await page.goto(`${BASE}/settings/users/new`);
+    await expect(page.getByRole("heading", { name: NEW_USER, level: 2 })).toBeVisible();
+    await expect(page.locator("#new-username")).toBeVisible();
   };
 
   for (const width of [360, 390, 430, 768, 1024, 1280]) {
-    await openSettings(width);
+    await openCreateUser(width);
     const m = await createRow();
     const fields = [
       ["username", m.username],
@@ -324,7 +406,10 @@ test("12: create-user row shares its slot at every width, both themes (#97)", as
     }
     expect(await docOverflow(), `document overflow at ${width}px`).toBe(false);
 
-    // Witness: the settings password row (the reference pattern) is unchanged.
+    // Witness: the settings password row (the reference pattern, which stayed
+    // on /settings) is unchanged.
+    await page.goto(`${BASE}/settings`);
+    await expect(page.locator("#settings-new-password")).toBeVisible();
     const pw = await passwordRow();
     if (width <= 430) {
       expect(Math.abs(pw.next - pw.rowWidth), `new password spans the row at ${width}px`)
@@ -341,7 +426,7 @@ test("12: create-user row shares its slot at every width, both themes (#97)", as
   // has no scheme-specific layout rule, and this proves it).
   for (const scheme of ["dark", "light"] as const) {
     await page.emulateMedia({ colorScheme: scheme });
-    await openSettings(390);
+    await openCreateUser(390);
     const m = await createRow();
     for (const [name, field] of [
       ["username", m.username],
@@ -353,4 +438,51 @@ test("12: create-user row shares its slot at every width, both themes (#97)", as
     }
     expect(await docOverflow(), `document overflow at 390px ${scheme}`).toBe(false);
   }
+});
+
+test("13: the settings area navigates client-side; the bar's Settings stays exact", async ({ page }) => {
+  await page.addInitScript(() => {
+    sessionStorage.setItem("docLoads", String(Number(sessionStorage.getItem("docLoads") ?? 0) + 1));
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${BASE}/settings`);
+  await expect(page.getByRole("heading", { name: ACCOUNT, level: 2 })).toBeVisible();
+  const before = await loads(page);
+
+  const bar = page.getByRole("navigation", { name: "Primary actions" });
+  const barSettings = bar.getByRole("button", { name: "Settings" });
+  // On /settings the bar destination IS the current screen.
+  await expect(barSettings).toHaveAttribute("aria-current", "page");
+
+  await page.getByRole("button", { name: USERS, exact: true }).click();
+  await expect(page).toHaveURL(`${BASE}/settings/users`);
+  await expect(page.getByRole("heading", { name: USERS, level: 2 })).toBeVisible();
+
+  // #96 keeps the accent EXACT: on a sub-route the Settings button is not
+  // "current", so it stays a live way back to the account screen.
+  await expect(barSettings).not.toHaveAttribute("aria-current");
+  await barSettings.click();
+  await expect(page).toHaveURL(`${BASE}/settings`);
+  await expect(barSettings).toHaveAttribute("aria-current", "page");
+
+  // Forward again through the area, then back through the pushState chain.
+  await page.getByRole("button", { name: USERS, exact: true }).click();
+  await expect(page).toHaveURL(`${BASE}/settings/users`);
+  await page.getByRole("button", { name: NEW_USER, exact: true }).click();
+  await expect(page).toHaveURL(`${BASE}/settings/users/new`);
+  await expect(page.getByRole("heading", { name: NEW_USER, level: 2 })).toBeVisible();
+
+  await page.getByRole("button", { name: "Back to Users" }).click();
+  await expect(page).toHaveURL(`${BASE}/settings/users`);
+
+  await page.goBack();
+  await expect(page).toHaveURL(`${BASE}/settings/users/new`);
+  await page.goBack();
+  await expect(page).toHaveURL(`${BASE}/settings/users`);
+  await page.goBack();
+  await expect(page).toHaveURL(`${BASE}/settings`);
+  await expect(page.getByRole("heading", { name: ACCOUNT, level: 2 })).toBeVisible();
+
+  // INV-4: not one of those navigations loaded the document.
+  expect(await loads(page)).toBe(before);
 });

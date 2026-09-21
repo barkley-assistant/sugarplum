@@ -22,11 +22,11 @@ test("a1: session persists across SPA navigation and full reloads", async ({ pag
 
   // SPA navigation keeps the session (no bounce to /login).
   await page.goto(`${BASE}/settings`);
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Account & Preferences", level: 2 })).toBeVisible();
 
   // Full document reload: the cookie + sliding session must still auth.
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Account & Preferences", level: 2 })).toBeVisible();
   await expect(page).toHaveURL(/\/settings$/);
 
   // Boot gate: /api/auth/me 200 on the reloaded document.

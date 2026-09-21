@@ -1,27 +1,32 @@
-import { useEffect, useState, type FormEvent } from "react";
-import type { AdminUser, Me } from "../../shared/types";
+import { useState, type FormEvent } from "react";
+import type { Me } from "../../shared/types";
 import { S } from "../strings";
 import { useToast } from "../toast";
-import { useInstallPrompt } from "../pwa/install";
-import { clearStoredIdentity, readStoredMe, writeStoredMe } from "../me-store";
+import { clearStoredIdentity, writeStoredMe } from "../me-store";
 import { navigate } from "../router";
-import { AdminPanel } from "./AdminPanel";
+import { useBootMe } from "../use-boot-me";
+import { usePageFocus } from "../use-page-focus";
 import { AppShell, PageHeader } from "./AppShell";
+import { ChevronRightIcon } from "./IconButton";
 import { SettingsSkeleton } from "./Skeletons";
-import { UserMenu } from "./UserMenu";
+import { SettingsUserMenu } from "./SettingsUserMenu";
+import { ToggleSwitch } from "./ToggleSwitch";
 
-/** Dedicated settings surface: every user gets the Account section
- *  (display name, password, price-hint preference); admins also get the
- *  user-management table below it. Protected by the same boot-time
- *  /api/auth/me check AppPage uses. */
+/** /settings (#96): the Account & Preferences screen — display name, password
+ *  change and the two preference switches. Admins get a Users entry row that
+ *  leads to the admin-only /settings/users screen; the user-management table
+ *  itself no longer lives on this route.
+ *
+ *  Boots through the shared useBootMe() ladder (401 → /login?next=, offline →
+ *  the cached identity) exactly like the two admin screens; the local
+ *  `updated` overlay carries profile/settings writes forward, because the hook
+ *  fetches the identity once per mount. */
 export function SettingsPage() {
-  const [me, setMe] = useState<Me | null>(null);
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [usersError, setUsersError] = useState<string | null>(null);
-  const [booted, setBooted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const boot = useBootMe();
+  const headingRef = usePageFocus(boot.status);
 
-  const [displayName, setDisplayName] = useState("");
+  const [updated, setUpdated] = useState<Me | null>(null);
+  const [displayNameDraft, setDisplayNameDraft] = useState<string | null>(null);
   const [profileBusy, setProfileBusy] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -30,60 +35,7 @@ export function SettingsPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const toast = useToast();
-  const install = useInstallPrompt();
-
-  useEffect(() => {
-    void boot();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function boot() {
-    try {
-      const meRes = await fetch("/api/auth/me");
-      if (meRes.status === 401) {
-        navigate(`/login?next=${encodeURIComponent("/settings")}`);
-        return;
-      }
-      if (!meRes.ok) {
-        const stored = readStoredMe();
-        if (!stored) {
-          setError(S.errors.loadWishlist);
-          setBooted(true);
-          return;
-        }
-        setMe(stored);
-        setDisplayName(stored.displayName);
-        setBooted(true);
-        return;
-      }
-      const meBody = (await meRes.json()) as Me;
-      setMe(meBody);
-      setDisplayName(meBody.displayName);
-      writeStoredMe(meBody);
-      if (meBody.isAdmin) await refreshUsers();
-      setBooted(true);
-    } catch {
-      const stored = readStoredMe();
-      if (!stored) {
-        setError(S.errors.loadWishlist);
-      } else {
-        setMe(stored);
-        setDisplayName(stored.displayName);
-      }
-      setBooted(true);
-    }
-  }
-
-  async function refreshUsers() {
-    setUsersError(null);
-    try {
-      const res = await fetch("/api/users");
-      if (!res.ok) throw new Error();
-      setUsers((await res.json()) as AdminUser[]);
-    } catch {
-      setUsersError(S.errors.loadWishlist);
-    }
-  }
+  const me = updated ?? (boot.status === "ready" || boot.status === "offline" ? boot.me : null);
 
   async function setSetting(key: "hintsEnabled" | "priceTrackingEnabled", value: boolean) {
     if (!me) return;
@@ -94,9 +46,9 @@ export function SettingsPage() {
         body: JSON.stringify({ [key]: value }),
       });
       if (!res.ok) throw new Error();
-      const updated = { ...me, [key]: value };
-      setMe(updated);
-      writeStoredMe(updated);
+      const next = { ...me, [key]: value };
+      setUpdated(next);
+      writeStoredMe(next);
     } catch {
       toast(S.errors.changeSettings, "danger");
     }
@@ -113,10 +65,10 @@ export function SettingsPage() {
         body: JSON.stringify({ displayName }),
       });
       if (!res.ok) throw new Error();
-      const updated = (await res.json()) as Me;
-      setMe(updated);
-      setDisplayName(updated.displayName);
-      writeStoredMe(updated);
+      const next = (await res.json()) as Me;
+      setUpdated(next);
+      setDisplayNameDraft(next.displayName);
+      writeStoredMe(next);
       toast(S.settings.profileSaved);
     } catch {
       toast(S.errors.changeSettings, "danger");
@@ -158,48 +110,28 @@ export function SettingsPage() {
     }
   }
 
-  async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    clearStoredIdentity();
-    navigate("/login");
-  }
-
-  if (error && !me) {
+  if (boot.status === "error") {
     return (
       <main className="auth-page">
         <div className="card auth-card">
-          <p className="error" role="alert">{error}</p>
+          <p className="error" role="alert">{boot.message}</p>
         </div>
       </main>
     );
   }
 
-  if (!booted || !me) {
+  if (!me) {
     return <SettingsSkeleton />;
   }
 
-  const userMenu = (
-    <UserMenu
-      displayName={me.displayName || me.username}
-      onLogout={logout}
-      extra={
-        install.canInstall ? (
-          <button
-            type="button"
-            className="menu-item"
-            role="menuitem"
-            onClick={install.promptInstall}
-          >
-            {S.pwa.install}
-          </button>
-        ) : undefined
-      }
-    />
-  );
+  const displayName = displayNameDraft ?? me.displayName;
 
   return (
-    <AppShell brandHref="/" headerRight={userMenu}>
-      <PageHeader title={S.settings.title} />
+    <AppShell
+      brandHref="/"
+      headerRight={<SettingsUserMenu displayName={me.displayName || me.username} />}
+    >
+      <PageHeader title={S.settings.titleAccount} headingRef={headingRef} />
 
       <div className="settings-stack">
         <section className="settings-section" aria-label={S.settings.account}>
@@ -212,7 +144,7 @@ export function SettingsPage() {
                 type="text"
                 autoComplete="nickname"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(e) => setDisplayNameDraft(e.target.value)}
                 required
               />
             </div>
@@ -269,34 +201,30 @@ export function SettingsPage() {
 
         <section className="settings-section" aria-label={S.settings.preferences}>
           <h3>{S.settings.preferences}</h3>
-          <button
-            type="button"
-            className="menu-item"
-            role="switch"
-            aria-checked={me.hintsEnabled}
-            onClick={() => void setSetting("hintsEnabled", !me.hintsEnabled)}
-          >
-            <span>{S.settings.hintsToggle}</span>
-            <span className="menu-item-state">{me.hintsEnabled ? S.settings.on : S.settings.off}</span>
-          </button>
-
-          <button
-            type="button"
-            className="menu-item"
-            role="switch"
-            aria-checked={me.priceTrackingEnabled}
-            onClick={() => void setSetting("priceTrackingEnabled", !me.priceTrackingEnabled)}
-          >
-            <span>{S.settings.trackToggle}</span>
-            <span className="menu-item-state">{me.priceTrackingEnabled ? S.settings.on : S.settings.off}</span>
-          </button>
+          <ToggleSwitch
+            label={S.settings.hintsToggle}
+            checked={me.hintsEnabled}
+            onChange={(next) => void setSetting("hintsEnabled", next)}
+          />
+          <ToggleSwitch
+            label={S.settings.trackToggle}
+            checked={me.priceTrackingEnabled}
+            onChange={(next) => void setSetting("priceTrackingEnabled", next)}
+          />
         </section>
 
         {me.isAdmin && (
-          <section className="settings-section" aria-label={S.settings.usersSection}>
-            <h3>{S.settings.usersSection}</h3>
-            {usersError && <p className="error" role="alert">{usersError}</p>}
-            <AdminPanel users={users} onChanged={refreshUsers} />
+          <section className="settings-section settings-nav-section" aria-label={S.settings.usersEntry}>
+            <button
+              type="button"
+              className="settings-nav-row"
+              onClick={() => navigate("/settings/users")}
+            >
+              <span>{S.settings.usersEntry}</span>
+              <span className="settings-nav-chevron">
+                <ChevronRightIcon />
+              </span>
+            </button>
           </section>
         )}
       </div>

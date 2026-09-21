@@ -6,6 +6,8 @@ import { AddPage } from "./components/AddPage";
 import { ItemPage } from "./components/ItemPage";
 import { ItemEditPage } from "./components/ItemEditPage";
 import { SettingsPage } from "./components/SettingsPage";
+import { SettingsUserNewPage } from "./components/SettingsUserNewPage";
+import { SettingsUsersPage } from "./components/SettingsUsersPage";
 import { SharePage } from "./components/SharePage";
 import { LoginView } from "./components/Login";
 import { ConfirmProvider } from "./confirm";
@@ -36,6 +38,10 @@ function viewFor(route: Route) {
       return <SharePage token={route.token} />;
     case "settings":
       return <SettingsPage />;
+    case "settingsUsers":
+      return <SettingsUsersPage />;
+    case "settingsUserNew":
+      return <SettingsUserNewPage />;
     case "add":
       return <AddPage search={route.search} />;
     case "item":
@@ -53,7 +59,10 @@ function viewFor(route: Route) {
 
 /** Document title per route (#62 D11). The item page overrides this once its
  *  item boots (the item's own title is only known then); every navigation
- *  resets it here first, so a stale item title can't outlive its page. */
+ *  resets it here first, so a stale item title can't outlive its page.
+ *  The settings AREA shares one title (#96): the in-page h2 carries the screen
+ *  name, and three tab suffixes for a 3-screen area is noise at mobile tab
+ *  widths. */
 function titleFor(route: Route): string {
   switch (route.name) {
     case "login":
@@ -62,6 +71,10 @@ function titleFor(route: Route): string {
       return "Add · sugarplum";
     case "itemEdit":
       return "Edit item · sugarplum";
+    case "settings":
+    case "settingsUsers":
+    case "settingsUserNew":
+      return "Settings · sugarplum";
     default:
       return "sugarplum";
   }

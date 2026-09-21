@@ -15,7 +15,12 @@ export function safeNext(raw: string | null): string {
 export type Route =
   | { name: "home" }
   | { name: "login"; next: string }
+  /** /settings — the Account & Preferences screen (#96). */
   | { name: "settings" }
+  /** /settings/users — the admin user-management table (#96). */
+  | { name: "settingsUsers" }
+  /** /settings/users/new — the admin create-user form (#96). */
+  | { name: "settingsUserNew" }
   | { name: "share"; token: string }
   /** Raw location.search — the share-target prefill seam (INV-A). */
   | { name: "add"; search: string }
@@ -28,9 +33,12 @@ const ITEM_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 /** Exact-match route table. `/add` is its own page (#62 — it was the feed
  *  with the add sheet open before), `/items/:id` and `/items/:id/edit` are
- *  the owner item pages, and an unknown path (including a malformed item id)
- *  falls through to home, same as the pre-router switch did and the same as
- *  a malformed /share token. */
+ *  the owner item pages, `/settings*` is the three-screen settings area
+ *  (#96 — users/new is matched before users, so a future param route under
+ *  /settings/users cannot shadow the creation form), and an unknown path
+ *  (including a malformed item id, or any /settings sub-path other than the
+ *  two admin screens) falls through to home, same as the pre-router switch
+ *  did and the same as a malformed /share token. */
 export function parseRoute(path: string, search: string): Route {
   const share = /^\/share\/([0-9a-f]{64})$/.exec(path);
   if (share) return { name: "share", token: share[1] };
@@ -43,6 +51,8 @@ export function parseRoute(path: string, search: string): Route {
     return { name: "login", next: safeNext(new URLSearchParams(search).get("next")) };
   }
   if (path === "/add") return { name: "add", search };
+  if (path === "/settings/users/new") return { name: "settingsUserNew" };
+  if (path === "/settings/users") return { name: "settingsUsers" };
   if (path === "/settings") return { name: "settings" };
   return { name: "home" };
 }

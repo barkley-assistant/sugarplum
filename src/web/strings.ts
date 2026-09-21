@@ -67,6 +67,16 @@ export const S = {
   },
   settings: {
     title: "Settings",
+    /** #96 screen titles: the settings AREA is three routes, each with its
+     *  own in-page heading (document.title stays "Settings · sugarplum"). */
+    titleAccount: "Account & Preferences",
+    titleUsers: "Users",
+    titleNewUser: "New user",
+    /** #96 navigation between the settings screens. */
+    usersEntry: "Users",
+    newUser: "New user",
+    backToAccount: "Back to Account & Preferences",
+    backToUsers: "Back to Users",
     account: "Account",
     usersSection: "Users",
     displayName: "Display name",
@@ -199,6 +209,7 @@ export const S = {
     deleteUserBody: "Their items and claims will be removed.",
     passwordReset: "Password reset.",
     userDeleted: "User deleted.",
+    userCreated: "User created.",
     delete: "Delete",
     displayName: "Display name",
     password: "Password",
