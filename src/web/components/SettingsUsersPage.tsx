@@ -9,9 +9,10 @@ import { AppShell, PageHeader } from "./AppShell";
 import { SettingsSkeleton } from "./Skeletons";
 import { SettingsUserMenu } from "./SettingsUserMenu";
 
-/** /settings/users (#96): the admin user-management table. Admins only —
- *  non-admins are redirected to /settings by the boot gate, and the
- *  /api/users endpoints 403 them server-side regardless. The users list
+/** /settings/users (#96): the admin user-management table. Admins only, and
+ *  since #98 only when they have opted into user management (default off) —
+ *  both cases are redirected to /settings by the boot gate, and the
+ *  /api/users endpoints 403 non-admins server-side regardless. The users list
  *  lives here now (it was the Account screen's state) so the table's data
  *  and its screen mount together. */
 export function SettingsUsersPage() {
@@ -20,12 +21,18 @@ export function SettingsUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersError, setUsersError] = useState<string | null>(null);
 
-  const isAdmin = (boot.status === "ready" || boot.status === "offline") && boot.me.isAdmin;
+  // #98: the admin surface needs the opt-in on top of the admin role; a
+  // pref-off admin is bounced by the boot gate exactly like a member, so the
+  // users list is never fetched for them.
+  const canManageUsers =
+    (boot.status === "ready" || boot.status === "offline") &&
+    boot.me.isAdmin &&
+    boot.me.showUserManagement;
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!canManageUsers) return;
     void refreshUsers();
-  }, [isAdmin]);
+  }, [canManageUsers]);
 
   async function refreshUsers() {
     setUsersError(null);
@@ -46,9 +53,10 @@ export function SettingsUsersPage() {
       </AppShell>
     );
   }
-  // Non-admin: the boot gate has already queued the replace-redirect, so keep
-  // the skeleton on screen rather than flashing admin chrome on the way out.
-  if (!boot.me.isAdmin) return <SettingsSkeleton />;
+  // Not an admin — or an admin without the #98 user-management opt-in: the
+  // boot gate has already queued the replace-redirect, so keep the skeleton on
+  // screen rather than flashing admin chrome on the way out.
+  if (!boot.me.isAdmin || !boot.me.showUserManagement) return <SettingsSkeleton />;
 
   return (
     <AppShell

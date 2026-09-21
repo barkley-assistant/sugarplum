@@ -11,7 +11,8 @@ import { SettingsUserMenu } from "./SettingsUserMenu";
 /** /settings/users/new (#96): the create-user form, moved off the Account
  *  screen verbatim (same .item-form / .field-row markup and #new-* input ids,
  *  so the #97 row-geometry contract transfers untouched). Admins only — same
- *  boot gate as the users table, which is where a successful create lands. */
+ *  boot gate as the users table (#98: role + the user-management opt-in),
+ *  which is where a successful create lands. */
 export function SettingsUserNewPage() {
   const boot = useAdminBoot();
   const headingRef = usePageFocus(boot.status);
@@ -56,8 +57,9 @@ export function SettingsUserNewPage() {
       </AppShell>
     );
   }
-  // Non-admin: the boot gate has already queued the replace-redirect.
-  if (!boot.me.isAdmin) return <SettingsSkeleton />;
+  // Not an admin — or an admin without the #98 user-management opt-in: the
+  // boot gate has already queued the replace-redirect.
+  if (!boot.me.isAdmin || !boot.me.showUserManagement) return <SettingsSkeleton />;
 
   return (
     <AppShell

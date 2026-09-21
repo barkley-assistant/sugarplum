@@ -1339,7 +1339,12 @@ test("9: no horizontal overflow at 360-1280px across surfaces", async ({ page, b
 
   // A10: the settings screens and Login are their own surfaces and clear the
   // same bar. The admin user table (the widest content, including its own
-  // scroll containment at 360px) lives on /settings/users as of #96.
+  // scroll containment at 360px) lives on /settings/users as of #96 — and is
+  // opt-in since #98, so seed it for this probe and hand it back off after.
+  const uiOn = await page.request.put(`${BASE}/api/auth/me/settings`, {
+    data: { showUserManagement: true },
+  });
+  expect(uiOn.status()).toBe(200);
   for (const width of [360, 768, 1280]) {
     await page.setViewportSize({ width, height: 800 });
     for (const screen of [
@@ -1355,6 +1360,10 @@ test("9: no horizontal overflow at 360-1280px across surfaces", async ({ page, b
       expect(probe.offenders, `${screen.path} escapes at ${width}px`).toEqual([]);
     }
   }
+  const uiOff = await page.request.put(`${BASE}/api/auth/me/settings`, {
+    data: { showUserManagement: false },
+  });
+  expect(uiOff.status()).toBe(200);
 
   // The login card is the one surface with no session: probe it anonymously.
   const anonymous = await browser.newContext({ viewport: { width: 360, height: 800 } });
@@ -2951,6 +2960,13 @@ test("24: item row and reset row share their slot at every width (#97)", async (
     "other-currency spans the row at 390px",
   ).toBeLessThanOrEqual(1);
 
+  // #98: the admin table is opt-in — seed it for the reset-row probe, hand it
+  // back off once the geometry work is done (below).
+  const uiOn = await page.request.put(`${BASE}/api/auth/me/settings`, {
+    data: { showUserManagement: true },
+  });
+  expect(uiOn.status()).toBe(200);
+
   /** The admin reset-password row: the input plus its two buttons. */
   const resetRow = () =>
     page.evaluate(() => {
@@ -3017,6 +3033,11 @@ test("24: item row and reset row share their slot at every width (#97)", async (
     }
     await closeReset();
   }
+
+  const uiOff = await page.request.put(`${BASE}/api/auth/me/settings`, {
+    data: { showUserManagement: false },
+  });
+  expect(uiOff.status()).toBe(200);
 
   const removed = await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
   expect([200, 204]).toContain(removed.status());

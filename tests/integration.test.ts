@@ -828,6 +828,36 @@ describe("price history", () => {
     const empty = await jar.request("PUT", "/api/auth/me/settings", {});
     expect(empty.status).toBe(400);
   });
+
+  test("settings: PUT /api/auth/me/settings opts into admin user management (#98)", async () => {
+    const { jar } = await newIsolatedUser("admin-ui-settings");
+
+    const me = await jar.request("GET", "/api/auth/me");
+    expect(((await me.json()) as Me).showUserManagement).toBe(false); // default OFF
+
+    const on = await jar.request("PUT", "/api/auth/me/settings", { showUserManagement: true });
+    expect(on.status).toBe(200);
+    const onBody = (await on.json()) as Me;
+    expect(onBody.showUserManagement).toBe(true);
+    expect(onBody.hintsEnabled).toBe(true); // untouched knobs keep their values
+    expect(onBody.priceTrackingEnabled).toBe(true);
+
+    // Persisted, not just echoed: a fresh GET reads the stored row.
+    const afterOn = await jar.request("GET", "/api/auth/me");
+    expect(((await afterOn.json()) as Me).showUserManagement).toBe(true);
+
+    const off = await jar.request("PUT", "/api/auth/me/settings", { showUserManagement: false });
+    expect(off.status).toBe(200);
+    expect(((await off.json()) as Me).showUserManagement).toBe(false);
+
+    const invalid = await jar.request("PUT", "/api/auth/me/settings", { showUserManagement: "yes" });
+    expect(invalid.status).toBe(400);
+    expect(((await invalid.json()) as { error: string }).error).toBe("showUserManagement must be a boolean");
+
+    const stranger = app.newJar();
+    const unauth = await stranger.request("PUT", "/api/auth/me/settings", { showUserManagement: true });
+    expect(unauth.status).toBe(401);
+  });
 });
 
 describe("price hints route", () => {

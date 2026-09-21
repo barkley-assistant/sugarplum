@@ -12,6 +12,11 @@ export interface Me {
   /** Daily price-tracking opt-in (default on): when false the server skips
    *  this user's items in the daily tracking pass. */
   priceTrackingEnabled: boolean;
+  /** #98: admin UI-exposure opt-in (default off). When true AND isAdmin, the
+   *  settings area shows the Users management screens. UI GATING ONLY: never
+   *  consulted by /api/users* authorization — the server's requireAdmin 403
+   *  is the enforcement, and it applies whether this is on or off. */
+  showUserManagement: boolean;
 }
 
 export interface AdminUser {

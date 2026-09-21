@@ -24,18 +24,18 @@ afterAll(() => {
 describe("db migrations", () => {
   test("migrations are idempotent", () => {
     const version = db.query("PRAGMA user_version").get() as { user_version: number };
-    expect(version.user_version).toBe(7);
+    expect(version.user_version).toBe(8);
 
     // Re-run migrations on the same connection (and a second open) — no-op.
     runMigrations(db);
     const again = openDatabase(dbPath);
-    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 7 });
+    expect(again.query("PRAGMA user_version").get()).toEqual({ user_version: 8 });
     again.close();
   });
 
-  test("v2 (enrichment state) + v3 (image provenance) + v4 (price provenance) + v5 (share) + v6 (tracking) + v7 (owner mark) columns exist on an upgraded db", () => {
+  test("v2 (enrichment state) + v3 (image provenance) + v4 (price provenance) + v5 (share) + v6 (tracking) + v7 (owner mark) + v8 (admin ui gate) columns exist on an upgraded db", () => {
     const v = db.query("PRAGMA user_version").get() as { user_version: number };
-    expect(v.user_version).toBe(7);
+    expect(v.user_version).toBe(8);
     const cols = db.query("PRAGMA table_info(wishlist_items)").all() as { name: string }[];
     for (const c of [
       "fetch_state",
@@ -64,6 +64,11 @@ describe("db migrations", () => {
     expect(trackCol).toBeDefined();
     // Default ON: daily tracking runs unless the user opts out.
     expect(trackCol?.dflt_value).toBe("1");
+    const adminUiCol = userCols.find((c) => c.name === "show_user_management");
+    expect(adminUiCol).toBeDefined();
+    // Default OFF — deliberately the opposite polarity of its siblings: #98
+    // hides the admin user-management UI unless an admin opts in.
+    expect(adminUiCol?.dflt_value).toBe("0");
 
     // A row created under the v1 schema (before v2-v4 ran) reads 'complete'
     // with NULL provenance — the DEFAULT guarantees zero data migration.
@@ -86,7 +91,7 @@ describe("db migrations", () => {
         "Old item",
       ]);
       runMigrations(fresh);
-      expect((fresh.query("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(7);
+      expect((fresh.query("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(8);
       const row = fresh
         .query(
           `SELECT fetch_state, site_name, hint_price_cents, image_source, price_source, cheaper_url
@@ -155,6 +160,20 @@ describe("db migrations", () => {
         .get("v2-upgrade-item") as { owner_purchased: number; owner_purchased_at: string | null };
       expect(upgraded7.owner_purchased).toBe(0);
       expect(upgraded7.owner_purchased_at).toBeNull();
+
+      // v8: the admin UI gate is additive and defaults OFF — the pre-existing
+      // user (an admin in production) is hidden until they opt in.
+      const adminUiCols = fresh.query("PRAGMA table_info(users)").all() as {
+        name: string;
+        dflt_value: string | null;
+      }[];
+      const adminUiCol = adminUiCols.find((c) => c.name === "show_user_management");
+      expect(adminUiCol).toBeDefined();
+      expect(adminUiCol?.dflt_value).toBe("0");
+      const gatedUser = fresh
+        .query("SELECT show_user_management FROM users WHERE id = ?")
+        .get("v2-upgrade-user") as { show_user_management: number };
+      expect(gatedUser.show_user_management).toBe(0);
     } finally {
       fresh.close();
       rmSync(freshPath, { force: true });

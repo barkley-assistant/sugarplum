@@ -13,9 +13,10 @@ import { SettingsUserMenu } from "./SettingsUserMenu";
 import { ToggleSwitch } from "./ToggleSwitch";
 
 /** /settings (#96): the Account & Preferences screen — display name, password
- *  change and the two preference switches. Admins get a Users entry row that
- *  leads to the admin-only /settings/users screen; the user-management table
- *  itself no longer lives on this route.
+ *  change and the preference switches. Admins get a "Show user management"
+ *  switch (#98, default off) plus, when it is on, a Users entry row that leads
+ *  to the admin-only /settings/users screen; the user-management table itself
+ *  no longer lives on this route.
  *
  *  Boots through the shared useBootMe() ladder (401 → /login?next=, offline →
  *  the cached identity) exactly like the two admin screens; the local
@@ -37,7 +38,10 @@ export function SettingsPage() {
   const toast = useToast();
   const me = updated ?? (boot.status === "ready" || boot.status === "offline" ? boot.me : null);
 
-  async function setSetting(key: "hintsEnabled" | "priceTrackingEnabled", value: boolean) {
+  async function setSetting(
+    key: "hintsEnabled" | "priceTrackingEnabled" | "showUserManagement",
+    value: boolean,
+  ) {
     if (!me) return;
     try {
       const res = await fetch("/api/auth/me/settings", {
@@ -211,9 +215,19 @@ export function SettingsPage() {
             checked={me.priceTrackingEnabled}
             onChange={(next) => void setSetting("priceTrackingEnabled", next)}
           />
+          {/* #98: the opt-in that reveals the admin user-management area.
+              Admins only — members never see the control (and gained nothing
+              if they did: the entry below also requires isAdmin). */}
+          {me.isAdmin && (
+            <ToggleSwitch
+              label={S.settings.usersToggle}
+              checked={me.showUserManagement}
+              onChange={(next) => void setSetting("showUserManagement", next)}
+            />
+          )}
         </section>
 
-        {me.isAdmin && (
+        {me.isAdmin && me.showUserManagement && (
           <section className="settings-section settings-nav-section" aria-label={S.settings.usersEntry}>
             <button
               type="button"

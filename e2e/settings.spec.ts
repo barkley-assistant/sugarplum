@@ -26,6 +26,18 @@ async function openMenu(page: Page, buttonName: string): Promise<void> {
   await page.locator(`.user-menu-button[aria-label="${buttonName}"]`).click();
 }
 
+/** #98: the admin user-management surface is opt-in and the e2e server boots a
+ *  fresh DB every run, so a spec that needs the Users screens seeds the
+ *  preference through its own session first (page.request shares the browser
+ *  context's cookie). Callers re-navigate afterwards so the SPA reboots the
+ *  identity. */
+async function setUserManagement(page: Page, on: boolean): Promise<void> {
+  const res = await page.request.put(`${BASE}/api/auth/me/settings`, {
+    data: { showUserManagement: on },
+  });
+  expect(res.status()).toBe(200);
+}
+
 /** The three settings screens' page headings (#96): one h2 per screen. */
 const ACCOUNT = "Account & Preferences";
 const USERS = "Users";
@@ -42,6 +54,9 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("1: admin /settings is Account & Preferences; the Users entry opens the table", async ({ page }) => {
+  // #98 baseline for this spec: start with the preference explicitly off, so
+  // the assertions below do not depend on whatever earlier specs left behind.
+  await setUserManagement(page, false);
   await page.goto(`${BASE}/settings`);
   await expect(page.getByRole("heading", { name: ACCOUNT, level: 2 })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Account", level: 3 })).toBeVisible();
@@ -53,7 +68,15 @@ test("1: admin /settings is Account & Preferences; the Users entry opens the tab
   await expect(page.locator(".admin-table")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Create user" })).toHaveCount(0);
 
-  // Admins get an entry row through to the Users screen.
+  // #98: off means no entry row — but the admin still owns the opt-in switch,
+  // which is the only way back.
+  const usersSwitch = page.getByRole("switch", { name: "Show user management" });
+  await expect(usersSwitch).toHaveAttribute("aria-checked", "false");
+  await expect(page.getByRole("button", { name: USERS, exact: true })).toHaveCount(0);
+
+  // The switch reveals the entry in the same session (no reload needed).
+  await usersSwitch.click();
+  await expect(usersSwitch).toHaveAttribute("aria-checked", "true");
   await page.getByRole("button", { name: USERS, exact: true }).click();
   await expect(page).toHaveURL(`${BASE}/settings/users`);
   await expect(page.getByRole("heading", { name: USERS, level: 2 })).toBeVisible();
@@ -97,6 +120,21 @@ test("2: member: Account & Preferences only; users screens bounce; /api/users is
     expect(users.status()).toBe(401); // no session on the raw request fixture
     const forbidden = await ctx.request.get(`${BASE}/api/users`);
     expect(forbidden.status()).toBe(403); // the member's own session: 403, not 401
+
+    // #98: a member CAN flip the preference on their own row (the settings
+    // route is role-agnostic like its two siblings) and still gets no admin UI:
+    // the switch is admin-only and the entry ANDs isAdmin, while /api/users
+    // keeps 403ing.
+    const optedIn = await ctx.request.put(`${BASE}/api/auth/me/settings`, {
+      data: { showUserManagement: true },
+    });
+    expect(optedIn.status()).toBe(200);
+    await ctx.goto(`${BASE}/settings`);
+    await expect(ctx.getByRole("heading", { name: ACCOUNT, level: 2 })).toBeVisible();
+    await expect(ctx.getByRole("switch", { name: "Show user management" })).toHaveCount(0);
+    await expect(ctx.getByRole("button", { name: USERS, exact: true })).toHaveCount(0);
+    await ctx.goto(`${BASE}/settings/users`);
+    await expect(ctx).toHaveURL(`${BASE}/settings`);
   } finally {
     await ctx.close();
   }
@@ -115,6 +153,7 @@ test("3: main page has no admin controls", async ({ page }) => {
 });
 
 test("4: last-admin guard surfaces on the Users screen", async ({ page }) => {
+  await setUserManagement(page, true);
   await page.goto(`${BASE}/settings/users`);
   await expect(page.locator(".admin-table")).toBeVisible();
   const adminRow = page.locator(".admin-table tbody tr", { hasText: "admin" }).first();
@@ -191,6 +230,9 @@ test("7: menu navigates to settings and the brand navigates home", async ({ page
 });
 
 test("8: all three settings routes load offline from the shell cache", async ({ page, context }) => {
+  // #98: the admin screens are opt-in, so seed the preference for the cached
+  // identity both passes below boot from.
+  await setUserManagement(page, true);
   const screens = [
     { path: "/settings", heading: ACCOUNT },
     { path: "/settings/users", heading: USERS },
@@ -217,14 +259,21 @@ test("8: all three settings routes load offline from the shell cache", async ({ 
 
 test("9: preference switches are real switches and round-trip (click + keyboard)", async ({ page }) => {
   await page.goto(`${BASE}/settings`);
-  const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as { hintsEnabled: boolean };
+  const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as {
+    hintsEnabled: boolean;
+    showUserManagement: boolean;
+  };
   const hints = page.getByRole("switch", { name: /Show unverified price hints/ });
   await expect(page.getByRole("switch", { name: /Track prices daily/ })).toBeVisible();
   await expect(hints).toHaveAttribute("aria-checked", String(me.hintsEnabled));
   // The On/Off text affordance the old rows carried is gone: the row parses as
   // one switch, and only the track communicates the state (#96).
   await expect(page.locator(".menu-item-state")).toHaveCount(0);
-  await expect(page.locator(".toggle-row .switch-track")).toHaveCount(2);
+  // #98 added the admin-only third switch; the geometry contract is shared.
+  const adminUi = page.getByRole("switch", { name: "Show user management" });
+  await expect(adminUi).toBeVisible();
+  await expect(adminUi).toHaveAttribute("aria-checked", String(me.showUserManagement));
+  await expect(page.locator(".toggle-row .switch-track")).toHaveCount(3);
 
   // The visual: a 44x26 track whose thumb sits left when off and slides to the
   // right when on, driven by aria-checked — not an On/Off text row (#96).
@@ -287,6 +336,8 @@ test("10: heading ladder — one h2 per settings screen", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Create user" })).toHaveCount(0);
   await assertNoSkippedLevels();
 
+  // #98: the Users screens are opt-in; seed before climbing their ladders.
+  await setUserManagement(page, true);
   await page.goto(`${BASE}/settings/users`);
   await expect(page.getByRole("heading", { name: USERS, level: 2, exact: true })).toHaveCount(1);
   await expect(page.getByRole("heading", { name: USERS, exact: true })).toHaveCount(1); // h2 only
@@ -320,6 +371,8 @@ test("11: settings submits carry the amethyst pill grammar", async ({ page }) =>
 });
 
 test("12: create-user row shares its slot at every width, both themes (#97)", async ({ page }) => {
+  // #98: /settings/users/new is behind the opt-in preference.
+  await setUserManagement(page, true);
   /** The create-user row: the row plus its three fields. */
   const createRow = () =>
     page.evaluate(() => {
@@ -441,6 +494,7 @@ test("12: create-user row shares its slot at every width, both themes (#97)", as
 });
 
 test("13: the settings area navigates client-side; the bar's Settings stays exact", async ({ page }) => {
+  await setUserManagement(page, true);
   await page.addInitScript(() => {
     sessionStorage.setItem("docLoads", String(Number(sessionStorage.getItem("docLoads") ?? 0) + 1));
   });
@@ -485,4 +539,56 @@ test("13: the settings area navigates client-side; the bar's Settings stays exac
 
   // INV-4: not one of those navigations loaded the document.
   expect(await loads(page)).toBe(before);
+});
+
+test("14: user management is opt-in — a fresh admin starts hidden (#98)", async ({ page, browser }) => {
+  // A BRAND-NEW admin row proves the default: the bootstrap admin's preference
+  // has been seeded by earlier specs, so only a fresh row is order-independent.
+  const username = `fresh-admin-${Math.random().toString(36).slice(2, 8)}`;
+  const created = await page.request.post(`${BASE}/api/users`, {
+    data: { username, password: "fresh-admin-pass", displayName: "Fresh Admin", isAdmin: true },
+  });
+  expect(created.status()).toBe(201);
+  const id = ((await created.json()) as { id: string }).id;
+
+  // A separate context so the bootstrap admin's session (and the cleanup
+  // DELETE below) survives.
+  const ctx = await browser.newContext();
+  try {
+    const fresh = await ctx.newPage();
+    await login(fresh, username, "fresh-admin-pass");
+
+    // Default OFF: the opt-in switch is there (it belongs to every admin)...
+    await fresh.goto(`${BASE}/settings`);
+    await expect(fresh.getByRole("heading", { name: ACCOUNT, level: 2 })).toBeVisible();
+    const toggle = fresh.getByRole("switch", { name: "Show user management" });
+    await expect(toggle).toHaveAttribute("aria-checked", "false");
+    // ...and the management surface is absent, entry row included.
+    await expect(fresh.getByRole("button", { name: USERS, exact: true })).toHaveCount(0);
+    await fresh.goto(`${BASE}/settings/users`);
+    await expect(fresh).toHaveURL(`${BASE}/settings`);
+    await expect(fresh.locator(".admin-table")).toHaveCount(0);
+
+    // Opting in reveals it, entry and deep link alike.
+    await fresh.getByRole("switch", { name: "Show user management" }).click();
+    await expect(toggle).toHaveAttribute("aria-checked", "true");
+    await fresh.getByRole("button", { name: USERS, exact: true }).click();
+    await expect(fresh).toHaveURL(`${BASE}/settings/users`);
+    await expect(fresh.locator(".admin-table")).toBeVisible();
+
+    // Opting back out hides it again — the choice is persisted, and the deep
+    // link bounces once more.
+    await fresh.getByRole("button", { name: "Back to Account & Preferences" }).click();
+    await fresh.getByRole("switch", { name: "Show user management" }).click();
+    await expect(toggle).toHaveAttribute("aria-checked", "false");
+    await expect(fresh.getByRole("button", { name: USERS, exact: true })).toHaveCount(0);
+    await fresh.goto(`${BASE}/settings/users`);
+    await expect(fresh).toHaveURL(`${BASE}/settings`);
+  } finally {
+    await ctx.close();
+    // Leave the board exactly as found: the last-admin guard specs depend on
+    // the bootstrap admin being the only active one. No status assertion here,
+    // so a real failure above is never masked.
+    await page.request.delete(`${BASE}/api/users/${id}`);
+  }
 });

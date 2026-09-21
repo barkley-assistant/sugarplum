@@ -150,6 +150,19 @@ ALTER TABLE wishlist_items ADD COLUMN owner_purchased INTEGER NOT NULL DEFAULT 0
 ALTER TABLE wishlist_items ADD COLUMN owner_purchased_at TEXT;
 `,
   },
+  {
+    version: 8,
+    sql: `
+-- #98: admin UI-exposure preference. When false, the Users management
+-- screens are hidden from the admin's Settings area (client-side redirect;
+-- /api/users* authorization is UNCHANGED and never consults this column).
+-- DEFAULT 0: user management is hidden unless an admin opts in — including
+-- every existing admin row on upgrade (the issue's "default hidden").
+-- Deliberately the opposite polarity of hints/price_tracking (opt-out,
+-- DEFAULT 1): this feature is opt-in.
+ALTER TABLE users ADD COLUMN show_user_management INTEGER NOT NULL DEFAULT 0;
+`,
+  },
 ];
 
 export function runMigrations(db: Database): void {
