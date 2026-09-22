@@ -586,16 +586,19 @@ test("3f: #112 add-page disclosure hover stays neutral and readable, both scheme
     expect(await value(submit, "background-color"), `${scheme}: CTA hover intact`).toBe(CTA[scheme]);
   }
 
-  // Keyboard: the disclosure stays a Tab stop (DOM order on /add is URL field
-  // -> primary submit -> disclosure), focus alone never paints the bar, and
-  // the global focus ring is drawn.
+  // Keyboard: the disclosure stays a Tab stop. The page heading is focused on
+  // mount (usePageFocus), so tabbing walks the content in DOM order — #125 put
+  // the list-context row (its switcher trigger) between the heading and the
+  // form, which is what makes the disclosure the FOURTH stop instead of the
+  // third. Focus alone never paints the bar, and the global focus ring is
+  // drawn.
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto(`${BASE}/add`);
   await page.mouse.move(0, 0);
   const disclose = page.getByRole("button", { name: "Add details manually" });
   await expect(disclose).toBeVisible();
-  for (let i = 0; i < 3; i++) await page.keyboard.press("Tab");
-  await expect(disclose, "the disclosure is the third Tab stop").toBeFocused();
+  for (let i = 0; i < 4; i++) await page.keyboard.press("Tab");
+  await expect(disclose, "the disclosure is the fourth Tab stop").toBeFocused();
   expect(await value(disclose, "background-color"), "keyboard focus paints no bar").toBe(NONE);
   expect(await value(disclose, "outline-style"), "keyboard focus keeps the ring").toBe("solid");
   expect(await value(disclose, "outline-width"), "keyboard focus ring width").toBe("2px");
@@ -3841,14 +3844,24 @@ test("28: recurring mobile controls keep the app-wide 44px touch floor (#116)", 
     await expect(page).toHaveURL(`${BASE}/`);
     // …and the padded band did not grow the bar it lives in (#116 §F risk 1:
     // the topbar is min-height driven, so a grown lockup box WOULD have pushed
-    // the 52px routes — /add, /items/:id, /items/:id/edit, /share/:token — to 57).
+    // the bar past the height the cluster routes render). #125 made the header
+    // uniform: /add now carries the same right-hand cluster as the feed, so
+    // the bar's height is the feed's — what #116 pins here is the LOCKUP, and
+    // that the lockup is not what sizes the bar.
     await page.goto(`${BASE}/add`);
     await expect(page.locator(".brand")).toBeVisible();
     const bar = await page.evaluate(() => ({
       topbar: document.querySelector(".topbar")!.getBoundingClientRect().height,
       brand: document.querySelector(".brand")!.getBoundingClientRect().height,
     }));
-    expect(Math.round(bar.topbar), "the add-page topbar keeps its shipped height").toBe(52);
+    await page.goto(`${BASE}/`);
+    await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+    const feedBar = await page.evaluate(
+      () => document.querySelector(".topbar")!.getBoundingClientRect().height,
+    );
+    expect(Math.round(bar.topbar), "#125: the add-page topbar matches the feed's").toBe(
+      Math.round(feedBar),
+    );
     expect(Math.round(bar.brand), "the lockup box is untouched").toBe(28);
   } finally {
     const removed = await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
@@ -5055,4 +5068,177 @@ test("36: #127 — purchased cluster, guarded discard, canonical add pair", asyn
   expect([200, 204]).toContain(removed.status());
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${BASE}/`);
+});
+
+test("37: #125 — one header on every authenticated page, Back-to-list button, subpage switcher", async ({
+  page,
+  browser,
+}) => {
+  // Two probe rows: the feed only offers Reorder from two items up, and leg 2
+  // pins the feed as unchanged — including that action.
+  const probeIds: string[] = [];
+  for (const title of ["Header probe", "Header probe two"]) {
+    const seeded = await page.request.post(`${BASE}/api/wishlist/items`, { data: { title } });
+    expect(seeded.status()).toBe(201);
+    probeIds.push(((await seeded.json()) as { id: string }).id);
+  }
+  const itemId = probeIds[0]!;
+
+  // A second member with a non-empty list: the switcher on a subpage must be
+  // able to leave the own list (D4).
+  const OTHER = { username: "header-other", password: "header-other-pass", displayName: "Header Other" };
+  const created = await page.request.post(`${BASE}/api/users`, {
+    data: { username: OTHER.username, password: OTHER.password, displayName: OTHER.displayName },
+  });
+  expect([201, 409], "the second member exists (created here or by an earlier run)").toContain(
+    created.status(),
+  );
+
+  const otherContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  try {
+    const other = await otherContext.newPage();
+    await login(other, OTHER.username, OTHER.password);
+    const otherRow = await other.request.post(`${BASE}/api/wishlist/items`, {
+      data: { title: "Other list probe" },
+    });
+    expect(otherRow.status()).toBe(201);
+
+    // --- 1. Item view: the full cluster, with a real Back-to-list BUTTON. --
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`${BASE}/items/${itemId}`);
+    await expect(page.locator(".item-page")).toBeVisible();
+
+    const cluster = page.locator(".topbar-actions");
+    await expect(cluster, "#125: the item view carries the header cluster").toBeVisible();
+    await expect(cluster.getByRole("button", { name: "Add item", exact: true })).toBeVisible();
+    await expect(cluster.getByRole("button", { name: "Share my list", exact: true })).toBeVisible();
+    const back = cluster.getByRole("button", { name: "Back to list", exact: true });
+    await expect(back, "#125: a visible Back-to-list button, not just the text link").toBeVisible();
+    // Same control family as the feed's Reorder, and a real 44px target.
+    await expect(back).toHaveClass(/secondary/);
+    await expect(back).toHaveClass(/topbar-back/);
+    expect(Math.round((await back.boundingBox())!.height), "Back to list target").toBeGreaterThanOrEqual(44);
+    // The brand LINK keeps its own role (3c/4d/9/12 click it).
+    await expect(page.getByRole("link", { name: "Back to list" })).toBeVisible();
+    // …and the page says which list it belongs to (the compact context bar).
+    await expect(page.locator(".list-switcher--compact .list-switcher-name")).toHaveText(
+      "Admin's wishlist",
+    );
+
+    const loadsBefore = await loads(page);
+    await back.click();
+    await expect(page).toHaveURL(`${BASE}/`);
+    expect(await loads(page), "Back to list is a client-side navigation").toBe(loadsBefore);
+
+    // --- 2. Feed: UNCHANGED (display-scale switcher + Reorder, no bar). ----
+    await expect(page.locator(".list-switcher .page-title")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Reorder", exact: true })).toBeVisible();
+    await expect(page.locator(".list-switcher--compact")).toHaveCount(0);
+
+    // --- 3. /add: the same cluster, WITHOUT the Add chip (its destination is
+    //        this page), so the submit stays the page's only "Add item". ----
+    await page.goto(`${BASE}/add`);
+    await expect(page.getByRole("heading", { name: "Add item" })).toBeVisible();
+    const addCluster = page.locator(".topbar-actions");
+    await expect(addCluster, "#125: /add carries the header cluster too").toBeVisible();
+    await expect(addCluster.getByRole("button", { name: "Share my list", exact: true })).toBeVisible();
+    await expect(addCluster.getByRole("button", { name: "Add item", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Add item", exact: true })).toHaveCount(1);
+    await expect(addCluster.getByRole("button", { name: "Back to list", exact: true })).toHaveCount(0);
+    await expect(page.locator(".list-switcher--compact")).toBeVisible();
+
+    // --- 4. Settings: same cluster + bar; the avatar menu drops its own
+    //        Settings row there, and keeps it on a page that is not Settings.
+    await page.goto(`${BASE}/settings`);
+    await expect(page.getByRole("heading", { name: "Account & Preferences", level: 2 })).toBeVisible();
+    const settingsCluster = page.locator(".topbar-actions");
+    await expect(settingsCluster.getByRole("button", { name: "Add item", exact: true })).toBeVisible();
+    await expect(settingsCluster.getByRole("button", { name: "Share my list", exact: true })).toBeVisible();
+    await expect(page.locator(".list-switcher--compact")).toBeVisible();
+    await page.locator('.user-menu-button[aria-label="Admin"]').click();
+    const menu = page.getByRole("menu", { name: "Admin" });
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: "Log out" })).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: "Settings" })).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(menu).toHaveCount(0);
+
+    await page.goto(`${BASE}/items/${itemId}`);
+    await page.locator('.user-menu-button[aria-label="Admin"]').click();
+    const itemMenu = page.getByRole("menu", { name: "Admin" });
+    await expect(itemMenu.getByRole("menuitem", { name: "Settings" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(itemMenu).toHaveCount(0);
+
+    // --- 5. The two admin screens too (opt-in on), then hand it back off. ---
+    const uiOn = await page.request.put(`${BASE}/api/auth/me/settings`, {
+      data: { showUserManagement: true },
+    });
+    expect(uiOn.status()).toBe(200);
+    for (const path of ["/settings/users", "/settings/users/new"]) {
+      await page.goto(`${BASE}${path}`);
+      await expect(page.locator(".topbar-actions"), `cluster on ${path}`).toBeVisible();
+      await expect(page.locator(".list-switcher--compact"), `bar on ${path}`).toBeVisible();
+    }
+    const uiOff = await page.request.put(`${BASE}/api/auth/me/settings`, {
+      data: { showUserManagement: false },
+    });
+    expect(uiOff.status()).toBe(200);
+
+    // --- 6. D4: the subpage switcher navigates to that list's feed. -------
+    await page.goto(`${BASE}/items/${itemId}`);
+    await page.locator(".list-switcher--compact .list-switcher-trigger").click();
+    const popover = page.getByRole("menu", { name: "Switch wishlist" });
+    await expect(popover).toBeVisible();
+    await popover.getByRole("menuitemradio", { name: /Header Other/ }).click();
+    await expect(page).toHaveURL(`${BASE}/`);
+    await expect(page.getByRole("heading", { name: "Header Other's wishlist" })).toBeVisible();
+    // …and the feed's own switcher is still how you come back.
+    await page.getByRole("button", { name: /wishlist/ }).click();
+    await page.getByRole("menuitemradio", { name: /Admin/ }).click();
+    await expect(page.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+
+    // --- 7. D6: mobile keeps the bottom bar and no desktop cluster. -------
+    await page.setViewportSize({ width: 390, height: 844 });
+    for (const path of [`/items/${itemId}`, "/add", "/settings"]) {
+      await page.goto(`${BASE}${path}`);
+      await expect(page.locator(".topbar-actions"), `cluster on ${path} @390`).toHaveCount(0);
+      await expect(page.locator(".topbar-back"), `back button on ${path} @390`).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "Back to list" })).toBeVisible();
+      await expect(page.getByRole("navigation", { name: "Primary actions" })).toBeVisible();
+    }
+
+    // --- 8. One header height, and no overflow, at every width. ----------
+    for (const width of [360, 390, 430, 768, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      for (const path of ["/", "/add", "/settings", `/items/${itemId}`]) {
+        await page.goto(`${BASE}${path}`);
+        await expect(page.locator(".topbar")).toBeVisible();
+        const probe = await horizontalEscapes(page);
+        expect(probe.docOverflow, `${path} overflow at ${width}px`).toBe(false);
+        expect(probe.offenders, `${path} escapes at ${width}px`).toEqual([]);
+      }
+      if (width < 640) continue;
+      const heights: number[] = [];
+      for (const path of ["/", "/add", "/settings", `/items/${itemId}`]) {
+        await page.goto(`${BASE}${path}`);
+        await expect(page.locator(".topbar")).toBeVisible();
+        heights.push(
+          Math.round(
+            await page.locator(".topbar").evaluate((el) => el.getBoundingClientRect().height),
+          ),
+        );
+      }
+      expect(
+        new Set(heights).size,
+        `#125: the header never changes shape — heights at ${width}px: ${heights.join(",")}`,
+      ).toBe(1);
+    }
+  } finally {
+    await otherContext.close();
+    for (const id of probeIds) {
+      const removed = await page.request.delete(`${BASE}/api/wishlist/items/${id}`);
+      expect([200, 204]).toContain(removed.status());
+    }
+  }
 });
