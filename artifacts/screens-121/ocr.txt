@@ -1,0 +1,622 @@
+#121 OCR reads (tesseract --psm 4) — before vs after, rendered pixels
+
+===== add-1280-dark =====
+-- before:
+   © sugarplum
+   Add to Sugarplum
+   Link
+   | Paste a product link...
+   Add details manually .
+   Cancel
+-- after:
+   © sugarplum
+   Add item
+   Link
+   | Paste a product link...
+   Add details manually .
+   Cancel
+
+===== add-1280-light =====
+-- before:
+   6 sugarplum
+   Add to Sugarplum
+   Link
+   Paste a product link...
+   Add details manually .
+   Cancel
+-- after:
+   6 sugarplum
+   Add item
+   Link
+   Paste a product link...
+   Add details manually .
+   Cancel
+
+===== add-360-dark =====
+-- before:
+   © sugarplum
+   Add to Sugarplum
+   Link
+   Paste a product link...
+   Add details manually .
+   Cancel
+   + “ @
+-- after:
+   © sugarplum
+   Add item
+   Link
+   | Paste a product link...
+   Add details manually .
+   Cancel
+   + “ @
+
+===== add-360-light =====
+-- before:
+   6 sugarplum
+   Add to Sugarplum
+   Link
+   Paste a product link...
+   Add details manually .
+   Cancel
+   + “ ®
+   ‘Add item ee Settings
+-- after:
+   6 sugarplum
+   Add item
+   Link
+   Paste a product link...
+   Add details manually .
+   Cancel
+   + “ ®
+   ‘Add item ee Settings
+
+===== add-390-dark =====
+-- before:
+   © sugarplum
+   Add to Sugarplum
+   Link
+   | Paste a product link...
+   Add details manually .
+   Cancel
+   + “ @
+-- after:
+   © sugarplum
+   Add item
+   Link
+   | Paste a product link...
+   Add details manually .
+   Cancel
+   + “ @
+
+===== add-390-light =====
+-- before:
+   6 sugarplum
+   Add to Sugarplum
+   Link
+   Paste a product link...
+   Add details manually .
+   Cancel
+   + “ ®
+   ‘Add item ee Settings
+-- after:
+   6 sugarplum
+   Add item
+   Link
+   Paste a product link...
+   Add details manually .
+   Cancel
+   + “ ®
+   ‘Add item ee Settings
+
+===== add-430-dark =====
+-- before:
+   © sugarplum
+   Add to Sugarplum
+   Link
+   | Paste a product link...
+   Add details manually .
+   Cancel
+   + “ ®
+   ‘Add item Share Settings
+-- after:
+   © sugarplum
+   Add item
+   Link
+   | Paste a product link...
+   Add details manually .
+   Cancel
+   + “ ®
+   ‘Add item cep Settings
+
+===== add-430-light =====
+-- before:
+   6 sugarplum
+   Add to Sugarplum
+   Link
+   Paste a product link...
+   Add details manually .
+   Cancel
+   + “ @
+   ‘Add item ee Settings
+-- after:
+   6 sugarplum
+   Add item
+   Link
+   Paste a product link...
+   Add details manually .
+   Cancel
+   + “ @
+   ‘Add item ee Settings
+
+===== add-768-dark =====
+-- before:
+   © sugarplum
+   Add to Sugarplum
+   Link
+   | Paste a product link...
+   Add details manually .
+   Cancel
+-- after:
+   © sugarplum
+   Add item
+   Link
+   | Paste a product link...
+   Add details manually .
+   Cancel
+
+===== add-768-light =====
+-- before:
+   6 sugarplum
+   Add to Sugarplum
+   Link
+   Paste a product link...
+   Add details manually .
+   Cancel
+-- after:
+   6 sugarplum
+   Add item
+   Link
+   Paste a product link...
+   Add details manually .
+   Cancel
+
+===== add-manual-1280-dark =====
+-- before:
+   © sugarplum
+   Add to Sugarplum
+   Link
+   | Paste a product link...
+   Add details manually 2
+   Optional — we'll fetch the title, price and image from the link.
+   Title Price Currency
+   Leave blank to auto-fill from the link 24.99 GBP v
+   Tags
+   Birthday, Someday
+   Notes
+   Cancel
+-- after:
+   © sugarplum
+   Add item
+   Link
+   | Paste a product link...
+   Add details manually 2
+   Optional — we'll fetch the title, price and image from the link.
+   Title Price Currency
+   Leave blank to auto-fill from the link 24.99 GBP v
+   Tags
+   Birthday, Someday
+   Notes
+   Cancel
+
+===== add-manual-1280-light =====
+-- before:
+   6 sugarplum
+   Add to Sugarplum
+   Link
+   Paste a product link...
+   Add details manually
+   Optional — we'll fetch the title, price and image from the link.
+   Title Price Currency
+   Leave blank to auto-fil from the link | | 24.99 GBP v
+   Tags
+   Birthday, Someday
+   Notes
+   Cancel
+-- after:
+   6 sugarplum
+   Add item
+   Link
+   Paste a product link...
+   Add details manually
+   Optional — we'll fetch the title, price and image from the link.
+   Title Price Currency
+   Leave blank to auto-fil from the link | | 24.99 GBP v
+   Tags
+   Birthday, Someday
+   Notes
+   Cancel
+
+===== add-manual-390-dark =====
+-- before:
+   © sugarplum
+   Add to Sugarplum
+   Link
+   Paste a product link...
+   Add details manually 2
+   Optional — we'll fetch the title, price and image from the
+   link,
+   Title
+   Leave blank to auto-fill from the link
+   Price Currency,
+   | 24.99 GBP 9
+   Tags
+   Birthday, Someday
+   Notes
+-- after:
+   © sugarplum
+   Add item
+   Link
+   Paste a product link...
+   Add details manually 2
+   Optional — we'll fetch the title, price and image from the
+   link,
+   Title
+   Leave blank to auto-fill from the link
+   Price Currency
+   [ 24.99 GBP v
+   Tags
+   Birthday, Someday
+   Notes
+
+===== add-manual-390-light =====
+-- before:
+   6 sugarplum
+   Add to Sugarplum
+   Link
+   Paste a product link...
+   Add details manually
+   Optional — we'll fetch the title, price and image from the
+   link,
+   Title
+   Leave blank to auto-fill from the link
+   Price Currency
+   | 24.99 GBP v
+   Tags
+   itthday, Someday
+   Notes
+-- after:
+   6 sugarplum
+   Add item
+   Link
+   Paste a product link...
+   Add details manually
+   Optional — we'll fetch the title, price and image from the
+   link.
+   Title
+   Leave blank to auto-fill from the link
+   Price Currency
+   | 24.99 GBP v
+   Tags
+   itthday, Someday
+   Notes
+
+===== edit-1280-dark =====
+-- before:
+   © sugarplum
+   Edit
+   Link
+   https://...
+   Title
+   Price
+   Currency
+   Stonewashed Linen Apron
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+-- after:
+   © sugarplum
+   Edit item
+   Link
+   https://...
+   Title
+   Price
+   Currency
+   Stonewashed Linen Apron
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+
+===== edit-1280-light =====
+-- before:
+   6 sugarplum
+   Edit
+   Link
+   https://...
+   Title
+   Price
+   Currency
+   Stonewashed Linen Apron
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+-- after:
+   6 sugarplum
+   Edit item
+   Link
+   https://...
+   Title
+   Price
+   Currency
+   Stonewashed Linen Apron
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+
+===== edit-360-dark =====
+-- before:
+   © sugarplum
+   Edit
+   Link
+   ( https://...
+   Title
+   copemoetetrr Apron
+   Price Currency
+   ( 34.00 \f GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck
+   ‘strap
+   Found it cheaper at
+-- after:
+   © sugarplum
+   Edit item
+   Link
+   https://...
+   Title
+   Stonewashed Linen Apron
+   Price Currency
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck
+   ‘strap
+
+===== edit-360-light =====
+-- before:
+   6 sugarplum
+   Edit
+   Link
+   https://...
+   Title
+   Stonewashed Linen Apron
+   Price ‘Currency
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck
+   strap
+-- after:
+   6 sugarplum
+   Edit item
+   Link
+   https://...
+   Title
+   Stonewashed Linen Apron
+   Price ‘Currency
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck
+   strap
+
+===== edit-390-dark =====
+-- before:
+   © sugarplum
+   Edit
+   Link
+   ( https://...
+   Title
+   copemoetetrr Apron
+   Price Currency
+   ( 34.00 \f GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+   Found it cheaper at
+   hitpsi/..
+-- after:
+   © sugarplum
+   Edit item
+   Link
+   https://...
+   Title
+   Stonewashed Linen Apron
+   Price Currency
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+   Found it cheaper at
+
+===== edit-390-light =====
+-- before:
+   6 sugarplum
+   Edit
+   Link
+   https://...
+   Title
+   Stonewashed Linen Apron
+   Price ‘Currency
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+   y)
+-- after:
+   6 sugarplum
+   Edit item
+   Link
+   https://...
+   Title
+   Stonewashed Linen Apron
+   Price ‘Currency
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+   y)
+
+===== edit-430-dark =====
+-- before:
+   © sugarplum
+   Edit
+   Link
+   https://...
+   Title
+   Stonewashed Linen Apron
+   Price Currency
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+   Found it cheaper at
+-- after:
+   © sugarplum
+   Edit item
+   Link
+   https://...
+   Title
+   Stonewashed Linen Apron
+   Price Currency
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+   Found it cheaper at
+
+===== edit-430-light =====
+-- before:
+   6 sugarplum
+   Edit
+   Link
+   https://...
+   Title
+   Stonewashed Linen Apron
+   Price ‘Currency
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+   y)
+-- after:
+   6 sugarplum
+   Edit item
+   Link
+   https://...
+   Title
+   Stonewashed Linen Apron
+   Price ‘Currency
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+   y)
+
+===== edit-768-dark =====
+-- before:
+   © sugarplum
+   Edit
+   Link
+   https://...
+   Title Price Currency
+   Stonewashed Linen Apron
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+   Found it cheaper at
+   hitpsi/..
+   a -
+-- after:
+   © sugarplum
+   Edit item
+   Link
+   https://...
+   Title Price Currency
+   Stonewashed Linen Apron
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+   Found it cheaper at
+   hitpsi/..
+   a -
+
+===== edit-768-light =====
+-- before:
+   6 sugarplum
+   Edit
+   Link
+   https://...
+   Title
+   Price
+   Currency
+   Stonewashed Linen Apron
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+-- after:
+   6 sugarplum
+   Edit item
+   Link
+   https://...
+   Title
+   Price
+   Currency
+   Stonewashed Linen Apron
+   34.00
+   GBP
+   Tags
+   Birthday, Someday
+   Notes
+   The long one with the adjustable neck strap
+

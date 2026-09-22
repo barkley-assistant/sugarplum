@@ -1,0 +1,119 @@
+#121 probe matrix — runtime probes behind the capture set
+before = main @ 43909f6 build (/home/agent/.hermes/profiles/builder/cache/scratch/screens-121/before-repo)
+after  = fix/add-edit-heading-copy head build (/home/agent/projects/barkley-assistant/sugarplum)
+
+identical seed on both sides: one manual item (title, price, currency, notes,
+tags), same viewport list, same schemes, per-side temp DB + random port.
+
+add-360-light: CHANGED
+  docTitle: "Add \u00b7 sugarplum" -> "Add item \u00b7 sugarplum"
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add to Sugarplum"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add item"}]
+  bodyHasMarketingHeading: true -> false
+
+add-390-light: CHANGED
+  docTitle: "Add \u00b7 sugarplum" -> "Add item \u00b7 sugarplum"
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add to Sugarplum"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add item"}]
+  bodyHasMarketingHeading: true -> false
+
+add-430-light: CHANGED
+  docTitle: "Add \u00b7 sugarplum" -> "Add item \u00b7 sugarplum"
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add to Sugarplum"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add item"}]
+  bodyHasMarketingHeading: true -> false
+
+add-768-light: CHANGED
+  docTitle: "Add \u00b7 sugarplum" -> "Add item \u00b7 sugarplum"
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add to Sugarplum"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add item"}]
+  bodyHasMarketingHeading: true -> false
+
+add-1280-light: CHANGED
+  docTitle: "Add \u00b7 sugarplum" -> "Add item \u00b7 sugarplum"
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add to Sugarplum"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add item"}]
+  bodyHasMarketingHeading: true -> false
+
+add-manual-390-light: CHANGED
+  docTitle: "Add \u00b7 sugarplum" -> "Add item \u00b7 sugarplum"
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add to Sugarplum"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add item"}]
+  bodyHasMarketingHeading: true -> false
+
+add-manual-1280-light: CHANGED
+  docTitle: "Add \u00b7 sugarplum" -> "Add item \u00b7 sugarplum"
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add to Sugarplum"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add item"}]
+  bodyHasMarketingHeading: true -> false
+
+edit-360-light: CHANGED
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit item"}]
+
+edit-390-light: CHANGED
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit item"}]
+
+edit-430-light: CHANGED
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit item"}]
+
+edit-768-light: CHANGED
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit item"}]
+
+edit-1280-light: CHANGED
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit item"}]
+
+add-360-dark: CHANGED
+  docTitle: "Add \u00b7 sugarplum" -> "Add item \u00b7 sugarplum"
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add to Sugarplum"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add item"}]
+  bodyHasMarketingHeading: true -> false
+
+add-390-dark: CHANGED
+  docTitle: "Add \u00b7 sugarplum" -> "Add item \u00b7 sugarplum"
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add to Sugarplum"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add item"}]
+  bodyHasMarketingHeading: true -> false
+
+add-430-dark: CHANGED
+  docTitle: "Add \u00b7 sugarplum" -> "Add item \u00b7 sugarplum"
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add to Sugarplum"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add item"}]
+  bodyHasMarketingHeading: true -> false
+
+add-768-dark: CHANGED
+  docTitle: "Add \u00b7 sugarplum" -> "Add item \u00b7 sugarplum"
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add to Sugarplum"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add item"}]
+  bodyHasMarketingHeading: true -> false
+
+add-1280-dark: CHANGED
+  docTitle: "Add \u00b7 sugarplum" -> "Add item \u00b7 sugarplum"
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add to Sugarplum"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add item"}]
+  bodyHasMarketingHeading: true -> false
+
+add-manual-390-dark: CHANGED
+  docTitle: "Add \u00b7 sugarplum" -> "Add item \u00b7 sugarplum"
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add to Sugarplum"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add item"}]
+  bodyHasMarketingHeading: true -> false
+
+add-manual-1280-dark: CHANGED
+  docTitle: "Add \u00b7 sugarplum" -> "Add item \u00b7 sugarplum"
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add to Sugarplum"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Add item"}]
+  bodyHasMarketingHeading: true -> false
+
+edit-360-dark: CHANGED
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit item"}]
+
+edit-390-dark: CHANGED
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit item"}]
+
+edit-430-dark: CHANGED
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit item"}]
+
+edit-768-dark: CHANGED
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit item"}]
+
+edit-1280-dark: CHANGED
+  headings: [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit"}] -> [{"tag": "H1", "text": "sugarplum"}, {"tag": "H1", "text": "Edit item"}]
+
+
+summary:
+  captures probed: 24
+  captures with a changed probe: 24
+  horizontal overflow: before 0, after 0
+  page-title line count: before [1], after [1]
+  page-title box (w x h) add-360: before {'w': 328, 'h': 28.6} after {'w': 328, 'h': 28.6}
+  page-title box (w x h) edit-360: before {'w': 328, 'h': 28.6} after {'w': 328, 'h': 28.6}
+  'Add to Sugarplum' anywhere in body text: before [False, True], after [False]
+  submit labels: before ['"Add item"', '"Save"'], after ['"Add item"', '"Save"']
+  form-actions labels: before ['["Cancel"]', '["Save", "Cancel"]'], after ['["Cancel"]', '["Save", "Cancel"]']
+  doc titles: before ['Add · sugarplum', 'Edit item · sugarplum'], after ['Add item · sugarplum', 'Edit item · sugarplum']

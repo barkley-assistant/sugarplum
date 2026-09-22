@@ -1,0 +1,858 @@
+{
+  "mode": "after",
+  "root": "/home/agent/projects/barkley-assistant/sugarplum",
+  "overflow": [
+    {
+      "name": "add-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "add-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "add-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "add-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "add-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "add-manual-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "add-manual-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "edit-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "edit-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "edit-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "edit-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "edit-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "add-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "add-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "add-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "add-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "add-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "add-manual-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "add-manual-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "edit-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "edit-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "edit-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "edit-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "edit-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    }
+  ],
+  "shots": [
+    {
+      "name": "add-360-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Add item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 328,
+          "h": 28.6
+        },
+        "submitLabel": "Add item",
+        "formActions": [
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "add-390-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Add item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 358,
+          "h": 28.6
+        },
+        "submitLabel": "Add item",
+        "formActions": [
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "add-430-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Add item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 398,
+          "h": 28.6
+        },
+        "submitLabel": "Add item",
+        "formActions": [
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "add-768-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Add item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 736,
+          "h": 28.6
+        },
+        "submitLabel": "Add item",
+        "formActions": [
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "add-1280-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Add item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 720,
+          "h": 28.6
+        },
+        "submitLabel": "Add item",
+        "formActions": [
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "add-manual-390-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Add item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 358,
+          "h": 28.6
+        },
+        "submitLabel": "Add item",
+        "formActions": [
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "add-manual-1280-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Add item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 720,
+          "h": 28.6
+        },
+        "submitLabel": "Add item",
+        "formActions": [
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "edit-360-light",
+      "probe": {
+        "docTitle": "Edit item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Edit item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 328,
+          "h": 28.6
+        },
+        "submitLabel": "Save",
+        "formActions": [
+          "Save",
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "edit-390-light",
+      "probe": {
+        "docTitle": "Edit item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Edit item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 358,
+          "h": 28.6
+        },
+        "submitLabel": "Save",
+        "formActions": [
+          "Save",
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "edit-430-light",
+      "probe": {
+        "docTitle": "Edit item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Edit item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 398,
+          "h": 28.6
+        },
+        "submitLabel": "Save",
+        "formActions": [
+          "Save",
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "edit-768-light",
+      "probe": {
+        "docTitle": "Edit item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Edit item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 736,
+          "h": 28.6
+        },
+        "submitLabel": "Save",
+        "formActions": [
+          "Save",
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "edit-1280-light",
+      "probe": {
+        "docTitle": "Edit item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Edit item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 720,
+          "h": 28.6
+        },
+        "submitLabel": "Save",
+        "formActions": [
+          "Save",
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "add-360-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Add item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 328,
+          "h": 28.6
+        },
+        "submitLabel": "Add item",
+        "formActions": [
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "add-390-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Add item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 358,
+          "h": 28.6
+        },
+        "submitLabel": "Add item",
+        "formActions": [
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "add-430-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Add item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 398,
+          "h": 28.6
+        },
+        "submitLabel": "Add item",
+        "formActions": [
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "add-768-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Add item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 736,
+          "h": 28.6
+        },
+        "submitLabel": "Add item",
+        "formActions": [
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "add-1280-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Add item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 720,
+          "h": 28.6
+        },
+        "submitLabel": "Add item",
+        "formActions": [
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "add-manual-390-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Add item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 358,
+          "h": 28.6
+        },
+        "submitLabel": "Add item",
+        "formActions": [
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "add-manual-1280-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Add item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 720,
+          "h": 28.6
+        },
+        "submitLabel": "Add item",
+        "formActions": [
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "edit-360-dark",
+      "probe": {
+        "docTitle": "Edit item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Edit item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 328,
+          "h": 28.6
+        },
+        "submitLabel": "Save",
+        "formActions": [
+          "Save",
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "edit-390-dark",
+      "probe": {
+        "docTitle": "Edit item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Edit item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 358,
+          "h": 28.6
+        },
+        "submitLabel": "Save",
+        "formActions": [
+          "Save",
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "edit-430-dark",
+      "probe": {
+        "docTitle": "Edit item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Edit item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 398,
+          "h": 28.6
+        },
+        "submitLabel": "Save",
+        "formActions": [
+          "Save",
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "edit-768-dark",
+      "probe": {
+        "docTitle": "Edit item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Edit item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 736,
+          "h": 28.6
+        },
+        "submitLabel": "Save",
+        "formActions": [
+          "Save",
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "edit-1280-dark",
+      "probe": {
+        "docTitle": "Edit item · sugarplum",
+        "headings": [
+          {
+            "tag": "H1",
+            "text": "sugarplum"
+          },
+          {
+            "tag": "H1",
+            "text": "Edit item"
+          }
+        ],
+        "pageTitleLines": 1,
+        "pageTitleBox": {
+          "w": 720,
+          "h": 28.6
+        },
+        "submitLabel": "Save",
+        "formActions": [
+          "Save",
+          "Cancel"
+        ],
+        "disclosureOpen": false,
+        "bodyHasMarketingHeading": false,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    }
+  ]
+}
