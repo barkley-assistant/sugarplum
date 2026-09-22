@@ -194,9 +194,9 @@ export function ItemPage({ id }: { id: string }) {
       });
     }
     if (item.ownerPurchased === true) {
-      items.push({ id: "unmark-owner-purchased", label: S.owner.unmark, onSelect: unmarkOwnerPurchased });
+      items.push({ id: "unmark-owner-purchased", label: S.owner.unmark, section: true, onSelect: unmarkOwnerPurchased });
     } else {
-      items.push({ id: "mark-owner-purchased", label: S.owner.mark, onSelect: markOwnerPurchased });
+      items.push({ id: "mark-owner-purchased", label: S.owner.mark, section: true, onSelect: markOwnerPurchased });
     }
     items.push({ id: "reset-purchased", label: S.share.resetPurchased, onSelect: resetPurchased });
     items.push({ id: "delete", label: S.item.delete, danger: true, onSelect: deleteItem });

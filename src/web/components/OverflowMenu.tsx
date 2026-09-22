@@ -9,6 +9,9 @@ export interface OverflowItem {
   onSelect: () => void | Promise<void>;
   /** Danger items render separated + tinted (Delete). */
   danger?: boolean;
+  /** #127: opens a new group — a divider is drawn ABOVE this row (never
+   *  above the menu's first row, which has nothing to divide). */
+  section?: boolean;
   disabled?: boolean;
 }
 
@@ -160,11 +163,22 @@ export function OverflowMenu({ triggerLabel, triggerIcon, triggerClassName, trig
   function renderItems() {
     const rows: ReactNode[] = [];
     let dangerStarted = false;
+    // No divider directly above the menu's top edge, and never two in a row —
+    // a divider separates groups, so it needs a row above it to separate from.
+    let previousWasDivider = true;
+    function divider(key: string) {
+      if (previousWasDivider) return;
+      rows.push(<div key={key} className="overflow-separator" aria-hidden="true" />);
+      previousWasDivider = true;
+    }
     for (const item of items) {
+      // #127: a section opener is divided from the group above it, and the
+      // danger divider is the same grammar for Delete.
       if (item.danger && !dangerStarted) {
         dangerStarted = true;
-        rows.push(<div key="__danger-separator" className="overflow-separator" aria-hidden="true" />);
+        divider("__danger-separator");
       }
+      if (item.section) divider(`__section-separator-${item.id}`);
       rows.push(
         <button
           key={item.id}
@@ -178,6 +192,7 @@ export function OverflowMenu({ triggerLabel, triggerIcon, triggerClassName, trig
           {item.label}
         </button>,
       );
+      previousWasDivider = false;
     }
     if (extra) rows.push(<Fragment key="__extra">{extra}</Fragment>);
     return rows;

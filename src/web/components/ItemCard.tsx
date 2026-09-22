@@ -149,12 +149,17 @@ export function ItemCard({
       menu.push({
         id: "unmark-owner-purchased",
         label: S.owner.unmark,
+        // #127: the owner's own mark and the blind reset below act on two
+        // different flags (ownerPurchased here, the anonymous share mark
+        // there) — the divider groups them as "the purchased section".
+        section: true,
         onSelect: () => onUnmarkOwnerPurchased?.(item.id),
       });
     } else if (onMarkOwnerPurchased) {
       menu.push({
         id: "mark-owner-purchased",
         label: S.owner.mark,
+        section: true,
         onSelect: handleMarkOwnerPurchased,
       });
     }
