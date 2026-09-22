@@ -1,0 +1,808 @@
+{
+  "seeds": {
+    "failed": "9419aeec-7407-40fa-9933-287ead84b349",
+    "imaged": "a017cbe0-5cf7-42c6-ad4f-09532626c4ed",
+    "mug": "049ba037-9c0a-4770-af08-f4b8afb44db3",
+    "lamp": "077c0874-d6a8-46aa-b7e5-841af28677b5"
+  },
+  "measurements": [
+    {
+      "surface": "owner",
+      "theme": "light",
+      "width": 360,
+      "file": "owner-light-360.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 72,
+          "frameH": 72,
+          "titleX": 112,
+          "rowLeft": 16
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        }
+      ],
+      "titleXSpread": 72,
+      "docOverflow": false
+    },
+    {
+      "surface": "owner",
+      "theme": "light",
+      "width": 390,
+      "file": "owner-light-390.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 72,
+          "frameH": 72,
+          "titleX": 112,
+          "rowLeft": 16
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        }
+      ],
+      "titleXSpread": 72,
+      "docOverflow": false
+    },
+    {
+      "surface": "owner",
+      "theme": "light",
+      "width": 430,
+      "file": "owner-light-430.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 72,
+          "frameH": 72,
+          "titleX": 112,
+          "rowLeft": 16
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        }
+      ],
+      "titleXSpread": 72,
+      "docOverflow": false
+    },
+    {
+      "surface": "owner",
+      "theme": "light",
+      "width": 768,
+      "file": "owner-light-768.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 72,
+          "frameH": 72,
+          "titleX": 112,
+          "rowLeft": 16
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        }
+      ],
+      "titleXSpread": 72,
+      "docOverflow": false
+    },
+    {
+      "surface": "owner",
+      "theme": "light",
+      "width": 1280,
+      "file": "owner-light-1280.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 96,
+          "frameH": 96,
+          "titleX": 246,
+          "rowLeft": 126
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        }
+      ],
+      "titleXSpread": 96,
+      "docOverflow": false
+    },
+    {
+      "surface": "owner",
+      "theme": "dark",
+      "width": 360,
+      "file": "owner-dark-360.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 72,
+          "frameH": 72,
+          "titleX": 112,
+          "rowLeft": 16
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        }
+      ],
+      "titleXSpread": 72,
+      "docOverflow": false
+    },
+    {
+      "surface": "owner",
+      "theme": "dark",
+      "width": 390,
+      "file": "owner-dark-390.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 72,
+          "frameH": 72,
+          "titleX": 112,
+          "rowLeft": 16
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        }
+      ],
+      "titleXSpread": 72,
+      "docOverflow": false
+    },
+    {
+      "surface": "owner",
+      "theme": "dark",
+      "width": 430,
+      "file": "owner-dark-430.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 72,
+          "frameH": 72,
+          "titleX": 112,
+          "rowLeft": 16
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        }
+      ],
+      "titleXSpread": 72,
+      "docOverflow": false
+    },
+    {
+      "surface": "owner",
+      "theme": "dark",
+      "width": 768,
+      "file": "owner-dark-768.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 72,
+          "frameH": 72,
+          "titleX": 112,
+          "rowLeft": 16
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        }
+      ],
+      "titleXSpread": 72,
+      "docOverflow": false
+    },
+    {
+      "surface": "owner",
+      "theme": "dark",
+      "width": 1280,
+      "file": "owner-dark-1280.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 96,
+          "frameH": 96,
+          "titleX": 246,
+          "rowLeft": 126
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        }
+      ],
+      "titleXSpread": 96,
+      "docOverflow": false
+    },
+    {
+      "surface": "reorder",
+      "theme": "light",
+      "width": 390,
+      "file": "reorder-light-390.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 96,
+          "rowLeft": 16
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 72,
+          "frameH": 72,
+          "titleX": 168,
+          "rowLeft": 16
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 96,
+          "rowLeft": 16
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 96,
+          "rowLeft": 16
+        }
+      ],
+      "titleXSpread": 72,
+      "docOverflow": false
+    },
+    {
+      "surface": "guest",
+      "theme": "light",
+      "width": 390,
+      "file": "guest-light-390.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 72,
+          "frameH": 72,
+          "titleX": 112,
+          "rowLeft": 16
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        }
+      ],
+      "titleXSpread": 72,
+      "docOverflow": false
+    },
+    {
+      "surface": "guest",
+      "theme": "light",
+      "width": 1280,
+      "file": "guest-light-1280.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 96,
+          "frameH": 96,
+          "titleX": 246,
+          "rowLeft": 126
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        }
+      ],
+      "titleXSpread": 96,
+      "docOverflow": false
+    },
+    {
+      "surface": "guest",
+      "theme": "dark",
+      "width": 390,
+      "file": "guest-dark-390.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 72,
+          "frameH": 72,
+          "titleX": 112,
+          "rowLeft": 16
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        }
+      ],
+      "titleXSpread": 72,
+      "docOverflow": false
+    },
+    {
+      "surface": "guest",
+      "theme": "dark",
+      "width": 1280,
+      "file": "guest-dark-1280.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 96,
+          "frameH": 96,
+          "titleX": 246,
+          "rowLeft": 126
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        }
+      ],
+      "titleXSpread": 96,
+      "docOverflow": false
+    },
+    {
+      "surface": "share",
+      "theme": "light",
+      "width": 390,
+      "file": "share-light-390.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 72,
+          "frameH": 72,
+          "titleX": 112,
+          "rowLeft": 16
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        }
+      ],
+      "titleXSpread": 72,
+      "docOverflow": false
+    },
+    {
+      "surface": "share",
+      "theme": "light",
+      "width": 1280,
+      "file": "share-light-1280.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 96,
+          "frameH": 96,
+          "titleX": 246,
+          "rowLeft": 126
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        }
+      ],
+      "titleXSpread": 96,
+      "docOverflow": false
+    },
+    {
+      "surface": "share",
+      "theme": "dark",
+      "width": 390,
+      "file": "share-dark-390.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 72,
+          "frameH": 72,
+          "titleX": 112,
+          "rowLeft": 16
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 40,
+          "rowLeft": 16
+        }
+      ],
+      "titleXSpread": 72,
+      "docOverflow": false
+    },
+    {
+      "surface": "share",
+      "theme": "dark",
+      "width": 1280,
+      "file": "share-dark-1280.png",
+      "rows": [
+        {
+          "title": "Running socks",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        },
+        {
+          "title": "Fresh Kiss Trio",
+          "frame": "img",
+          "frameW": 96,
+          "frameH": 96,
+          "titleX": 246,
+          "rowLeft": 126
+        },
+        {
+          "title": "Manual mug",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        },
+        {
+          "title": "Desk lamp",
+          "frame": null,
+          "frameW": null,
+          "frameH": null,
+          "titleX": 150,
+          "rowLeft": 126
+        }
+      ],
+      "titleXSpread": 96,
+      "docOverflow": false
+    }
+  ]
+}
