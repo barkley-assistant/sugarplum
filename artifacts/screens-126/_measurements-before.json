@@ -1,0 +1,2462 @@
+[
+  {
+    "surface": "owner-full",
+    "theme": "light",
+    "width": 360,
+    "file": "owner-full-light-360.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 158
+      },
+      {
+        "cls": "detail-actions",
+        "top": 165,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 216,
+        "h": 243
+      },
+      {
+        "cls": "detail-card",
+        "top": 465,
+        "h": 124
+      },
+      {
+        "cls": "detail-card",
+        "top": 596,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 707,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 856,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      6,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-full",
+    "theme": "light",
+    "width": 390,
+    "file": "owner-full-light-390.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 158
+      },
+      {
+        "cls": "detail-actions",
+        "top": 165,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 216,
+        "h": 256
+      },
+      {
+        "cls": "detail-card",
+        "top": 478,
+        "h": 124
+      },
+      {
+        "cls": "detail-card",
+        "top": 609,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 720,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 869,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      6,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-full",
+    "theme": "light",
+    "width": 430,
+    "file": "owner-full-light-430.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 273
+      },
+      {
+        "cls": "detail-card",
+        "top": 474,
+        "h": 124
+      },
+      {
+        "cls": "detail-card",
+        "top": 605,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 716,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 865,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-full",
+    "theme": "light",
+    "width": 768,
+    "file": "owner-full-light-768.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 421
+      },
+      {
+        "cls": "detail-card",
+        "top": 622,
+        "h": 103
+      },
+      {
+        "cls": "detail-card",
+        "top": 732,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 843,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 992,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden",
+      "[object",
+      "[object",
+      "[object",
+      "[object",
+      "[object"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-full",
+    "theme": "light",
+    "width": 1280,
+    "file": "owner-full-light-1280.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 414
+      },
+      {
+        "cls": "detail-card",
+        "top": 615,
+        "h": 103
+      },
+      {
+        "cls": "detail-card",
+        "top": 725,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 836,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 985,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden",
+      "[object",
+      "[object",
+      "[object",
+      "[object",
+      "[object"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-manual",
+    "theme": "light",
+    "width": 360,
+    "file": "owner-manual-light-360.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 0,
+    "viewOnLinks": 0,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 74
+      },
+      {
+        "cls": "detail-card",
+        "top": 275,
+        "h": 103
+      },
+      {
+        "cls": "detail-card",
+        "top": 385,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 496,
+        "h": 98
+      },
+      {
+        "cls": "detail-footer",
+        "top": 601,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-manual",
+    "theme": "light",
+    "width": 390,
+    "file": "owner-manual-light-390.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 0,
+    "viewOnLinks": 0,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 74
+      },
+      {
+        "cls": "detail-card",
+        "top": 275,
+        "h": 103
+      },
+      {
+        "cls": "detail-card",
+        "top": 385,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 496,
+        "h": 98
+      },
+      {
+        "cls": "detail-footer",
+        "top": 601,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-manual",
+    "theme": "light",
+    "width": 430,
+    "file": "owner-manual-light-430.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 0,
+    "viewOnLinks": 0,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 74
+      },
+      {
+        "cls": "detail-card",
+        "top": 275,
+        "h": 103
+      },
+      {
+        "cls": "detail-card",
+        "top": 385,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 496,
+        "h": 98
+      },
+      {
+        "cls": "detail-footer",
+        "top": 601,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-manual",
+    "theme": "light",
+    "width": 768,
+    "file": "owner-manual-light-768.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 0,
+    "viewOnLinks": 0,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 74
+      },
+      {
+        "cls": "detail-card",
+        "top": 275,
+        "h": 103
+      },
+      {
+        "cls": "detail-card",
+        "top": 385,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 496,
+        "h": 98
+      },
+      {
+        "cls": "detail-footer",
+        "top": 601,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-manual",
+    "theme": "light",
+    "width": 1280,
+    "file": "owner-manual-light-1280.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 0,
+    "viewOnLinks": 0,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 74
+      },
+      {
+        "cls": "detail-card",
+        "top": 275,
+        "h": 103
+      },
+      {
+        "cls": "detail-card",
+        "top": 385,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 496,
+        "h": 98
+      },
+      {
+        "cls": "detail-footer",
+        "top": 601,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "peer-sheet",
+    "theme": "light",
+    "width": 360,
+    "file": "peer-sheet-light-360.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 159,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 210,
+        "h": 79
+      },
+      {
+        "cls": "detail-card",
+        "top": 296,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 383,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 532,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "peer-sheet",
+    "theme": "light",
+    "width": 390,
+    "file": "peer-sheet-light-390.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 159,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 210,
+        "h": 79
+      },
+      {
+        "cls": "detail-card",
+        "top": 296,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 383,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 532,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "peer-sheet",
+    "theme": "light",
+    "width": 430,
+    "file": "peer-sheet-light-430.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 159,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 210,
+        "h": 79
+      },
+      {
+        "cls": "detail-card",
+        "top": 296,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 383,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 532,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "peer-sheet",
+    "theme": "light",
+    "width": 768,
+    "file": "peer-sheet-light-768.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 159,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 210,
+        "h": 79
+      },
+      {
+        "cls": "detail-card",
+        "top": 296,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 383,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 532,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "peer-sheet",
+    "theme": "light",
+    "width": 1280,
+    "file": "peer-sheet-light-1280.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 20,
+        "h": 160
+      },
+      {
+        "cls": "detail-actions",
+        "top": 187,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 238,
+        "h": 79
+      },
+      {
+        "cls": "detail-card",
+        "top": 324,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 411,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 560,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "share-sheet",
+    "theme": "light",
+    "width": 360,
+    "file": "share-sheet-light-360.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 144
+      },
+      {
+        "cls": "detail-actions",
+        "top": 167,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 218,
+        "h": 238
+      },
+      {
+        "cls": "detail-card",
+        "top": 463,
+        "h": 100
+      },
+      {
+        "cls": "detail-card",
+        "top": 570,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 657,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 806,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "share-sheet",
+    "theme": "light",
+    "width": 390,
+    "file": "share-sheet-light-390.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 144
+      },
+      {
+        "cls": "detail-actions",
+        "top": 167,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 218,
+        "h": 251
+      },
+      {
+        "cls": "detail-card",
+        "top": 476,
+        "h": 100
+      },
+      {
+        "cls": "detail-card",
+        "top": 583,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 670,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 819,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "share-sheet",
+    "theme": "light",
+    "width": 430,
+    "file": "share-sheet-light-430.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 159,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 210,
+        "h": 269
+      },
+      {
+        "cls": "detail-card",
+        "top": 486,
+        "h": 100
+      },
+      {
+        "cls": "detail-card",
+        "top": 593,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 679,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 828,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      6,
+      7
+    ],
+    "clipped": [
+      "visually-hidden"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "share-sheet",
+    "theme": "light",
+    "width": 768,
+    "file": "share-sheet-light-768.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 159,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 210,
+        "h": 417
+      },
+      {
+        "cls": "detail-card",
+        "top": 634,
+        "h": 79
+      },
+      {
+        "cls": "detail-card",
+        "top": 720,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 806,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 955,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      6,
+      7
+    ],
+    "clipped": [
+      "visually-hidden",
+      "[object",
+      "[object",
+      "[object",
+      "[object",
+      "[object"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "share-sheet",
+    "theme": "light",
+    "width": 1280,
+    "file": "share-sheet-light-1280.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 20,
+        "h": 160
+      },
+      {
+        "cls": "detail-actions",
+        "top": 187,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 238,
+        "h": 305
+      },
+      {
+        "cls": "detail-card",
+        "top": 550,
+        "h": 100
+      },
+      {
+        "cls": "detail-card",
+        "top": 657,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 744,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 893,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden",
+      "[object",
+      "[object",
+      "[object",
+      "[object",
+      "[object"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-full",
+    "theme": "dark",
+    "width": 360,
+    "file": "owner-full-dark-360.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 158
+      },
+      {
+        "cls": "detail-actions",
+        "top": 165,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 216,
+        "h": 243
+      },
+      {
+        "cls": "detail-card",
+        "top": 465,
+        "h": 124
+      },
+      {
+        "cls": "detail-card",
+        "top": 596,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 707,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 856,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      6,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-full",
+    "theme": "dark",
+    "width": 390,
+    "file": "owner-full-dark-390.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 158
+      },
+      {
+        "cls": "detail-actions",
+        "top": 165,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 216,
+        "h": 256
+      },
+      {
+        "cls": "detail-card",
+        "top": 478,
+        "h": 124
+      },
+      {
+        "cls": "detail-card",
+        "top": 609,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 720,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 869,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      6,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-full",
+    "theme": "dark",
+    "width": 430,
+    "file": "owner-full-dark-430.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 273
+      },
+      {
+        "cls": "detail-card",
+        "top": 474,
+        "h": 124
+      },
+      {
+        "cls": "detail-card",
+        "top": 605,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 716,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 865,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-full",
+    "theme": "dark",
+    "width": 768,
+    "file": "owner-full-dark-768.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 421
+      },
+      {
+        "cls": "detail-card",
+        "top": 622,
+        "h": 103
+      },
+      {
+        "cls": "detail-card",
+        "top": 732,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 843,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 992,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden",
+      "[object",
+      "[object",
+      "[object",
+      "[object",
+      "[object"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-full",
+    "theme": "dark",
+    "width": 1280,
+    "file": "owner-full-dark-1280.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 414
+      },
+      {
+        "cls": "detail-card",
+        "top": 615,
+        "h": 103
+      },
+      {
+        "cls": "detail-card",
+        "top": 725,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 836,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 985,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden",
+      "[object",
+      "[object",
+      "[object",
+      "[object",
+      "[object"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-manual",
+    "theme": "dark",
+    "width": 360,
+    "file": "owner-manual-dark-360.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 0,
+    "viewOnLinks": 0,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 74
+      },
+      {
+        "cls": "detail-card",
+        "top": 275,
+        "h": 103
+      },
+      {
+        "cls": "detail-card",
+        "top": 385,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 496,
+        "h": 98
+      },
+      {
+        "cls": "detail-footer",
+        "top": 601,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-manual",
+    "theme": "dark",
+    "width": 390,
+    "file": "owner-manual-dark-390.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 0,
+    "viewOnLinks": 0,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 74
+      },
+      {
+        "cls": "detail-card",
+        "top": 275,
+        "h": 103
+      },
+      {
+        "cls": "detail-card",
+        "top": 385,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 496,
+        "h": 98
+      },
+      {
+        "cls": "detail-footer",
+        "top": 601,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-manual",
+    "theme": "dark",
+    "width": 430,
+    "file": "owner-manual-dark-430.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 0,
+    "viewOnLinks": 0,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 74
+      },
+      {
+        "cls": "detail-card",
+        "top": 275,
+        "h": 103
+      },
+      {
+        "cls": "detail-card",
+        "top": 385,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 496,
+        "h": 98
+      },
+      {
+        "cls": "detail-footer",
+        "top": 601,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-manual",
+    "theme": "dark",
+    "width": 768,
+    "file": "owner-manual-dark-768.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 0,
+    "viewOnLinks": 0,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 74
+      },
+      {
+        "cls": "detail-card",
+        "top": 275,
+        "h": 103
+      },
+      {
+        "cls": "detail-card",
+        "top": 385,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 496,
+        "h": 98
+      },
+      {
+        "cls": "detail-footer",
+        "top": 601,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "owner-manual",
+    "theme": "dark",
+    "width": 1280,
+    "file": "owner-manual-dark-1280.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 0,
+    "viewOnLinks": 0,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 0,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 143,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 194,
+        "h": 74
+      },
+      {
+        "cls": "detail-card",
+        "top": 275,
+        "h": 103
+      },
+      {
+        "cls": "detail-card",
+        "top": 385,
+        "h": 104
+      },
+      {
+        "cls": "detail-card",
+        "top": 496,
+        "h": 98
+      },
+      {
+        "cls": "detail-footer",
+        "top": 601,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "peer-sheet",
+    "theme": "dark",
+    "width": 360,
+    "file": "peer-sheet-dark-360.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 159,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 210,
+        "h": 79
+      },
+      {
+        "cls": "detail-card",
+        "top": 296,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 383,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 532,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "peer-sheet",
+    "theme": "dark",
+    "width": 390,
+    "file": "peer-sheet-dark-390.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 159,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 210,
+        "h": 79
+      },
+      {
+        "cls": "detail-card",
+        "top": 296,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 383,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 532,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "peer-sheet",
+    "theme": "dark",
+    "width": 430,
+    "file": "peer-sheet-dark-430.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 159,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 210,
+        "h": 79
+      },
+      {
+        "cls": "detail-card",
+        "top": 296,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 383,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 532,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "peer-sheet",
+    "theme": "dark",
+    "width": 768,
+    "file": "peer-sheet-dark-768.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 159,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 210,
+        "h": 79
+      },
+      {
+        "cls": "detail-card",
+        "top": 296,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 383,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 532,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "peer-sheet",
+    "theme": "dark",
+    "width": 1280,
+    "file": "peer-sheet-dark-1280.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 20,
+        "h": 160
+      },
+      {
+        "cls": "detail-actions",
+        "top": 187,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 238,
+        "h": 79
+      },
+      {
+        "cls": "detail-card",
+        "top": 324,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 411,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 560,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "share-sheet",
+    "theme": "dark",
+    "width": 360,
+    "file": "share-sheet-dark-360.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 144
+      },
+      {
+        "cls": "detail-actions",
+        "top": 167,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 218,
+        "h": 238
+      },
+      {
+        "cls": "detail-card",
+        "top": 463,
+        "h": 100
+      },
+      {
+        "cls": "detail-card",
+        "top": 570,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 657,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 806,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "share-sheet",
+    "theme": "dark",
+    "width": 390,
+    "file": "share-sheet-dark-390.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 144
+      },
+      {
+        "cls": "detail-actions",
+        "top": 167,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 218,
+        "h": 251
+      },
+      {
+        "cls": "detail-card",
+        "top": 476,
+        "h": 100
+      },
+      {
+        "cls": "detail-card",
+        "top": 583,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 670,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 819,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "share-sheet",
+    "theme": "dark",
+    "width": 430,
+    "file": "share-sheet-dark-430.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 159,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 210,
+        "h": 269
+      },
+      {
+        "cls": "detail-card",
+        "top": 486,
+        "h": 100
+      },
+      {
+        "cls": "detail-card",
+        "top": 593,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 679,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 828,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      6,
+      7
+    ],
+    "clipped": [
+      "visually-hidden"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "share-sheet",
+    "theme": "dark",
+    "width": 768,
+    "file": "share-sheet-dark-768.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 16,
+        "h": 136
+      },
+      {
+        "cls": "detail-actions",
+        "top": 159,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 210,
+        "h": 417
+      },
+      {
+        "cls": "detail-card",
+        "top": 634,
+        "h": 79
+      },
+      {
+        "cls": "detail-card",
+        "top": 720,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 806,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 955,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      6,
+      7
+    ],
+    "clipped": [
+      "visually-hidden",
+      "[object",
+      "[object",
+      "[object",
+      "[object",
+      "[object"
+    ],
+    "sheetClipped": 0
+  },
+  {
+    "surface": "share-sheet",
+    "theme": "dark",
+    "width": 1280,
+    "file": "share-sheet-dark-1280.png",
+    "detailGap": "7px",
+    "cardPadding": "14px 16px",
+    "heroInfoGap": "4px",
+    "actionsGap": "10px",
+    "moreHeadingMargin": "4px",
+    "openProductLinks": 1,
+    "viewOnLinks": 1,
+    "docOverflow": false,
+    "sections": [
+      {
+        "cls": "detail-hero",
+        "top": 20,
+        "h": 160
+      },
+      {
+        "cls": "detail-actions",
+        "top": 187,
+        "h": 44
+      },
+      {
+        "cls": "detail-card",
+        "top": 238,
+        "h": 305
+      },
+      {
+        "cls": "detail-card",
+        "top": 550,
+        "h": 100
+      },
+      {
+        "cls": "detail-card",
+        "top": 657,
+        "h": 80
+      },
+      {
+        "cls": "detail-card",
+        "top": 744,
+        "h": 142
+      },
+      {
+        "cls": "detail-footer",
+        "top": 893,
+        "h": 26
+      }
+    ],
+    "sectionGaps": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "clipped": [
+      "visually-hidden",
+      "[object",
+      "[object",
+      "[object",
+      "[object",
+      "[object"
+    ],
+    "sheetClipped": 0
+  }
+]
