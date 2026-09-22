@@ -1,0 +1,2521 @@
+{
+  "mode": "before",
+  "overflow": [
+    {
+      "name": "owner-feed-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "owner-feed-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "owner-feed-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "owner-feed-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "owner-feed-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "owner-detail-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "owner-detail-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "owner-detail-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "owner-detail-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "owner-detail-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "owner-reorder-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "guest-feed-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "guest-feed-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "guest-feed-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "guest-feed-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "guest-feed-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "guest-detail-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "share-feed-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "share-feed-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "share-feed-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "share-feed-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "share-feed-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "owner-feed-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "owner-feed-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "owner-feed-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "owner-feed-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "owner-feed-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "owner-detail-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "owner-detail-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "owner-detail-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "owner-detail-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "owner-detail-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "owner-reorder-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "guest-feed-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "guest-feed-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "guest-feed-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "guest-feed-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "guest-feed-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "guest-detail-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "share-feed-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "share-feed-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "share-feed-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "share-feed-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "share-feed-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    }
+  ],
+  "shots": [
+    {
+      "name": "owner-feed-360-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £48.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £129.50",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 139.5,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £34.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "owner-feed-390-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £48.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £129.50",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 139.5,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £34.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "owner-feed-430-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £48.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £129.50",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 139.5,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £34.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "owner-feed-768-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £48.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £129.50",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 139.5,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £34.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "owner-feed-1280-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £48.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 0,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £129.50",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 0,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 121,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £34.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 0,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 0,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 96,
+          "rowH": 121,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "owner-detail-360-light",
+      "rows": []
+    },
+    {
+      "name": "owner-detail-390-light",
+      "rows": []
+    },
+    {
+      "name": "owner-detail-430-light",
+      "rows": []
+    },
+    {
+      "name": "owner-detail-768-light",
+      "rows": []
+    },
+    {
+      "name": "owner-detail-1280-light",
+      "rows": []
+    },
+    {
+      "name": "owner-reorder-390-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £48.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 104.5,
+          "titleLines": 1
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £129.50",
+          "clusterChildren": 2,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 136,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £34.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 124.8,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": null,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 104.5,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "guest-feed-360-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": null,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "guest-feed-390-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": null,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "guest-feed-430-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": null,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "guest-feed-768-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": null,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "guest-feed-1280-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": null,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 96,
+          "rowH": 121,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "guest-detail-390-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": null,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "share-feed-360-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "share-feed-390-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "share-feed-430-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "share-feed-768-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "share-feed-1280-light",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 0,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 0,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 0,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 0,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 96,
+          "rowH": 121,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "owner-feed-360-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £48.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £129.50",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 139.5,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £34.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "owner-feed-390-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £48.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £129.50",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 139.5,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £34.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "owner-feed-430-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £48.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £129.50",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 139.5,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £34.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "owner-feed-768-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £48.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £129.50",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 139.5,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £34.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "owner-feed-1280-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £48.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 0,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £129.50",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 0,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 121,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £34.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": 0,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 0,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 96,
+          "rowH": 121,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "owner-detail-360-dark",
+      "rows": []
+    },
+    {
+      "name": "owner-detail-390-dark",
+      "rows": []
+    },
+    {
+      "name": "owner-detail-430-dark",
+      "rows": []
+    },
+    {
+      "name": "owner-detail-768-dark",
+      "rows": []
+    },
+    {
+      "name": "owner-detail-1280-dark",
+      "rows": []
+    },
+    {
+      "name": "owner-reorder-390-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £48.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 104.5,
+          "titleLines": 1
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £129.50",
+          "clusterChildren": 2,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 136,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": "Lowest £34.00",
+          "clusterChildren": 2,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 124.8,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": null,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 104.5,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "guest-feed-360-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": null,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "guest-feed-390-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": null,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "guest-feed-430-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": null,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "guest-feed-768-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": null,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "guest-feed-1280-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": null,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 96,
+          "rowH": 121,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "guest-detail-390-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": null,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": null,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "share-feed-360-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "share-feed-390-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "share-feed-430-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "share-feed-768-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 14,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 72,
+          "rowH": 128.3,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 14,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 72,
+          "rowH": 108,
+          "titleLines": 2
+        }
+      ]
+    },
+    {
+      "name": "share-feed-1280-dark",
+      "rows": [
+        {
+          "title": "Aurora Woven Throw",
+          "price": "£48.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 0,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Hand-Beaten Copper Kettle",
+          "price": "£139.50",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 0,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Stonewashed Linen Apron with a deliberatel",
+          "price": "£34.00",
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 1,
+          "kebabDeltaPx": 0,
+          "thumbFit": "cover",
+          "thumbPad": "0px",
+          "thumbBox": 96,
+          "rowH": 130,
+          "titleLines": 2
+        },
+        {
+          "title": "Replacement Filter Cartridge",
+          "price": null,
+          "placeholder": false,
+          "placeholderGlyph": null,
+          "atLowestChip": null,
+          "metaLine": null,
+          "clusterChildren": 0,
+          "kebabDeltaPx": 0,
+          "thumbFit": null,
+          "thumbPad": null,
+          "thumbBox": 96,
+          "rowH": 121,
+          "titleLines": 2
+        }
+      ]
+    }
+  ]
+}

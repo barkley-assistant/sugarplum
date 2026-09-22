@@ -1,0 +1,344 @@
+#130 feed-row matrix — before (main) vs after (feat/feed-row-consistency)
+shots: before=44 after=44  names identical=True
+
+== guest-detail-390-dark   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH= 119.3 lines=2
+
+== guest-detail-390-light   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH= 119.3 lines=2
+
+== guest-feed-1280-dark   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH=   130 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=contain pad=6px   rowH=   121 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH=   130 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH=   121 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH=   121 lines=2
+
+== guest-feed-1280-light   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH=   130 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=contain pad=6px   rowH=   121 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH=   130 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH=   121 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH=   121 lines=2
+
+== guest-feed-360-dark   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=contain pad=6px   rowH= 159.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH= 119.3 lines=2
+
+== guest-feed-360-light   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=contain pad=6px   rowH= 159.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH= 119.3 lines=2
+
+== guest-feed-390-dark   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH= 119.3 lines=2
+
+== guest-feed-390-light   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH= 119.3 lines=2
+
+== guest-feed-430-dark   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH= 119.3 lines=2
+
+== guest-feed-430-light   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH= 119.3 lines=2
+
+== guest-feed-768-dark   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH= 119.3 lines=2
+
+== guest-feed-768-light   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=None   fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH= 119.3 lines=2
+
+== owner-feed-1280-dark   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=Lowest £48.00  kebabΔ=0      fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH=   130 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=0      fit=cover   pad=0px   rowH=   121 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=0      fit=contain pad=6px   rowH=   121 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=Lowest £34.00  kebabΔ=0      fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH=   130 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH=   121 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH=   121 lines=2
+
+== owner-feed-1280-light   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=Lowest £48.00  kebabΔ=0      fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH=   130 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=0      fit=cover   pad=0px   rowH=   121 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=0      fit=contain pad=6px   rowH=   121 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=Lowest £34.00  kebabΔ=0      fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH=   130 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH=   121 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH=   121 lines=2
+
+== owner-feed-360-dark   changed: placeholder, atLowestChip, metaLine, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=Lowest £48.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=14     fit=cover   pad=0px   rowH= 139.5 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=0      fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=Lowest £34.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+== owner-feed-360-light   changed: placeholder, atLowestChip, metaLine, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=Lowest £48.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=14     fit=cover   pad=0px   rowH= 139.5 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=0      fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=Lowest £34.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+== owner-feed-390-dark   changed: placeholder, atLowestChip, metaLine, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=Lowest £48.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=14     fit=cover   pad=0px   rowH= 139.5 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=0      fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=Lowest £34.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+== owner-feed-390-light   changed: placeholder, atLowestChip, metaLine, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=Lowest £48.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=14     fit=cover   pad=0px   rowH= 139.5 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=0      fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=Lowest £34.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+== owner-feed-430-dark   changed: placeholder, atLowestChip, metaLine, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=Lowest £48.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=14     fit=cover   pad=0px   rowH= 139.5 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=0      fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=Lowest £34.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+== owner-feed-430-light   changed: placeholder, atLowestChip, metaLine, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=Lowest £48.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=14     fit=cover   pad=0px   rowH= 139.5 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=0      fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=Lowest £34.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+== owner-feed-768-dark   changed: placeholder, atLowestChip, metaLine, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=Lowest £48.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=14     fit=cover   pad=0px   rowH= 139.5 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=0      fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=Lowest £34.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+== owner-feed-768-light   changed: placeholder, atLowestChip, metaLine, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=Lowest £48.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=14     fit=cover   pad=0px   rowH= 139.5 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=0      fit=contain pad=6px   rowH= 139.5 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=Lowest £34.00  kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=0      fit=contain pad=6px   rowH= 128.6 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+== owner-reorder-390-dark   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=Lowest £48.00  kebabΔ=None   fit=cover   pad=0px   rowH= 104.5 lines=1
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 104.8 lines=1
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=cover   pad=0px   rowH=   136 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=contain pad=6px   rowH=   136 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=Lowest £34.00  kebabΔ=None   fit=cover   pad=0px   rowH= 124.8 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 125.1 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH= 104.5 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH= 115.8 lines=2
+
+== owner-reorder-390-light   changed: placeholder, atLowestChip, metaLine, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=Lowest £48.00  kebabΔ=None   fit=cover   pad=0px   rowH= 104.5 lines=1
+                                      AFTER  price='£48.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 104.8 lines=1
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=cover   pad=0px   rowH=   136 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=Lowest £129.50 kebabΔ=None   fit=contain pad=6px   rowH=   136 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=Lowest £34.00  kebabΔ=None   fit=cover   pad=0px   rowH= 124.8 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=At lowest    meta=At lowest      kebabΔ=None   fit=contain pad=6px   rowH= 125.1 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH= 104.5 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=None   fit=None    pad=None  rowH= 115.8 lines=2
+
+== share-feed-1280-dark   changed: placeholder, thumbFit, thumbPad
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH=   130 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=0      fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH=   130 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH=   130 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH=   121 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH=   121 lines=2
+
+== share-feed-1280-light   changed: placeholder, thumbFit, thumbPad
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH=   130 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=0      fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH=   130 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=cover   pad=0px   rowH=   130 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH=   130 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH=   121 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH=   121 lines=2
+
+== share-feed-360-dark   changed: placeholder, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+== share-feed-360-light   changed: placeholder, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+== share-feed-390-dark   changed: placeholder, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+== share-feed-390-light   changed: placeholder, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+== share-feed-430-dark   changed: placeholder, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+== share-feed-430-light   changed: placeholder, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+== share-feed-768-dark   changed: placeholder, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+== share-feed-768-light   changed: placeholder, kebabDeltaPx, thumbFit, thumbPad, rowH
+   Aurora Woven Throw                 BEFORE price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£48.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Hand-Beaten Copper Kettle          BEFORE price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£139.50'    placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Stonewashed Linen Apron with a del BEFORE price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=14     fit=cover   pad=0px   rowH= 128.3 lines=2
+                                      AFTER  price='£34.00'     placeholder=False chip=None         meta=None           kebabΔ=0      fit=contain pad=6px   rowH= 128.3 lines=2
+   Replacement Filter Cartridge       BEFORE price=None         placeholder=False chip=None         meta=None           kebabΔ=14     fit=None    pad=None  rowH=   108 lines=2
+                                      AFTER  price=None         placeholder=True  chip=None         meta=None           kebabΔ=0      fit=None    pad=None  rowH= 119.3 lines=2
+
+overflow failures: before=0 after=0
