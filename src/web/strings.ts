@@ -191,6 +191,10 @@ export const S = {
     resetConfirmBody:
       "Purchased marks are anonymous. This clears the mark without telling you who set it.",
     ownerViewingOwn: "You are viewing your own shared list. Purchased marks are hidden from you.",
+    /** #133: the guest share view's quiet end-of-content hook. The target is
+     *  /login?next=/ — after signing in the visitor lands on their own list,
+     *  which is what the copy promises. */
+    signInHook: "Sign in to create your own wishlist",
   },
   owner: {
     /** #76: the owner's OWN purchased mark (distinct from the anonymous
