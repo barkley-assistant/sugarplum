@@ -13,6 +13,7 @@ import { DetailMeta } from "./DetailMeta";
 import { EmptyState } from "./EmptyState";
 import { HintsPanel } from "./HintsPanel";
 import { DotsIcon } from "./IconButton";
+import { ListContextBar } from "./ListContextBar";
 import { OverflowMenu, type OverflowItem } from "./OverflowMenu";
 import { ProductImage } from "./ProductImage";
 import { PriceHistoryCard } from "./PriceHistoryCard";
@@ -212,19 +213,19 @@ export function ItemPage({ id }: { id: string }) {
   if (boot.status === "loading") return <ItemSkeleton />;
   if (boot.status === "error") {
     return (
-      <AppShell brandHref="/" brandLinkLabel={S.settings.backToList}>
+      <AppShell me={me} brandHref="/" brandLinkLabel={S.settings.backToList}>
         <p className="error" role="alert">{boot.message}</p>
       </AppShell>
     );
   }
   if (notFound) {
     return (
-      <AppShell brandHref="/" brandLinkLabel={S.settings.backToList}>
+      <AppShell me={me} showBackToList brandHref="/" brandLinkLabel={S.settings.backToList}>
         <EmptyState title={S.item.notFound} />
       </AppShell>
     );
   }
-  if (!item) return <ItemSkeleton />;
+  if (!me || !item) return <ItemSkeleton />;
 
   const stats = item.priceStats;
   const delta = priceDelta(item.priceCents, item.currency, stats);
@@ -236,8 +237,11 @@ export function ItemPage({ id }: { id: string }) {
   const editHref = `/items/${item.id}/edit`;
 
   return (
-    <AppShell brandHref="/" brandLinkLabel={S.settings.backToList}>
+    <AppShell me={me} showBackToList brandHref="/" brandLinkLabel={S.settings.backToList}>
       <div className="item-page" data-item-id={item.id}>
+        {/* #125: the context row every non-feed page carries — which list this
+            item belongs to, and the way to another one. */}
+        <ListContextBar me={me} />
         <div className="detail-header">
           {/* #72: the close icon is gone — a page is dismissed by the
               browser's own back button (the feed when opened from it, the

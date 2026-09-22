@@ -15,6 +15,14 @@ interface ListSwitcherProps {
   onSelect: (userId: string | null) => void;
   /** Optional action beside the count (for example, a reorder-mode toggle). */
   action?: ReactNode;
+  /** `page` (default) is the feed's display-scale heading. `compact` is the
+   *  context bar every non-feed page carries (#125): the same trigger at the
+   *  page scale, and the Reorder action is feed-only. Both variants use an
+   *  h2 — on the pages that own a heading before the bar (the form screens'
+   *  h1, the settings screens' h2) it is a subordinate section heading, and
+   *  on the item view it is the row the item's own h2 sits under, so no
+   *  heading level is skipped anywhere (settings.spec "heading ladder"). */
+  variant?: "page" | "compact";
 }
 
 function CaretIcon() {
@@ -42,7 +50,16 @@ function CheckIcon() {
 
 /** Heading trigger and responsive wishlist selector. Desktop uses an anchored
  * menu; mobile uses the shared bottom-sheet primitive. */
-export function ListSwitcher({ currentName, rows, currentUserId, count, onSelect, action }: ListSwitcherProps) {
+export function ListSwitcher({
+  currentName,
+  rows,
+  currentUserId,
+  count,
+  onSelect,
+  action,
+  variant = "page",
+}: ListSwitcherProps) {
+  const compact = variant === "compact";
   const [open, setOpen] = useState(false);
   const [desktop, setDesktop] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia("(min-width: 640px)").matches : true,
@@ -143,23 +160,25 @@ export function ListSwitcher({ currentName, rows, currentUserId, count, onSelect
     });
   }
 
+  const trigger = (
+    <button
+      ref={triggerRef}
+      type="button"
+      className="list-switcher-trigger"
+      aria-expanded={open}
+      aria-haspopup={desktop ? "menu" : "dialog"}
+      aria-controls={open && desktop ? surfaceId : undefined}
+      onClick={() => setOpen((value) => !value)}
+    >
+      <span className="list-switcher-name">{S.list.heading(currentName)}</span>
+      <CaretIcon />
+    </button>
+  );
+
   return (
-    <div className="list-switcher">
+    <div className={compact ? "list-switcher list-switcher--compact" : "list-switcher"}>
       <div className="list-heading">
-        <h2 className="page-title">
-          <button
-            ref={triggerRef}
-            type="button"
-            className="list-switcher-trigger"
-            aria-expanded={open}
-            aria-haspopup={desktop ? "menu" : "dialog"}
-            aria-controls={open && desktop ? surfaceId : undefined}
-            onClick={() => setOpen((value) => !value)}
-          >
-            <span className="list-switcher-name">{S.list.heading(currentName)}</span>
-            <CaretIcon />
-          </button>
-        </h2>
+        <h2 className={compact ? "page-title page-title--form" : "page-title"}>{trigger}</h2>
         {(count !== undefined || action) && (
           <div className="list-heading-meta">
             {count !== undefined && <span className="count">{S.list.itemCount(count)}</span>}

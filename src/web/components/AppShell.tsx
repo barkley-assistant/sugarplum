@@ -1,13 +1,23 @@
 import type { ReactNode, Ref } from "react";
+import type { Me } from "../../shared/types";
 import { S } from "../strings";
 import { navigate } from "../router";
+import { HeaderCluster } from "./HeaderCluster";
 import { SkeletonList } from "./SkeletonList";
 
 interface AppShellProps {
-  /** Right side of the topbar (the UserMenu). */
-  headerRight?: ReactNode;
-  /** Compact actions beside the user menu (add/share icon buttons). */
-  headerActions?: ReactNode;
+  /** The signed-in identity. When set, the shell renders the shared header
+   *  cluster (Add + Share + avatar, #125) so every authenticated page carries
+   *  the same header. Anonymous surfaces (/share/:token) and the boot
+   *  skeletons leave it unset and keep the bare lockup. */
+  me?: Me | null;
+  /** Suppress the cluster's Add chip (the /add page). */
+  hideHeaderAdd?: boolean;
+  /** Suppress the cluster's Add AND Share chips (the feed's empty /
+   *  other-user-list states). */
+  hideHeaderActions?: boolean;
+  /** Render the cluster's Back-to-list button (the item view). */
+  showBackToList?: boolean;
   /** When set, the brand renders as a home link with this accessible name
    *  (the /settings page); otherwise it is a plain lockup. */
   brandHref?: string;
@@ -50,8 +60,10 @@ function Brand({ href, linkLabel }: { href?: string; linkLabel?: string }) {
  *  actions + user menu) and a fluid main column. Login keeps its own auth
  *  layout. */
 export function AppShell({
-  headerRight,
-  headerActions,
+  me,
+  hideHeaderAdd = false,
+  hideHeaderActions = false,
+  showBackToList = false,
   brandHref,
   brandLinkLabel,
   children,
@@ -62,10 +74,16 @@ export function AppShell({
       {refreshing && <div className="progress-hairline" aria-hidden="true" />}
       <header className="topbar">
         <Brand href={brandHref} linkLabel={brandLinkLabel} />
-        <div className="topbar-right">
-          {headerActions && <div className="topbar-actions">{headerActions}</div>}
-          {headerRight}
-        </div>
+        {me && (
+          <div className="topbar-right">
+            <HeaderCluster
+              me={me}
+              hideAdd={hideHeaderAdd}
+              hideActions={hideHeaderActions}
+              showBackToList={showBackToList}
+            />
+          </div>
+        )}
       </header>
       <div className="app-main">{children}</div>
     </main>
