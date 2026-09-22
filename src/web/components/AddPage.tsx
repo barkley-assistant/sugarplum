@@ -67,7 +67,7 @@ export function AddPage({ search }: AddPageProps) {
     navigate("/");
   }
 
-  if (boot.status === "loading") return <FormSkeleton />;
+  if (boot.status === "loading") return <FormSkeleton hideHeaderAdd />;
   if (boot.status === "error") {
     return (
       <AppShell brandHref="/" brandLinkLabel={S.settings.backToList}>

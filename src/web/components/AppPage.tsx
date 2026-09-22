@@ -194,17 +194,24 @@ export function AppPage() {
       if (snap && snap.meId === meBody.id) {
         setOwnItems(snap.ownItems);
         setSummary(snap.summary);
-        setActiveTag(snap.activeTag);
-        handoffScrollRef.current = snap.scrollY;
         const viewingUser = viewingHandoff === undefined ? snap.viewingUserId : viewingHandoff;
         setViewing(viewingUser);
-        // Another user's rows are only restored when the handoff did not
-        // redirect the feed elsewhere — otherwise they would be the wrong
-        // list's rows under the new heading.
-        if (viewingUser === snap.viewingUserId) setOtherItems(snap.otherItems);
+        // The snapshot's filter, scroll offset and rows belong to the list
+        // that was on screen. A handoff that lands on a DIFFERENT list starts
+        // it at the top: restoring the old offset would open the new list at
+        // a clamped arbitrary position, and its rows would be the wrong
+        // list's rows under the new heading (plan D4).
+        if (viewingUser === snap.viewingUserId) {
+          setActiveTag(snap.activeTag);
+          handoffScrollRef.current = snap.scrollY;
+          setOtherItems(snap.otherItems);
+        }
         setBooted(true); // data is on screen: no skeleton flash
         void Promise.all([refreshSummary(meBody.id), refreshOwnList(meBody.id)]);
-        if (viewingUser !== null) void viewList(viewingUser);
+        // Revalidate the other user's list only when a handoff put it on
+        // screen. A plain snapshot restore is the feed the user left, rows
+        // and all — plan D4 invokes viewList for the handoff case only.
+        if (viewingHandoff !== undefined && viewingUser !== null) void viewList(viewingUser);
         return;
       }
 
@@ -425,7 +432,10 @@ export function AppPage() {
   }
 
   if (!booted || !me) {
-    return <AppShellLoading />;
+    // #125 C.3: seed the boot shell with the cached identity so the header
+    // does not morph (52 → 66px) when /api/auth/me answers. The guest share
+    // boot does not pass it — anonymous stays anonymous.
+    return <AppShellLoading me={readStoredMe()} />;
   }
 
   const ownRef: OwnerRef = { id: me.id, displayName: me.displayName || me.username };

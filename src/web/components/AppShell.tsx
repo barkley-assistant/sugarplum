@@ -90,10 +90,18 @@ export function AppShell({
   );
 }
 
-/** Skeleton shell for the boot path (keeps the topbar + list shape). */
-export function AppShellLoading() {
+/** Skeleton shell for the boot path (keeps the topbar + list shape).
+ *
+ *  `me` seeds the header cluster from the identity cache (#125): without it
+ *  the boot shell paints the bare 52px lockup and the topbar grows to 66px
+ *  when the identity lands, so every navigation morphs the header — the
+ *  shape change #125 exists to remove. It is a PROP rather than a
+ *  readStoredMe() call here because the guest share boot renders this shell
+ *  too, and an anonymous surface must stay bare even when the viewer happens
+ *  to have an identity cached (plan C.3, §E). */
+export function AppShellLoading({ me }: { me?: Me | null }) {
   return (
-    <AppShell>
+    <AppShell me={me}>
       <SkeletonList />
     </AppShell>
   );
