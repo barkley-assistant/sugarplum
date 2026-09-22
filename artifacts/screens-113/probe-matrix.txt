@@ -1,0 +1,454 @@
+#113 probe matrix — fields that differ between before (main @ 2f85ba3) and after (feat/cheaper-link-detail)
+captures with no differences are omitted
+
+cheaper-full-360-light
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at elsewhere.example.com"
+  cheaperHref: null → "https://elsewhere.example.com/cheaper-apron"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 65
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(24, 24, 27)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 48
+  toggleTop: 743.45 → 808.45
+  orderOk: null → true
+  moreCardHeight: 106 → 171
+
+cheaper-full-390-light
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at elsewhere.example.com"
+  cheaperHref: null → "https://elsewhere.example.com/cheaper-apron"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 65
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(24, 24, 27)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 48
+  toggleTop: 743.45 → 808.45
+  orderOk: null → true
+  moreCardHeight: 106 → 171
+
+cheaper-full-430-light
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at elsewhere.example.com"
+  cheaperHref: null → "https://elsewhere.example.com/cheaper-apron"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 65
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(24, 24, 27)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 48
+  toggleTop: 742.58 → 807.58
+  orderOk: null → true
+  moreCardHeight: 106 → 171
+
+cheaper-full-768-light
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at elsewhere.example.com"
+  cheaperHref: null → "https://elsewhere.example.com/cheaper-apron"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 44
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(24, 24, 27)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 24
+  toggleTop: 721.58 → 765.58
+  orderOk: null → true
+  moreCardHeight: 106 → 150
+
+cheaper-full-1280-light
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at elsewhere.example.com"
+  cheaperHref: null → "https://elsewhere.example.com/cheaper-apron"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 44
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(24, 24, 27)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 24
+  toggleTop: 721.58 → 765.58
+  orderOk: null → true
+  moreCardHeight: 106 → 150
+
+cheaper-manual-360-light
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at supplies.example.net"
+  cheaperHref: null → "https://supplies.example.net/filter-cartridge"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 65
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(24, 24, 27)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 48
+  toggleTop: 475 → 540
+  orderOk: null → true
+  moreCardHeight: 106 → 171
+
+cheaper-manual-390-light
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at supplies.example.net"
+  cheaperHref: null → "https://supplies.example.net/filter-cartridge"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 65
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(24, 24, 27)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 48
+  toggleTop: 475 → 540
+  orderOk: null → true
+  moreCardHeight: 106 → 171
+
+cheaper-manual-430-light
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at supplies.example.net"
+  cheaperHref: null → "https://supplies.example.net/filter-cartridge"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 44
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(24, 24, 27)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 24
+  toggleTop: 475 → 519
+  orderOk: null → true
+  moreCardHeight: 106 → 150
+
+cheaper-manual-768-light
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at supplies.example.net"
+  cheaperHref: null → "https://supplies.example.net/filter-cartridge"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 44
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(24, 24, 27)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 24
+  toggleTop: 475 → 519
+  orderOk: null → true
+  moreCardHeight: 106 → 150
+
+cheaper-manual-1280-light
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at supplies.example.net"
+  cheaperHref: null → "https://supplies.example.net/filter-cartridge"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 44
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(24, 24, 27)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 24
+  toggleTop: 475 → 519
+  orderOk: null → true
+  moreCardHeight: 106 → 150
+
+cheaper-full-360-dark
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at elsewhere.example.com"
+  cheaperHref: null → "https://elsewhere.example.com/cheaper-apron"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 65
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(247, 245, 250)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 48
+  toggleTop: 743.45 → 808.45
+  orderOk: null → true
+  moreCardHeight: 106 → 171
+
+cheaper-full-390-dark
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at elsewhere.example.com"
+  cheaperHref: null → "https://elsewhere.example.com/cheaper-apron"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 65
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(247, 245, 250)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 48
+  toggleTop: 743.45 → 808.45
+  orderOk: null → true
+  moreCardHeight: 106 → 171
+
+cheaper-full-430-dark
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at elsewhere.example.com"
+  cheaperHref: null → "https://elsewhere.example.com/cheaper-apron"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 65
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(247, 245, 250)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 48
+  toggleTop: 742.58 → 807.58
+  orderOk: null → true
+  moreCardHeight: 106 → 171
+
+cheaper-full-768-dark
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at elsewhere.example.com"
+  cheaperHref: null → "https://elsewhere.example.com/cheaper-apron"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 44
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(247, 245, 250)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 24
+  toggleTop: 721.58 → 765.58
+  orderOk: null → true
+  moreCardHeight: 106 → 150
+
+cheaper-full-1280-dark
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at elsewhere.example.com"
+  cheaperHref: null → "https://elsewhere.example.com/cheaper-apron"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 44
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(247, 245, 250)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 24
+  toggleTop: 721.58 → 765.58
+  orderOk: null → true
+  moreCardHeight: 106 → 150
+
+cheaper-manual-360-dark
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at supplies.example.net"
+  cheaperHref: null → "https://supplies.example.net/filter-cartridge"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 65
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(247, 245, 250)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 48
+  toggleTop: 475 → 540
+  orderOk: null → true
+  moreCardHeight: 106 → 171
+
+cheaper-manual-390-dark
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at supplies.example.net"
+  cheaperHref: null → "https://supplies.example.net/filter-cartridge"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 65
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(247, 245, 250)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 48
+  toggleTop: 475 → 540
+  orderOk: null → true
+  moreCardHeight: 106 → 171
+
+cheaper-manual-430-dark
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at supplies.example.net"
+  cheaperHref: null → "https://supplies.example.net/filter-cartridge"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 44
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(247, 245, 250)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 24
+  toggleTop: 475 → 519
+  orderOk: null → true
+  moreCardHeight: 106 → 150
+
+cheaper-manual-768-dark
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at supplies.example.net"
+  cheaperHref: null → "https://supplies.example.net/filter-cartridge"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 44
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(247, 245, 250)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 24
+  toggleTop: 475 → 519
+  orderOk: null → true
+  moreCardHeight: 106 → 150
+
+cheaper-manual-1280-dark
+  children: "[\"detail-card-heading\",\"detail-hints\"]" → "[\"detail-card-heading\",\"detail-row\",\"detail-hints\"]"
+  cheaperPresent: false → true
+  cheaperLabel: null → "Found it cheaper at supplies.example.net"
+  cheaperHref: null → "https://supplies.example.net/filter-cartridge"
+  cheaperTarget: null → "_blank"
+  cheaperRel: null → "noopener noreferrer"
+  cheaperReferrerPolicy: null → "no-referrer"
+  cheaperTag: null → "A"
+  cheaperSvgCount: null → 2
+  cheaperTrailingSvgIsLast: null → true
+  cheaperHeight: null → 44
+  cheaperMinHeight: null → "44px"
+  cheaperBorderTopWidth: null → "1px"
+  cheaperLabelColor: null → "rgb(247, 245, 250)"
+  cheaperOverflowWrap: null → "anywhere"
+  cheaperLabelHeight: null → 24
+  toggleTop: 475 → 519
+  orderOk: null → true
+  moreCardHeight: 106 → 150
+
+summary:
+cheaper-full-360-light: 19 probe field(s) differ
+cheaper-full-390-light: 19 probe field(s) differ
+cheaper-full-430-light: 19 probe field(s) differ
+cheaper-full-768-light: 19 probe field(s) differ
+cheaper-full-1280-light: 19 probe field(s) differ
+cheaper-manual-360-light: 19 probe field(s) differ
+cheaper-manual-390-light: 19 probe field(s) differ
+cheaper-manual-430-light: 19 probe field(s) differ
+cheaper-manual-768-light: 19 probe field(s) differ
+cheaper-manual-1280-light: 19 probe field(s) differ
+no-cheaper-360-light: 0 probe field(s) differ
+no-cheaper-390-light: 0 probe field(s) differ
+no-cheaper-430-light: 0 probe field(s) differ
+no-cheaper-768-light: 0 probe field(s) differ
+no-cheaper-1280-light: 0 probe field(s) differ
+cheaper-full-360-dark: 19 probe field(s) differ
+cheaper-full-390-dark: 19 probe field(s) differ
+cheaper-full-430-dark: 19 probe field(s) differ
+cheaper-full-768-dark: 19 probe field(s) differ
+cheaper-full-1280-dark: 19 probe field(s) differ
+cheaper-manual-360-dark: 19 probe field(s) differ
+cheaper-manual-390-dark: 19 probe field(s) differ
+cheaper-manual-430-dark: 19 probe field(s) differ
+cheaper-manual-768-dark: 19 probe field(s) differ
+cheaper-manual-1280-dark: 19 probe field(s) differ
+no-cheaper-360-dark: 0 probe field(s) differ
+no-cheaper-390-dark: 0 probe field(s) differ
+no-cheaper-430-dark: 0 probe field(s) differ
+no-cheaper-768-dark: 0 probe field(s) differ
+no-cheaper-1280-dark: 0 probe field(s) differ

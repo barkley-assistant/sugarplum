@@ -1,0 +1,33 @@
+#113 pixel matrix — top-aligned diff over the overlapping canvas
+before = main @ 2f85ba3 build, after = feat/cheaper-link-detail build, same fixtures, same run params
+
+cheaper-full-1280-dark.png: canvas 1280x844 → 1280x885 (Δh 41); differing 36012/1080320 (3.33%); bbox x 280-999, y 737-826 (720x90)
+cheaper-full-1280-light.png: canvas 1280x844 → 1280x885 (Δh 41); differing 35973/1080320 (3.33%); bbox x 280-999, y 737-826 (720x90)
+cheaper-full-360-dark.png: canvas 360x918 → 360x983 (Δh 65); differing 11835/330480 (3.58%); bbox x 16-343, y 757-908 (328x152)
+cheaper-full-360-light.png: canvas 360x918 → 360x983 (Δh 65); differing 11780/330480 (3.56%); bbox x 16-343, y 757-908 (328x152)
+cheaper-full-390-dark.png: canvas 390x918 → 390x983 (Δh 65); differing 12743/358020 (3.56%); bbox x 16-373, y 757-908 (358x152)
+cheaper-full-390-light.png: canvas 390x918 → 390x983 (Δh 65); differing 12685/358020 (3.54%); bbox x 16-373, y 757-908 (358x152)
+cheaper-full-430-dark.png: canvas 430x918 → 430x983 (Δh 65); differing 13850/394740 (3.51%); bbox x 16-413, y 757-908 (398x152)
+cheaper-full-430-light.png: canvas 430x918 → 430x983 (Δh 65); differing 13796/394740 (3.49%); bbox x 16-413, y 757-908 (398x152)
+cheaper-full-768-dark.png: canvas 768x844 → 768x885 (Δh 41); differing 36748/648192 (5.67%); bbox x 16-751, y 737-826 (736x90)
+cheaper-full-768-light.png: canvas 768x844 → 768x885 (Δh 41); differing 36709/648192 (5.66%); bbox x 16-751, y 737-826 (736x90)
+cheaper-manual-1280-dark.png: canvas 1280x844 → 1280x844 (Δh 0); differing 36582/1080320 (3.39%); bbox x 280-999, y 491-619 (720x129)
+cheaper-manual-1280-light.png: canvas 1280x844 → 1280x844 (Δh 0); differing 36549/1080320 (3.38%); bbox x 280-999, y 491-619 (720x129)
+cheaper-manual-360-dark.png: canvas 360x844 → 360x844 (Δh 0); differing 25456/303840 (8.38%); bbox x 16-343, y 489-640 (328x152)
+cheaper-manual-360-light.png: canvas 360x844 → 360x844 (Δh 0); differing 25393/303840 (8.36%); bbox x 16-343, y 489-640 (328x152)
+cheaper-manual-390-dark.png: canvas 390x844 → 390x844 (Δh 0); differing 27439/329160 (8.34%); bbox x 16-373, y 489-640 (358x152)
+cheaper-manual-390-light.png: canvas 390x844 → 390x844 (Δh 0); differing 27377/329160 (8.32%); bbox x 16-373, y 489-640 (358x152)
+cheaper-manual-430-dark.png: canvas 430x844 → 430x844 (Δh 0); differing 21770/362920 (6.00%); bbox x 16-413, y 491-619 (398x129)
+cheaper-manual-430-light.png: canvas 430x844 → 430x844 (Δh 0); differing 21737/362920 (5.99%); bbox x 16-413, y 491-619 (398x129)
+cheaper-manual-768-dark.png: canvas 768x844 → 768x844 (Δh 0); differing 37318/648192 (5.76%); bbox x 16-751, y 491-619 (736x129)
+cheaper-manual-768-light.png: canvas 768x844 → 768x844 (Δh 0); differing 37285/648192 (5.75%); bbox x 16-751, y 491-619 (736x129)
+no-cheaper-1280-dark.png: canvas 1280x844 → 1280x844 (Δh 0); differing 0/1080320 (0.00%); bbox none
+no-cheaper-1280-light.png: canvas 1280x844 → 1280x844 (Δh 0); differing 0/1080320 (0.00%); bbox none
+no-cheaper-360-dark.png: canvas 360x844 → 360x844 (Δh 0); differing 0/303840 (0.00%); bbox none
+no-cheaper-360-light.png: canvas 360x844 → 360x844 (Δh 0); differing 0/303840 (0.00%); bbox none
+no-cheaper-390-dark.png: canvas 390x844 → 390x844 (Δh 0); differing 0/329160 (0.00%); bbox none
+no-cheaper-390-light.png: canvas 390x844 → 390x844 (Δh 0); differing 0/329160 (0.00%); bbox none
+no-cheaper-430-dark.png: canvas 430x844 → 430x844 (Δh 0); differing 0/362920 (0.00%); bbox none
+no-cheaper-430-light.png: canvas 430x844 → 430x844 (Δh 0); differing 0/362920 (0.00%); bbox none
+no-cheaper-768-dark.png: canvas 768x844 → 768x844 (Δh 0); differing 0/648192 (0.00%); bbox none
+no-cheaper-768-light.png: canvas 768x844 → 768x844 (Δh 0); differing 0/648192 (0.00%); bbox none

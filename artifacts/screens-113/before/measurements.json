@@ -1,0 +1,788 @@
+{
+  "mode": "before",
+  "root": "/home/agent/projects/barkley-assistant/sugarplum/.worktrees/screens-113-before",
+  "overflow": [
+    {
+      "name": "cheaper-full-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    }
+  ],
+  "probes": [
+    {
+      "name": "cheaper-full-360-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 743.45,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-full-390-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 743.45,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-full-430-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 742.58,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-full-768-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 721.58,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-full-1280-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 721.58,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-manual-360-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-manual-390-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-manual-430-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-manual-768-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-manual-1280-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-360-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475.88,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-390-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475.88,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-430-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-768-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-1280-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-full-360-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 743.45,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-full-390-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 743.45,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-full-430-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 742.58,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-full-768-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 721.58,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-full-1280-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 721.58,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-manual-360-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-manual-390-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-manual-430-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-manual-768-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-manual-1280-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-360-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475.88,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-390-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475.88,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-430-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-768-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-1280-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    }
+  ]
+}

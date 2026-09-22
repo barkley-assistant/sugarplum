@@ -1,0 +1,1148 @@
+{
+  "mode": "after",
+  "root": "/home/agent/projects/barkley-assistant/sugarplum",
+  "overflow": [
+    {
+      "name": "cheaper-full-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "cheaper-full-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "cheaper-manual-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "no-cheaper-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    }
+  ],
+  "probes": [
+    {
+      "name": "cheaper-full-360-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at elsewhere.example.com",
+          "tag": "A",
+          "href": "https://elsewhere.example.com/cheaper-apron",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 743.45,
+          "bottom": 808.45,
+          "height": 65,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(24, 24, 27)",
+          "labelWrap": "anywhere",
+          "labelWidth": 294,
+          "labelHeight": 48
+        },
+        "toggle": {
+          "top": 808.45,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 171
+      }
+    },
+    {
+      "name": "cheaper-full-390-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at elsewhere.example.com",
+          "tag": "A",
+          "href": "https://elsewhere.example.com/cheaper-apron",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 743.45,
+          "bottom": 808.45,
+          "height": 65,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(24, 24, 27)",
+          "labelWrap": "anywhere",
+          "labelWidth": 324,
+          "labelHeight": 48
+        },
+        "toggle": {
+          "top": 808.45,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 171
+      }
+    },
+    {
+      "name": "cheaper-full-430-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at elsewhere.example.com",
+          "tag": "A",
+          "href": "https://elsewhere.example.com/cheaper-apron",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 742.58,
+          "bottom": 807.58,
+          "height": 65,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(24, 24, 27)",
+          "labelWrap": "anywhere",
+          "labelWidth": 364,
+          "labelHeight": 48
+        },
+        "toggle": {
+          "top": 807.58,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 171
+      }
+    },
+    {
+      "name": "cheaper-full-768-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at elsewhere.example.com",
+          "tag": "A",
+          "href": "https://elsewhere.example.com/cheaper-apron",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 721.58,
+          "bottom": 765.58,
+          "height": 44,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(24, 24, 27)",
+          "labelWrap": "anywhere",
+          "labelWidth": 702,
+          "labelHeight": 24
+        },
+        "toggle": {
+          "top": 765.58,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 150
+      }
+    },
+    {
+      "name": "cheaper-full-1280-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at elsewhere.example.com",
+          "tag": "A",
+          "href": "https://elsewhere.example.com/cheaper-apron",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 721.58,
+          "bottom": 765.58,
+          "height": 44,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(24, 24, 27)",
+          "labelWrap": "anywhere",
+          "labelWidth": 686,
+          "labelHeight": 24
+        },
+        "toggle": {
+          "top": 765.58,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 150
+      }
+    },
+    {
+      "name": "cheaper-manual-360-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at supplies.example.net",
+          "tag": "A",
+          "href": "https://supplies.example.net/filter-cartridge",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 475,
+          "bottom": 540,
+          "height": 65,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(24, 24, 27)",
+          "labelWrap": "anywhere",
+          "labelWidth": 294,
+          "labelHeight": 48
+        },
+        "toggle": {
+          "top": 540,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 171
+      }
+    },
+    {
+      "name": "cheaper-manual-390-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at supplies.example.net",
+          "tag": "A",
+          "href": "https://supplies.example.net/filter-cartridge",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 475,
+          "bottom": 540,
+          "height": 65,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(24, 24, 27)",
+          "labelWrap": "anywhere",
+          "labelWidth": 324,
+          "labelHeight": 48
+        },
+        "toggle": {
+          "top": 540,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 171
+      }
+    },
+    {
+      "name": "cheaper-manual-430-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at supplies.example.net",
+          "tag": "A",
+          "href": "https://supplies.example.net/filter-cartridge",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 475,
+          "bottom": 519,
+          "height": 44,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(24, 24, 27)",
+          "labelWrap": "anywhere",
+          "labelWidth": 364,
+          "labelHeight": 24
+        },
+        "toggle": {
+          "top": 519,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 150
+      }
+    },
+    {
+      "name": "cheaper-manual-768-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at supplies.example.net",
+          "tag": "A",
+          "href": "https://supplies.example.net/filter-cartridge",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 475,
+          "bottom": 519,
+          "height": 44,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(24, 24, 27)",
+          "labelWrap": "anywhere",
+          "labelWidth": 702,
+          "labelHeight": 24
+        },
+        "toggle": {
+          "top": 519,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 150
+      }
+    },
+    {
+      "name": "cheaper-manual-1280-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at supplies.example.net",
+          "tag": "A",
+          "href": "https://supplies.example.net/filter-cartridge",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 475,
+          "bottom": 519,
+          "height": 44,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(24, 24, 27)",
+          "labelWrap": "anywhere",
+          "labelWidth": 686,
+          "labelHeight": 24
+        },
+        "toggle": {
+          "top": 519,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 150
+      }
+    },
+    {
+      "name": "no-cheaper-360-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475.88,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-390-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475.88,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-430-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-768-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-1280-light",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "cheaper-full-360-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at elsewhere.example.com",
+          "tag": "A",
+          "href": "https://elsewhere.example.com/cheaper-apron",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 743.45,
+          "bottom": 808.45,
+          "height": 65,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(247, 245, 250)",
+          "labelWrap": "anywhere",
+          "labelWidth": 294,
+          "labelHeight": 48
+        },
+        "toggle": {
+          "top": 808.45,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 171
+      }
+    },
+    {
+      "name": "cheaper-full-390-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at elsewhere.example.com",
+          "tag": "A",
+          "href": "https://elsewhere.example.com/cheaper-apron",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 743.45,
+          "bottom": 808.45,
+          "height": 65,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(247, 245, 250)",
+          "labelWrap": "anywhere",
+          "labelWidth": 324,
+          "labelHeight": 48
+        },
+        "toggle": {
+          "top": 808.45,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 171
+      }
+    },
+    {
+      "name": "cheaper-full-430-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at elsewhere.example.com",
+          "tag": "A",
+          "href": "https://elsewhere.example.com/cheaper-apron",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 742.58,
+          "bottom": 807.58,
+          "height": 65,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(247, 245, 250)",
+          "labelWrap": "anywhere",
+          "labelWidth": 364,
+          "labelHeight": 48
+        },
+        "toggle": {
+          "top": 807.58,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 171
+      }
+    },
+    {
+      "name": "cheaper-full-768-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at elsewhere.example.com",
+          "tag": "A",
+          "href": "https://elsewhere.example.com/cheaper-apron",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 721.58,
+          "bottom": 765.58,
+          "height": 44,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(247, 245, 250)",
+          "labelWrap": "anywhere",
+          "labelWidth": 702,
+          "labelHeight": 24
+        },
+        "toggle": {
+          "top": 765.58,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 150
+      }
+    },
+    {
+      "name": "cheaper-full-1280-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at elsewhere.example.com",
+          "tag": "A",
+          "href": "https://elsewhere.example.com/cheaper-apron",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 721.58,
+          "bottom": 765.58,
+          "height": 44,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(247, 245, 250)",
+          "labelWrap": "anywhere",
+          "labelWidth": 686,
+          "labelHeight": 24
+        },
+        "toggle": {
+          "top": 765.58,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 150
+      }
+    },
+    {
+      "name": "cheaper-manual-360-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at supplies.example.net",
+          "tag": "A",
+          "href": "https://supplies.example.net/filter-cartridge",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 475,
+          "bottom": 540,
+          "height": 65,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(247, 245, 250)",
+          "labelWrap": "anywhere",
+          "labelWidth": 294,
+          "labelHeight": 48
+        },
+        "toggle": {
+          "top": 540,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 171
+      }
+    },
+    {
+      "name": "cheaper-manual-390-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at supplies.example.net",
+          "tag": "A",
+          "href": "https://supplies.example.net/filter-cartridge",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 475,
+          "bottom": 540,
+          "height": 65,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(247, 245, 250)",
+          "labelWrap": "anywhere",
+          "labelWidth": 324,
+          "labelHeight": 48
+        },
+        "toggle": {
+          "top": 540,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 171
+      }
+    },
+    {
+      "name": "cheaper-manual-430-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at supplies.example.net",
+          "tag": "A",
+          "href": "https://supplies.example.net/filter-cartridge",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 475,
+          "bottom": 519,
+          "height": 44,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(247, 245, 250)",
+          "labelWrap": "anywhere",
+          "labelWidth": 364,
+          "labelHeight": 24
+        },
+        "toggle": {
+          "top": 519,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 150
+      }
+    },
+    {
+      "name": "cheaper-manual-768-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at supplies.example.net",
+          "tag": "A",
+          "href": "https://supplies.example.net/filter-cartridge",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 475,
+          "bottom": 519,
+          "height": 44,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(247, 245, 250)",
+          "labelWrap": "anywhere",
+          "labelWidth": 702,
+          "labelHeight": 24
+        },
+        "toggle": {
+          "top": 519,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 150
+      }
+    },
+    {
+      "name": "cheaper-manual-1280-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-row",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": true,
+          "label": "Found it cheaper at supplies.example.net",
+          "tag": "A",
+          "href": "https://supplies.example.net/filter-cartridge",
+          "target": "_blank",
+          "rel": "noopener noreferrer",
+          "referrerPolicy": "no-referrer",
+          "svgCount": 2,
+          "trailingSvgIsLast": true,
+          "top": 475,
+          "bottom": 519,
+          "height": 44,
+          "minHeight": "44px",
+          "borderTopWidth": "1px",
+          "labelColor": "rgb(247, 245, 250)",
+          "labelWrap": "anywhere",
+          "labelWidth": 686,
+          "labelHeight": 24
+        },
+        "toggle": {
+          "top": 519,
+          "height": 44
+        },
+        "orderOk": true,
+        "moreCardHeight": 150
+      }
+    },
+    {
+      "name": "no-cheaper-360-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475.88,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-390-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475.88,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-430-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-768-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    },
+    {
+      "name": "no-cheaper-1280-dark",
+      "probe": {
+        "moreCard": true,
+        "children": [
+          "detail-card-heading",
+          "detail-hints"
+        ],
+        "heading": "More information",
+        "cheaper": {
+          "present": false
+        },
+        "toggle": {
+          "top": 475,
+          "height": 44
+        },
+        "orderOk": null,
+        "moreCardHeight": 106
+      }
+    }
+  ]
+}
