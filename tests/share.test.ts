@@ -193,6 +193,70 @@ describe("anonymous share view", () => {
     }
   });
 
+  test("#133: the view's keys are EXACTLY {ownerDisplayName, viewerIsOwner, items}", async () => {
+    await loginAsAdmin();
+    // A fresh owner whose username and display name CANNOT be confused: the
+    // leak probe below looks for the username literal, so it must not appear
+    // anywhere else in the payload by accident.
+    const created = await admin.request("POST", "/api/users", {
+      username: "zog-private",
+      password: "zog-private-pass",
+      displayName: "Zoe",
+    });
+    expect(created.status).toBe(201);
+
+    const owner = app.newJar();
+    expect(
+      (
+        await owner.request("POST", "/api/auth/login", {
+          username: "zog-private",
+          password: "zog-private-pass",
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await owner.request("POST", "/api/wishlist/items", {
+          title: "Lock probe",
+          priceCents: "9.99",
+          currency: "GBP",
+          notes: "Private note",
+        })
+      ).status,
+    ).toBe(201);
+    const token = ((await (await owner.request("POST", "/api/share")).json()) as ShareLinkResponse)
+      .token as string;
+
+    const view = (await (
+      await app.newJar().request("GET", `/api/share/${token}`)
+    ).json()) as ShareView;
+
+    // Shape lock: the projection is exactly this — a future field (an owner
+    // username, a cheaperUrl, a hint price) fails here instead of shipping.
+    expect(Object.keys(view).sort()).toEqual(["items", "ownerDisplayName", "viewerIsOwner"]);
+    expect(view.ownerDisplayName).toBe("Zoe");
+    expect(view.items).toHaveLength(1);
+    expect(Object.keys(view.items[0]).sort()).toEqual([
+      "createdAt",
+      "currency",
+      "hasImage",
+      "id",
+      "imageSource",
+      "notes",
+      "priceCents",
+      "priceStats",
+      "purchased",
+      "siteName",
+      "tags",
+      "title",
+      "url",
+    ]);
+
+    // …and no owner identity travels with it: the username never appears,
+    // while the display name the owner chose does (the heading reads it).
+    expect(JSON.stringify(view)).not.toContain("zog-private");
+  });
+
   test("#90: share priceStats + createdAt match the owner's for an item with history", async () => {
     const ownerId = await loginAsAdmin();
     const item = await seedItem("Parity probe", { priceCents: "19.99", currency: "GBP" });

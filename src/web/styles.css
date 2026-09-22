@@ -1851,16 +1851,16 @@ button.filter-chip {
   text-align: center;
 }
 
-.share-note {
+.share-note,
+.share-signin {
   margin: 0;
   font-size: var(--text-sm);
 }
 
-/* Tagline on the public share view: the quiet context line the app footer
-   used to carry (issue #94). `muted` supplies --text-2. */
-.share-tagline {
-  margin: 0;
-  font-size: var(--text-sm);
+/* #133: the guest share view's end-of-content sign-in hook — page content in
+   the slot the app footer used to occupy, quiet enough to not read as a CTA. */
+.share-signin {
+  margin-top: var(--sp-4);
 }
 
 /* Accent on top of .claimed-badge: "Purchased" on a shared list. */

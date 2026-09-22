@@ -1,4 +1,4 @@
-import { test, expect, type Locator, type Page } from "@playwright/test";
+import { test, expect, type BrowserContext, type Locator, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -4440,8 +4440,11 @@ test("33: #130 — price placeholder, Lowest verdict, letterbox, kebab anchor", 
     await guest.keyboard.press("Escape");
     await expect(guestSheet).toHaveCount(0);
 
-    // --- Anonymous share feed: the placeholder reaches the third consumer;
-    //     its price-ONLY grammar (no meta lines) is #133's call and stands. ---
+    // --- Anonymous share feed: the third consumer of the #130 verdict. #133
+    //     took the parity decision: share rows run the SAME Lowest rule as the
+    //     owner and other-user feeds (chip at the lowest, "Lowest £X" above
+    //     it, the dash placeholder with no price at all). The delta line stays
+    //     owner-side — no share row renders it. ---
     const shared = await page.request.post(`${BASE}/api/share`);
     expect(shared.status()).toBe(201);
     shareToken = ((await shared.json()) as { token: string }).token;
@@ -4454,12 +4457,27 @@ test("33: #130 — price placeholder, Lowest verdict, letterbox, kebab anchor", 
           `.item-card[data-item-id="${noPrice}"] .price-unavailable [aria-hidden="true"]`,
         ),
       ).toHaveText("—");
+      // No history → no verdict (the placeholder row keeps the price slot).
       await expect(
         anonPage.locator(`.item-card[data-item-id="${noPrice}"] .price-meta`),
       ).toHaveCount(0);
+      // At the lowest → the quiet chip, textually identical to the owner's.
       await expect(
-        anonPage.locator(`.item-card[data-item-id="${atLowest}"] .price-meta`),
+        anonPage.locator(`.item-card[data-item-id="${atLowest}"] .price-meta.price-at-lowest`),
+      ).toHaveText("At lowest");
+      expect(
+        (await anonPage.locator(`.item-card[data-item-id="${atLowest}"] .price-meta`).innerText()).trim(),
+        "the share feed agrees with the owner feed on the Lowest verdict",
+      ).toBe(ownerChipText);
+      // Above the lowest → the "Lowest £X" line, never the chip.
+      await expect(
+        anonPage.locator(`.item-card[data-item-id="${above}"] .price-meta`),
+      ).toHaveText("Lowest £25.00");
+      await expect(
+        anonPage.locator(`.item-card[data-item-id="${above}"] .price-at-lowest`),
       ).toHaveCount(0);
+      // #133's boundary: the delta line stays owner-side on every share row.
+      await expect(anonPage.locator(".price-delta")).toHaveCount(0);
       const overflow = await horizontalEscapes(anonPage);
       expect(overflow.docOverflow, "share overflow @390").toBe(false);
       expect(overflow.offenders, "share escapes @390").toEqual([]);
@@ -4656,6 +4674,247 @@ test("34: #113 — owner detail surfaces the saved cheaper link; guests never do
     for (const id of seeded) {
       await page.request.delete(`${BASE}/api/wishlist/items/${id}`);
     }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${BASE}/`);
+  }
+});
+
+/** #133: the guest share view. One tagline under the title, a guest-safe row
+ *  menu (the issue's read-only pair plus the one guest write the share flow
+ *  sells), the #130 Lowest verdict on the rows, and one quiet sign-in hook at
+ *  the page end — with no owner identity beyond the display name the owner
+ *  chose. */
+test("35: #133 — guest share view: scoped menu, one tagline, Lowest parity, sign-in hook", async ({
+  page,
+  browser,
+}) => {
+  // A dedicated owner whose USERNAME and display name are unalike, so the
+  // "no owner identity on the share surface" probes are real tests: a leaked
+  // username would render "zog-private" while the heading reads "Zoe's
+  // wishlist".
+  const created = await page.request.post(`${BASE}/api/users`, {
+    data: { username: "zog-private", password: "zog-private-pass", displayName: "Zoe" },
+  });
+  expect(created.status()).toBe(201);
+  const ownerUser = (await created.json()) as { id: string };
+
+  const ownerContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const ownerPage = await ownerContext.newPage();
+  const seeded: string[] = [];
+  let anonContext: BrowserContext | undefined;
+  let shareToken: string | undefined;
+
+  try {
+    await login(ownerPage, "zog-private", "zog-private-pass");
+
+    // Two rows, seeded through the same API the form uses: one AT its lowest
+    // with a product URL (the menu's read-only pair needs a url), one ABOVE
+    // its lowest with a real delta the row must NOT render. The ledger's
+    // minimum can never exceed the current price, so "above" is add low, raise.
+    const atLowestRes = await ownerPage.request.post(`${BASE}/api/wishlist/items`, {
+      data: {
+        title: "At lowest probe",
+        url: "https://example.com/gift",
+        priceCents: "25.00",
+        currency: "GBP",
+      },
+    });
+    expect(atLowestRes.status()).toBe(201);
+    const atLowest = ((await atLowestRes.json()) as { id: string }).id;
+    seeded.push(atLowest);
+
+    const aboveRes = await ownerPage.request.post(`${BASE}/api/wishlist/items`, {
+      data: { title: "Above lowest probe", priceCents: "25.00", currency: "GBP" },
+    });
+    expect(aboveRes.status()).toBe(201);
+    const above = ((await aboveRes.json()) as { id: string }).id;
+    seeded.push(above);
+    const raised = await ownerPage.request.patch(`${BASE}/api/wishlist/items/${above}`, {
+      data: { priceCents: "30.00" },
+    });
+    expect(raised.status()).toBe(200);
+
+    const shared = await ownerPage.request.post(`${BASE}/api/share`);
+    expect(shared.status()).toBe(201);
+    shareToken = ((await shared.json()) as { token: string }).token;
+
+    // Anonymous viewer: a fresh context with zero cookies. Clipboard
+    // permissions are granted so the "Copy link" row can be checked against
+    // the real clipboard, not just the toast.
+    const anon = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      permissions: ["clipboard-read", "clipboard-write"],
+    });
+    anonContext = anon;
+    await anon.addInitScript(() => {
+      sessionStorage.setItem("docLoads", String(Number(sessionStorage.getItem("docLoads") ?? 0) + 1));
+    });
+    const anonPage = await anon.newPage();
+    await anonPage.goto(`${BASE}/share/${shareToken}`);
+    await expect(anonPage.getByRole("heading", { name: "Zoe's wishlist" })).toBeVisible();
+
+    const atLowestCard = anonPage.locator(`.item-card[data-item-id="${atLowest}"]`);
+    const aboveCard = anonPage.locator(`.item-card[data-item-id="${above}"]`);
+    await expect(atLowestCard).toBeVisible();
+    await expect(aboveCard).toBeVisible();
+
+    // 1. Tagline dedup: ONE line under the title — the shared-list note — and
+    //    the marketing tagline is gone from this surface.
+    await expect(anonPage.getByText("Shared list — no account needed")).toBeVisible();
+    await expect(anonPage.locator(".share-note")).toHaveCount(1);
+    await expect(
+      anonPage.getByText("Private wishlists, shared with people you trust."),
+    ).toHaveCount(0);
+
+    // 2a. Desktop popover (>= 640px): exactly the guest-safe trio, no Cancel
+    //     row (that is the mobile Sheet's own dismiss route).
+    await anonPage.setViewportSize({ width: 1280, height: 900 });
+    await atLowestCard.getByRole("button", { name: "More actions" }).click();
+    const popover = anonPage.getByRole("menu", { name: "More actions" });
+    await expect(popover).toBeVisible();
+    expect(
+      (await popover.getByRole("menuitem").allInnerTexts()).map((t) => t.trim()).sort(),
+    ).toEqual(["Copy link", "Mark as purchased", "Open product"]);
+    await anonPage.keyboard.press("Escape");
+    await expect(popover).toHaveCount(0);
+
+    // 2b. Mobile sheet (390px): the same trio plus the Sheet's Cancel row, and
+    //     never an owner action.
+    await anonPage.setViewportSize({ width: 390, height: 844 });
+    await atLowestCard.getByRole("button", { name: "More actions" }).click();
+    const sheetMenu = anonPage.getByRole("menu", { name: "More actions" });
+    await expect(sheetMenu).toBeVisible();
+    const sheetItems = (await sheetMenu.getByRole("menuitem").allInnerTexts()).map((t) => t.trim());
+    expect(sheetItems.filter((label) => label !== "Cancel").sort()).toEqual([
+      "Copy link",
+      "Mark as purchased",
+      "Open product",
+    ]);
+    expect(sheetItems, "the Sheet keeps its own dismiss row").toContain("Cancel");
+    for (const ownerAction of ["Edit", "Edit item", "Re-check price", "Reset purchased mark", "Delete"]) {
+      await expect(
+        sheetMenu.getByRole("menuitem", { name: ownerAction, exact: true }),
+      ).toHaveCount(0);
+    }
+
+    // 3. The read-only pair WORKS: Copy link writes the product URL to the
+    //    clipboard and toasts.
+    await sheetMenu.getByRole("menuitem", { name: "Copy link" }).click();
+    await expect(anonPage.locator(".toast")).toContainText("Copied");
+    expect(
+      await anonPage.evaluate(() => navigator.clipboard.readText()),
+      "the copied text is the product url",
+    ).toBe("https://example.com/gift");
+
+    // …and Open product hands the URL off to a NEW browsing context without
+    // re-loading the SPA (#102's contract, for a menu row rather than a link).
+    const urlBefore = anonPage.url();
+    const loadsBefore = await loads(anonPage);
+    await atLowestCard.getByRole("button", { name: "More actions" }).click();
+    const [popup] = await Promise.all([
+      anon.waitForEvent("page"),
+      anonPage.getByRole("menuitem", { name: "Open product" }).click(),
+    ]);
+    await popup.close();
+    expect(anonPage.url(), "the SPA document stayed put").toBe(urlBefore);
+    expect(await loads(anonPage), "no extra document load").toBe(loadsBefore);
+
+    // 4. The one guest WRITE survives the rescoped menu (spec 15e's chain).
+    await atLowestCard.getByRole("button", { name: "More actions" }).click();
+    await anonPage.getByRole("menuitem", { name: "Mark as purchased" }).click();
+    const dialog = anonPage.getByRole("alertdialog");
+    await expect(dialog).toBeVisible();
+    await expect(
+      dialog.getByText("This tells other viewers the item is already bought."),
+    ).toBeVisible();
+    await dialog.getByRole("button", { name: "Mark as purchased" }).click();
+    await expect(atLowestCard.locator(".share-purchased-badge")).toHaveText("Purchased");
+    await expect(atLowestCard).toHaveClass(/is-purchased/);
+
+    // 5. Lowest parity with the owner/other-user feeds (#130's rule)…
+    await expect(atLowestCard.locator(".price-meta.price-at-lowest")).toHaveText("At lowest");
+    await expect(aboveCard.locator(".price-meta")).toHaveText("Lowest £25.00");
+    await expect(aboveCard.locator(".price-at-lowest")).toHaveCount(0);
+    // …with the delta line deliberately owner-side (the row above has a real
+    // "up £5.00" the guest surface must not render).
+    await expect(anonPage.locator(".price-delta")).toHaveCount(0);
+
+    // 6. A row without a URL gets no read-only pair (the url gate).
+    await aboveCard.getByRole("button", { name: "More actions" }).click();
+    const urlLessMenu = anonPage.getByRole("menu", { name: "More actions" });
+    await expect(urlLessMenu).toBeVisible();
+    expect(
+      (await urlLessMenu.getByRole("menuitem").allInnerTexts())
+        .map((t) => t.trim())
+        .filter((label) => label !== "Cancel")
+        .sort(),
+    ).toEqual(["Mark as purchased"]);
+    await anonPage.keyboard.press("Escape");
+    await expect(urlLessMenu).toHaveCount(0);
+
+    // 7. Privacy in the browser: the owner's username never reaches the DOM;
+    //    the display name the owner chose does.
+    expect(await anonPage.locator("body").innerText()).not.toContain("zog-private");
+
+    // 8. The sign-in hook: one muted link at the page end, below the list,
+    //    never in the header — and it routes to the login form.
+    const hook = anonPage.getByRole("link", { name: "Sign in to create your own wishlist" });
+    await expect(hook).toBeVisible();
+    await expect(hook).toHaveAttribute("href", "/login?next=/");
+    await expect(
+      anonPage.locator(".topbar").getByRole("link", { name: "Sign in to create your own wishlist" }),
+    ).toHaveCount(0);
+    const listBox = (await anonPage.locator(".item-list").boundingBox())!;
+    const hookBox = (await hook.boundingBox())!;
+    expect(hookBox.y, "the hook sits below the list it advertises").toBeGreaterThan(
+      listBox.y + listBox.height - 1,
+    );
+    // Muted copy, but still the app's standard link colour: it clears AA in
+    // both schemes (the capture pass measures the same ratio).
+    for (const scheme of ["light", "dark"] as const) {
+      await anonPage.emulateMedia({ colorScheme: scheme });
+      expect(await contrast(hook), `hook contrast @${scheme}`).toBeGreaterThanOrEqual(4.5);
+    }
+    await anonPage.emulateMedia({ colorScheme: "light" });
+
+    // 9. Narrow widths: neither the hook line nor the wider menu escapes.
+    for (const width of [360, 390]) {
+      await anonPage.setViewportSize({ width, height: 844 });
+      const probe = await horizontalEscapes(anonPage);
+      expect(probe.docOverflow, `share overflow @${width}`).toBe(false);
+      expect(probe.offenders, `share escapes @${width}`).toEqual([]);
+    }
+
+    // 10. Click-through: the hook lands on the login view with `next` intact
+    //     (safeNext's own contract is spec 14's, not re-asserted here).
+    await hook.click();
+    await expect(anonPage).toHaveURL(`${BASE}/login?next=/`);
+    await expect(anonPage.getByRole("button", { name: "Sign in" })).toBeVisible();
+
+    // 11. The owner's own copy: no hook, the owner note instead, no mark
+    //     affordance at all, and the username just as absent.
+    await ownerPage.goto(`${BASE}/share/${shareToken}`);
+    await expect(ownerPage.getByRole("heading", { name: "Zoe's wishlist" })).toBeVisible();
+    await expect(
+      ownerPage.getByText("You are viewing your own shared list."),
+    ).toBeVisible();
+    await expect(
+      ownerPage.getByRole("link", { name: "Sign in to create your own wishlist" }),
+    ).toHaveCount(0);
+    await expect(ownerPage.locator(".share-signin")).toHaveCount(0);
+    await expect(ownerPage.getByRole("button", { name: "More actions" })).toHaveCount(0);
+    expect(await ownerPage.locator("body").innerText()).not.toContain("zog-private");
+  } finally {
+    // Hand the board back to the serial state: no share link, no probe rows,
+    // no extra user (the suite's later specs share this server + DB).
+    if (shareToken) await ownerPage.request.delete(`${BASE}/api/share`);
+    for (const id of seeded) {
+      await ownerPage.request.delete(`${BASE}/api/wishlist/items/${id}`);
+    }
+    await anonContext?.close();
+    await ownerContext.close();
+    await page.request.delete(`${BASE}/api/users/${ownerUser.id}`);
+    await page.emulateMedia({ colorScheme: "light" });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${BASE}/`);
   }
