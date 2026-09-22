@@ -25,7 +25,9 @@ users are `Admin` (4 items) and `Rowan` (2 items) — the second list is what th
 context bar's switcher offers.
 
 - `before/` = `main` @ e891c11, built in a worktree and served on its own port.
-- `after/` = `feat/desktop-header-consistency` @ 5ed91cc.
+- `after/` = `feat/desktop-header-consistency` @ 5ed91cc — the branch head the
+  capture run used. The commit after it (`ca3865f`) is test-only (a spec 24
+  de-flake), so no capture here is stale.
 
 `measurements.json` (per side) records the runtime probe for every capture:
 topbar height, cluster visibility + button inventory, Back-to-list presence,
