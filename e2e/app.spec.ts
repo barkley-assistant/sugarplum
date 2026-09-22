@@ -306,6 +306,57 @@ function expectFrameContract(frames: RowFrame[], label: string, thumb: number): 
   expect(Math.max(...xs) - Math.min(...xs), `${label}: titles share one column`).toBeLessThanOrEqual(1);
 }
 
+/** #130: one row's kebab-vs-thumb geometry. The kebab must sit at the THUMB's
+ *  vertical center — a fixed row anchor — whatever the text height does. */
+interface RowAnchor {
+  id: string;
+  title: string;
+  kebabCenterY: number;
+  thumbCenterY: number;
+  thumbH: number;
+  rowH: number;
+  titleLines: number;
+}
+
+/** Geometry of every `.item-card` row that carries both a thumb frame and a
+ *  row action trigger (owner/share rows), in DOM order. */
+const rowAnchors = (page: Page): Promise<RowAnchor[]> =>
+  page.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll<HTMLElement>(".item-list .item-card"));
+    const out: RowAnchor[] = [];
+    for (const el of rows) {
+      const kebab = el.querySelector<HTMLElement>(".product-row-actions .icon-btn");
+      const thumb = el.querySelector<HTMLElement>(".product-img, .product-img-fallback");
+      const title = el.querySelector<HTMLElement>(".product-row-title");
+      if (!kebab || !thumb || !title) continue;
+      const k = kebab.getBoundingClientRect();
+      const t = thumb.getBoundingClientRect();
+      const lineHeight = parseFloat(getComputedStyle(title).lineHeight);
+      out.push({
+        id: el.dataset.itemId ?? "",
+        title: (title.textContent ?? "").trim(),
+        kebabCenterY: k.top + k.height / 2,
+        thumbCenterY: t.top + t.height / 2,
+        thumbH: t.height,
+        rowH: el.getBoundingClientRect().height,
+        titleLines: Math.round(title.getBoundingClientRect().height / lineHeight),
+      });
+    }
+    return out;
+  });
+
+/** #130 acceptance, asserted on EVERY row of the list: the kebab's center is
+ *  the thumb's center within a pixel — on one-line rows and on wrapped ones. */
+function expectKebabContract(rows: RowAnchor[], label: string): void {
+  expect(rows.length, `${label}: rows to measure`).toBeGreaterThan(1);
+  for (const row of rows) {
+    expect(
+      Math.abs(row.kebabCenterY - row.thumbCenterY),
+      `${label}: "${row.title}" kebab sits at the thumb's center`,
+    ).toBeLessThanOrEqual(1);
+  }
+}
+
 test("1: login lands on the app shell with the own empty state", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Nothing saved yet." })).toBeVisible();
   await expect(page.getByText("Paste a product link to start your list.")).toBeVisible();
@@ -594,7 +645,10 @@ test("4b: price history shows the lowest price and the delta since added", async
     has: page.getByRole("heading", { name: "History probe" }),
   });
   await expect(card.locator(".price")).toHaveText("£10.00");
-  await expect(card.locator(".price-meta")).toHaveText("Lowest £10.00");
+  // #130: the drop put the row AT its lowest, so the "Lowest £10.00" line
+  // (which repeated the price) collapses into the chip. The delta line below
+  // is independent of the verdict and stays.
+  await expect(card.locator(".price-meta.price-at-lowest")).toHaveText("At lowest");
   await expect(card.locator(".price-delta .delta-copy")).toHaveText("£2.50 since added");
   await expect(card.locator(".price-delta")).toHaveAttribute("data-direction", "down");
   await expect(card.getByRole("button", { name: "Re-check price" })).toHaveCount(0); // no URL
@@ -2240,13 +2294,23 @@ test("15f: anonymous share sheet shows price history and more info, no owner act
  *  SUGARPLUM_ALLOW_PRIVATE_FETCH=1 (global-setup). */
 async function startFixtureServer(): Promise<{ url: string; close: () => void }> {
   const html = await readFile(join(ROOT, "tests", "fixtures", "shopify-local.html"), "utf8");
-  const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00]);
+  // A real 1x1 PNG (valid signature, CRCs and zlib stream), served at the
+  // fixture's og:image path. The bytes must be DECODABLE: a truncated header
+  // still passes the magic-byte sniff, so the download "succeeds" while the
+  // browser fires <img> error and ProductImage swaps in the fallback well —
+  // leaving the thumbnail-fit probes with no image to measure. The stored
+  // extension follows the response CONTENT TYPE (src/server/images.ts), so the
+  // URL's .jpg name is only a label.
+  const png = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    "base64",
+  );
   return new Promise((resolve) => {
     const server: Server = createServer((req, res) => {
       const url = new URL(req.url ?? "/", "http://fixture.local");
       if (url.pathname === "/img/trio.jpg") {
-        res.writeHead(200, { "Content-Type": "image/jpeg" });
-        res.end(jpeg);
+        res.writeHead(200, { "Content-Type": "image/png" });
+        res.end(png);
         return;
       }
       res.writeHead(200, { "Content-Type": "text/html" });
@@ -4119,6 +4183,291 @@ test("32: #119 — every feed row reserves the thumb frame; titles align down th
       await page.request.delete(`${BASE}/api/wishlist/items/${id}`);
     }
     await page.emulateMedia({ colorScheme: "light" });
+    await page.goto(`${BASE}/`);
+  }
+});
+
+test("33: #130 — price placeholder, Lowest verdict, letterbox, kebab anchor", async ({
+  page,
+  browser,
+}) => {
+  // Four rows, seeded through the same API the form uses: no price at all, a
+  // price AT its lowest, a price ABOVE its lowest, and one whose title wraps.
+  // The ledger's minimum can never exceed the current price, so the only way
+  // to build a real "above the lowest" row is add low, then raise.
+  const seeded: string[] = [];
+  const seed = async (data: Record<string, unknown>): Promise<string> => {
+    const created = await page.request.post(`${BASE}/api/wishlist/items`, { data });
+    expect(created.status()).toBe(201);
+    const id = ((await created.json()) as { id: string }).id;
+    seeded.push(id);
+    return id;
+  };
+
+  const noPrice = await seed({ title: "No price probe" });
+  const atLowest = await seed({ title: "At lowest probe", priceCents: "20.00", currency: "GBP" });
+  const above = await seed({
+    title: "Above lowest probe with a product title long enough to wrap",
+    priceCents: "25.00",
+    currency: "GBP",
+  });
+  const raised = await page.request.patch(`${BASE}/api/wishlist/items/${above}`, {
+    data: { priceCents: "30.00" },
+  });
+  expect(raised.status()).toBe(200);
+
+  // A fixture-scraped row, so the letterbox assertions own their image instead
+  // of leaning on a row an earlier spec happened to leave behind (spec 3's
+  // fixture server is closed by then; this one stays up until the scrape has
+  // stored the bytes).
+  const fixture = await startFixtureServer();
+  const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as { id: string };
+  const fixtureItem = await seed({ url: `${fixture.url}/product` });
+  await expect
+    .poll(
+      async () => {
+        const list = (await (
+          await page.request.get(`${BASE}/api/users/${me.id}/wishlist`)
+        ).json()) as Array<{ id: string; imagePath: string | null }>;
+        return list.find((row) => row.id === fixtureItem)?.imagePath ?? null;
+      },
+      { timeout: 20_000, message: "the fixture scrape stores an image" },
+    )
+    .not.toBeNull();
+
+  // The list switcher is a popover MENU at desktop widths and a Sheet of
+  // buttons on mobile, so the guest switches lists at 1280 (like specs 12 and
+  // 32) and the parity assertions then run at 390, where the feed's rows are
+  // the surface this ticket is about.
+  const guestContext = await browser.newContext({ viewport: { width: 1280, height: 844 } });
+  const guest = await guestContext.newPage();
+  let guestUser: { id: string } | undefined;
+  let shareToken: string | undefined;
+  let ownerChipText = "";
+
+  try {
+    // --- Owner feed, 390 light: the three price states, the letterbox and the
+    //     kebab anchor, on one-line AND wrapped rows. ---
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${BASE}/`);
+
+    const noPriceCard = page.locator(`.item-card[data-item-id="${noPrice}"]`);
+    const atLowestCard = page.locator(`.item-card[data-item-id="${atLowest}"]`);
+    const aboveCard = page.locator(`.item-card[data-item-id="${above}"]`);
+    await expect(noPriceCard).toBeVisible();
+
+    // 1. Missing price: the placeholder keeps the price slot — the same type
+    //    size as a real price, the phrase as the accessible name, and no
+    //    invented number anywhere.
+    await expect(noPriceCard.locator(".price")).toHaveCount(0);
+    await expect(noPriceCard.locator(".hint-price")).toHaveCount(0);
+    await expect(noPriceCard.locator(".price-unavailable")).toBeVisible();
+    await expect(noPriceCard.locator('.price-unavailable [aria-hidden="true"]')).toHaveText("—");
+    await expect(noPriceCard.locator(".price-unavailable .visually-hidden")).toHaveText(
+      "Price unavailable",
+    );
+    await expect(noPriceCard.locator(".price-meta")).toHaveCount(0);
+    const rhythm = await page.evaluate(
+      ([dashId, priceId]) => {
+        const dash = document.querySelector<HTMLElement>(
+          `.item-card[data-item-id="${dashId}"] .price-unavailable`,
+        );
+        const price = document.querySelector<HTMLElement>(
+          `.item-card[data-item-id="${priceId}"] .price`,
+        );
+        if (!dash || !price) throw new Error("price slots missing");
+        return {
+          dashFont: getComputedStyle(dash).fontSize,
+          priceFont: getComputedStyle(price).fontSize,
+          dashH: dash.getBoundingClientRect().height,
+          priceH: price.getBoundingClientRect().height,
+        };
+      },
+      [noPrice, atLowest] as const,
+    );
+    expect(rhythm.dashFont, "placeholder keeps the row's price type size").toBe(rhythm.priceFont);
+    expect(
+      Math.abs(rhythm.dashH - rhythm.priceH),
+      "placeholder keeps the row's price line height",
+    ).toBeLessThanOrEqual(1);
+
+    // 2. At the lowest: the chip, and NO "Lowest £X" line repeating the price.
+    await expect(atLowestCard.locator(".price")).toHaveText("£20.00");
+    await expect(atLowestCard.locator(".price-meta.price-at-lowest")).toHaveText("At lowest");
+    await expect(atLowestCard.locator(".price-meta")).toHaveCount(1);
+    await expect(atLowestCard).not.toContainText("Lowest £");
+    ownerChipText = (await atLowestCard.locator(".price-meta").innerText()).trim();
+
+    // 3. Above the lowest: the line exists, the chip does not, and the delta
+    //    line keeps its own direction signal.
+    await expect(aboveCard.locator(".price")).toHaveText("£30.00");
+    await expect(aboveCard.locator(".price-meta")).toHaveText("Lowest £25.00");
+    await expect(aboveCard.locator(".price-at-lowest")).toHaveCount(0);
+    await expect(aboveCard.locator(".price-delta")).toHaveAttribute("data-direction", "up");
+
+    // 4. Kebab anchor: every row's kebab center is its thumb center, and the
+    //    long title really does wrap (so the tall-row case is covered).
+    const anchors390 = await rowAnchors(page);
+    expectKebabContract(anchors390, "owner feed @390/light");
+    const wrapped = anchors390.find((row) => row.id === above);
+    expect(wrapped?.titleLines, "the long title wraps at 390").toBeGreaterThanOrEqual(2);
+    expect(wrapped!.rowH, "the wrapped row is taller than its thumb").toBeGreaterThan(72);
+
+    // 5. Letterbox: contain + the 6px pad, inside an UNCHANGED frame.
+    const imagedCard = page.locator(`.item-card[data-item-id="${fixtureItem}"]`);
+    await expect(imagedCard.locator(".product-img")).toBeVisible();
+    const letterbox = await imagedCard.locator(".product-img").evaluate((el) => {
+      const style = getComputedStyle(el);
+      const box = el.getBoundingClientRect();
+      return { fit: style.objectFit, pad: style.paddingTop, w: box.width, h: box.height };
+    });
+    expect(letterbox.fit, "the feed thumb letterboxes").toBe("contain");
+    expect(letterbox.pad, "the feed thumb pads").toBe("6px");
+    expect(Math.abs(letterbox.w - 72), "the frame width is unchanged").toBeLessThanOrEqual(1);
+    expect(Math.abs(letterbox.h - 72), "the frame height is unchanged").toBeLessThanOrEqual(1);
+    // Every imaged row in the list, not only the seeded one.
+    const allImgs = await page.evaluate(() =>
+      Array.from(document.querySelectorAll<HTMLImageElement>(".item-list .product-img")).map(
+        (img) => ({
+          id: img.closest<HTMLElement>(".item-card")?.dataset.itemId ?? "",
+          fit: getComputedStyle(img).objectFit,
+          pad: getComputedStyle(img).paddingTop,
+        }),
+      ),
+    );
+    expect(allImgs.length, "the feed renders at least the seeded image").toBeGreaterThan(0);
+    for (const img of allImgs) {
+      expect(img.fit, `feed thumb ${img.id} letterboxes`).toBe("contain");
+      expect(img.pad, `feed thumb ${img.id} pads`).toBe("6px");
+    }
+    expectFrameContract(await listFrames(page), "owner feed @390/light", 72);
+
+    // 6. No overflow at the two narrowest widths the brief names.
+    for (const width of [360, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      const overflow = await horizontalEscapes(page);
+      expect(overflow.docOverflow, `owner overflow @${width}`).toBe(false);
+      expect(overflow.offenders, `owner escapes @${width}`).toEqual([]);
+    }
+
+    // --- The same verdicts and the same anchor in dark, and at the desktop
+    //     thumb size (the track switches to 96px at 1024px). ---
+    for (const scheme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme: scheme });
+      for (const [width, thumb] of [
+        [390, 72],
+        [1280, 96],
+      ] as const) {
+        await page.setViewportSize({ width, height: 844 });
+        await page.goto(`${BASE}/`);
+        await expect(page.locator(`.item-card[data-item-id="${noPrice}"]`)).toBeVisible();
+        await expect(
+          page.locator(`.item-card[data-item-id="${atLowest}"] .price-at-lowest`),
+        ).toHaveText("At lowest");
+        await expect(page.locator(`.item-card[data-item-id="${above}"] .price-meta`)).toHaveText(
+          "Lowest £25.00",
+        );
+        const anchors = await rowAnchors(page);
+        expectKebabContract(anchors, `owner feed @${width}/${scheme}`);
+        expect(
+          Math.abs(anchors[0].thumbH - thumb),
+          `thumb token @${width}/${scheme}`,
+        ).toBeLessThanOrEqual(1);
+        const overflow = await horizontalEscapes(page);
+        expect(overflow.docOverflow, `owner overflow @${width}/${scheme}`).toBe(false);
+        expect(overflow.offenders, `owner escapes @${width}/${scheme}`).toEqual([]);
+      }
+    }
+    await page.emulateMedia({ colorScheme: "light" });
+
+    // --- The detail hero letterboxes too: same ProductImage, same crop. ---
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${BASE}/items/${fixtureItem}`);
+    const hero = page.locator(".detail-hero .product-img");
+    await expect(hero).toBeVisible();
+    expect(await hero.evaluate((el) => getComputedStyle(el).objectFit), "detail hero letterboxes")
+      .toBe("contain");
+    await page.goto(`${BASE}/`);
+
+    // --- Guest feed parity: the SAME verdict text on the same rows. ---
+    const guestRes = await page.request.post(`${BASE}/api/users`, {
+      data: { username: "price-guest", password: "guest-pass", displayName: "Price Guest" },
+    });
+    expect(guestRes.status()).toBe(201);
+    guestUser = (await guestRes.json()) as { id: string };
+    await login(guest, "price-guest", "guest-pass");
+    await guest.getByRole("button", { name: /wishlist/ }).click();
+    await guest.getByRole("menuitemradio", { name: /Admin/ }).click();
+    await expect(guest.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+    await guest.setViewportSize({ width: 390, height: 844 });
+    await expect(guest.locator(`.item-card[data-item-id="${atLowest}"]`)).toBeVisible();
+
+    const guestAtLowest = guest.locator(`.item-card[data-item-id="${atLowest}"]`);
+    await expect(guestAtLowest.locator(".price")).toHaveText("£20.00");
+    await expect(guestAtLowest.locator(".price-meta.price-at-lowest")).toHaveText("At lowest");
+    expect(
+      (await guestAtLowest.locator(".price-meta").innerText()).trim(),
+      "owner and guest feeds agree on the Lowest verdict",
+    ).toBe(ownerChipText);
+    await expect(guest.locator(`.item-card[data-item-id="${above}"] .price-meta`)).toHaveText(
+      "Lowest £25.00",
+    );
+    await expect(
+      guest.locator(
+        `.item-card[data-item-id="${noPrice}"] .price-unavailable [aria-hidden="true"]`,
+      ),
+    ).toHaveText("—");
+
+    // The guest DETAIL sheet shows the full line the feed's chip collapses —
+    // #90's representable-everything contract, fed by the same ledger now.
+    await guestAtLowest.getByRole("button", { name: "At lowest probe" }).click();
+    const guestSheet = guest.getByRole("dialog", { name: "At lowest probe" });
+    await expect(guestSheet).toBeVisible();
+    await expect(guestSheet.getByText("Lowest £20.00")).toBeVisible();
+    // One observation is not a chart: the drawn graph stays absent.
+    await expect(guestSheet.locator(".price-graph")).toHaveCount(0);
+    await guest.keyboard.press("Escape");
+    await expect(guestSheet).toHaveCount(0);
+
+    // --- Anonymous share feed: the placeholder reaches the third consumer;
+    //     its price-ONLY grammar (no meta lines) is #133's call and stands. ---
+    const shared = await page.request.post(`${BASE}/api/share`);
+    expect(shared.status()).toBe(201);
+    shareToken = ((await shared.json()) as { token: string }).token;
+    const anon = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    try {
+      const anonPage = await anon.newPage();
+      await anonPage.goto(`${BASE}/share/${shareToken}`);
+      await expect(
+        anonPage.locator(
+          `.item-card[data-item-id="${noPrice}"] .price-unavailable [aria-hidden="true"]`,
+        ),
+      ).toHaveText("—");
+      await expect(
+        anonPage.locator(`.item-card[data-item-id="${noPrice}"] .price-meta`),
+      ).toHaveCount(0);
+      await expect(
+        anonPage.locator(`.item-card[data-item-id="${atLowest}"] .price-meta`),
+      ).toHaveCount(0);
+      const overflow = await horizontalEscapes(anonPage);
+      expect(overflow.docOverflow, "share overflow @390").toBe(false);
+      expect(overflow.offenders, "share escapes @390").toEqual([]);
+    } finally {
+      await anon.close();
+    }
+  } finally {
+    // Hand the board back to the serial state: no share link, no extra user,
+    // no probe row (later files run against the same server + DB).
+    if (shareToken) await page.request.delete(`${BASE}/api/share`);
+    fixture.close();
+    await guestContext.close();
+    if (guestUser) await page.request.delete(`${BASE}/api/users/${guestUser.id}`);
+    for (const id of seeded) {
+      await page.request.delete(`${BASE}/api/wishlist/items/${id}`);
+    }
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${BASE}/`);
   }
 });

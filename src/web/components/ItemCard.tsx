@@ -109,8 +109,11 @@ export function ItemCard({
   const hintPrice = viewerIsOwner
     ? formatPrice(ownerItem.hintPriceCents, ownerItem.hintCurrency)
     : null;
-  const stats = viewerIsOwner ? ownerItem.priceStats : null;
+  // #130: both projections carry the ledger summary now, so owner and guest
+  // rows run ONE Lowest rule instead of two.
+  const stats = item.priceStats;
   const delta = priceDelta(item.priceCents, item.currency, stats);
+  const lowest = lowestState(item.priceCents, item.currency, stats);
   const publicItem = item as PublicItem;
   function ownerMenuItems(): OverflowItem[] {
     const menu: OverflowItem[] = [];
@@ -173,10 +176,10 @@ export function ItemCard({
     return menu;
   }
 
-  const metaParts: string[] = [];
-  if (stats) {
-    metaParts.push(S.item.lowestSeen(formatPrice(stats.lowestCents, stats.lowestCurrency)));
-  }
+  // #130: the meta line only exists when the current price sits ABOVE the
+  // lowest — at the lowest it becomes the quiet chip (PriceCluster's
+  // atLowest), and with no history there is no line at all.
+  const metaParts: string[] = lowest?.kind === "below" ? [S.item.lowestSeen(lowest.lowest)] : [];
 
   const ownerActions =
     viewerIsOwner && ownerMenuItems().length > 0 ? (
@@ -251,7 +254,14 @@ export function ItemCard({
           )}
         </>
       }
-      price={<PriceCluster price={price} hintPrice={hintPrice} metaParts={metaParts} />}
+      price={
+        <PriceCluster
+          price={price}
+          hintPrice={hintPrice}
+          metaParts={metaParts}
+          atLowest={lowest?.kind === "equal"}
+        />
+      }
       delta={
         delta && (
           <span className="price-delta" data-direction={delta.direction}>
@@ -304,4 +314,32 @@ export function priceDelta(
   }
   const amount = formatPrice(centsToDecimal(Math.abs(current - atAdd)), currentCurrency);
   return { direction: current < atAdd ? "down" : "up", amount };
+}
+
+/** #130: how the current price sits against the ledger's lowest.
+ *  "equal" collapses the meta line into the quiet "At lowest" chip;
+ *  "below" means a real lowest exists BELOW the current price (the ledger's
+ *  minimum can never exceed it) and keeps the "Lowest £X" line.
+ *  Null when there is nothing honest to compare: no current price, no
+ *  history, or a currency mismatch — mixed-currency money is never compared
+ *  (the same rule as priceDelta). Integer cents only. */
+export type LowestState = { kind: "equal" } | { kind: "below"; lowest: string };
+
+export function lowestState(
+  currentDecimal: string | null,
+  currentCurrency: string | null,
+  stats: PriceStats | null,
+): LowestState | null {
+  if (!stats || currentDecimal === null) return null;
+  if (
+    (currentCurrency ?? "").trim().toUpperCase() !==
+    (stats.lowestCurrency ?? "").trim().toUpperCase()
+  ) {
+    return null;
+  }
+  const current = toCents(currentDecimal);
+  const lowest = toCents(stats.lowestCents);
+  if (current === null || lowest === null) return null;
+  if (current === lowest) return { kind: "equal" };
+  return { kind: "below", lowest: formatPrice(stats.lowestCents, stats.lowestCurrency) };
 }

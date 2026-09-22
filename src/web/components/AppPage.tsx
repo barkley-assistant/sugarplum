@@ -630,12 +630,12 @@ export function AppPage() {
 /** Maps the other-user projection (PublicItem) into the guest detail sheet's
  *  normalized shape. Only fields PublicItem actually carries are read — an
  *  owner-only field (hints, cheaperUrl, priceSource) is not even addressable
- *  here, so nothing can reach the sheet by omission. PublicItem has no price
- *  ledger, so priceStats is explicitly null: the price-history card stays
- *  absent on this surface, exactly as before #90. The image stays on the
- *  session-scoped route the public rows already use; there is no claim state
- *  in this shape (it lives on the row) and no purchased state, because the
- *  other-user projection has none. */
+ *  here, so nothing can reach the sheet by omission. #130 gave PublicItem the
+ *  price ledger summary, so the sheet's history card and lowest line light up
+ *  for other-user items exactly as #90's contract says they should. The image
+ *  stays on the session-scoped route the public rows already use; there is no
+ *  claim state in this shape (it lives on the row) and no purchased state,
+ *  because the other-user projection has none. */
 function toGuestDetail(item: PublicItem): GuestItemDetail {
   return {
     id: item.id,
@@ -648,7 +648,7 @@ function toGuestDetail(item: PublicItem): GuestItemDetail {
     siteName: item.siteName,
     imageSrc: item.imagePath ? `/api/wishlist/items/${item.id}/image` : undefined,
     createdAt: item.createdAt,
-    priceStats: null,
+    priceStats: item.priceStats,
     imageSource: item.imageSource,
   };
 }

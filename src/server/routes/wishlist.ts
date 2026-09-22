@@ -212,12 +212,15 @@ function hintsDisabledFor(db: Database, userId: string): boolean {
   return row ? row.hints_enabled === 0 : false;
 }
 
-/** Non-owner view: booleans only; claimant identity is never exposed. */
-function toPublicItem(row: ItemRow, viewerId: string): PublicItem {
+/** Non-owner view: booleans only; claimant identity is never exposed. The
+ *  price ledger summary (#130) is a product fact, not owner data — the
+ *  anonymous share DTO already ships it, and the two feeds must agree. */
+function toPublicItem(db: Database, row: ItemRow, viewerId: string): PublicItem {
   return {
     ...commonItem(row),
     claimed: row.claimed_by !== null,
     claimedByYou: row.claimed_by === viewerId,
+    priceStats: priceStatsFor(db, row.id),
   };
 }
 
@@ -270,7 +273,7 @@ export function wishlistRoutes(
         if (viewer.id === req.params.id) {
           return jsonOk(rows.map((row) => toOwnedItem(db, row, seriesCap)));
         }
-        return jsonOk(rows.map((row) => toPublicItem(row, viewer.id)));
+        return jsonOk(rows.map((row) => toPublicItem(db, row, viewer.id)));
       }),
     },
     "/api/wishlist/items": {
@@ -558,7 +561,7 @@ export function wishlistRoutes(
         if (!item) return jsonError(404, "Item not found");
         if (item.user_id === viewer.id) return jsonError(400, "Cannot claim your own item");
         if (item.claimed_by !== null) {
-          if (item.claimed_by === viewer.id) return jsonOk(toPublicItem(item, viewer.id));
+          if (item.claimed_by === viewer.id) return jsonOk(toPublicItem(db, item, viewer.id));
           return jsonError(409, "Item is already claimed");
         }
         db.run("UPDATE wishlist_items SET claimed_by = ?, claimed_at = ? WHERE id = ?", [
@@ -566,17 +569,17 @@ export function wishlistRoutes(
           new Date().toISOString(),
           item.id,
         ]);
-        return jsonOk(toPublicItem(getItem(db, item.id) as ItemRow, viewer.id));
+        return jsonOk(toPublicItem(db, getItem(db, item.id) as ItemRow, viewer.id));
       }),
     },
     "/api/wishlist/items/:id/unclaim": {
       POST: requireSession(db, (req, viewer) => {
         const item = getItem(db, req.params.id);
         if (!item) return jsonError(404, "Item not found");
-        if (item.claimed_by === null) return jsonOk(toPublicItem(item, viewer.id));
+        if (item.claimed_by === null) return jsonOk(toPublicItem(db, item, viewer.id));
         if (item.claimed_by !== viewer.id) return jsonError(403, "Only the claimant can unclaim");
         db.run("UPDATE wishlist_items SET claimed_by = NULL, claimed_at = NULL WHERE id = ?", [item.id]);
-        return jsonOk(toPublicItem(getItem(db, item.id) as ItemRow, viewer.id));
+        return jsonOk(toPublicItem(db, getItem(db, item.id) as ItemRow, viewer.id));
       }),
     },
     "/api/wishlist/summary": {

@@ -136,6 +136,11 @@ export interface PriceHintState {
 export interface PublicItem extends CommonItem {
   claimed: boolean;
   claimedByYou: boolean;
+  /** #130: lowest + earliest price observation from price_history — the SAME
+   *  product fact ShareItem already carries. The ledger has no viewer identity
+   *  in it, so this crosses no privacy boundary; it exists so the owner and
+   *  guest feeds render one "Lowest" rule instead of two. */
+  priceStats: PriceStats | null;
 }
 
 /** Anonymous share view of an item. A dedicated DTO: never OwnedItem (owner

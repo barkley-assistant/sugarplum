@@ -33,8 +33,9 @@ export interface GuestItemDetail {
   /** Both guests carry the add date now (CommonItem and ShareItem); the
    *  footer is omitted only when a caller has none. */
   createdAt?: string | null;
-  /** Derived price history. Share rows carry it; the other-user projection
-   *  has no ledger, so it passes null and the card stays absent. */
+  /** Derived price history. Both guest projections carry it now (#130 gave
+   *  PublicItem the ledger summary); it stays optional so a caller with no
+   *  ledger renders no card rather than an empty one. */
   priceStats?: PriceStats | null;
   /** Where the stored image came from ('direct' | 'search' | null) — the
    *  footer's provenance note. Product fact, never the image path. */

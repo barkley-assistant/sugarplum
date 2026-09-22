@@ -120,6 +120,9 @@
   /* Compact row system. */
   --row-thumb: 72px;
   --row-thumb-desktop: 96px;
+  /* #130: letterbox padding inside a thumb frame — the product never reaches
+     the 12px radius, so the rounded mask cannot clip it. */
+  --thumb-pad: 6px;
   --row-gap: var(--sp-2);
   --row-pad-y: 10px;
   --row-pad-x: var(--sp-3);
