@@ -3,6 +3,7 @@ import { navigate } from "../router";
 import { parseShareTarget } from "../format";
 import { useBootMe } from "../use-boot-me";
 import { usePageFocus } from "../use-page-focus";
+import { useConfirm } from "../confirm";
 import { setPendingFocusItemId } from "../feed-handoff";
 import { AppShell } from "./AppShell";
 import { FormSkeleton } from "./Skeletons";
@@ -21,9 +22,27 @@ interface AddPageProps {
  *  popping over an untouched form is the bug this page exists to fix. */
 export function AddPage({ search }: AddPageProps) {
   const boot = useBootMe();
+  const confirm = useConfirm();
   const headingRef = usePageFocus(boot.status);
   // Parsed once: the prefill is the arrival state, never a live mirror.
   const [initial] = useState(() => parseShareTarget(new URLSearchParams(search)));
+
+  // #127: the shared exit rule — an explicit exit on a form page exists only
+  // when it does something the persistent chrome does not. The header's
+  // "Back to list" link is always there and always leaves, so the form's own
+  // exit is only worth rendering while a draft is at stake — and then it
+  // GUARDS, because leaving destroys input the link would have dropped
+  // silently. The form owns the dirty predicate (it holds the fields); this
+  // page owns the consequence (dialog + navigation).
+  async function discardDraft() {
+    const ok = await confirm({
+      title: S.form.discardTitle,
+      body: S.form.discardBody,
+      confirmLabel: S.form.discard,
+      danger: false,
+    });
+    if (ok) navigate("/");
+  }
 
   async function createItem(values: ItemFormValues) {
     const payload: Record<string, unknown> = { title: values.title };
@@ -67,7 +86,7 @@ export function AddPage({ search }: AddPageProps) {
           submitLabel={S.list.addItem}
           initialValues={initial}
           onSubmit={createItem}
-          onCancel={() => navigate("/")}
+          onDiscard={discardDraft}
         />
       </div>
     </AppShell>

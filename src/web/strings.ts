@@ -149,6 +149,12 @@ export const S = {
     cheaperLinkPlaceholder: "https://…",
     tagsPlaceholder: "Birthday, Someday",
     cancel: "Cancel",
+    /** #127: the guarded exit on the ADD form — rendered only while the form
+     *  holds content a submit would send. "Cancel" stays the EDIT branch's
+     *  label and the confirm dialog's reject label; one word, one job. */
+    discard: "Discard",
+    discardTitle: "Discard this item?",
+    discardBody: "The details you entered will be lost.",
     saving: "Saving…",
     addSubmitBusy: "Adding…",
     save: "Save",

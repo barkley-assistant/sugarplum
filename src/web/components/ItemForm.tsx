@@ -19,6 +19,9 @@ interface ItemFormProps {
   submitLabel: string;
   onSubmit: (values: ItemFormValues) => void | Promise<void>;
   onCancel?: () => void;
+  /** #127: the ADD flow's guarded exit. The button renders only while the
+   *  form holds a draft; the page owns the confirm dialog + navigation. */
+  onDiscard?: () => void | Promise<void>;
   /** Add mode keeps manual fields behind a progressive disclosure. */
   mode?: "add" | "edit";
 }
@@ -37,12 +40,31 @@ export function seedCurrency(stored: string | null | undefined): {
   return { currency: S.form.currencyOther, otherCurrency: code };
 }
 
+/** #127: does the form hold something a submit would actually send? The six
+ *  payload fields the submit path trims (ItemForm's submit); `tags` is the
+ *  RAW comma-string state, not `ItemFormValues`' `string[]`. The currency
+ *  select and the Other-code input are deliberately excluded: with an empty
+ *  price the payload never carries a currency, so alone they lose nothing. */
+export function hasDraft(raw: {
+  title: string;
+  url: string;
+  priceCents: string;
+  notes: string;
+  tags: string;
+  cheaperUrl: string;
+}): boolean {
+  return [raw.title, raw.url, raw.priceCents, raw.notes, raw.tags, raw.cheaperUrl].some(
+    (value) => value.trim() !== "",
+  );
+}
+
 export function ItemForm({
   initial,
   initialValues,
   submitLabel,
   onSubmit,
   onCancel,
+  onDiscard,
   mode = "edit",
 }: ItemFormProps) {
   const [title, setTitle] = useState(initialValues?.title ?? initial?.title ?? "");
@@ -204,6 +226,18 @@ export function ItemForm({
     </button>
   ) : null;
 
+  // #127: the add flow's exit places itself, and only when there is something
+  // to lose — a pristine form needs no button (the header's "Back to list"
+  // link already leaves). Busy-gated like the submit: mid-submit this is not
+  // an escape hatch out from under the request already in flight.
+  const draft = isAdd && hasDraft({ title, url, priceCents, notes, tags, cheaperUrl });
+  const discardButton =
+    draft && onDiscard ? (
+      <button type="button" className="secondary" disabled={busy} onClick={() => void onDiscard()}>
+        {S.form.discard}
+      </button>
+    ) : null;
+
   return (
     <form className={`item-form${isAdd ? " item-form--add" : ""}`} onSubmit={submit}>
       {urlField}
@@ -232,7 +266,7 @@ export function ItemForm({
             </div>
           )}
           {error && <p className="error" role="alert">{error}</p>}
-          {cancelButton && <div className="form-actions">{cancelButton}</div>}
+          {discardButton && <div className="form-actions">{discardButton}</div>}
         </>
       ) : (
         <>
