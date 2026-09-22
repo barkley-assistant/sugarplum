@@ -172,17 +172,6 @@ export function GuestItemDetailSheet({ item, onClose }: GuestItemDetailSheetProp
               <LinkIcon />
               <h3 className="detail-card-title">{S.detail.moreInfoTitle}</h3>
             </div>
-            <a
-              className="detail-row"
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              referrerPolicy="no-referrer"
-            >
-              <ExternalLinkIcon />
-              <span>{S.detail.viewOn(site ?? urlHost(item.url))}</span>
-              <ChevronRightIcon />
-            </a>
             <button type="button" className="detail-row" onClick={() => copyLink(item.url as string)}>
               <LinkIcon />
               <span>{S.item.copyLink}</span>
@@ -274,16 +263,3 @@ function LinkIcon() {
   );
 }
 
-function ChevronRightIcon() {
-  return (
-    <Icon size={16}>
-      <path
-        d="m7.5 4 5 6-5 6"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Icon>
-  );
-}

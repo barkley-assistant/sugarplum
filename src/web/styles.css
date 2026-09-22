@@ -2476,7 +2476,7 @@ button.row-open:hover {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--sp-1);
+  gap: var(--sp-2);
   min-width: 0;
   padding-top: 1px;
 }
@@ -2532,7 +2532,7 @@ button.row-open:hover {
 
 .detail-actions {
   display: flex;
-  gap: 10px;
+  gap: var(--sp-3);
   min-width: 0;
 }
 
@@ -2574,9 +2574,10 @@ button.row-open:hover {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-card);
-  /* Sub-grid literal (14px): not on the 8px scale; 12/16 would re-flow the
-     card. Left literal on purpose (#131 T5). */
-  padding: 14px 16px;
+  /* #131 left this at a sub-grid 14px literal on purpose (no incidental
+     substitution mid-pass). #126 is the deliberate on-grid re-flow pass:
+     16px all round, per the mockup's ~16px card padding. */
+  padding: var(--section-pad) var(--sp-4);
   min-width: 0;
 }
 
@@ -2621,7 +2622,7 @@ button.row-open:hover {
   margin-top: 8px;
 }
 
-.detail-more-card > .detail-card-heading { margin-bottom: var(--sp-1); }
+.detail-more-card > .detail-card-heading { margin-bottom: var(--sp-2); }
 
 .detail-row {
   display: flex;

@@ -694,6 +694,21 @@ test("4d: item page actions, edit route round-trip and delete", async ({ page })
   await expect(productLink).toHaveAttribute("href", "https://example.com/detail-probe");
   await expect(productLink).toHaveAttribute("target", "_blank");
 
+  // #126: one primary external action. The "View on <site>" duplicate of the
+  // hero CTA is gone from the More information card.
+  await expect(itemPage.getByRole("link", { name: /View on/ })).toHaveCount(0);
+  await expect(itemPage.getByRole("link", { name: "Open product" })).toHaveCount(1);
+
+  // #126: the more-card keeps the hints disclosure as its only row.
+  await expect(itemPage.getByRole("button", { name: "Check prices elsewhere" })).toBeVisible();
+
+  // #126: the detail rhythm rides #131's --section-gap (16px) — the 7px
+  // off-grid literal is gone. Computed-style probe (the house idiom).
+  const scrollGap = await itemPage.locator(".detail-scroll").evaluate(
+    (el) => getComputedStyle(el).gap,
+  );
+  expect(scrollGap, "#126 detail section gap").toBe("16px");
+
   await itemPage.getByRole("button", { name: "More actions" }).click();
   const menu = page.getByRole("menu", { name: "More actions" });
   // Re-check/retry is URL- and fetch-state-gated; the background fetch may
@@ -2074,7 +2089,7 @@ test("15e: anonymous guest sheet shows details and confirmed purchase state", as
     await expect(sheet.getByRole("button", { name: "Edit item" })).toHaveCount(0);
     await expect(sheet.locator(".price-graph")).toHaveCount(0);
     // #90: the "More information" card is gated on the item's own URL — this
-    // seed has none, so the card (and its "View on…" row) stays absent.
+    // seed has none, so the card stays absent.
     await expect(sheet.locator(".detail-more-card")).toHaveCount(0);
     await expect(sheet.getByRole("button", { name: "More actions" })).toHaveCount(0);
     // #72: no close icon on the sheet; the app back button dismisses it
@@ -2163,11 +2178,15 @@ test("15f: anonymous share sheet shows price history and more info, no owner act
     // literal.
     await expect(history.locator(".price-graph-caption")).toHaveText("Watching for a trend");
 
-    // "More information" — the item's OWN link and a copy affordance. The live
+    // "More information" — the item's OWN link was removed with #126's
+    // duplicate-CTA resolution: the hero "Open product" is the single
+    // external action; the sheet keeps only the copy affordance here. The live
     // prices-elsewhere search is an owner-only route: never on this surface.
     const more = sheet.locator(".detail-more-card");
     await expect(more).toBeVisible();
-    await expect(more.getByRole("link", { name: "View on example.com" })).toBeVisible();
+    await expect(more.getByRole("link", { name: /View on/ })).toHaveCount(0);
+    await expect(sheet.getByRole("link", { name: "Open product" }))
+      .toHaveAttribute("href", "https://example.com/probe");
     await expect(more.getByRole("button", { name: "Copy link" })).toBeVisible();
     await expect(sheet.getByText("Check prices elsewhere")).toHaveCount(0);
     await expect(sheet.getByText("Prices seen elsewhere (unverified)")).toHaveCount(0);
@@ -3568,14 +3587,10 @@ test("27: external product links hand off, never route in-app (#102)", async ({ 
     const itemPage = page.locator(".item-page");
     await expect(itemPage.locator(".detail-title")).toHaveText("Handoff probe");
 
-    // --- Owner item page: "Open product" + "View at merchant". ---
+    // --- Owner item page: "Open product". ---
     const open = itemPage.getByRole("link", { name: "Open product" });
     await expect(open).toBeVisible();
     await expectHandoffAnchor(open, "ItemPage / Open product");
-    await expectHandoffAnchor(
-      itemPage.getByRole("link", { name: "View on example.com" }),
-      "ItemPage / View at merchant",
-    );
 
     // --- Owner item page: a hints candidate (the third surface). The live
     // search is unconfigured in e2e (503 -> the honesty state), and the
@@ -3616,7 +3631,7 @@ test("27: external product links hand off, never route in-app (#102)", async ({ 
     // --- The handoff itself: a NEW browsing context, and an SPA that stays put.
     await expectHandoffClick(page, open, "item page");
 
-    // --- Anonymous share surface: the same two anchors, same contract.
+    // --- Anonymous share surface: the same anchor, same contract. ---
     const shared = await page.request.post(`${BASE}/api/share`);
     expect(shared.status()).toBe(201);
     const token = ((await shared.json()) as { token: string }).token;
@@ -3633,10 +3648,6 @@ test("27: external product links hand off, never route in-app (#102)", async ({ 
       const guestOpen = sheet.getByRole("link", { name: "Open product" });
       await expect(guestOpen).toBeVisible();
       await expectHandoffAnchor(guestOpen, "Guest sheet / Open product");
-      await expectHandoffAnchor(
-        sheet.getByRole("link", { name: "View on example.com" }),
-        "Guest sheet / View at merchant",
-      );
       await expectHandoffClick(anonPage, guestOpen, "guest sheet");
       await expect(sheet, "the guest sheet survives the handoff").toBeVisible();
     } finally {
