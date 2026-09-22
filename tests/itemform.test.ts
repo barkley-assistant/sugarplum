@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { seedCurrency } from "../src/web/components/ItemForm";
+import { hasDraft, seedCurrency } from "../src/web/components/ItemForm";
 
 describe("seedCurrency (#114)", () => {
   test("null stored (no price) → GBP default, empty other", () => {
@@ -21,5 +21,36 @@ describe("seedCurrency (#114)", () => {
   });
   test("arbitrary code (XYZ) is honest — server accepts any string", () => {
     expect(seedCurrency("XYZ")).toEqual({ currency: "Other", otherCurrency: "XYZ" });
+  });
+});
+
+describe("hasDraft (#127)", () => {
+  const empty = {
+    title: "",
+    url: "",
+    priceCents: "",
+    notes: "",
+    tags: "",
+    cheaperUrl: "",
+  };
+
+  test("an untouched add form holds no draft", () => {
+    expect(hasDraft(empty)).toBe(false);
+  });
+
+  test("whitespace-only input is not a draft (nothing would be sent)", () => {
+    expect(hasDraft({ ...empty, title: "   ", notes: " \n ", url: "\t" })).toBe(false);
+  });
+
+  // Every field the submit path trims and sends counts on its own — including
+  // the share-target prefill's url/title.
+  for (const field of ["title", "url", "priceCents", "notes", "tags", "cheaperUrl"] as const) {
+    test(`${field} alone is a draft`, () => {
+      expect(hasDraft({ ...empty, [field]: "x" })).toBe(true);
+    });
+  }
+
+  test("a field typed and then cleared is not a draft", () => {
+    expect(hasDraft({ ...empty, priceCents: "" })).toBe(false);
   });
 });
