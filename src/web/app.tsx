@@ -68,7 +68,7 @@ function titleFor(route: Route): string {
     case "login":
       return "Sign in · sugarplum";
     case "add":
-      return "Add · sugarplum";
+      return "Add item · sugarplum";
     case "itemEdit":
       return "Edit item · sugarplum";
     case "settings":
