@@ -442,8 +442,13 @@ test("3b: add details disclosure preserves values and link-only primary flow", a
   await page.getByRole("button", { name: "Add details manually" }).click();
   await expect(page.getByLabel("Title")).toHaveValue("Disclosure probe");
   await expect(page.getByLabel("Notes")).toHaveValue("Kept while collapsed");
-  // A page is not an overlay: Escape closes nothing, so leave via Cancel.
-  await page.getByRole("button", { name: "Cancel" }).click();
+  // A page is not an overlay: Escape closes nothing, so leave via the
+  // guarded Discard (#127) — it renders because the form holds content a
+  // submit would send (title, notes, link).
+  await page.getByRole("button", { name: "Discard" }).click();
+  const discard = page.getByRole("alertdialog");
+  await expect(discard).toBeVisible();
+  await discard.getByRole("button", { name: "Discard" }).click();
   await expect(page).toHaveURL(`${BASE}/`);
 });
 
@@ -453,8 +458,19 @@ test("3c: desktop add page has no sheet chrome and no overflow", async ({ page }
   await expect(page).toHaveURL(`${BASE}/add`);
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Add item" })).toBeVisible();
+  // #127 (D2): the #121 pair holds as a SET on /add — heading, submit label
+  // and document title all read "Add item" (the heading pin alone, #146's,
+  // could not see a regression in either of the other two).
+  await expect(page.getByRole("button", { name: "Add item", exact: true })).toBeVisible();
+  expect(await page.title()).toBe("Add item · sugarplum");
+  // #127 (D3): a pristine /add renders NO in-form exit — the persistent
+  // chrome's "Back to list" link is the exit; a "Cancel" here would be a
+  // second, unguarded way off a page that holds nothing.
+  await expect(page.getByRole("button", { name: "Discard" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Cancel" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Back to list" })).toBeVisible();
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
-  await page.getByRole("button", { name: "Cancel" }).click();
+  await page.getByRole("link", { name: "Back to list" }).click();
   await expect(page).toHaveURL(`${BASE}/`);
 });
 
@@ -1758,7 +1774,9 @@ test("12: AA contrast sweep holds in both schemes", async ({ page, browser }) =>
     const urlField = page.locator("#item-url");
     await expect(urlField).toBeVisible();
     expect(await boundaryContrast(urlField), `${colorScheme}: field boundary`).toBeGreaterThanOrEqual(3);
-    await page.getByRole("button", { name: "Cancel" }).click();
+    // #127: the pristine add form renders no exit of its own; the header's
+    // brand link is the one that was always there, at every width.
+    await page.getByRole("link", { name: "Back to list" }).click();
     await expect(page).toHaveURL(`${BASE}/`);
 
     // Detail surface: muted footer metadata, and the segmented control's
@@ -4918,4 +4936,123 @@ test("35: #133 — guest share view: scoped menu, one tagline, Lowest parity, si
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${BASE}/`);
   }
+});
+
+test("36: #127 — purchased cluster, guarded discard, canonical add pair", async ({ page }) => {
+  // A TITLE-ONLY row: with no url the menu inventory is deterministic — no
+  // copy-link row and no fetch-state-dependent recheck/retry entry — which is
+  // exactly the pin #127's walkthrough was missing. It is also the state the
+  // issue filed against: "Mark as purchased" AND "Reset purchased mark" both
+  // rendering on an item nothing has marked.
+  const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Desktop nits probe" },
+  });
+  expect(seeded.status()).toBe(201);
+  const item = (await seeded.json()) as { id: string };
+  await page.reload();
+  const card = page.locator(`.item-card[data-item-id="${item.id}"]`);
+
+  // --- 1. D1, desktop popover: the purchased pair reads as ONE cluster. ---
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${BASE}/`);
+  const menu = page.getByRole("menu", { name: "More actions" });
+  const inventory = async () =>
+    (await menu.getByRole("menuitem").allInnerTexts()).map((t) => t.trim());
+  await card.getByRole("button", { name: "More actions" }).click();
+  await expect(menu).toBeVisible();
+  expect(await inventory()).toEqual(["Edit", "Mark as purchased", "Reset purchased mark", "Delete"]);
+  // Two dividers: one opens the purchased cluster, one opens Delete (danger).
+  await expect(menu.locator(".overflow-separator")).toHaveCount(2);
+
+  // --- 2. D1 owner-mark XOR — with the blind reset surviving it. ---
+  await menu.getByRole("menuitem", { name: "Mark as purchased" }).click();
+  const markDialog = page.getByRole("alertdialog");
+  await expect(markDialog).toBeVisible();
+  await markDialog.getByRole("button", { name: "Mark as purchased" }).click();
+  await expect(card.locator(".owner-purchased-badge")).toHaveText("Bought by you");
+
+  await card.getByRole("button", { name: "More actions" }).click();
+  await expect(menu).toBeVisible();
+  expect(await inventory()).toEqual(["Edit", "Unmark purchased", "Reset purchased mark", "Delete"]);
+  await expect(menu.locator(".overflow-separator")).toHaveCount(2);
+  // #84's XOR is the owner's OWN flag; the reset acts on the anonymous one,
+  // which this client cannot see — so it is NOT the other half of an XOR and
+  // must stay on every owner row (it is the only owner-side way to clear a
+  // mark a guest left, and revoking the link does not clear it).
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+
+  // --- 3. D1, mobile sheet: the same cluster + the sheet's own dismiss row. ---
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${BASE}/`);
+  await card.getByRole("button", { name: "More actions" }).click();
+  const sheetMenu = page.getByRole("menu", { name: "More actions" });
+  await expect(sheetMenu).toBeVisible();
+  expect((await sheetMenu.getByRole("menuitem").allInnerTexts()).map((t) => t.trim())).toEqual([
+    "Edit",
+    "Unmark purchased",
+    "Reset purchased mark",
+    "Delete",
+    "Cancel",
+  ]);
+  // cluster + danger + the sheet's dismiss divider.
+  await expect(sheetMenu.locator(".overflow-separator")).toHaveCount(3);
+  await sheetMenu.getByRole("menuitem", { name: "Unmark purchased" }).click();
+  await expect(card.locator(".owner-purchased-badge")).toHaveCount(0);
+
+  // --- 4. D1, detail-menu parity (that menu has no Edit entry). ---
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${BASE}/items/${item.id}`);
+  const detailPage = page.locator(".item-page");
+  await detailPage.getByRole("button", { name: "More actions" }).click();
+  await expect(menu).toBeVisible();
+  expect(await inventory()).toEqual(["Mark as purchased", "Reset purchased mark", "Delete"]);
+  // The cluster LEADS this menu (the probe has no url), so only the danger
+  // divider renders: a divider above the first row separates nothing.
+  await expect(menu.locator(".overflow-separator")).toHaveCount(1);
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+
+  // --- 5. D3, /add pristine → no in-form exit; a draft → guarded Discard. ---
+  await page.goto(`${BASE}/add`);
+  await expect(page.getByRole("heading", { name: "Add item" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Discard" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Cancel" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Back to list" })).toBeVisible();
+
+  // Whitespace alone is NOT a draft: nothing a submit would send would be lost.
+  await page.getByLabel("Link").fill("   ");
+  await expect(page.getByRole("button", { name: "Discard" })).toHaveCount(0);
+  await page.getByLabel("Link").fill("https://example.com/discard-probe");
+  const discard = page.getByRole("button", { name: "Discard" });
+  await expect(discard).toBeVisible();
+
+  // Rejecting the guard keeps the user on /add with the draft intact.
+  await discard.click();
+  const discardDialog = page.getByRole("alertdialog");
+  await expect(discardDialog).toBeVisible();
+  await expect(discardDialog.getByRole("heading", { name: "Discard this item?" })).toBeVisible();
+  await discardDialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(page).toHaveURL(`${BASE}/add`);
+  await expect(page.getByLabel("Link")).toHaveValue("https://example.com/discard-probe");
+
+  // Confirming it lands on the feed.
+  await discard.click();
+  await discardDialog.getByRole("button", { name: "Discard" }).click();
+  await expect(page).toHaveURL(`${BASE}/`);
+
+  // --- 6. D3, a share-target prefill counts as a draft (the link arrived
+  //        with intent — "Back to list" would silently drop it). ---
+  await page.goto(`${BASE}/add?url=https://example.com/prefill-probe&title=Prefill probe`);
+  await expect(page.getByLabel("Title")).toHaveValue("Prefill probe");
+  await expect(page.getByRole("button", { name: "Discard" })).toBeVisible();
+  await page.getByRole("button", { name: "Discard" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Discard" }).click();
+  await expect(page).toHaveURL(`${BASE}/`);
+
+  // --- 7. Board hygiene: no probe row (and no draft state) left behind. ---
+  const removed = await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
+  expect([200, 204]).toContain(removed.status());
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${BASE}/`);
 });
