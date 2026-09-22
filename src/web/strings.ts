@@ -47,7 +47,6 @@ export const S = {
      *  accessible name a screen reader hears instead of "em dash". */
     priceUnavailable: "Price unavailable",
     atAddPrice: (price: string) => `At add ${price}`,
-    cheaperFound: "Found cheaper:",
     pricesElsewhere: "Prices seen elsewhere (unverified)",
     checkingPrices: "Checking…",
     hintCandidateNote: "check before buying",
@@ -67,6 +66,10 @@ export const S = {
     tagsTitle: "Tags",
     moreInfoTitle: "More information",
     checkElsewhere: "Check prices elsewhere",
+    /** #113: the owner's saved "found it cheaper at" link, as a host label.
+     *  Same phrase as the form field (S.form.cheaperLink) so the edit form
+     *  and the surfaced row read as one concept. */
+    cheaperAt: (host: string) => `Found it cheaper at ${host}`,
     addedOn: (date: string) => `Added ${date}`,
   },
   settings: {

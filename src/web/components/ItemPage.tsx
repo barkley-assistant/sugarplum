@@ -339,6 +339,22 @@ export function ItemPage({ id }: { id: string }) {
               <LinkIcon />
               <h3 className="detail-card-title">{S.detail.moreInfoTitle}</h3>
             </div>
+            {/* #113: the owner's saved "found it cheaper at" link — read-only,
+                above the on-demand hints disclosure. Owner-only data: the
+                guest projections never carry cheaperUrl. */}
+            {item.cheaperUrl && (
+              <a
+                className="detail-row"
+                href={item.cheaperUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                referrerPolicy="no-referrer"
+              >
+                <ExternalLinkIcon />
+                <span>{S.detail.cheaperAt(urlHost(item.cheaperUrl))}</span>
+                <ChevronRightIcon />
+              </a>
+            )}
             <div className="detail-hints">
               <HintsPanel
                 itemId={item.id}
@@ -387,6 +403,10 @@ function ExternalLinkIcon() {
 
 function PencilIcon() {
   return <Icon><path d="m5 14.8-.7 2.7 2.7-.7L15.8 8 13 5.2 5 14.8Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="m11.8 6.4 2.8 2.8" stroke="currentColor" strokeWidth="1.5" /></Icon>;
+}
+
+function ChevronRightIcon() {
+  return <Icon size={16}><path d="m7.5 4 5 6-5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></Icon>;
 }
 
 function NoteIcon() {

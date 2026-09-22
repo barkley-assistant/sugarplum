@@ -753,7 +753,9 @@ test("4d: item page actions, edit route round-trip and delete", async ({ page })
   await expect(itemPage.getByRole("link", { name: /View on/ })).toHaveCount(0);
   await expect(itemPage.getByRole("link", { name: "Open product" })).toHaveCount(1);
 
-  // #126: the more-card keeps the hints disclosure as its only row.
+  // #126 + #113: the more-card's standing rows are the saved cheaper link
+  // (only when one is stored — this seed has none) and the hints
+  // disclosure; this seed exercises the hints disclosure.
   await expect(itemPage.getByRole("button", { name: "Check prices elsewhere" })).toBeVisible();
 
   // #126: the detail rhythm rides #131's --section-gap (16px) — the 7px
@@ -3636,6 +3638,7 @@ test("27: external product links hand off, never route in-app (#102)", async ({ 
       url: "https://example.com/handoff-probe",
       priceCents: "31.50",
       currency: "GBP",
+      cheaperUrl: "https://elsewhere.example.com/deal",
     },
   });
   expect(seeded.status()).toBe(201);
@@ -3655,6 +3658,13 @@ test("27: external product links hand off, never route in-app (#102)", async ({ 
     const open = itemPage.getByRole("link", { name: "Open product" });
     await expect(open).toBeVisible();
     await expectHandoffAnchor(open, "ItemPage / Open product");
+
+    // --- Owner item page: the saved "found it cheaper at" row (#113). It is
+    //     the page's second external anchor (#126's single-primary-action rule
+    //     is about the hero CTA, and this href is a different destination). ---
+    const cheaper = itemPage.getByRole("link", { name: /Found it cheaper at/ });
+    await expect(cheaper).toBeVisible();
+    await expectHandoffAnchor(cheaper, "ItemPage / found it cheaper");
 
     // --- Owner item page: a hints candidate (the third surface). The live
     // search is unconfigured in e2e (503 -> the honesty state), and the
@@ -4467,6 +4477,185 @@ test("33: #130 — price placeholder, Lowest verdict, letterbox, kebab anchor", 
       await page.request.delete(`${BASE}/api/wishlist/items/${id}`);
     }
     await page.emulateMedia({ colorScheme: "light" });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${BASE}/`);
+  }
+});
+
+/** #113: the owner's saved "found it cheaper at" link renders on the detail
+ *  page — read-only, in the More information card, as a #102 handoff row.
+ *  The guest surfaces (other-user sheet, anonymous share sheet) never see it:
+ *  cheaperUrl is owner-only data on every DTO (PublicItem, ShareItem), so the
+ *  row must be absent there at the RENDER level, not just on the wire. */
+test("34: #113 — owner detail surfaces the saved cheaper link; guests never do", async ({
+  page,
+  browser,
+}) => {
+  const created = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: {
+      title: "Cheaper link probe",
+      url: "https://example.com/linen-apron",
+      priceCents: "24.99",
+      currency: "GBP",
+      cheaperUrl: "https://elsewhere.example.com/cheaper-apron",
+    },
+  });
+  expect(created.status()).toBe(201);
+  const item = (await created.json()) as { id: string };
+  const unset = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "No cheaper probe", priceCents: "9.99", currency: "GBP" },
+  });
+  expect(unset.status()).toBe(201);
+  const bare = (await unset.json()) as { id: string };
+
+  let guestUser: { id: string } | undefined;
+  let shareToken: string | undefined;
+  const seeded = [item.id, bare.id];
+  try {
+    // --- Owner page: the row renders with the saved href + host label. ---
+    await page.goto(`${BASE}/items/${item.id}`);
+    const itemPage = page.locator(".item-page");
+    const more = itemPage.locator(".detail-more-card");
+    const cheaperRow = more.getByRole("link", { name: "Found it cheaper at elsewhere.example.com" });
+    await expect(cheaperRow).toBeVisible();
+    await expect(cheaperRow).toHaveAttribute("href", "https://elsewhere.example.com/cheaper-apron");
+    // #102: the saved link hands off exactly like every external anchor.
+    await expectHandoffAnchor(cheaperRow, "ItemPage / found it cheaper");
+    // Row order: saved evidence above the on-demand hints disclosure.
+    const toggle = itemPage.getByRole("button", { name: "Check prices elsewhere" });
+    await expect(toggle).toBeVisible();
+    const cheaperBox = (await cheaperRow.boundingBox())!;
+    const toggleBox = (await toggle.boundingBox())!;
+    expect(
+      cheaperBox.y + cheaperBox.height,
+      "the cheaper row sits above the hints toggle",
+    ).toBeLessThanOrEqual(toggleBox.y + 1);
+    // Exactly one cheaper row; the hero keeps the single primary exit.
+    await expect(itemPage.getByRole("link", { name: /Found it cheaper at/ })).toHaveCount(1);
+    await expect(itemPage.getByRole("link", { name: "Open product" })).toHaveCount(1);
+
+    // --- Absence when the field is unset (no dead-end affordance). ---
+    await page.goto(`${BASE}/items/${bare.id}`);
+    await expect(page.locator(".detail-more-card")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Found it cheaper at/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Check prices elsewhere" })).toBeVisible();
+
+    // --- Clearing via the edit form removes the row (round-trip). ---
+    await page.goto(`${BASE}/items/${item.id}`);
+    await page.getByRole("button", { name: "Edit item" }).click();
+    await page.getByLabel("Found it cheaper at").fill("");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page).toHaveURL(`${BASE}/items/${item.id}`);
+    await expect(page.getByRole("link", { name: /Found it cheaper at/ })).toHaveCount(0);
+    // …and re-setting it through the form brings the row back. Re-enter the
+    // ORIGINAL URL so the guest/share privacy probes below assert against the
+    // value actually stored at that point (a stale URL would make the absence
+    // probes trivially true).
+    await page.getByRole("button", { name: "Edit item" }).click();
+    await page.getByLabel("Found it cheaper at").fill("https://elsewhere.example.com/cheaper-apron");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(
+      page.getByRole("link", { name: "Found it cheaper at elsewhere.example.com" }),
+    ).toBeVisible();
+
+    // --- Narrow widths: the row never escapes. ---
+    for (const width of [360, 390, 430]) {
+      await page.setViewportSize({ width, height: 844 });
+      const probe = await horizontalEscapes(page);
+      expect(probe.docOverflow, `item page overflow @${width}`).toBe(false);
+      expect(probe.offenders, `item page escapes @${width}`).toEqual([]);
+    }
+    await page.setViewportSize({ width: 1280, height: 844 });
+
+    // --- Long host: the label wraps (overflow-wrap: anywhere), no escape. ---
+    const long = await page.request.post(`${BASE}/api/wishlist/items`, {
+      data: {
+        title: "Long host probe",
+        priceCents: "5.00",
+        currency: "GBP",
+        cheaperUrl: `https://shop.${"very-long-subdomain".repeat(4)}.example.co.uk/deep/path`,
+      },
+    });
+    expect(long.status()).toBe(201);
+    const longItem = (await long.json()) as { id: string };
+    seeded.push(longItem.id);
+    await page.goto(`${BASE}/items/${longItem.id}`);
+    await expect(
+      page.getByRole("link", { name: /Found it cheaper at shop\.very-long/ }),
+    ).toBeVisible();
+    await page.setViewportSize({ width: 360, height: 844 });
+    const narrow = await horizontalEscapes(page);
+    expect(narrow.docOverflow, "long host doc overflow @360").toBe(false);
+    expect(narrow.offenders, "long host escapes @360").toEqual([]);
+    await page.setViewportSize({ width: 1280, height: 844 });
+
+    // --- Guest surface 1: the other-user detail sheet never renders it. ---
+    // Switch lists at 1280 (the switcher is a popover menu at desktop, a sheet
+    // on mobile), then probe the sheet at 390.
+    const guestRes = await page.request.post(`${BASE}/api/users`, {
+      data: { username: "cheaper-guest", password: "guest-pass", displayName: "Cheaper Guest" },
+    });
+    expect(guestRes.status()).toBe(201);
+    guestUser = (await guestRes.json()) as { id: string };
+    const guestContext = await browser.newContext({ viewport: { width: 1280, height: 844 } });
+    try {
+      const guest = await guestContext.newPage();
+      await login(guest, "cheaper-guest", "guest-pass");
+      await guest.getByRole("button", { name: /wishlist/ }).click();
+      await guest.getByRole("menuitemradio", { name: /Admin/ }).click();
+      await expect(guest.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+      await guest.setViewportSize({ width: 390, height: 844 });
+      await guest
+        .locator(".item-card", { has: guest.getByRole("heading", { name: "Cheaper link probe" }) })
+        .getByRole("button", { name: "Cheaper link probe" })
+        .click();
+      const guestSheet = guest.getByRole("dialog", { name: "Cheaper link probe" });
+      await expect(guestSheet).toBeVisible();
+      await expect(guestSheet.getByText(/Found it cheaper at/)).toHaveCount(0);
+      await expect(
+        guestSheet.getByRole("link", { name: /elsewhere\.example\.com/ }),
+      ).toHaveCount(0);
+      // The guest more-card still carries its own (copy-link) row.
+      await expect(guestSheet.locator(".detail-more-card")).toBeVisible();
+      await guest.keyboard.press("Escape");
+    } finally {
+      await guestContext.close();
+    }
+
+    // --- Guest surface 2: the anonymous share sheet never renders it. ---
+    const shared = await page.request.post(`${BASE}/api/share`);
+    expect(shared.status()).toBe(201);
+    shareToken = ((await shared.json()) as { token: string }).token;
+    const anon = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      reducedMotion: "reduce",
+    });
+    try {
+      const anonPage = await anon.newPage();
+      await anonPage.goto(`${BASE}/share/${shareToken}`);
+      await anonPage
+        .locator(".item-card", { has: anonPage.getByRole("heading", { name: "Cheaper link probe" }) })
+        .getByRole("button", { name: "Cheaper link probe" })
+        .click();
+      const shareSheet = anonPage.getByRole("dialog", { name: "Cheaper link probe" });
+      await expect(shareSheet).toBeVisible();
+      await expect(shareSheet.getByText(/Found it cheaper at/)).toHaveCount(0);
+      await expect(
+        shareSheet.getByRole("link", { name: /elsewhere\.example\.com/ }),
+      ).toHaveCount(0);
+      // The raw URL must not be in the share page's rendered DOM at all.
+      expect(await anonPage.locator("body").innerText()).not.toContain("cheaper-apron");
+      await anonPage.keyboard.press("Escape");
+      await expect(shareSheet).toHaveCount(0);
+    } finally {
+      await anon.close();
+    }
+  } finally {
+    if (shareToken) await page.request.delete(`${BASE}/api/share`);
+    if (guestUser) await page.request.delete(`${BASE}/api/users/${guestUser.id}`);
+    for (const id of seeded) {
+      await page.request.delete(`${BASE}/api/wishlist/items/${id}`);
+    }
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${BASE}/`);
   }
