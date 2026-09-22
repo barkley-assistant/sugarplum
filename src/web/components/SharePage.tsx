@@ -132,7 +132,10 @@ export function SharePage({ token }: { token: string }) {
               image={
                 item.hasImage ? (
                   <ProductImage src={`/api/share/${token}/items/${item.id}/image`} />
-                ) : undefined
+                ) : (
+                  // #119: share rows reserve the thumb frame too.
+                  <span className="product-img-fallback" aria-hidden="true" />
+                )
               }
               price={<PriceCluster price={formatPrice(item.priceCents, item.currency)} />}
               actions={

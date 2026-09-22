@@ -257,6 +257,55 @@ function movedUpOne(ids: string[], index: number): string[] {
   return next;
 }
 
+/** #119: one feed row's thumb-frame geometry. Every row must reserve exactly
+ *  one frame — the cover-fit image, or the neutral well when the item has no
+ *  image — and the title column must start at the same x on every row, so a
+ *  no-image row cannot fall out of line with its neighbours. */
+interface RowFrame {
+  id: string;
+  title: string;
+  wellCount: number;
+  imgCount: number;
+  frameW: number | null;
+  frameH: number | null;
+  titleX: number;
+}
+
+/** Geometry of every `.item-card` in the current list, in DOM order. */
+const listFrames = (page: Page): Promise<RowFrame[]> =>
+  page.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll<HTMLElement>(".item-list .item-card"));
+    return rows.map((el) => {
+      const title = el.querySelector<HTMLElement>(".product-row-title");
+      if (!title) throw new Error("product-row-title missing");
+      const frame = el.querySelector<HTMLElement>(".product-img-fallback, .product-img");
+      const rect = frame?.getBoundingClientRect();
+      return {
+        id: el.dataset.itemId ?? "",
+        title: (title.textContent ?? "").trim(),
+        wellCount: el.querySelectorAll(".product-img-fallback").length,
+        imgCount: el.querySelectorAll(".product-img").length,
+        frameW: rect?.width ?? null,
+        frameH: rect?.height ?? null,
+        titleX: title.getBoundingClientRect().left,
+      };
+    });
+  });
+
+/** #119 acceptance, asserted on EVERY row of the list rather than one pair:
+ *  exactly one thumb frame per row, sized to the row token, one shared title x. */
+function expectFrameContract(frames: RowFrame[], label: string, thumb: number): void {
+  expect(frames.length, `${label}: rows to compare`).toBeGreaterThan(1);
+  for (const frame of frames) {
+    const tag = `${label}: "${frame.title}"`;
+    expect(frame.wellCount + frame.imgCount, `${tag} reserves exactly one thumb frame`).toBe(1);
+    expect(Math.abs((frame.frameW ?? 0) - thumb), `${tag} frame width`).toBeLessThanOrEqual(1);
+    expect(Math.abs((frame.frameH ?? 0) - thumb), `${tag} frame height`).toBeLessThanOrEqual(1);
+  }
+  const xs = frames.map((f) => f.titleX);
+  expect(Math.max(...xs) - Math.min(...xs), `${label}: titles share one column`).toBeLessThanOrEqual(1);
+}
+
 test("1: login lands on the app shell with the own empty state", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Nothing saved yet." })).toBeVisible();
   await expect(page.getByText("Paste a product link to start your list.")).toBeVisible();
@@ -3924,5 +3973,141 @@ test("31: #118 — empty state keeps the literal, drawn charts never do", async 
     await expect(drawn.getByText("Not enough history yet")).toHaveCount(0);
   } finally {
     await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
+  }
+});
+
+test("32: #119 — every feed row reserves the thumb frame; titles align down the list", async ({
+  page,
+  browser,
+}) => {
+  // A manual add is fetchState "complete" with imagePath null — the exact
+  // "no image" shape the issue reports (a scrape that failed, or found none).
+  // Two of them so the row-to-row comparison holds even against a list that
+  // has nothing else in it (the serial DB carries imaged rows from test 3).
+  const seeded: string[] = [];
+  for (const spec of [
+    { title: "Thumb probe bare", priceCents: "5.00", currency: "GBP" },
+    { title: "Thumb probe bare 2", priceCents: "9.00", currency: "GBP" },
+  ]) {
+    const created = await page.request.post(`${BASE}/api/wishlist/items`, { data: spec });
+    expect(created.status()).toBe(201);
+    seeded.push(((await created.json()) as { id: string }).id);
+  }
+  const probe = { id: seeded[0] };
+
+  const guestContext = await browser.newContext({ viewport: { width: 1280, height: 844 } });
+  const guest = await guestContext.newPage();
+  let guestUser: { id: string } | undefined;
+  let shareToken: string | undefined;
+
+  try {
+    // --- Owner feed: the two breakpoints the thumb TRACK switches between
+    //     (72px, 96px at 1024px), both schemes. The track edit is
+    //     breakpoint-scoped; the call-site edit is not. ---
+    for (const scheme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme: scheme });
+      for (const [width, thumb] of [
+        [390, 72],
+        [1280, 96],
+      ] as const) {
+        await page.setViewportSize({ width, height: 844 });
+        await page.goto(`${BASE}/`);
+        await expect(page.locator(`.item-card[data-item-id="${probe.id}"]`)).toBeVisible();
+        const frames = await listFrames(page);
+        const bare = frames.find((f) => f.id === probe.id);
+        expect(bare, `owner @${width}/${scheme}: seeded no-image row`).toBeTruthy();
+        expect(bare!.wellCount, `owner @${width}/${scheme}: bare row holds the well`).toBe(1);
+        expect(bare!.imgCount, `owner @${width}/${scheme}: bare row has no image`).toBe(0);
+        expectFrameContract(frames, `owner feed @${width}/${scheme}`, thumb);
+        const overflow = await horizontalEscapes(page);
+        expect(overflow.docOverflow, `owner overflow @${width}/${scheme}`).toBe(false);
+        expect(overflow.offenders, `owner escapes @${width}/${scheme}`).toEqual([]);
+      }
+    }
+    await page.emulateMedia({ colorScheme: "light" });
+
+    // --- Reorder mode at 390: the handle is a second leading track; the thumb
+    //     track behind it must stay fixed. ---
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${BASE}/`);
+    await page.getByRole("button", { name: "Reorder", exact: true }).click();
+    await expect(page.locator(".item-card.is-reordering").first()).toBeVisible();
+    const reorderFrames = await listFrames(page);
+    expect(reorderFrames.length, "reorder mode lists every row").toBeGreaterThan(1);
+    expect(
+      reorderFrames.find((f) => f.id === probe.id)?.wellCount,
+      "reorder @390: bare row holds the well",
+    ).toBe(1);
+    await expect(page.locator(".product-row-handle").first()).toBeVisible();
+    expectFrameContract(reorderFrames, "owner reorder @390", 72);
+    await page.getByRole("button", { name: "Done", exact: true }).click();
+
+    // --- Guest feed: the same ItemCard path with viewerIsOwner false, where
+    //     the pending branch never applied — the well branch is the only code
+    //     these rows newly execute. ---
+    const guestRes = await page.request.post(`${BASE}/api/users`, {
+      data: { username: "thumb-guest", password: "guest-pass", displayName: "Thumb Guest" },
+    });
+    expect(guestRes.status()).toBe(201);
+    guestUser = (await guestRes.json()) as { id: string };
+    await login(guest, "thumb-guest", "guest-pass");
+    await guest.getByRole("button", { name: /wishlist/ }).click();
+    await guest.getByRole("menuitemradio", { name: /Admin/ }).click();
+    await expect(guest.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+    for (const [width, thumb] of [
+      [390, 72],
+      [1280, 96],
+    ] as const) {
+      await guest.setViewportSize({ width, height: 844 });
+      await expect(guest.locator(`.item-card[data-item-id="${probe.id}"]`)).toBeVisible();
+      const frames = await listFrames(guest);
+      expect(
+        frames.find((f) => f.id === probe.id)?.wellCount,
+        `guest @${width}: bare row holds the well`,
+      ).toBe(1);
+      expectFrameContract(frames, `guest feed @${width}`, thumb);
+      const overflow = await horizontalEscapes(guest);
+      expect(overflow.docOverflow, `guest overflow @${width}`).toBe(false);
+      expect(overflow.offenders, `guest escapes @${width}`).toEqual([]);
+    }
+
+    // --- Anonymous share view: the third ProductRow consumer. ---
+    const shared = await page.request.post(`${BASE}/api/share`);
+    expect(shared.status()).toBe(201);
+    shareToken = ((await shared.json()) as { token: string }).token;
+    const anon = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    try {
+      const anonPage = await anon.newPage();
+      for (const [width, thumb] of [
+        [390, 72],
+        [1280, 96],
+      ] as const) {
+        await anonPage.setViewportSize({ width, height: 844 });
+        await anonPage.goto(`${BASE}/share/${shareToken}`);
+        await expect(anonPage.locator(`.item-card[data-item-id="${probe.id}"]`)).toBeVisible();
+        const frames = await listFrames(anonPage);
+        expect(
+          frames.find((f) => f.id === probe.id)?.wellCount,
+          `share @${width}: bare row holds the well`,
+        ).toBe(1);
+        expectFrameContract(frames, `share view @${width}`, thumb);
+        const overflow = await horizontalEscapes(anonPage);
+        expect(overflow.docOverflow, `share overflow @${width}`).toBe(false);
+        expect(overflow.offenders, `share escapes @${width}`).toEqual([]);
+      }
+    } finally {
+      await anon.close();
+    }
+  } finally {
+    // Hand the board back to the serial state: no share link, no extra user,
+    // no probe row (later files run against the same server + DB).
+    if (shareToken) await page.request.delete(`${BASE}/api/share`);
+    await guestContext.close();
+    if (guestUser) await page.request.delete(`${BASE}/api/users/${guestUser.id}`);
+    for (const id of seeded) {
+      await page.request.delete(`${BASE}/api/wishlist/items/${id}`);
+    }
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.goto(`${BASE}/`);
   }
 });
