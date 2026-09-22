@@ -339,19 +339,6 @@ export function ItemPage({ id }: { id: string }) {
               <LinkIcon />
               <h3 className="detail-card-title">{S.detail.moreInfoTitle}</h3>
             </div>
-            {item.url && (
-              <a
-                className="detail-row"
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                referrerPolicy="no-referrer"
-              >
-                <ExternalLinkIcon />
-                <span>{S.detail.viewOn(site ?? urlHost(item.url))}</span>
-                <ChevronRightIcon />
-              </a>
-            )}
             <div className="detail-hints">
               <HintsPanel
                 itemId={item.id}
@@ -412,8 +399,4 @@ function TagIcon() {
 
 function LinkIcon() {
   return <Icon><path d="m8.1 11.9 3.8-3.8M6.3 14.3l-1.1 1.1a2.7 2.7 0 0 1-3.8-3.8l2.2-2.2a2.7 2.7 0 0 1 3.8 0M13.7 5.7l1.1-1.1a2.7 2.7 0 0 1 3.8 3.8l-2.2 2.2a2.7 2.7 0 0 1-3.8 0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></Icon>;
-}
-
-function ChevronRightIcon() {
-  return <Icon size={16}><path d="m7.5 4 5 6-5 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></Icon>;
 }

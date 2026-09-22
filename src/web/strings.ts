@@ -61,7 +61,6 @@ export const S = {
     notesTitle: "Notes",
     tagsTitle: "Tags",
     moreInfoTitle: "More information",
-    viewOn: (site: string) => `View on ${site}`,
     checkElsewhere: "Check prices elsewhere",
     addedOn: (date: string) => `Added ${date}`,
   },

@@ -197,7 +197,11 @@
   --detail-sheet-max-h: 90dvh;
   --detail-handle-w: 40px;
   --detail-handle-h: 4px;
-  --detail-section-gap: 7px;
+  /* #126: the detail rhythm rides #131's named section gap (--sp-4, 16px).
+     7px was an off-grid Amethyst literal; both .detail-scroll surfaces and
+     the .skeleton-item boot skeleton consume this alias, so the boot→page
+     swap stays rhythm-identical for free. */
+  --detail-section-gap: var(--section-gap);
 }
 
 /* ---------- Tokens: dark (auto, no toggle) ---------- */
