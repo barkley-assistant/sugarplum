@@ -1,0 +1,1282 @@
+{
+  "mode": "after",
+  "root": "/home/agent/projects/barkley-assistant/sugarplum",
+  "overflow": [
+    {
+      "name": "menu-popover-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "menu-popover-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "menu-sheet-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "menu-sheet-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "menu-sheet-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "detail-menu-popover-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "detail-menu-popover-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "detail-menu-sheet-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "detail-menu-sheet-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "detail-menu-sheet-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "add-pristine-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "add-pristine-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "add-pristine-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "add-pristine-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "add-pristine-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "add-draft-360-light",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "add-draft-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "add-draft-430-light",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "add-draft-768-light",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "add-draft-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "discard-dialog-390-light",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "discard-dialog-1280-light",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "menu-popover-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "menu-popover-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "menu-sheet-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "menu-sheet-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "menu-sheet-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "detail-menu-popover-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "detail-menu-popover-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "detail-menu-sheet-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "detail-menu-sheet-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "detail-menu-sheet-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "add-pristine-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "add-pristine-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "add-pristine-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "add-pristine-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "add-pristine-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "add-draft-360-dark",
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "ok": true
+    },
+    {
+      "name": "add-draft-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "add-draft-430-dark",
+      "scrollWidth": 430,
+      "clientWidth": 430,
+      "ok": true
+    },
+    {
+      "name": "add-draft-768-dark",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "ok": true
+    },
+    {
+      "name": "add-draft-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    },
+    {
+      "name": "discard-dialog-390-dark",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "ok": true
+    },
+    {
+      "name": "discard-dialog-1280-dark",
+      "scrollWidth": 1280,
+      "clientWidth": 1280,
+      "ok": true
+    }
+  ],
+  "shots": [
+    {
+      "name": "menu-popover-768-light",
+      "probe": {
+        "docTitle": "sugarplum",
+        "url": "/",
+        "menuItems": [
+          "Edit",
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete"
+        ],
+        "menuSeparators": 2,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 321,
+        "menuFirstSeparatorY": 373,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": false,
+        "dialogTitle": null,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "menu-popover-1280-light",
+      "probe": {
+        "docTitle": "sugarplum",
+        "url": "/",
+        "menuItems": [
+          "Edit",
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete"
+        ],
+        "menuSeparators": 2,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 344,
+        "menuFirstSeparatorY": 396,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": false,
+        "dialogTitle": null,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "menu-sheet-360-light",
+      "probe": {
+        "docTitle": "sugarplum",
+        "url": "/",
+        "menuItems": [
+          "Edit",
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete",
+          "Cancel"
+        ],
+        "menuSeparators": 3,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 552,
+        "menuFirstSeparatorY": 604,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": false,
+        "dialogTitle": null,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "menu-sheet-390-light",
+      "probe": {
+        "docTitle": "sugarplum",
+        "url": "/",
+        "menuItems": [
+          "Edit",
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete",
+          "Cancel"
+        ],
+        "menuSeparators": 3,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 552,
+        "menuFirstSeparatorY": 604,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": false,
+        "dialogTitle": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "menu-sheet-430-light",
+      "probe": {
+        "docTitle": "sugarplum",
+        "url": "/",
+        "menuItems": [
+          "Edit",
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete",
+          "Cancel"
+        ],
+        "menuSeparators": 3,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 552,
+        "menuFirstSeparatorY": 604,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": false,
+        "dialogTitle": null,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "detail-menu-popover-768-light",
+      "probe": {
+        "docTitle": "Stonewashed Linen Apron · sugarplum",
+        "url": "/items/c3f04c2b-827a-4174-a157-7224e7b23e79",
+        "menuItems": [
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete"
+        ],
+        "menuSeparators": 1,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 141,
+        "menuFirstSeparatorY": 241,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "detail-menu-popover-1280-light",
+      "probe": {
+        "docTitle": "Stonewashed Linen Apron · sugarplum",
+        "url": "/items/c3f04c2b-827a-4174-a157-7224e7b23e79",
+        "menuItems": [
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete"
+        ],
+        "menuSeparators": 1,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 141,
+        "menuFirstSeparatorY": 241,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "detail-menu-sheet-360-light",
+      "probe": {
+        "docTitle": "Stonewashed Linen Apron · sugarplum",
+        "url": "/items/c3f04c2b-827a-4174-a157-7224e7b23e79",
+        "menuItems": [
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete",
+          "Cancel"
+        ],
+        "menuSeparators": 2,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 613,
+        "menuFirstSeparatorY": 713,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "detail-menu-sheet-390-light",
+      "probe": {
+        "docTitle": "Stonewashed Linen Apron · sugarplum",
+        "url": "/items/c3f04c2b-827a-4174-a157-7224e7b23e79",
+        "menuItems": [
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete",
+          "Cancel"
+        ],
+        "menuSeparators": 2,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 613,
+        "menuFirstSeparatorY": 713,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "detail-menu-sheet-430-light",
+      "probe": {
+        "docTitle": "Stonewashed Linen Apron · sugarplum",
+        "url": "/items/c3f04c2b-827a-4174-a157-7224e7b23e79",
+        "menuItems": [
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete",
+          "Cancel"
+        ],
+        "menuSeparators": 2,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 613,
+        "menuFirstSeparatorY": 713,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "add-pristine-360-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "add-pristine-390-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "add-pristine-430-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "add-pristine-768-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "add-pristine-1280-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "add-draft-360-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [
+          "Discard"
+        ],
+        "discardVisible": true,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "add-draft-390-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [
+          "Discard"
+        ],
+        "discardVisible": true,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "add-draft-430-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [
+          "Discard"
+        ],
+        "discardVisible": true,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "add-draft-768-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [
+          "Discard"
+        ],
+        "discardVisible": true,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "add-draft-1280-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [
+          "Discard"
+        ],
+        "discardVisible": true,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "discard-dialog-390-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [
+          "Discard"
+        ],
+        "discardVisible": true,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": "Discard this item?",
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "discard-dialog-1280-light",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [
+          "Discard"
+        ],
+        "discardVisible": true,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": "Discard this item?",
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "menu-popover-768-dark",
+      "probe": {
+        "docTitle": "sugarplum",
+        "url": "/",
+        "menuItems": [
+          "Edit",
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete"
+        ],
+        "menuSeparators": 2,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 321,
+        "menuFirstSeparatorY": 373,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": false,
+        "dialogTitle": null,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "menu-popover-1280-dark",
+      "probe": {
+        "docTitle": "sugarplum",
+        "url": "/",
+        "menuItems": [
+          "Edit",
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete"
+        ],
+        "menuSeparators": 2,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 344,
+        "menuFirstSeparatorY": 396,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": false,
+        "dialogTitle": null,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "menu-sheet-360-dark",
+      "probe": {
+        "docTitle": "sugarplum",
+        "url": "/",
+        "menuItems": [
+          "Edit",
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete",
+          "Cancel"
+        ],
+        "menuSeparators": 3,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 552,
+        "menuFirstSeparatorY": 604,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": false,
+        "dialogTitle": null,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "menu-sheet-390-dark",
+      "probe": {
+        "docTitle": "sugarplum",
+        "url": "/",
+        "menuItems": [
+          "Edit",
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete",
+          "Cancel"
+        ],
+        "menuSeparators": 3,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 552,
+        "menuFirstSeparatorY": 604,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": false,
+        "dialogTitle": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "menu-sheet-430-dark",
+      "probe": {
+        "docTitle": "sugarplum",
+        "url": "/",
+        "menuItems": [
+          "Edit",
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete",
+          "Cancel"
+        ],
+        "menuSeparators": 3,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 552,
+        "menuFirstSeparatorY": 604,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": false,
+        "dialogTitle": null,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "detail-menu-popover-768-dark",
+      "probe": {
+        "docTitle": "Stonewashed Linen Apron · sugarplum",
+        "url": "/items/c3f04c2b-827a-4174-a157-7224e7b23e79",
+        "menuItems": [
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete"
+        ],
+        "menuSeparators": 1,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 141,
+        "menuFirstSeparatorY": 241,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "detail-menu-popover-1280-dark",
+      "probe": {
+        "docTitle": "Stonewashed Linen Apron · sugarplum",
+        "url": "/items/c3f04c2b-827a-4174-a157-7224e7b23e79",
+        "menuItems": [
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete"
+        ],
+        "menuSeparators": 1,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 141,
+        "menuFirstSeparatorY": 241,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "detail-menu-sheet-360-dark",
+      "probe": {
+        "docTitle": "Stonewashed Linen Apron · sugarplum",
+        "url": "/items/c3f04c2b-827a-4174-a157-7224e7b23e79",
+        "menuItems": [
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete",
+          "Cancel"
+        ],
+        "menuSeparators": 2,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 613,
+        "menuFirstSeparatorY": 713,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "detail-menu-sheet-390-dark",
+      "probe": {
+        "docTitle": "Stonewashed Linen Apron · sugarplum",
+        "url": "/items/c3f04c2b-827a-4174-a157-7224e7b23e79",
+        "menuItems": [
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete",
+          "Cancel"
+        ],
+        "menuSeparators": 2,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 613,
+        "menuFirstSeparatorY": 713,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "detail-menu-sheet-430-dark",
+      "probe": {
+        "docTitle": "Stonewashed Linen Apron · sugarplum",
+        "url": "/items/c3f04c2b-827a-4174-a157-7224e7b23e79",
+        "menuItems": [
+          "Mark as purchased",
+          "Reset purchased mark",
+          "Delete",
+          "Cancel"
+        ],
+        "menuSeparators": 2,
+        "menuDangerItems": 1,
+        "menuFirstRowY": 613,
+        "menuFirstSeparatorY": 713,
+        "submitLabel": null,
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "add-pristine-360-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "add-pristine-390-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "add-pristine-430-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "add-pristine-768-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "add-pristine-1280-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [],
+        "discardVisible": false,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "add-draft-360-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [
+          "Discard"
+        ],
+        "discardVisible": true,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "add-draft-390-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [
+          "Discard"
+        ],
+        "discardVisible": true,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "add-draft-430-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [
+          "Discard"
+        ],
+        "discardVisible": true,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "add-draft-768-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [
+          "Discard"
+        ],
+        "discardVisible": true,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "add-draft-1280-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [
+          "Discard"
+        ],
+        "discardVisible": true,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": null,
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "discard-dialog-390-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [
+          "Discard"
+        ],
+        "discardVisible": true,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": "Discard this item?",
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "discard-dialog-1280-dark",
+      "probe": {
+        "docTitle": "Add item · sugarplum",
+        "url": "/add",
+        "menuItems": null,
+        "menuSeparators": null,
+        "menuDangerItems": null,
+        "menuFirstRowY": null,
+        "menuFirstSeparatorY": null,
+        "submitLabel": "Add item",
+        "formActions": [
+          "Discard"
+        ],
+        "discardVisible": true,
+        "inFormCancel": false,
+        "headerBackLink": true,
+        "dialogTitle": "Discard this item?",
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    }
+  ]
+}
