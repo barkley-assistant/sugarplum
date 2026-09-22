@@ -2132,7 +2132,11 @@ button.filter-chip {
     "thumb body   body   actions"
     "thumb price  price  actions"
     "thumb delta  delta  actions";
-  grid-template-columns: auto minmax(0, 1fr) 0 auto;
+  /* #119: the thumb track is token-fixed, not `auto` — an `auto` track with
+     no thumb child collapses to 0 and the gap alone (12px) indents the title,
+     so a no-image row would start 72px left of an imaged neighbour. Fixed
+     size here means the column can never re-collapse, whatever a caller passes. */
+  grid-template-columns: var(--row-thumb) minmax(0, 1fr) 0 auto;
   column-gap: var(--sp-3);
   row-gap: 2px;
   align-items: start;
@@ -2160,7 +2164,7 @@ button.filter-chip {
     "handle thumb body   body   actions"
     "handle thumb price  price  actions"
     "handle thumb delta  delta  actions";
-  grid-template-columns: auto auto minmax(0, 1fr) 0 auto;
+  grid-template-columns: auto var(--row-thumb) minmax(0, 1fr) 0 auto;
 }
 
 .product-row-title {
@@ -2317,7 +2321,7 @@ button.row-open:hover {
       "thumb title  price actions"
       "thumb body   price actions"
       "thumb delta  price actions";
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-columns: var(--row-thumb-desktop) minmax(0, 1fr) auto auto;
     align-items: center;
     row-gap: var(--sp-1);
   }
@@ -2327,7 +2331,7 @@ button.row-open:hover {
       "handle thumb title  price actions"
       "handle thumb body   price actions"
       "handle thumb delta  price actions";
-    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+    grid-template-columns: auto var(--row-thumb-desktop) minmax(0, 1fr) auto auto;
   }
 
   .item-thumb,

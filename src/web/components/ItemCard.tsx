@@ -226,9 +226,13 @@ export function ItemCard({
       image={
         item.imagePath ? (
           <ProductImage src={`/api/wishlist/items/${item.id}/image`} />
-        ) : viewerIsOwner && item.fetchState === "pending" ? (
+        ) : (
+          // #119: every row reserves the thumb frame, so a no-image row's
+          // title/price column lines up with its imaged neighbours. Pending
+          // rows pulse through [data-fetch="pending"] on the <li> (see
+          // styles.css) — this is the same well the detail heroes use.
           <span className="product-img-fallback" aria-hidden="true" />
-        ) : undefined
+        )
       }
       actions={viewerIsOwner ? ownerRowActions : publicActions}
       body={
