@@ -3382,6 +3382,9 @@ test("24: item row and reset row share their slot at every width (#97)", async (
   // same family — 40.6px on main, ≥44px now.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${BASE}/settings/users`);
+  // The table's rows arrive from an async fetch; measuring straight after the
+  // goto raced it (empty NodeList → 0 heights). Wait for the row first.
+  await expect(page.locator(".admin-actions button").first()).toBeVisible();
   const adminActionHeights = await page.evaluate(() =>
     Array.from(document.querySelectorAll(".admin-actions button")).map(
       (b) => Math.round(b.getBoundingClientRect().height * 10) / 10,
