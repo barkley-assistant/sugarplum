@@ -1,0 +1,1344 @@
+{
+  "mode": "after",
+  "root": "/home/agent/projects/barkley-assistant/sugarplum",
+  "captures": [
+    {
+      "name": "feed-360-light",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/feed-360-light.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.81,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 360,
+        "clientWidth": 360,
+        "overflow": false
+      }
+    },
+    {
+      "name": "menu-sheet-360-light",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/menu-sheet-360-light.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.81,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 360,
+        "clientWidth": 360,
+        "overflow": false
+      },
+      "menuKind": "sheet",
+      "menuItems": [
+        "Open product",
+        "Copy link",
+        "Mark as purchased",
+        "Cancel"
+      ]
+    },
+    {
+      "name": "feed-390-light",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/feed-390-light.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.81,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflow": false
+      }
+    },
+    {
+      "name": "menu-sheet-390-light",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/menu-sheet-390-light.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.81,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflow": false
+      },
+      "menuKind": "sheet",
+      "menuItems": [
+        "Open product",
+        "Copy link",
+        "Mark as purchased",
+        "Cancel"
+      ]
+    },
+    {
+      "name": "feed-430-light",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/feed-430-light.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.81,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 430,
+        "clientWidth": 430,
+        "overflow": false
+      }
+    },
+    {
+      "name": "menu-sheet-430-light",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/menu-sheet-430-light.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.81,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 430,
+        "clientWidth": 430,
+        "overflow": false
+      },
+      "menuKind": "sheet",
+      "menuItems": [
+        "Open product",
+        "Copy link",
+        "Mark as purchased",
+        "Cancel"
+      ]
+    },
+    {
+      "name": "feed-768-light",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/feed-768-light.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.81,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 768,
+        "clientWidth": 768,
+        "overflow": false
+      }
+    },
+    {
+      "name": "menu-popover-768-light",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/menu-popover-768-light.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.81,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 768,
+        "clientWidth": 768,
+        "overflow": false
+      },
+      "menuKind": "popover",
+      "menuItems": [
+        "Open product",
+        "Copy link",
+        "Mark as purchased"
+      ]
+    },
+    {
+      "name": "feed-1280-light",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/feed-1280-light.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.81,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "overflow": false
+      }
+    },
+    {
+      "name": "menu-popover-1280-light",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/menu-popover-1280-light.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.81,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "overflow": false
+      },
+      "menuKind": "popover",
+      "menuItems": [
+        "Open product",
+        "Copy link",
+        "Mark as purchased"
+      ]
+    },
+    {
+      "name": "feed-360-dark",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/feed-360-dark.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.94,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 360,
+        "clientWidth": 360,
+        "overflow": false
+      }
+    },
+    {
+      "name": "menu-sheet-360-dark",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/menu-sheet-360-dark.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.94,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 360,
+        "clientWidth": 360,
+        "overflow": false
+      },
+      "menuKind": "sheet",
+      "menuItems": [
+        "Open product",
+        "Copy link",
+        "Mark as purchased",
+        "Cancel"
+      ]
+    },
+    {
+      "name": "feed-390-dark",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/feed-390-dark.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.94,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflow": false
+      }
+    },
+    {
+      "name": "menu-sheet-390-dark",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/menu-sheet-390-dark.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.94,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflow": false
+      },
+      "menuKind": "sheet",
+      "menuItems": [
+        "Open product",
+        "Copy link",
+        "Mark as purchased",
+        "Cancel"
+      ]
+    },
+    {
+      "name": "feed-430-dark",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/feed-430-dark.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.94,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 430,
+        "clientWidth": 430,
+        "overflow": false
+      }
+    },
+    {
+      "name": "menu-sheet-430-dark",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/menu-sheet-430-dark.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.94,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 430,
+        "clientWidth": 430,
+        "overflow": false
+      },
+      "menuKind": "sheet",
+      "menuItems": [
+        "Open product",
+        "Copy link",
+        "Mark as purchased",
+        "Cancel"
+      ]
+    },
+    {
+      "name": "feed-768-dark",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/feed-768-dark.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.94,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 768,
+        "clientWidth": 768,
+        "overflow": false
+      }
+    },
+    {
+      "name": "menu-popover-768-dark",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/menu-popover-768-dark.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.94,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 768,
+        "clientWidth": 768,
+        "overflow": false
+      },
+      "menuKind": "popover",
+      "menuItems": [
+        "Open product",
+        "Copy link",
+        "Mark as purchased"
+      ]
+    },
+    {
+      "name": "feed-1280-dark",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/feed-1280-dark.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.94,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "overflow": false
+      }
+    },
+    {
+      "name": "menu-popover-1280-dark",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/menu-popover-1280-dark.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": true,
+      "hookContrast": 6.94,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": true,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "overflow": false
+      },
+      "menuKind": "popover",
+      "menuItems": [
+        "Open product",
+        "Copy link",
+        "Mark as purchased"
+      ]
+    },
+    {
+      "name": "owner-390-light",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/owner-390-light.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed",
+        "You are viewing your own shared list. Purchased marks are hidden from you."
+      ],
+      "taglineLines": [],
+      "signInHook": null,
+      "signInInTopbar": false,
+      "hookBelowList": null,
+      "hookContrast": null,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": false,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": false,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": false,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflow": false
+      }
+    },
+    {
+      "name": "owner-1280-light",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/owner-1280-light.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed",
+        "You are viewing your own shared list. Purchased marks are hidden from you."
+      ],
+      "taglineLines": [],
+      "signInHook": null,
+      "signInInTopbar": false,
+      "hookBelowList": null,
+      "hookContrast": null,
+      "rows": [
+        {
+          "title": "Linen table runner, washed",
+          "price": null,
+          "priceUnavailable": true,
+          "priceMeta": [],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": false,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Stoneware teapot, 1.1L",
+          "price": "£25.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "At lowest"
+          ],
+          "atLowestChip": true,
+          "deltaCount": 0,
+          "hasMenu": false,
+          "purchasedBadge": false
+        },
+        {
+          "title": "Cast iron skillet, 26cm, pre-seasoned",
+          "price": "£30.00",
+          "priceUnavailable": false,
+          "priceMeta": [
+            "Lowest £25.00"
+          ],
+          "atLowestChip": false,
+          "deltaCount": 0,
+          "hasMenu": false,
+          "purchasedBadge": false
+        }
+      ],
+      "doc": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "overflow": false
+      }
+    },
+    {
+      "name": "empty-390-light",
+      "file": "/home/agent/.hermes/profiles/builder/cache/scratch/screens-133/after/empty-390-light.png",
+      "heading": "sugarplum",
+      "shareNotes": [
+        "Shared list — no account needed"
+      ],
+      "taglineLines": [],
+      "signInHook": {
+        "text": "Sign in to create your own wishlist",
+        "href": "/login?next=/"
+      },
+      "signInInTopbar": false,
+      "hookBelowList": null,
+      "hookContrast": 6.81,
+      "rows": [],
+      "doc": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "overflow": false
+      }
+    }
+  ]
+}

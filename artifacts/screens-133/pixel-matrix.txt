@@ -1,0 +1,27 @@
+#133 pixel matrix — top-aligned diff over the overlapping canvas
+before = main @ 0dbbe7d build (before-repo worktree), after = feat/guest-share-view head build
+same seed, same viewports, same schemes, per-side temp DB + random port
+
+empty-390-light.png: canvas 390x900 -> 390x900 (Δh +0); differing 8569/351000 (2.44%); bbox x 16-348, y 199-328 (333x130)
+feed-1280-dark.png: canvas 1280x900 -> 1280x900 (Δh +0); differing 39310/1152000 (3.41%); bbox x 126-1153, y 165-573 (1028x409)
+feed-1280-light.png: canvas 1280x900 -> 1280x900 (Δh +0); differing 38827/1152000 (3.37%); bbox x 126-1153, y 165-573 (1028x409)
+feed-360-dark.png: canvas 360x900 -> 360x900 (Δh +0); differing 32963/324000 (10.17%); bbox x 16-343, y 165-568 (328x404)
+feed-360-light.png: canvas 360x900 -> 360x900 (Δh +0); differing 32548/324000 (10.05%); bbox x 16-343, y 165-568 (328x404)
+feed-390-dark.png: canvas 390x900 -> 390x900 (Δh +0); differing 33130/351000 (9.44%); bbox x 16-373, y 165-568 (358x404)
+feed-390-light.png: canvas 390x900 -> 390x900 (Δh +0); differing 32697/351000 (9.32%); bbox x 16-373, y 165-568 (358x404)
+feed-430-dark.png: canvas 430x900 -> 430x900 (Δh +0); differing 33345/387000 (8.62%); bbox x 16-413, y 165-568 (398x404)
+feed-430-light.png: canvas 430x900 -> 430x900 (Δh +0); differing 32952/387000 (8.51%); bbox x 16-413, y 165-568 (398x404)
+feed-768-dark.png: canvas 768x900 -> 768x900 (Δh +0); differing 34547/691200 (5.00%); bbox x 16-751, y 165-568 (736x404)
+feed-768-light.png: canvas 768x900 -> 768x900 (Δh +0); differing 34171/691200 (4.94%); bbox x 16-751, y 165-568 (736x404)
+menu-popover-1280-dark.png: canvas 1280x900 -> 1280x900 (Δh +0); differing 128655/1152000 (11.17%); bbox x 126-1170, y 165-592 (1045x428)
+menu-popover-1280-light.png: canvas 1280x900 -> 1280x900 (Δh +0); differing 123953/1152000 (10.76%); bbox x 126-1163, y 165-585 (1038x421)
+menu-popover-768-dark.png: canvas 768x900 -> 768x900 (Δh +0); differing 107776/691200 (15.59%); bbox x 16-767, y 165-568 (752x404)
+menu-popover-768-light.png: canvas 768x900 -> 768x900 (Δh +0); differing 102635/691200 (14.85%); bbox x 16-761, y 165-568 (746x404)
+menu-sheet-360-dark.png: canvas 360x900 -> 360x900 (Δh +0); differing 68064/324000 (21.01%); bbox x 0-359, y 165-776 (360x612)
+menu-sheet-360-light.png: canvas 360x900 -> 360x900 (Δh +0); differing 67688/324000 (20.89%); bbox x 0-359, y 165-776 (360x612)
+menu-sheet-390-dark.png: canvas 390x900 -> 390x900 (Δh +0); differing 71141/351000 (20.27%); bbox x 0-389, y 165-776 (390x612)
+menu-sheet-390-light.png: canvas 390x900 -> 390x900 (Δh +0); differing 70747/351000 (20.16%); bbox x 0-389, y 165-776 (390x612)
+menu-sheet-430-dark.png: canvas 430x900 -> 430x900 (Δh +0); differing 75236/387000 (19.44%); bbox x 0-429, y 165-776 (430x612)
+menu-sheet-430-light.png: canvas 430x900 -> 430x900 (Δh +0); differing 74882/387000 (19.35%); bbox x 0-429, y 165-776 (430x612)
+owner-1280-light.png: canvas 1280x900 -> 1280x900 (Δh +0); differing 37162/1152000 (3.23%); bbox x 126-1153, y 202-597 (1028x396)
+owner-390-light.png: canvas 390x900 -> 390x900 (Δh +0); differing 31047/351000 (8.85%); bbox x 16-373, y 223-613 (358x391)

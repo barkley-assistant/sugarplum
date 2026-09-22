@@ -1,0 +1,154 @@
+#133 probe matrix — runtime probes behind the capture set
+before = main @ /home/agent/.hermes/profiles/builder/cache/scratch/screens-133/before-repo (0dbbe7d build)
+after  = feat/guest-share-view head build (/home/agent/projects/barkley-assistant/sugarplum)
+
+identical seed on both sides: three rows (no price / at its lowest with a url /
+raised above its lowest), one share token, one empty list; same viewports,
+same schemes, per-side temp DB + random port.
+
+empty-390-light: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+feed-1280-dark: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+feed-1280-light: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+feed-360-dark: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+feed-360-light: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+feed-390-dark: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+feed-390-light: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+feed-430-dark: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+feed-430-light: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+feed-768-dark: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+feed-768-light: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+menu-popover-1280-dark: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  menuItems: ['Mark as purchased'] -> ['Open product', 'Copy link', 'Mark as purchased']
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+menu-popover-1280-light: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  menuItems: ['Mark as purchased'] -> ['Open product', 'Copy link', 'Mark as purchased']
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+menu-popover-768-dark: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  menuItems: ['Mark as purchased'] -> ['Open product', 'Copy link', 'Mark as purchased']
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+menu-popover-768-light: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  menuItems: ['Mark as purchased'] -> ['Open product', 'Copy link', 'Mark as purchased']
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+menu-sheet-360-dark: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  menuItems: ['Mark as purchased', 'Cancel'] -> ['Open product', 'Copy link', 'Mark as purchased', 'Cancel']
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+menu-sheet-360-light: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  menuItems: ['Mark as purchased', 'Cancel'] -> ['Open product', 'Copy link', 'Mark as purchased', 'Cancel']
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+menu-sheet-390-dark: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  menuItems: ['Mark as purchased', 'Cancel'] -> ['Open product', 'Copy link', 'Mark as purchased', 'Cancel']
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+menu-sheet-390-light: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  menuItems: ['Mark as purchased', 'Cancel'] -> ['Open product', 'Copy link', 'Mark as purchased', 'Cancel']
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+menu-sheet-430-dark: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  menuItems: ['Mark as purchased', 'Cancel'] -> ['Open product', 'Copy link', 'Mark as purchased', 'Cancel']
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+menu-sheet-430-light: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  signInHook: None -> {'text': 'Sign in to create your own wishlist', 'href': '/login?next=/'}
+  hookBelowList: None -> True
+  menuItems: ['Mark as purchased', 'Cancel'] -> ['Open product', 'Copy link', 'Mark as purchased', 'Cancel']
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=True
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=True | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=True | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=True
+owner-1280-light: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=False | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=False | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=False
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=False | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=False | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=False
+owner-390-light: CHANGED
+  taglineLines: ['Private wishlists, shared with people you trust.'] -> []
+  rows(before): Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=False | Stoneware teapot, 1.1L: price=£25.00 meta=[] chip=False deltas=0 menu=False | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=[] chip=False deltas=0 menu=False
+  rows(after):  Linen table runner, washed: price=None meta=[] chip=False deltas=0 menu=False | Stoneware teapot, 1.1L: price=£25.00 meta=['At lowest'] chip=True deltas=0 menu=False | Cast iron skillet, 26cm, pre-seasoned: price=£30.00 meta=['Lowest £25.00'] chip=False deltas=0 menu=False
+
+## unchanged-by-contract
+
+every capture: document horizontal overflow = false on both sides (
+scrollWidth == clientWidth at 360/390/430/768/1280, both schemes).

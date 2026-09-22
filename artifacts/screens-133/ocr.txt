@@ -1,0 +1,172 @@
+=== before/feed-390-light ===
+6 sugarplum
+Admin's wishlist items
+Shared list — no account needed
+Private wishlists, shared with people you trust.
+Linen table runner, washed
+‘Stoneware teapot, 1.1L
+£25.00
+Cast iron skillet, 26cm,
+pre-seasoned
+£30.00
+
+=== after/feed-390-light ===
+6 sugarplum
+Admin's wishlist items
+Shared list — no account needed
+Linen table runner, washed
+‘Stoneware teapot, 1.1L
+£25.00 Atlowest
+Cast iron skillet, 26cm,
+pre-seasoned
+£30.00 Lowest £25.00
+Sign in to create your own wishlist
+
+=== before/feed-390-dark ===
+© sugarplum
+Admin's wishlist items
+Shared list — no account needed
+Private wishlists, shared with people you trust.
+Linen table runner, washed
+‘Stoneware teapot, 1.1L
+£25.00
+Cast iron skillet, 26cm,
+pre-seasoned
+£30.00
+
+=== after/feed-390-dark ===
+© sugarplum
+Admin's wishlist items
+Shared list — no account needed
+Linen table runner, washed
+‘Stoneware teapot, 1.1L
+£25.00 Atlowest
+Cast iron skillet, 26cm,
+pre-seasoned
+£30.00 Lowest £25.00
+Sign in to create your own wishlist
+
+=== before/feed-1280-light ===
+6 sugarplum
+Admin's wishlist items
+Shared list — no account needed
+Private wishlists, shared with people you trust.
+Linen table runner, washed
+‘Stoneware teapot, 1.1L
+£25.00
+Cast iron skillet, 26cm, pre-seasoned
+£30.00
+
+=== after/feed-1280-light ===
+6 sugarplum
+Admin's wishlist items
+Shared list — no account needed
+Linen table runner, washed
+‘Stoneware teapot, 1.1L
+£25.00 At iowest
+Cast iron skillet, 26cm, pre-seasoned
+£30.00 Lowest £25.00
+Sign in to create your own wishlist
+
+=== before/menu-sheet-390-light ===
+Mark as purchased
+
+=== after/menu-sheet-390-light ===
+Open product
+Copy link
+Mark as purchased
+
+=== before/menu-sheet-390-dark ===
+© sugarplum
+Admin's wishlist items
+‘Shared list — no account needed
+Private wishlists, shared with people you trust.
+Linen table runner, washed
+‘Stoneware teapot, 1.1L
+£25.00
+Cast iron skillet, 26cm,
+pre-seasoned 3
+£30.00
+
+=== after/menu-sheet-390-dark ===
+@ sugarplum
+Admin's wishlist 3 items
+Shared list — no account needed
+Linen table runner, washed
+‘Stoneware teapot, 1.1L
+£25.00  Atlowest
+Cast iron skillet, 26cm,
+pre-seasoned E
+£30.00 Lowest £25.00
+Sign in to create your own wishlist
+Open product
+Copy link
+Mark as purchased
+Cancel
+
+=== before/menu-popover-1280-light ===
+6 sugarplum
+Admin's wishlist items
+Shared list — no account needed
+Private wishlists, shared with people you trust.
+Linen table runner, washed
+‘Stoneware teapot, 1.1L
+£25.00:
+Cast iron skillet, 26cm, pre-seasoned Mark as purchased
+2su.uU
+
+=== after/menu-popover-1280-light ===
+6 sugarplum
+Admin's wishlist items
+Shared list — no account needed
+Linen table runner, washed
+‘Stoneware teapot, 1.1L
+£25.00 atlowest i
+Cast iron skillet, 26cm, pre-seasoned Open product
+Copy link
+Mark as purchased
+Sign in to create your own wishlist
+
+=== before/owner-390-light ===
+6 sugarplum
+Admin's wishlist items
+Shared list — no account needed
+You are viewing your own shared list. Purchased marks
+are hidden from you.
+Private wishlists, shared with people you trust.
+Linen table runner, washed
+‘Stoneware teapot, 1.1L
+£25.00
+Cast iron skillet, 26cm, pre-
+seasoned
+£30.00
+
+=== after/owner-390-light ===
+6 sugarplum
+Admin's wishlist items
+Shared list — no account needed
+You are viewing your own shared list. Purchased marks
+are hidden from you.
+Linen table runner, washed
+‘Stoneware teapot, 1.1L
+£25.00 Atlowest
+Cast iron skillet, 26cm, pre-
+seasoned
+£30.00 Lowest £25.00
+
+=== before/empty-390-light ===
+6 sugarplum
+Empty Owner's Oitems
+wishlist
+Shared list — no account needed
+Private wishlists, shared with people you trust.
+Empty Owner hasn't added anything yet.
+
+=== after/empty-390-light ===
+6 sugarplum
+Empty Owner's Oitems
+wishlist
+Shared list — no account needed
+Empty Owner hasn't added anything yet.
+Sign in to create your own wishlist
+
