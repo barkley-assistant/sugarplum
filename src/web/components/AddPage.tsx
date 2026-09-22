@@ -59,7 +59,9 @@ export function AddPage({ search }: AddPageProps) {
   return (
     <AppShell brandHref="/" brandLinkLabel={S.settings.backToList}>
       <div className="add-page">
-        <h1 ref={headingRef} tabIndex={-1} className="page-title page-title--form">{S.form.addTitle}</h1>
+        {/* #121: the heading mirrors the "Add item" CTA that navigated
+            here; the submit button (same words) names the commit. */}
+        <h1 ref={headingRef} tabIndex={-1} className="page-title page-title--form">{S.list.addItem}</h1>
         <ItemForm
           mode="add"
           submitLabel={S.list.addItem}

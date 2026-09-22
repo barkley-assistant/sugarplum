@@ -22,6 +22,11 @@ export const S = {
     networkError: "Network error. Try again.",
   },
   list: {
+    /** #121: the add flow's ONE "Add item" label — the feed CTA, the add
+     *  page heading (the heading mirrors the affordance that navigated
+     *  there; the submit button names the commit), and the add page's
+     *  submit. Same words, three roles — #129's duplicate-CTA finding is
+     *  about the bottom-bar tab, a same-role collision it owns. */
     addItem: "Add item",
     reorder: "Reorder",
     doneReordering: "Done",
@@ -147,7 +152,6 @@ export const S = {
     saving: "Saving…",
     addSubmitBusy: "Adding…",
     save: "Save",
-    addTitle: "Add to Sugarplum",
     addDetailsManually: "Add details manually",
     manualIntro: "Optional — we'll fetch the title, price and image from the link.",
     linkPlaceholderAdd: "Paste a product link…",
