@@ -1,0 +1,3486 @@
+[
+ {
+  "file": "feed-360-light.png",
+  "path": "/",
+  "width": 360,
+  "scheme": "light",
+  "title": "sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": null,
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Field notebook — A5 dotted"
+   },
+   {
+    "level": 3,
+    "text": "Wool throw blanket, oatmeal"
+   },
+   {
+    "level": 3,
+    "text": "Desk lamp, warm white"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "feed-360-dark.png",
+  "path": "/",
+  "width": 360,
+  "scheme": "dark",
+  "title": "sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": null,
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Field notebook — A5 dotted"
+   },
+   {
+    "level": 3,
+    "text": "Wool throw blanket, oatmeal"
+   },
+   {
+    "level": 3,
+    "text": "Desk lamp, warm white"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "feed-390-light.png",
+  "path": "/",
+  "width": 390,
+  "scheme": "light",
+  "title": "sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": null,
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Field notebook — A5 dotted"
+   },
+   {
+    "level": 3,
+    "text": "Wool throw blanket, oatmeal"
+   },
+   {
+    "level": 3,
+    "text": "Desk lamp, warm white"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "feed-390-dark.png",
+  "path": "/",
+  "width": 390,
+  "scheme": "dark",
+  "title": "sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": null,
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Field notebook — A5 dotted"
+   },
+   {
+    "level": 3,
+    "text": "Wool throw blanket, oatmeal"
+   },
+   {
+    "level": 3,
+    "text": "Desk lamp, warm white"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "feed-430-light.png",
+  "path": "/",
+  "width": 430,
+  "scheme": "light",
+  "title": "sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": null,
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Field notebook — A5 dotted"
+   },
+   {
+    "level": 3,
+    "text": "Wool throw blanket, oatmeal"
+   },
+   {
+    "level": 3,
+    "text": "Desk lamp, warm white"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "feed-430-dark.png",
+  "path": "/",
+  "width": 430,
+  "scheme": "dark",
+  "title": "sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": null,
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Field notebook — A5 dotted"
+   },
+   {
+    "level": 3,
+    "text": "Wool throw blanket, oatmeal"
+   },
+   {
+    "level": 3,
+    "text": "Desk lamp, warm white"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "feed-768-light.png",
+  "path": "/",
+  "width": 768,
+  "scheme": "light",
+  "title": "sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": null,
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Field notebook — A5 dotted"
+   },
+   {
+    "level": 3,
+    "text": "Wool throw blanket, oatmeal"
+   },
+   {
+    "level": 3,
+    "text": "Desk lamp, warm white"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "feed-768-dark.png",
+  "path": "/",
+  "width": 768,
+  "scheme": "dark",
+  "title": "sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": null,
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Field notebook — A5 dotted"
+   },
+   {
+    "level": 3,
+    "text": "Wool throw blanket, oatmeal"
+   },
+   {
+    "level": 3,
+    "text": "Desk lamp, warm white"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "feed-1280-light.png",
+  "path": "/",
+  "width": 1280,
+  "scheme": "light",
+  "title": "sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 66,
+   "height": 66
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": null,
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Field notebook — A5 dotted"
+   },
+   {
+    "level": 3,
+    "text": "Wool throw blanket, oatmeal"
+   },
+   {
+    "level": 3,
+    "text": "Desk lamp, warm white"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "feed-1280-dark.png",
+  "path": "/",
+  "width": 1280,
+  "scheme": "dark",
+  "title": "sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 66,
+   "height": 66
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": null,
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Field notebook — A5 dotted"
+   },
+   {
+    "level": 3,
+    "text": "Wool throw blanket, oatmeal"
+   },
+   {
+    "level": 3,
+    "text": "Desk lamp, warm white"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "item-360-light.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62",
+  "width": 360,
+  "scheme": "light",
+  "title": "Aeropress Go travel coffee maker · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 2,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Price history"
+   },
+   {
+    "level": 3,
+    "text": "Notes"
+   },
+   {
+    "level": 3,
+    "text": "Tags"
+   },
+   {
+    "level": 3,
+    "text": "More information"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "item-360-dark.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62",
+  "width": 360,
+  "scheme": "dark",
+  "title": "Aeropress Go travel coffee maker · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 2,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Price history"
+   },
+   {
+    "level": 3,
+    "text": "Notes"
+   },
+   {
+    "level": 3,
+    "text": "Tags"
+   },
+   {
+    "level": 3,
+    "text": "More information"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "item-390-light.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62",
+  "width": 390,
+  "scheme": "light",
+  "title": "Aeropress Go travel coffee maker · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 2,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Price history"
+   },
+   {
+    "level": 3,
+    "text": "Notes"
+   },
+   {
+    "level": 3,
+    "text": "Tags"
+   },
+   {
+    "level": 3,
+    "text": "More information"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "item-390-dark.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62",
+  "width": 390,
+  "scheme": "dark",
+  "title": "Aeropress Go travel coffee maker · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 2,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Price history"
+   },
+   {
+    "level": 3,
+    "text": "Notes"
+   },
+   {
+    "level": 3,
+    "text": "Tags"
+   },
+   {
+    "level": 3,
+    "text": "More information"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "item-430-light.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62",
+  "width": 430,
+  "scheme": "light",
+  "title": "Aeropress Go travel coffee maker · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 2,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Price history"
+   },
+   {
+    "level": 3,
+    "text": "Notes"
+   },
+   {
+    "level": 3,
+    "text": "Tags"
+   },
+   {
+    "level": 3,
+    "text": "More information"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "item-430-dark.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62",
+  "width": 430,
+  "scheme": "dark",
+  "title": "Aeropress Go travel coffee maker · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 2,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Price history"
+   },
+   {
+    "level": 3,
+    "text": "Notes"
+   },
+   {
+    "level": 3,
+    "text": "Tags"
+   },
+   {
+    "level": 3,
+    "text": "More information"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "item-768-light.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62",
+  "width": 768,
+  "scheme": "light",
+  "title": "Aeropress Go travel coffee maker · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Back to list",
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": true,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 2,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Price history"
+   },
+   {
+    "level": 3,
+    "text": "Notes"
+   },
+   {
+    "level": 3,
+    "text": "Tags"
+   },
+   {
+    "level": 3,
+    "text": "More information"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "item-768-dark.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62",
+  "width": 768,
+  "scheme": "dark",
+  "title": "Aeropress Go travel coffee maker · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Back to list",
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": true,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 2,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Price history"
+   },
+   {
+    "level": 3,
+    "text": "Notes"
+   },
+   {
+    "level": 3,
+    "text": "Tags"
+   },
+   {
+    "level": 3,
+    "text": "More information"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "item-1280-light.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62",
+  "width": 1280,
+  "scheme": "light",
+  "title": "Aeropress Go travel coffee maker · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 66,
+   "height": 66
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Back to list",
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": true,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 2,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Price history"
+   },
+   {
+    "level": 3,
+    "text": "Notes"
+   },
+   {
+    "level": 3,
+    "text": "Tags"
+   },
+   {
+    "level": 3,
+    "text": "More information"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "item-1280-dark.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62",
+  "width": 1280,
+  "scheme": "dark",
+  "title": "Aeropress Go travel coffee maker · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 66,
+   "height": 66
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Back to list",
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": true,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 2,
+    "text": "Aeropress Go travel coffee maker"
+   },
+   {
+    "level": 3,
+    "text": "Price history"
+   },
+   {
+    "level": 3,
+    "text": "Notes"
+   },
+   {
+    "level": 3,
+    "text": "Tags"
+   },
+   {
+    "level": 3,
+    "text": "More information"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "add-360-light.png",
+  "path": "/add",
+  "width": 360,
+  "scheme": "light",
+  "title": "Add item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Add item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "add-360-dark.png",
+  "path": "/add",
+  "width": 360,
+  "scheme": "dark",
+  "title": "Add item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Add item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "add-390-light.png",
+  "path": "/add",
+  "width": 390,
+  "scheme": "light",
+  "title": "Add item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Add item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "add-390-dark.png",
+  "path": "/add",
+  "width": 390,
+  "scheme": "dark",
+  "title": "Add item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Add item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "add-430-light.png",
+  "path": "/add",
+  "width": 430,
+  "scheme": "light",
+  "title": "Add item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Add item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "add-430-dark.png",
+  "path": "/add",
+  "width": 430,
+  "scheme": "dark",
+  "title": "Add item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Add item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "add-768-light.png",
+  "path": "/add",
+  "width": 768,
+  "scheme": "light",
+  "title": "Add item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Add item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "add-768-dark.png",
+  "path": "/add",
+  "width": 768,
+  "scheme": "dark",
+  "title": "Add item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Add item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "add-1280-light.png",
+  "path": "/add",
+  "width": 1280,
+  "scheme": "light",
+  "title": "Add item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 66,
+   "height": 66
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Add item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "add-1280-dark.png",
+  "path": "/add",
+  "width": 1280,
+  "scheme": "dark",
+  "title": "Add item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 66,
+   "height": 66
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Add item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "edit-360-light.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62/edit",
+  "width": 360,
+  "scheme": "light",
+  "title": "Edit item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Edit item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": [
+   "Save",
+   "Cancel"
+  ]
+ },
+ {
+  "file": "edit-360-dark.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62/edit",
+  "width": 360,
+  "scheme": "dark",
+  "title": "Edit item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Edit item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": [
+   "Save",
+   "Cancel"
+  ]
+ },
+ {
+  "file": "edit-390-light.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62/edit",
+  "width": 390,
+  "scheme": "light",
+  "title": "Edit item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Edit item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": [
+   "Save",
+   "Cancel"
+  ]
+ },
+ {
+  "file": "edit-390-dark.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62/edit",
+  "width": 390,
+  "scheme": "dark",
+  "title": "Edit item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Edit item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": [
+   "Save",
+   "Cancel"
+  ]
+ },
+ {
+  "file": "edit-430-light.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62/edit",
+  "width": 430,
+  "scheme": "light",
+  "title": "Edit item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Edit item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": [
+   "Save",
+   "Cancel"
+  ]
+ },
+ {
+  "file": "edit-430-dark.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62/edit",
+  "width": 430,
+  "scheme": "dark",
+  "title": "Edit item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Edit item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": [
+   "Save",
+   "Cancel"
+  ]
+ },
+ {
+  "file": "edit-768-light.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62/edit",
+  "width": 768,
+  "scheme": "light",
+  "title": "Edit item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Edit item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": [
+   "Save",
+   "Cancel"
+  ]
+ },
+ {
+  "file": "edit-768-dark.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62/edit",
+  "width": 768,
+  "scheme": "dark",
+  "title": "Edit item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Edit item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": [
+   "Save",
+   "Cancel"
+  ]
+ },
+ {
+  "file": "edit-1280-light.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62/edit",
+  "width": 1280,
+  "scheme": "light",
+  "title": "Edit item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 66,
+   "height": 66
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Edit item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": [
+   "Save",
+   "Cancel"
+  ]
+ },
+ {
+  "file": "edit-1280-dark.png",
+  "path": "/items/eb2066fe-fc57-46d3-8ad7-b47793878d62/edit",
+  "width": 1280,
+  "scheme": "dark",
+  "title": "Edit item · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 66,
+   "height": 66
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 1,
+    "text": "Edit item"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": [
+   "Save",
+   "Cancel"
+  ]
+ },
+ {
+  "file": "settings-360-light.png",
+  "path": "/settings",
+  "width": 360,
+  "scheme": "light",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Account & Preferences"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Account"
+   },
+   {
+    "level": 3,
+    "text": "Change password"
+   },
+   {
+    "level": 3,
+    "text": "Preferences"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-360-dark.png",
+  "path": "/settings",
+  "width": 360,
+  "scheme": "dark",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Account & Preferences"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Account"
+   },
+   {
+    "level": 3,
+    "text": "Change password"
+   },
+   {
+    "level": 3,
+    "text": "Preferences"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-390-light.png",
+  "path": "/settings",
+  "width": 390,
+  "scheme": "light",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Account & Preferences"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Account"
+   },
+   {
+    "level": 3,
+    "text": "Change password"
+   },
+   {
+    "level": 3,
+    "text": "Preferences"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-390-dark.png",
+  "path": "/settings",
+  "width": 390,
+  "scheme": "dark",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Account & Preferences"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Account"
+   },
+   {
+    "level": 3,
+    "text": "Change password"
+   },
+   {
+    "level": 3,
+    "text": "Preferences"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-430-light.png",
+  "path": "/settings",
+  "width": 430,
+  "scheme": "light",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Account & Preferences"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Account"
+   },
+   {
+    "level": 3,
+    "text": "Change password"
+   },
+   {
+    "level": 3,
+    "text": "Preferences"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-430-dark.png",
+  "path": "/settings",
+  "width": 430,
+  "scheme": "dark",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Account & Preferences"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Account"
+   },
+   {
+    "level": 3,
+    "text": "Change password"
+   },
+   {
+    "level": 3,
+    "text": "Preferences"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-768-light.png",
+  "path": "/settings",
+  "width": 768,
+  "scheme": "light",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Account & Preferences"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Account"
+   },
+   {
+    "level": 3,
+    "text": "Change password"
+   },
+   {
+    "level": 3,
+    "text": "Preferences"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-768-dark.png",
+  "path": "/settings",
+  "width": 768,
+  "scheme": "dark",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Account & Preferences"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Account"
+   },
+   {
+    "level": 3,
+    "text": "Change password"
+   },
+   {
+    "level": 3,
+    "text": "Preferences"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-1280-light.png",
+  "path": "/settings",
+  "width": 1280,
+  "scheme": "light",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 66,
+   "height": 66
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Account & Preferences"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Account"
+   },
+   {
+    "level": 3,
+    "text": "Change password"
+   },
+   {
+    "level": 3,
+    "text": "Preferences"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-1280-dark.png",
+  "path": "/settings",
+  "width": 1280,
+  "scheme": "dark",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 66,
+   "height": 66
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Account & Preferences"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   },
+   {
+    "level": 3,
+    "text": "Account"
+   },
+   {
+    "level": 3,
+    "text": "Change password"
+   },
+   {
+    "level": 3,
+    "text": "Preferences"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-users-360-light.png",
+  "path": "/settings/users",
+  "width": 360,
+  "scheme": "light",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Users"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-users-360-dark.png",
+  "path": "/settings/users",
+  "width": 360,
+  "scheme": "dark",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Users"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-users-390-light.png",
+  "path": "/settings/users",
+  "width": 390,
+  "scheme": "light",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Users"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-users-390-dark.png",
+  "path": "/settings/users",
+  "width": 390,
+  "scheme": "dark",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Users"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-users-430-light.png",
+  "path": "/settings/users",
+  "width": 430,
+  "scheme": "light",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Users"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-users-430-dark.png",
+  "path": "/settings/users",
+  "width": 430,
+  "scheme": "dark",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Users"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-users-768-light.png",
+  "path": "/settings/users",
+  "width": 768,
+  "scheme": "light",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Users"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-users-768-dark.png",
+  "path": "/settings/users",
+  "width": 768,
+  "scheme": "dark",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Users"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-users-1280-light.png",
+  "path": "/settings/users",
+  "width": 1280,
+  "scheme": "light",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 66,
+   "height": 66
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Users"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-users-1280-dark.png",
+  "path": "/settings/users",
+  "width": 1280,
+  "scheme": "dark",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 66,
+   "height": 66
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "Users"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-user-new-360-light.png",
+  "path": "/settings/users/new",
+  "width": 360,
+  "scheme": "light",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "New user"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-user-new-360-dark.png",
+  "path": "/settings/users/new",
+  "width": 360,
+  "scheme": "dark",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "New user"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-user-new-390-light.png",
+  "path": "/settings/users/new",
+  "width": 390,
+  "scheme": "light",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "New user"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-user-new-390-dark.png",
+  "path": "/settings/users/new",
+  "width": 390,
+  "scheme": "dark",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "New user"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-user-new-430-light.png",
+  "path": "/settings/users/new",
+  "width": 430,
+  "scheme": "light",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "New user"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-user-new-430-dark.png",
+  "path": "/settings/users/new",
+  "width": 430,
+  "scheme": "dark",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": false,
+  "clusterButtons": [],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "New user"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-user-new-768-light.png",
+  "path": "/settings/users/new",
+  "width": 768,
+  "scheme": "light",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "New user"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-user-new-768-dark.png",
+  "path": "/settings/users/new",
+  "width": 768,
+  "scheme": "dark",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 67,
+   "height": 67
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "New user"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-user-new-1280-light.png",
+  "path": "/settings/users/new",
+  "width": 1280,
+  "scheme": "light",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 66,
+   "height": 66
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "New user"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ },
+ {
+  "file": "settings-user-new-1280-dark.png",
+  "path": "/settings/users/new",
+  "width": 1280,
+  "scheme": "dark",
+  "title": "Settings · sugarplum",
+  "topbar": {
+   "top": 0,
+   "bottom": 66,
+   "height": 66
+  },
+  "brand": {
+   "top": 19,
+   "bottom": 47,
+   "height": 28
+  },
+  "clusterVisible": true,
+  "clusterButtons": [
+   "Add item",
+   "Share my list"
+  ],
+  "backToList": false,
+  "avatar": "Admin",
+  "compactBar": {
+   "trigger": "Admin's wishlist",
+   "count": "4 items",
+   "hasAction": false
+  },
+  "headings": [
+   {
+    "level": 1,
+    "text": "sugarplum"
+   },
+   {
+    "level": 2,
+    "text": "New user"
+   },
+   {
+    "level": 2,
+    "text": "Admin's wishlist"
+   }
+  ],
+  "overflow": false,
+  "offenders": 0,
+  "formActions": []
+ }
+]
