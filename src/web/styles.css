@@ -1024,7 +1024,10 @@ button.filter-chip {
   width: var(--row-thumb);
   height: var(--row-thumb);
   border-radius: var(--r-thumb);
-  object-fit: cover;
+  /* #130: letterboxed, never cropped — `contain` + the pad keep the product
+     clear of the rounded mask instead of cutting its edges off. */
+  object-fit: contain;
+  padding: var(--thumb-pad);
   background: var(--surface-2);
   flex-shrink: 0;
 }
@@ -2024,7 +2027,9 @@ button.filter-chip {
   opacity: 0.9;
 }
 
-.item-card.is-purchased .price-cluster .price {
+.item-card.is-purchased .price-cluster .price,
+.item-card.is-purchased .price-cluster .price-unavailable,
+.item-card.is-purchased .price-cluster .price-at-lowest {
   color: var(--purchased-text);
   opacity: 0.85;
 }
@@ -2049,6 +2054,28 @@ button.filter-chip {
   text-align: left;
   font-size: var(--text-row-meta);
   color: var(--text-2);
+}
+
+/* #130: the equal-lowest state — a quiet chip in the row-meta slot, never a
+   selected-control look (plum stays the filter chips' "active" grammar). */
+.price-at-lowest {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--text-row-meta);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* #130: a missing price keeps the row's rhythm — a muted dash in the price
+   slot, the accessible name carrying the real phrase. */
+.price-unavailable {
+  color: var(--text-3);
+  font-size: var(--text-row-price);
+  font-variant-numeric: tabular-nums;
 }
 
 .price-delta {
@@ -2246,7 +2273,13 @@ button.row-open:hover {
   z-index: 1;
   grid-area: actions;
   display: flex;
-  align-items: flex-start;
+  /* #130: the actions column anchors to the THUMB's vertical center, not to
+     the text height — a one-line and a three-line row put the kebab at the
+     same offset. The thumb is top-anchored and token-sized, so a box of its
+     height, centered, has its center on the thumb's center. min-height (not
+     height) so a taller action stack can never spill out of its row. */
+  align-items: center;
+  min-height: var(--row-thumb);
   flex-shrink: 0;
   min-width: 0;
   gap: var(--sp-1);
@@ -2262,7 +2295,9 @@ button.row-open:hover {
   height: var(--row-thumb);
   aspect-ratio: 1;
   border-radius: var(--r-thumb);
-  object-fit: cover;
+  /* #130: contain + the letterbox pad (see .item-thumb). */
+  object-fit: contain;
+  padding: var(--thumb-pad);
   background: var(--surface-2);
   flex-shrink: 0;
 }
@@ -2356,6 +2391,12 @@ button.row-open:hover {
   .product-row-delta,
   .product-row-actions {
     align-self: center;
+  }
+
+  /* #130: the desktop thumb is 96px, so the actions box tracks it — the
+     kebab's center, the thumb's center and the row's center coincide. */
+  .product-row-actions {
+    min-height: var(--row-thumb-desktop);
   }
 }
 
@@ -2469,7 +2510,9 @@ button.row-open:hover {
   height: var(--detail-thumb);
   flex: 0 0 var(--detail-thumb);
   border-radius: var(--r-thumb);
-  object-fit: cover;
+  /* #130: the hero letterboxes too — the same crop clipped the same products
+     one surface over (the pad itself is inherited from the base rules). */
+  object-fit: contain;
 }
 
 .detail-hero-info {

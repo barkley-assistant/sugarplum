@@ -41,6 +41,11 @@ export const S = {
     unavailable: "Details unavailable",
     hintPriceNote: "unverified — via search",
     lowestSeen: (price: string) => `Lowest ${price}`,
+    /** #130: the current price IS the lowest seen — the row's quiet chip. */
+    atLowest: "At lowest",
+    /** #130: no price at all — the visible glyph is a dash; this is the
+     *  accessible name a screen reader hears instead of "em dash". */
+    priceUnavailable: "Price unavailable",
     atAddPrice: (price: string) => `At add ${price}`,
     cheaperFound: "Found cheaper:",
     pricesElsewhere: "Prices seen elsewhere (unverified)",

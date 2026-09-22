@@ -128,6 +128,14 @@ describe("wishlist API", () => {
     expect(bobItem.claimed).toBe(true);
     expect(bobItem.claimedByYou).toBe(true);
 
+    // #130: EVERY public row carries the ledger-summary field — an object, or
+    // null for an item with no history, but never absent: the guest feed's
+    // Lowest rule reads it directly, with no viewer branching.
+    for (const row of bobItems) {
+      expect("priceStats" in row).toBe(true);
+      expect(row.priceStats === null || typeof row.priceStats === "object").toBe(true);
+    }
+
     // Carol's view: claimed true, claimedByYou false.
     await login(carol, "carol", "carol-pass");
     const carolList = await carol.request("GET", `/api/users/${aliceId}/wishlist`);
@@ -719,7 +727,7 @@ describe("price history", () => {
     expect(fromList.priceStats).toBeNull();
   });
 
-  test("price stats and the cheaper link are owner-only (absent from the public projection)", async () => {
+  test("price stats are a product fact on both projections; the cheaper link stays owner-only", async () => {
     const { jar, id } = await newIsolatedUser("price-private");
     const item = await createItem(jar, "Private stats probe", {
       priceCents: "4.99",
@@ -733,9 +741,21 @@ describe("price history", () => {
     expect(res.status).toBe(200);
     const items = (await res.json()) as PublicItem[];
     const dto = items.find((i) => i.id === item.id) as PublicItem;
-    expect("priceStats" in dto).toBe(false);
+    // #130: the ledger summary is a PRODUCT fact, not owner data (the
+    // anonymous share DTO has always carried it), and the guest feed now
+    // renders the same "Lowest" rule as the owner's — one derivation, one
+    // verdict, no viewer branching. The field is on the wire for both, with
+    // the same numbers.
+    expect("priceStats" in dto).toBe(true);
+    expect(dto.priceStats).not.toBeNull();
+    expect(dto.priceStats?.lowestCents).toBe(item.priceStats?.lowestCents);
+    expect(dto.priceStats?.lowestCurrency).toBe(item.priceStats?.lowestCurrency);
+    // Provenance and the owner's own "found it cheaper" link stay owner-only.
     expect("priceSource" in dto).toBe(false);
     expect("cheaperUrl" in dto).toBe(false);
+    // The claim boundary the widening rides next to is unchanged.
+    expect("claimed" in dto).toBe(true);
+    expect(dto.claimedByYou).toBe(false);
   });
 
   test("cheaper link round-trip: POST, PATCH, clear with null; invalid → 400", async () => {
