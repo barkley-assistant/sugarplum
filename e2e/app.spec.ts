@@ -452,7 +452,7 @@ test("3c: desktop add page has no sheet chrome and no overflow", async ({ page }
   await page.getByRole("button", { name: "Add item" }).first().click();
   await expect(page).toHaveURL(`${BASE}/add`);
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Add to Sugarplum" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Add item" })).toBeVisible();
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page).toHaveURL(`${BASE}/`);
@@ -863,7 +863,7 @@ test("4i: edit page round-trip and keyboard stillness", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   // A deep link straight to the edit route (no feed in history).
   await page.goto(`${BASE}/items/${item.id}/edit`);
-  await expect(page.getByRole("heading", { name: "Edit" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Edit item" })).toBeVisible();
   // INV-B on the edit surface too: nothing focused, so no keyboard pops.
   await expect(page.getByLabel("Title")).not.toBeFocused();
   expect(
