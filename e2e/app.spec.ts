@@ -5201,6 +5201,52 @@ test("37: #125 — one header on every authenticated page, Back-to-list button, 
     await page.getByRole("menuitemradio", { name: /Admin/ }).click();
     await expect(page.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
 
+    // --- 6b. The own row is the OTHER half of scope 4 ("own name -> own
+    //        feed"), and the compact bar marks it as the list on screen. ---
+    await page.goto(`${BASE}/items/${itemId}`);
+    await page.locator(".list-switcher--compact .list-switcher-trigger").click();
+    const ownPopover = page.getByRole("menu", { name: "Switch wishlist" });
+    await expect(ownPopover).toBeVisible();
+    const ownRow = ownPopover.getByRole("menuitemradio", { name: /Admin/ });
+    await expect(ownRow, "#125: the compact switcher checks the own row").toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    await expect(
+      ownPopover.getByRole("menuitemradio", { name: /Header Other/ }),
+      "#125: only the list on screen is current",
+    ).toHaveAttribute("aria-checked", "false");
+    await ownRow.click();
+    await expect(page).toHaveURL(`${BASE}/`);
+    await expect(page.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+    // OWNER mode, not the guest projection: the owner-only actions are back.
+    await expect(page.getByRole("button", { name: "Reorder", exact: true })).toBeVisible();
+    await expect(
+      page.locator(".topbar-actions").getByRole("button", { name: "Add item", exact: true }),
+    ).toBeVisible();
+
+    // --- 6c. …and that own-list handoff overrides a feed snapshot left on
+    //        someone else's list: `null` means "own list", `undefined` means
+    //        "no handoff" (feed-handoff). Leave the feed while it shows
+    //        Header Other, then pick the own row from the subpage. --------
+    await page.getByRole("button", { name: /wishlist/ }).click();
+    await page.getByRole("menuitemradio", { name: /Header Other/ }).click();
+    await expect(page.getByRole("heading", { name: "Header Other's wishlist" })).toBeVisible();
+    await page.locator('.user-menu-button[aria-label="Admin"]').click();
+    await page.getByRole("menu", { name: "Admin" }).getByRole("menuitem", { name: "Settings" }).click();
+    await expect(page).toHaveURL(`${BASE}/settings`);
+    await page.locator(".list-switcher--compact .list-switcher-trigger").click();
+    await page
+      .getByRole("menu", { name: "Switch wishlist" })
+      .getByRole("menuitemradio", { name: /Admin/ })
+      .click();
+    await expect(page).toHaveURL(`${BASE}/`);
+    await expect(
+      page.getByRole("heading", { name: "Admin's wishlist" }),
+      "#125: the own-list handoff overrides the snapshot's other-user view",
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Reorder", exact: true })).toBeVisible();
+
     // --- 7. D6: mobile keeps the bottom bar and no desktop cluster. -------
     await page.setViewportSize({ width: 390, height: 844 });
     for (const path of [`/items/${itemId}`, "/add", "/settings"]) {
