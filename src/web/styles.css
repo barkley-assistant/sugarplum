@@ -434,7 +434,10 @@ label {
   padding-bottom: calc(var(--sp-4) + var(--safe-bottom));
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  /* #161: the page layer's rhythm (16px, one 24px step at >=1024px). This
+     governs the settings family, which has no page wrapper: PageHeader, the
+     context bar and the stack are direct children here. */
+  gap: var(--page-gap);
 }
 
 .topbar {
@@ -531,7 +534,9 @@ a.brand:hover {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--sp-3);
-  margin-bottom: var(--section-gap);
+  /* #161: no margin-bottom here. The head and the following .settings-section
+     are already separated by .app-main's gap (--page-gap); the margin doubled
+     the rhythm to 32px on the users screens. */
 }
 
 /* When the head wraps at 360px the action keeps the right edge it has on one
@@ -1538,7 +1543,18 @@ button.filter-chip {
 .add-page {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  /* #161: the page layer's rhythm — was a 12px local decision, the narrowest
+     of the page stacks. 16px, one 24px step at >=1024px. */
+  gap: var(--page-gap);
+}
+
+/* #161: the form screens' page title is a DIRECT child of the page stack, so
+   its rhythm comes from .add-page's gap (--page-gap), never from the global
+   reset's 0.4rem — which stacked to 18.4px (12px gap + 6.4px margin). The
+   feed's .page-title deliberately keeps that margin: it is not in a page
+   stack, and its 6.4px is the title-to-count rhythm inside .list-heading. */
+.add-page > .page-title {
+  margin: 0;
 }
 
 .add-submit {
@@ -2537,6 +2553,13 @@ button.row-open:hover {
 .item-page {
   display: flex;
   flex-direction: column;
+  /* #161: the page owner's rhythm. The context bar and .detail-scroll live in
+     DIFFERENT flex containers, so neither owner's gap ever applied to the
+     boundary between them and it measured 0px at every width — the selector
+     and the hero read as one block. This is that boundary's rule: it takes
+     the layer token, so it is one grid step at 360px and the desktop step at
+     >=1024px without any rule here knowing about widths. */
+  gap: var(--context-gap);
   min-width: 0;
 }
 
@@ -2703,7 +2726,7 @@ button.row-open:hover {
 .detail-notes-body {
   color: var(--text-2);
   font-size: var(--text-sm);
-  margin: 8px 0 0;
+  margin: var(--sp-2) 0 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -2712,7 +2735,7 @@ button.row-open:hover {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-1);
-  margin-top: 8px;
+  margin-top: var(--sp-2);
 }
 
 .detail-more-card > .detail-card-heading { margin-bottom: var(--sp-2); }
@@ -2763,7 +2786,7 @@ button.row-open:hover {
 
 .detail-hints .hints-toggle svg { flex: 0 0 auto; color: var(--text-2); }
 .detail-hints .hints-toggle svg:last-child { margin-left: auto; color: var(--text-3); }
-.detail-hints .hint-candidates { margin-top: 4px; }
+.detail-hints .hint-candidates { margin-top: var(--sp-1); }
 
 .detail-footer {
   display: flex;
