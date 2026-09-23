@@ -395,6 +395,29 @@ label {
   font-weight: 600;
 }
 
+/* #120: the login password field's reveal control. The wrapper IS the field,
+   so the card's 0.6rem gap rhythm is unchanged; the input keeps its full
+   width and reserves the toggle's 44px plus the field's own 0.7rem gutter as
+   right padding (3rem = 48px), so typed text never runs under the glyph. */
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 3rem;
+}
+
+.password-reveal {
+  position: absolute;
+  top: 0;
+  right: 0;
+  /* 44px on both axes: the app-wide touch floor (#116). The glyph is centred
+     by .icon-btn's own inline-flex; .icon-btn's hover/focus/target rules are
+     reused verbatim, not duplicated. */
+  width: 44px;
+  height: 44px;
+}
+
 /* ---------- App shell ---------- */
 .app-shell {
   min-height: 100vh;

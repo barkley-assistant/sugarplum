@@ -134,3 +134,40 @@ export function ChevronLeftIcon() {
     </svg>
   );
 }
+
+/** #120: the login password field's default state — an open eye. The glyph
+ *  states the CONTROL's affordance, so the hidden-password state shows the
+ *  open eye and the revealed state shows the slashed one. Same language as
+ *  the other icons: 20px box, 1.8px stroke, currentColor. The almond is one
+ *  closed cubic lens (not two arcs meeting at a point, which pinches at the
+ *  1.8 stroke in a 20px box) with an iris at r=2.2, leaving a 1.0px lid
+ *  either side of the centred line. */
+export function EyeIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="M2 10c2.6-3.6 5-5.4 8-5.4S15.4 6.4 18 10c-2.6 3.6-5 5.4-8 5.4S4.6 13.6 2 10Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="10" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+/** #120: the revealed state — the same eye, struck through. */
+export function EyeOffIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="M2 10c2.6-3.6 5-5.4 8-5.4S15.4 6.4 18 10c-2.6 3.6-5 5.4-8 5.4S4.6 13.6 2 10Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="10" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M4.5 4.5 15.5 15.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}

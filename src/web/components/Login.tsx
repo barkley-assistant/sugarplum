@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { S } from "../strings";
 import { navigate, safeNext } from "../router";
+import { EyeIcon, EyeOffIcon, IconButton } from "./IconButton";
 import { AuthSkeleton } from "./Skeletons";
 
 /** In-SPA login view (the /login route). Renders the same form it always
@@ -15,6 +16,10 @@ export function LoginView() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** #120: the password field's reveal toggle. Purely presentational — the
+   *  submitted value, the autofill attributes and the auth path are
+   *  untouched; only the input's `type` follows it. */
+  const [reveal, setReveal] = useState(false);
   const [authCheck, setAuthCheck] = useState<"checking" | "anonymous">("checking");
 
   useEffect(() => {
@@ -93,14 +98,24 @@ export function LoginView() {
         />
 
         <label htmlFor="password">{S.auth.password}</label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <div className="password-field">
+          <input
+            id="password"
+            type={reveal ? "text" : "password"}
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <IconButton
+            className="password-reveal"
+            label={reveal ? S.auth.hidePassword : S.auth.revealPassword}
+            aria-pressed={reveal}
+            onClick={() => setReveal((v) => !v)}
+          >
+            {reveal ? <EyeOffIcon /> : <EyeIcon />}
+          </IconButton>
+        </div>
 
         {error && <p className="error" role="alert">{error}</p>}
 

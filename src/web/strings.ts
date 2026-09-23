@@ -15,6 +15,11 @@ export const S = {
     signingIn: "Signing in…",
     username: "Username",
     password: "Password",
+    /** #120: the login password field's reveal control. The accessible name
+     *  changes with the state; the field itself keeps S.auth.password as its
+     *  only label. Named for reuse by the settings password fields later. */
+    revealPassword: "Show password",
+    hidePassword: "Hide password",
     signOut: "Log out",
     invalidCredentials: "Invalid username or password.",
     signInFailed: "Sign-in failed.",
