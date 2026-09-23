@@ -1074,7 +1074,14 @@ test("6: tag filter shows only matching items and preserves order", async ({ pag
   expect(plain.status()).toBe(201);
   await page.reload();
 
+  // reload() resolves on the load event; the SPA then boots (/api/auth/me +
+  // the wishlist fetch) and commits the feed afterwards, so a bare read here
+  // races that render and can come back [] on a slow runner — the exact flake
+  // CI hit at the `toContain("Birthday candle")` below. Pin both seeded rows
+  // first; only then is reading the feed titles meaningful.
   const titles = page.locator(".item-card .item-title");
+  await expect(page.locator(".item-card", { hasText: "Birthday candle" })).toHaveCount(1);
+  await expect(page.locator(".item-card", { hasText: "Plain notebook" })).toHaveCount(1);
   const before = await titles.allTextContents();
   expect(before).toContain("Birthday candle");
   expect(before).toContain("Plain notebook");
@@ -1111,6 +1118,12 @@ test("6c: back from an item page preserves the tag filter and scroll position", 
   });
   expect(tagged.status()).toBe(201);
   await page.reload();
+
+  // Same post-reload boot race as spec 6: the feed must be ON SCREEN before
+  // the scroll half below means anything — scrolling a document that has not
+  // rendered yet is a no-op, so scrollY would read 0 and the assertion two
+  // lines down would fail. Wait for this spec's own tagged seed to land.
+  await expect(page.getByRole("button", { name: "Context probe", exact: true })).toBeVisible();
 
   // Scroll half: the position survives the round trip, with no document load.
   const docLoads = await loads(page);
@@ -2658,6 +2671,9 @@ test("18: currency select matches input metrics and keeps a chevron (#74)", asyn
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ colorScheme: "dark" });
   await page.goto(`${BASE}/items/${item.id}/edit`);
+  // The edit page boots after the navigation resolves — wait for the form
+  // before probing it, or the querySelector below runs on a skeleton.
+  await expect(page.getByLabel("Currency")).toBeVisible();
   const darkChevron = await page.evaluate(() => {
     const select = document.getElementById("item-currency");
     if (!select) throw new Error("currency select missing");
@@ -2671,7 +2687,6 @@ test("18: currency select matches input metrics and keeps a chevron (#74)", asyn
   // focus is retained throughout. On a real desktop ArrowDown opens the popup
   // and the same key lands on the next option either way — the VALUE contract
   // is the portable assertion.
-  await expect(page.getByLabel("Currency")).toBeVisible();
   await page.getByLabel("Currency").focus();
   await expect(page.getByLabel("Currency")).toBeFocused();
   await page.keyboard.press("ArrowDown");
@@ -3775,6 +3790,10 @@ test("26: row overflow menu floats above the list at desktop widths (#89)", asyn
   }
   await page.reload();
 
+  // reload() resolves before the SPA has booted, so wait for the feed to be on
+  // screen before reading it — the count/getAttribute reads below are raw.
+  await expect(page.locator(".item-card").nth(1)).toBeVisible();
+
   // The open row needs a FOLLOWING sibling row: that is where the pre-fix
   // "steal band" came from (the next row's z-1 action cluster ties on z with
   // the open row's and wins on DOM order, painting over the popover's right
@@ -3857,6 +3876,9 @@ test("26: row overflow menu floats above the list at desktop widths (#89)", asyn
   try {
     const anonPage = await anon.newPage();
     await anonPage.goto(`${BASE}/share/${shareToken}`);
+    // The share view fetches its rows after the navigation resolves; wait for
+    // the first row before reading its id off the DOM.
+    await expect(anonPage.locator(".item-card").first()).toBeVisible();
     const anonRowId = await anonPage.locator(".item-card").first().getAttribute("data-item-id");
     expect(anonRowId, "share row carries its id").toBeTruthy();
     await triggerOf(anonPage, anonRowId!).click();
