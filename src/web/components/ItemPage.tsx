@@ -265,7 +265,10 @@ export function ItemPage({ id }: { id: string }) {
     >
       <div className="item-page" data-item-id={item.id}>
         {/* #125: the context row every non-feed page carries — which list this
-            item belongs to, and the way to another one. */}
+            item belongs to, and the way to another one. #161: its separation
+            from .detail-scroll is owned by .item-page's `gap: var(--context-gap)`
+            (styles.css), NOT by a margin here — the two blocks live in
+            different flex containers, so a local margin would stack. */}
         <ListContextBar me={me} />
 
         <div className="detail-scroll">

@@ -67,6 +67,7 @@
      --section-pad   the vertical padding INSIDE a section card
      --row-gap / --row-pad-y / --row-pad-x   compact feed-row system
      --empty-pad-y / --empty-pad-x           empty-state block
+     --page-gap / --context-gap         page stack + the context-bar boundary
      Sub-grid literals stay literal by design (2px grid gaps, 10px
      --row-pad-y, 6px --topbar-pad-y, 14px .detail-card padding): they are
      fine-tuning below the 4px step, not rhythm violations. */
@@ -185,6 +186,17 @@
      toggles ~40px so the Preferences card clears the 390px fold. */
   --section-gap: var(--sp-4);
   --section-pad: var(--sp-4);
+  /* #161: the PAGE layer's rhythm — one gap between a page's direct children
+     (heading → context bar → content wrapper), and the named value for the
+     context-bar → page-content boundary the detail pages' two layout owners
+     left unruled. Aliases over the primitive scale, in the radius map's
+     idiom: a feature rule consumes the layer token, never --sp-4 directly,
+     so the boundary's meaning ("the page layer, not a card layer") is
+     visible at every call site. The desktop block at the end of this file
+     re-declares both at >=1024px; every consumer follows without carrying
+     its own media query. */
+  --page-gap: var(--sp-4);
+  --context-gap: var(--page-gap);
   --ease-ui: 120ms ease;
 
   --safe-top: env(safe-area-inset-top);
@@ -248,5 +260,20 @@
     --delta-down-chip: #1A231E;
     --delta-up: var(--text-2);
     --delta-up-chip: var(--surface-2);
+  }
+}
+
+/* ---------- Tokens: desktop page rhythm (#161) ----------
+   One deliberate step up for the page layer at >=1024px, where the content
+   column is 1028px wide and the 16px phone rhythm reads as tight. Values only:
+   no rule below carries a breakpoint, and no rule below carries a literal.
+   The dark block above is theme-scoped and untouched; this one is
+   width-scoped and re-declares the two #161 tokens in the same shape so the
+   alias chain stays legible without following a var() through a media
+   query. */
+@media (min-width: 1024px) {
+  :root {
+    --page-gap: var(--sp-5);
+    --context-gap: var(--page-gap);
   }
 }

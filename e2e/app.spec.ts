@@ -6012,3 +6012,188 @@ test("41: #117 — offline writes are framed as offline, never as a plain failur
     await context.setOffline(false);
   }
 });
+
+test("42: #161 — page spacing rhythm: the context-to-content boundary and the page layer", async ({ page }) => {
+  // #161: on the item page the compact context bar and the content below it are
+  // children of DIFFERENT flex containers — `.item-page` holds the bar,
+  // `.detail-scroll` holds the hero — so neither owner's `gap` governed the
+  // boundary between them and it measured 0px at EVERY width (not desktop-only,
+  // as the issue framed it): the selector and the hero read as one block.
+  //
+  // The fix is one page-layer token (--page-gap, aliased by --context-gap)
+  // consumed by every page stack: 16px, and one deliberate 24px step at
+  // >=1024px. This test pins the boundary and the page-layer rhythm with
+  // computed styles + boxes (the #21/#126 idiom) — a screenshot cannot go red,
+  // geometry can.
+
+  // The serial chain seeds "History probe" in 4b. When this test runs alone
+  // (the filtered RED/GREEN runs) seed the same shape, so the assertions below
+  // measure the layout rather than a missing fixture (the test 21 idiom).
+  const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as {
+    id: string;
+    showUserManagement: boolean;
+  };
+  const list = (await (await page.request.get(`${BASE}/api/users/${me.id}/wishlist`)).json()) as Array<{ id: string; title: string }>;
+  let probe = list.find((item) => item.title === "History probe");
+  if (!probe) {
+    const created = await page.request.post(`${BASE}/api/wishlist/items`, {
+      data: { title: "History probe", priceCents: "12.50", currency: "GBP" },
+    });
+    expect(created.status()).toBe(201);
+    probe = { id: ((await created.json()) as { id: string }).id, title: "History probe" };
+  }
+  const itemPath = `/items/${probe.id}`;
+
+  // #98: the two admin screens sit behind the user-management opt-in. Flip it
+  // through the API (the test 9/21/37 idiom), sweep, hand it back.
+  const uiOn = await page.request.put(`${BASE}/api/auth/me/settings`, {
+    data: { showUserManagement: true },
+  });
+  expect(uiOn.status()).toBe(200);
+
+  // The two rects in ONE frame: the bar's bottom and the first content block's
+  // top, plus the page owner's computed gap.
+  const boundary = () =>
+    page.evaluate(() => {
+      const bar = document.querySelector(".list-switcher--compact");
+      const hero = document.querySelector(".detail-scroll > .detail-hero");
+      const owner = document.querySelector(".item-page");
+      if (!bar || !hero || !owner) return null;
+      return {
+        gap: hero.getBoundingClientRect().top - bar.getBoundingClientRect().bottom,
+        ownerGap: getComputedStyle(owner).gap,
+      };
+    });
+
+  // Every in-scope authenticated surface and the element whose `gap` IS its
+  // page stack (the settings family has no page wrapper: PageHeader,
+  // ListContextBar and the stack are direct children of `.app-main`).
+  const routes = [
+    { path: itemPath, owner: ".item-page", formTitle: false },
+    { path: `${itemPath}/edit`, owner: ".add-page", formTitle: true },
+    { path: "/add", owner: ".add-page", formTitle: true },
+    { path: "/settings", owner: ".app-main", formTitle: false },
+    { path: "/settings/users", owner: ".app-main", formTitle: false },
+    { path: "/settings/users/new", owner: ".app-main", formTitle: false },
+  ];
+
+  try {
+    // --- A. The boundary, every width, both schemes. It is never flush.
+    for (const width of [360, 390, 430, 768, 1024, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      for (const scheme of ["light", "dark"] as const) {
+        await page.emulateMedia({ colorScheme: scheme });
+        await page.goto(`${BASE}${itemPath}`);
+        await expect(page.locator(".item-page")).toBeVisible();
+
+        const measured = await boundary();
+        expect(measured, `${scheme} @${width}: the boundary probe found its elements`).not.toBeNull();
+        // 0.5px of sub-pixel rounding is allowed; 0 is not.
+        expect(
+          measured!.gap,
+          `${scheme} @${width}: the context bar is separated from the content below it`,
+        ).toBeGreaterThanOrEqual(15);
+        // The boundary follows the token, so a width-dependent regression (a
+        // desktop-only rule, or a token that stopped stepping) is caught too.
+        expect(
+          measured!.ownerGap,
+          `${scheme} @${width}: .item-page's gap reads the page-layer token`,
+        ).toBe(width >= 1024 ? "24px" : "16px");
+      }
+    }
+
+    // --- B. One page layer at desktop: every page stack reads the SAME token,
+    // and no local margin stacks on it (the 18.4px / 32px outliers #161 removed).
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.setViewportSize({ width: 1280, height: 900 });
+    for (const route of routes) {
+      await page.goto(`${BASE}${route.path}`);
+      const owner = page.locator(route.owner).first();
+      await expect(owner, `${route.path}: ${route.owner} is on screen`).toBeVisible();
+
+      const layer = await page.evaluate((sel) => {
+        const el = document.querySelector(sel)!;
+        const head = document.querySelector(".settings-screen-head");
+        return {
+          gap: getComputedStyle(el).gap,
+          // A page title that is a DIRECT child of the page stack must take its
+          // rhythm from the stack's gap, never from the global reset's 0.4rem.
+          titleMargins: Array.from(el.children)
+            .filter((child) => child.classList.contains("page-title"))
+            .map((child) => getComputedStyle(child).marginBottom),
+          headMargin: head ? getComputedStyle(head).marginBottom : null,
+        };
+      }, route.owner);
+
+      expect(layer.gap, `${route.path}: ${route.owner} reads the page-layer token`).toBe("24px");
+      if (route.formTitle) {
+        // Non-vacuous: the pinned title is actually in the stack.
+        await expect(
+          page.locator(".add-page > .page-title--form"),
+          `${route.path}: the form page title is a direct child of the page stack`,
+        ).toHaveCount(1);
+      }
+      expect(
+        layer.titleMargins,
+        `${route.path}: no page-title margin stacks on the page gap`,
+      ).toEqual(layer.titleMargins.map(() => "0px"));
+      expect(
+        layer.headMargin ?? "0px",
+        `${route.path}: no screen-head margin doubles the page gap`,
+      ).toBe("0px");
+
+      // The #162 width contract, re-asserted here because this change widens
+      // the page's vertical rhythm.
+      const overflow = await horizontalEscapes(page);
+      expect(overflow.docOverflow, `${route.path}: no horizontal overflow`).toBe(false);
+      expect(overflow.offenders, `${route.path}: no escapes`).toEqual([]);
+    }
+
+    // --- C. Mobile lock: the same page layer on the phone step (16px), and the
+    // boundary is still separated. The whole point of the token is that no rule
+    // carries a breakpoint, so this is the regression guard for that claim.
+    for (const width of [360, 390, 430]) {
+      await page.setViewportSize({ width, height: 844 });
+      for (const route of routes) {
+        await page.goto(`${BASE}${route.path}`);
+        const ownerGap = await page
+          .locator(route.owner)
+          .first()
+          .evaluate((el) => getComputedStyle(el).gap);
+        expect(
+          ownerGap,
+          `@${width} ${route.path}: ${route.owner} stays on the 16px phone step`,
+        ).toBe("16px");
+      }
+      await page.goto(`${BASE}${itemPath}`);
+      const measured = await boundary();
+      expect(measured, `@${width}: the boundary probe found its elements`).not.toBeNull();
+      expect(
+        measured!.gap,
+        `@${width}: the context bar is separated from the content below it`,
+      ).toBeGreaterThanOrEqual(15);
+    }
+
+    // --- D. The feed's own title-to-count rhythm is untouched. The pin is
+    // scoped `.add-page > .page-title` precisely so the feed's h2 — inside
+    // .list-switcher's .list-heading, NOT a page stack — keeps the global
+    // reset's 0.4rem margin (the R4 mechanism).
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`${BASE}/`);
+    await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+    const feedTitleMargin = await page
+      .locator(".list-switcher .list-heading .page-title")
+      .evaluate((el) => getComputedStyle(el).marginBottom);
+    expect(
+      feedTitleMargin,
+      "the feed's title-to-count rhythm keeps its 6.4px margin",
+    ).toBe("6.4px");
+  } finally {
+    const uiOff = await page.request.put(`${BASE}/api/auth/me/settings`, {
+      data: { showUserManagement: me.showUserManagement },
+    });
+    expect(uiOff.status()).toBe(200);
+    // Leave the viewport desktop for any later assertions.
+    await page.setViewportSize({ width: 1280, height: 900 });
+  }
+});
