@@ -106,8 +106,10 @@ export function ItemForm({
           .filter(Boolean),
         cheaperUrl: cheaperUrl.trim(),
       });
-    } catch {
-      setError(S.errors.generic);
+    } catch (err) {
+      // #117: the page that made the request chose the message (it is the one
+      // holding the Response); the form just reports it.
+      setError(err instanceof Error ? err.message : S.errors.generic);
     } finally {
       setBusy(false);
     }

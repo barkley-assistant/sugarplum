@@ -285,6 +285,17 @@ export const S = {
     reorder: "Couldn't save the new order.",
     generic: "Something went wrong. Try again.",
   },
+  /** #117: the CONNECTION, not the request. A write that did not leave the
+   *  device is still reported as a failure — there is no queue and no retry —
+   *  so the copy says what happened and what it would take to fix it, instead
+   *  of naming an action the user cannot tell apart from a server error. */
+  offline: {
+    /** Every non-form write surface (delete, toggle, reorder, admin action). */
+    write: "You appear to be offline — this change was not saved.",
+    /** The form surfaces: "this change" is ambiguous while the user is
+     *  looking at a draft that is still on screen. */
+    form: "You appear to be offline — this item was not saved.",
+  },
   empty: {
     own: "Nothing saved yet.",
     ownHint: "Paste a product link to start your list.",

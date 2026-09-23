@@ -5,6 +5,7 @@ import { useBootMe } from "../use-boot-me";
 import { usePageFocus } from "../use-page-focus";
 import { useConfirm } from "../confirm";
 import { setPendingFocusItemId } from "../feed-handoff";
+import { classifyResponse, classifyWriteFailure } from "../net";
 import { AppShell } from "./AppShell";
 import { FormSkeleton } from "./Skeletons";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
@@ -54,12 +55,23 @@ export function AddPage({ search }: AddPageProps) {
     if (values.tags.length) payload.tags = values.tags;
     if (values.cheaperUrl) payload.cheaperUrl = values.cheaperUrl;
 
-    const res = await fetch("/api/wishlist/items", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error(S.errors.addItem);
+    let res: Response;
+    try {
+      res = await fetch("/api/wishlist/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      // #117: the form renders the message it is thrown, so the KIND is
+      // decided here, where the connection (or the failed request) is known.
+      const kind = classifyWriteFailure(err);
+      throw new Error(kind === "offline" ? S.offline.form : S.errors.addItem, { cause: err });
+    }
+    if (!res.ok) {
+      const kind = await classifyResponse(res);
+      throw new Error(kind === "offline" ? S.offline.form : S.errors.addItem);
+    }
     const created = (await res.json()) as { id: string };
     // #62 D8: hand the feed the new row so it scrolls it into view — this
     // page cannot scroll a feed that is not mounted.
