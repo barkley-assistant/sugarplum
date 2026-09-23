@@ -5,8 +5,8 @@ import { useToast } from "../toast";
 import { useAdminBoot } from "../use-admin-boot";
 import { usePageFocus } from "../use-page-focus";
 import { AppShell, PageHeader } from "./AppShell";
+import { ListContextBar } from "./ListContextBar";
 import { SettingsSkeleton } from "./Skeletons";
-import { SettingsUserMenu } from "./SettingsUserMenu";
 
 /** /settings/users/new (#96): the create-user form, moved off the Account
  *  screen verbatim (same .item-form / .field-row markup and #new-* input ids,
@@ -62,11 +62,10 @@ export function SettingsUserNewPage() {
   if (!boot.me.isAdmin || !boot.me.showUserManagement) return <SettingsSkeleton />;
 
   return (
-    <AppShell
-      brandHref="/"
-      headerRight={<SettingsUserMenu displayName={boot.me.displayName || boot.me.username} />}
-    >
+    <AppShell me={boot.me} brandHref="/">
       <PageHeader title={S.settings.titleNewUser} headingRef={headingRef} variant="form" />
+      {/* #125: same header, same context row as every other authed page. */}
+      <ListContextBar me={boot.me} />
 
       <div className="settings-screen-head">
         <button type="button" className="back-link" onClick={() => navigate("/settings/users")}>

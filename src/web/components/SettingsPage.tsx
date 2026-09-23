@@ -8,8 +8,8 @@ import { useBootMe } from "../use-boot-me";
 import { usePageFocus } from "../use-page-focus";
 import { AppShell, PageHeader } from "./AppShell";
 import { ChevronRightIcon } from "./IconButton";
+import { ListContextBar } from "./ListContextBar";
 import { SettingsSkeleton } from "./Skeletons";
-import { SettingsUserMenu } from "./SettingsUserMenu";
 import { ToggleSwitch } from "./ToggleSwitch";
 
 /** /settings (#96): the Account & Preferences screen — display name, password
@@ -131,11 +131,12 @@ export function SettingsPage() {
   const displayName = displayNameDraft ?? me.displayName;
 
   return (
-    <AppShell
-      brandHref="/"
-      headerRight={<SettingsUserMenu displayName={me.displayName || me.username} />}
-    >
+    <AppShell me={me} brandHref="/">
       <PageHeader title={S.settings.titleAccount} headingRef={headingRef} variant="form" />
+      {/* #125: the settings screens carry the same header as every other
+          authenticated page. The context bar sits under the page heading so
+          the heading ladder (brand h1 → screen h2 → sections h3) holds. */}
+      <ListContextBar me={me} />
 
       <div className="settings-stack">
         <section className="settings-section" aria-label={S.settings.account}>

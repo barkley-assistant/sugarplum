@@ -447,14 +447,13 @@ label {
 
 /* #116: on every non-feed page the lockup IS the back affordance (aria-label
    "Back to list"), and 28px is the app's shortest real target. A grown box is
-   not free there: the topbar is min-height-driven and only four routes carry a
-   54px sibling (.topbar-right), so /add, /items/:id, /items/:id/edit and
-   /share/:token render 52px and a 44px lockup box pushed them to 57px
-   (measured). A padded hit overlay gives the same 44px target (28 + 2x8) with
-   the topbar height byte-identical on every route, and taps land on the lockup
-   itself. The overlay stays inside the bar's own padding band (brand top
-   11.5 -> 3.5, bottom 39.5 -> 47.5 of the 52px bar), so it steals no taps from
-   the page below. */
+   not free there: the topbar is min-height-driven, so a 44px lockup box pushed
+   the bar taller than the routes that already carry a right-hand cluster
+   (measured 57px where the cluster routes render 66px). A padded hit overlay
+   gives the same 44px target (28 + 2x8) with the lockup box byte-identical on
+   every route, and taps land on the lockup itself. The overlay stays inside
+   the bar's own padding band (brand top 19 -> 11, bottom 47 -> 55 of the 66px
+   authed bar), so it steals no taps from the page below. */
 .brand::after {
   content: "";
   position: absolute;
@@ -2338,6 +2337,19 @@ button.row-open:hover {
   gap: var(--sp-1);
 }
 
+/* #125: `.topbar-actions` is desktop-only chrome — under 640px the same
+   actions live on the bottom bar. React gates it on a matchMedia state, which
+   flips a frame AFTER the viewport does, so a resize to a phone width would
+   paint the full desktop cluster (the item view's Back to list + Add + Share
+   is ~276px) inside a 360px bar for one frame and overflow the document.
+   A media query lands in the same layout pass as the resize, so the transient
+   frame cannot escape. */
+@media (max-width: 639px) {
+  .topbar-actions {
+    display: none;
+  }
+}
+
 /* ---------- List layout: single fluid column ---------- */
 .list-layout {
   display: flex;
@@ -3088,4 +3100,41 @@ button.row-open:hover {
   #root:has(.action-bar) .toast-host {
     bottom: calc(var(--sp-4) + var(--action-bar-h) + var(--safe-bottom));
   }
+}
+
+/* ============================================================
+   #125 — one header on every authenticated page
+   AppShell renders the same identity cluster (Back to list where it applies,
+   Add, Share, avatar) on every authed route, and every non-feed page carries
+   the compact context bar as the first row of its content column.
+   ============================================================ */
+
+/* The item view's way back to the feed: the feed's Reorder grammar
+   (button.secondary + the compact-action family), as the LEAD chip of the
+   actions cluster. min-height restates the app-wide 44px floor for the
+   topbar context — the Reorder sizing lives under .list-heading-action and
+   does not reach here. */
+.topbar-back {
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  margin-inline-end: var(--sp-1);
+}
+
+/* The compact list-switcher bar. One row — whose list, and how many items —
+   at the page scale (--page-title--form) rather than the feed's display
+   scale, so it reads as a context row under the page's own title. Declared
+   after the feed's `.list-switcher .list-heading` rules on purpose: same
+   specificity, source order decides. */
+.list-switcher--compact .list-heading {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: var(--sp-1) var(--sp-3);
+}
+
+.list-switcher--compact .page-title {
+  margin: 0;
 }

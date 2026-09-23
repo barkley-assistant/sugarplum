@@ -6,8 +6,8 @@ import { useAdminBoot } from "../use-admin-boot";
 import { usePageFocus } from "../use-page-focus";
 import { AdminPanel } from "./AdminPanel";
 import { AppShell, PageHeader } from "./AppShell";
+import { ListContextBar } from "./ListContextBar";
 import { SettingsSkeleton } from "./Skeletons";
-import { SettingsUserMenu } from "./SettingsUserMenu";
 
 /** /settings/users (#96): the admin user-management table. Admins only, and
  *  since #98 only when they have opted into user management (default off) —
@@ -59,11 +59,10 @@ export function SettingsUsersPage() {
   if (!boot.me.isAdmin || !boot.me.showUserManagement) return <SettingsSkeleton />;
 
   return (
-    <AppShell
-      brandHref="/"
-      headerRight={<SettingsUserMenu displayName={boot.me.displayName || boot.me.username} />}
-    >
+    <AppShell me={boot.me} brandHref="/">
       <PageHeader title={S.settings.titleUsers} headingRef={headingRef} variant="form" />
+      {/* #125: same header, same context row as every other authed page. */}
+      <ListContextBar me={boot.me} />
 
       <div className="settings-screen-head">
         <button type="button" className="back-link" onClick={() => navigate("/settings")}>

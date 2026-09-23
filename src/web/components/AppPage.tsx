@@ -10,18 +10,16 @@ import { useToast } from "../toast";
 import { useDragReorder } from "../reorder";
 import { parseShareTarget } from "../format";
 import { navigate } from "../router";
-import { useMedia } from "../use-media";
 import {
   clearPendingFocusItemId,
   peekPendingFocusItemId,
   saveFeedSnapshot,
   takeFeedSnapshot,
+  takeFeedViewingHandoff,
   trackFeedScroll,
   trackedFeedScrollY,
 } from "../feed-handoff";
-import { useInstallPrompt } from "../pwa/install";
 import {
-  clearStoredIdentity,
   readStoredMe,
   readStoredSummary,
   writeStoredMe,
@@ -30,12 +28,9 @@ import {
 import { EmptyState } from "./EmptyState";
 import { FilterChips } from "./FilterChips";
 import { ItemList, type OwnerRef } from "./ItemList";
-import { ShareMenu } from "./ShareMenu";
 import { GuestItemDetailSheet, type GuestItemDetail } from "./GuestItemDetailSheet";
 import { AppShell, AppShellLoading } from "./AppShell";
-import { IconButton, PlusIcon, ShareIcon } from "./IconButton";
 import { ListSwitcher } from "./ListSwitcher";
-import { UserMenu } from "./UserMenu";
 
 export function AppPage() {
   const [me, setMe] = useState<Me | null>(null);
@@ -43,7 +38,6 @@ export function AppPage() {
   const [ownItems, setOwnItems] = useState<OwnedItem[]>([]);
   const [viewing, setViewing] = useState<string | null>(null);
   const [otherItems, setOtherItems] = useState<PublicItem[]>([]);
-  const [shareOpen, setShareOpen] = useState(false);
   const [booted, setBooted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -51,7 +45,6 @@ export function AppPage() {
   const [guestItemId, setGuestItemId] = useState<string | null>(null);
   const [reordering, setReordering] = useState(false);
   const reorderToggleRef = useRef<HTMLButtonElement | null>(null);
-  const shareTriggerRef = useRef<HTMLButtonElement | null>(null);
   /** #62 D8: scroll position handed back from feed-handoff, applied after the
    *  restored rows commit (the list must exist before scrollTo can stick). */
   const handoffScrollRef = useRef<number | null>(null);
@@ -60,11 +53,6 @@ export function AppPage() {
   const pendingPollStartRef = useRef<number | null>(null);
   const toast = useToast();
   const reorder = useDragReorder(ownItems, onReorder);
-  const install = useInstallPrompt();
-  /** #73: one action cluster per width. Desktop keeps the header cluster;
-   *  mobile moves Add/Share to the bottom bar and drops the avatar-menu
-   *  Settings entry (the bar owns that destination). */
-  const isDesktop = useMedia("(min-width: 640px)");
 
   useEffect(() => {
     void boot();
@@ -150,6 +138,13 @@ export function AppPage() {
   }, [booted, ownItems]);
 
   async function boot() {
+    // #125: a list chosen from a SUBPAGE's switcher. Read once, at the top:
+    // the handoff is one-shot, and a boot that cannot honour it (share-target
+    // redirect, offline fallback) must still consume it rather than let it
+    // surprise a later boot. `undefined` means "no handoff"; `null` means
+    // "the signed-in user's own list" and overrides the snapshot's viewing
+    // user.
+    const viewingHandoff = takeFeedViewingHandoff();
     try {
       // Share-target seam: the server maps /add (the manifest action) to the
       // shell, so a share arrival normally renders AddPage directly. This
@@ -198,18 +193,31 @@ export function AppPage() {
       const snap = takeFeedSnapshot();
       if (snap && snap.meId === meBody.id) {
         setOwnItems(snap.ownItems);
-        setOtherItems(snap.otherItems);
         setSummary(snap.summary);
-        setViewing(snap.viewingUserId);
-        setActiveTag(snap.activeTag);
-        handoffScrollRef.current = snap.scrollY;
+        const viewingUser = viewingHandoff === undefined ? snap.viewingUserId : viewingHandoff;
+        setViewing(viewingUser);
+        // The snapshot's filter, scroll offset and rows belong to the list
+        // that was on screen. A handoff that lands on a DIFFERENT list starts
+        // it at the top: restoring the old offset would open the new list at
+        // a clamped arbitrary position, and its rows would be the wrong
+        // list's rows under the new heading (plan D4).
+        if (viewingUser === snap.viewingUserId) {
+          setActiveTag(snap.activeTag);
+          handoffScrollRef.current = snap.scrollY;
+          setOtherItems(snap.otherItems);
+        }
         setBooted(true); // data is on screen: no skeleton flash
         void Promise.all([refreshSummary(meBody.id), refreshOwnList(meBody.id)]);
+        // Revalidate the other user's list only when a handoff put it on
+        // screen. A plain snapshot restore is the feed the user left, rows
+        // and all — plan D4 invokes viewList for the handoff case only.
+        if (viewingHandoff !== undefined && viewingUser !== null) void viewList(viewingUser);
         return;
       }
 
       await Promise.all([refreshSummary(), refreshOwnList(meBody.id)]);
       setBooted(true);
+      if (viewingHandoff) void viewList(viewingHandoff);
     } catch {
       const stored = readStoredMe();
       if (!stored) {
@@ -413,16 +421,6 @@ export function AppPage() {
     await refreshSummary();
   }
 
-  async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    clearStoredIdentity();
-    navigate("/login");
-  }
-
-  function goToSettings() {
-    navigate("/settings");
-  }
-
   if (error && !me) {
     return (
       <main className="auth-page">
@@ -434,7 +432,10 @@ export function AppPage() {
   }
 
   if (!booted || !me) {
-    return <AppShellLoading />;
+    // #125 C.3: seed the boot shell with the cached identity so the header
+    // does not morph (52 → 66px) when /api/auth/me answers. The guest share
+    // boot does not pass it — anonymous stays anonymous.
+    return <AppShellLoading me={readStoredMe()} />;
   }
 
   const ownRef: OwnerRef = { id: me.id, displayName: me.displayName || me.username };
@@ -531,55 +532,17 @@ export function AppPage() {
     );
   }
 
+  /** #125: the feed keeps its own rules about WHICH actions apply — Add and
+   *  Share only while the own list is on screen and non-empty (the issue
+   *  freezes the feed) — but the cluster itself is the shared one every other
+   *  page now renders. */
   const showOwnerActions = !viewing && ownItems.length > 0;
-  /** Desktop header cluster — mobile gets the same actions in the bottom bar
-   *  instead (#73 D4: exactly one cluster is in the DOM at any width). */
-  const ownerActions = showOwnerActions && isDesktop ? (
-    <>
-      <IconButton variant="ghost" label={S.list.addItem} onClick={() => navigate("/add")}>
-        <PlusIcon />
-      </IconButton>
-      <div className="share-anchor">
-        <IconButton
-          ref={shareTriggerRef}
-          variant="ghost"
-          label={S.share.shareList}
-          onClick={() => setShareOpen((v) => !v)}
-          aria-expanded={shareOpen}
-          aria-haspopup="dialog"
-        >
-          <ShareIcon />
-        </IconButton>
-        <ShareMenu open={shareOpen} onClose={() => setShareOpen(false)} triggerRef={shareTriggerRef} />
-      </div>
-    </>
-  ) : null;
-
-  const userMenu = (
-    <UserMenu
-      displayName={me.displayName || me.username}
-      onLogout={logout}
-      onSettings={isDesktop ? goToSettings : undefined}
-      extra={
-        install.canInstall ? (
-          <button
-            type="button"
-            className="menu-item"
-            role="menuitem"
-            onClick={install.promptInstall}
-          >
-            {S.pwa.install}
-          </button>
-        ) : undefined
-      }
-    />
-  );
 
   return (
     <AppShell
       refreshing={refreshing}
-      headerActions={ownerActions}
-      headerRight={userMenu}
+      me={me}
+      hideHeaderActions={!showOwnerActions}
     >
       {error && <p className="error" role="alert">{error}</p>}
 
