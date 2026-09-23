@@ -1,0 +1,265 @@
+{
+  "issue": "barkley-assistant/sugarplum#129",
+  "captured_utc": "2026-09-23T00:39:18Z",
+  "before": "main 751feec (after PR #150 merged)",
+  "after": "fix/add-page-mobile b1aaf03",
+  "captures": "360/390/430/768/1280 x light+dark x {feed, /add pristine, /add draft collapsed, /add draft expanded}, both sides against the same seeded temp DB; viewport screenshots (the fixed bottom bar is in frame)",
+  "viewports": "390x844 mobile, 1280x900 desktop",
+  "note": "box edges are CSS px viewport coordinates: {top,bottom,w}",
+  "elements_reading_exactly_Add_item_on_add": {
+    "before": [
+      "h1.page-title",
+      "button.primary.add-submit",
+      "span.action-bar-label (the bar's Add tab)"
+    ],
+    "after": [
+      "h1.page-title",
+      "button.primary.add-submit"
+    ]
+  },
+  "geometry": {
+    "390 pristine": {
+      "before": {
+        "submit": {
+          "top": 262,
+          "bottom": 310,
+          "w": 358
+        },
+        "discard": null,
+        "error": null,
+        "disclose": {
+          "top": 322,
+          "bottom": 366,
+          "w": 358
+        },
+        "manual": null,
+        "cluster": null,
+        "barTop": 787,
+        "addItemTextEls": [
+          "H1.page-title page-title--form",
+          "BUTTON.primary add-submit",
+          "SPAN.action-bar-label"
+        ],
+        "scrollHeight": 844,
+        "docOverflow": false
+      },
+      "after": {
+        "submit": {
+          "top": 262,
+          "bottom": 310,
+          "w": 358
+        },
+        "discard": null,
+        "error": null,
+        "disclose": {
+          "top": 322,
+          "bottom": 366,
+          "w": 358
+        },
+        "manual": null,
+        "cluster": {
+          "top": 254,
+          "bottom": 310,
+          "w": 358
+        },
+        "barTop": 787,
+        "addItemTextEls": [
+          "H1.page-title page-title--form",
+          "BUTTON.primary add-submit"
+        ],
+        "scrollHeight": 844,
+        "docOverflow": false
+      }
+    },
+    "390 draft collapsed": {
+      "before": {
+        "submit": {
+          "top": 262,
+          "bottom": 310,
+          "w": 358
+        },
+        "discard": {
+          "top": 378,
+          "bottom": 422,
+          "w": 88
+        },
+        "error": null,
+        "disclose": {
+          "top": 322,
+          "bottom": 366,
+          "w": 358
+        },
+        "manual": null,
+        "cluster": null,
+        "barTop": 787,
+        "addItemTextEls": [
+          "H1.page-title page-title--form",
+          "BUTTON.primary add-submit",
+          "SPAN.action-bar-label"
+        ],
+        "scrollHeight": 844,
+        "docOverflow": false
+      },
+      "after": {
+        "submit": {
+          "top": 262,
+          "bottom": 310,
+          "w": 358
+        },
+        "discard": {
+          "top": 318,
+          "bottom": 362,
+          "w": 358
+        },
+        "error": null,
+        "disclose": {
+          "top": 374,
+          "bottom": 418,
+          "w": 358
+        },
+        "manual": null,
+        "cluster": {
+          "top": 254,
+          "bottom": 362,
+          "w": 358
+        },
+        "barTop": 787,
+        "addItemTextEls": [
+          "H1.page-title page-title--form",
+          "BUTTON.primary add-submit"
+        ],
+        "scrollHeight": 844,
+        "docOverflow": false
+      }
+    },
+    "390 draft expanded": {
+      "before": {
+        "submit": {
+          "top": 262,
+          "bottom": 310,
+          "w": 358
+        },
+        "discard": {
+          "top": 861,
+          "bottom": 905,
+          "w": 88
+        },
+        "error": null,
+        "disclose": {
+          "top": 322,
+          "bottom": 366,
+          "w": 358
+        },
+        "manual": {
+          "top": 378,
+          "bottom": 849,
+          "w": 358
+        },
+        "cluster": null,
+        "barTop": 787,
+        "addItemTextEls": [
+          "H1.page-title page-title--form",
+          "BUTTON.primary add-submit",
+          "SPAN.action-bar-label"
+        ],
+        "scrollHeight": 977,
+        "docOverflow": false
+      },
+      "after": {
+        "submit": {
+          "top": 262,
+          "bottom": 310,
+          "w": 358
+        },
+        "discard": {
+          "top": 318,
+          "bottom": 362,
+          "w": 358
+        },
+        "error": null,
+        "disclose": {
+          "top": 374,
+          "bottom": 418,
+          "w": 358
+        },
+        "manual": {
+          "top": 430,
+          "bottom": 901,
+          "w": 358
+        },
+        "cluster": {
+          "top": 254,
+          "bottom": 362,
+          "w": 358
+        },
+        "barTop": 787,
+        "addItemTextEls": [
+          "H1.page-title page-title--form",
+          "BUTTON.primary add-submit"
+        ],
+        "scrollHeight": 973,
+        "docOverflow": false
+      }
+    },
+    "1280 draft (desktop)": {
+      "before": {
+        "submit": {
+          "top": 261,
+          "bottom": 309,
+          "w": 720
+        },
+        "discard": {
+          "top": 377,
+          "bottom": 421,
+          "w": 88
+        },
+        "error": null,
+        "disclose": {
+          "top": 321,
+          "bottom": 365,
+          "w": 720
+        },
+        "manual": null,
+        "cluster": null,
+        "barTop": null,
+        "addItemTextEls": [
+          "H1.page-title page-title--form",
+          "BUTTON.primary add-submit"
+        ],
+        "scrollHeight": 900,
+        "docOverflow": false
+      },
+      "after": {
+        "submit": {
+          "top": 261,
+          "bottom": 309,
+          "w": 720
+        },
+        "discard": {
+          "top": 317,
+          "bottom": 361,
+          "w": 720
+        },
+        "error": null,
+        "disclose": {
+          "top": 373,
+          "bottom": 417,
+          "w": 720
+        },
+        "manual": null,
+        "cluster": {
+          "top": 253,
+          "bottom": 361,
+          "w": 720
+        },
+        "barTop": null,
+        "addItemTextEls": [
+          "H1.page-title page-title--form",
+          "BUTTON.primary add-submit"
+        ],
+        "scrollHeight": 900,
+        "docOverflow": false
+      }
+    }
+  }
+}
