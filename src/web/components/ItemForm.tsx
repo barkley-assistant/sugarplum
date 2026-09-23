@@ -243,9 +243,17 @@ export function ItemForm({
       {urlField}
       {isAdd ? (
         <>
-          <button type="submit" className="primary add-submit" disabled={busy}>
-            {busy ? S.form.addSubmitBusy : submitLabel}
-          </button>
+          {/* #129: submit, its validation error, and the guarded #127 exit
+              form ONE cluster above the disclosure — the primary action and
+              the way off the page stay together instead of stranding the
+              exit at the bottom of a blank page. */}
+          <div className="add-actions">
+            <button type="submit" className="primary add-submit" disabled={busy}>
+              {busy ? S.form.addSubmitBusy : submitLabel}
+            </button>
+            {error && <p className="error" role="alert">{error}</p>}
+            {discardButton && <div className="form-actions">{discardButton}</div>}
+          </div>
           <button
             type="button"
             className="add-disclose"
@@ -265,8 +273,6 @@ export function ItemForm({
               {(url.trim() || cheaperUrl.trim()) && cheaperField}
             </div>
           )}
-          {error && <p className="error" role="alert">{error}</p>}
-          {discardButton && <div className="form-actions">{discardButton}</div>}
         </>
       ) : (
         <>

@@ -1517,6 +1517,23 @@ button.filter-chip {
   margin-top: var(--sp-2);
 }
 
+/* #129: the add form's action cluster — the submit, its validation error and
+   the guarded #127 exit group together ABOVE the disclosure, so no control
+   ever strands alone in the page's lower blank. Column flex inherits the
+   form's own rhythm; the tight --sp-2 gap is what reads as one group. */
+.add-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* #129: the guarded exit is a full-width quiet secondary — the same tap size
+   as the primary it groups with. The .form-actions row keeps edit-mode's
+   inline grammar; only the add cluster stacks. */
+.add-actions .form-actions .secondary {
+  width: 100%;
+}
+
 .add-disclose {
   display: flex;
   align-items: center;
