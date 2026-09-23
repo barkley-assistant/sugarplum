@@ -14,7 +14,7 @@ async function login(page: Page, username: string, password: string): Promise<vo
   await page.context().clearCookies();
   await page.goto(`${BASE}/login`);
   await page.getByLabel("Username").fill(username);
-  await page.getByLabel("Password").fill(password);
+  await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
 }
@@ -112,7 +112,7 @@ test("s4: login view: anonymous sees the form; authed user is bounced to app", a
     // The share-target ?next= carry-through still works in-SPA:
     await anonPage.goto(`${BASE}/login?next=%2Fsettings`);
     await anonPage.getByLabel("Username").fill("admin");
-    await anonPage.getByLabel("Password").fill("admin-password");
+    await anonPage.getByLabel("Password", { exact: true }).fill("admin-password");
     await anonPage.getByRole("button", { name: "Sign in" }).click();
     await expect(anonPage).toHaveURL(/\/settings$/);
     await expect(anonPage.getByRole("heading", { name: "Account & Preferences", level: 2 })).toBeVisible();
@@ -127,7 +127,7 @@ test("s5: 401 boot bounce lands on /login?next= without a document load", async 
   await expect(page).toHaveURL(/\/login\?next=/); // the bounce is in-document
   const before = await loads(page);
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin-password");
+  await page.getByLabel("Password", { exact: true }).fill("admin-password");
   await page.getByRole("button", { name: "Sign in" }).click();
   // #62: the add flow is a page at /add (it was a sheet in the feed).
   await expect(page).toHaveURL(/\/add\?/);

@@ -18,7 +18,7 @@ async function login(page: Page, username: string, password: string): Promise<vo
   await page.context().clearCookies();
   await page.goto(`${BASE}/login`);
   await page.getByLabel("Username").fill(username);
-  await page.getByLabel("Password").fill(password);
+  await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   // App shell appears once the session is established (heading = switcher).
   await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
@@ -2010,7 +2010,7 @@ test("14: share-target GET prefills the add page through the login hop", async (
   // drop the prefill onto /.
   await expect(page).toHaveURL(/\/login\?next=/);
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin-password");
+  await page.getByLabel("Password", { exact: true }).fill("admin-password");
   await page.getByRole("button", { name: "Sign in" }).click();
 
   // After sign-in we land back on /add (the page, not a sheet) with the
@@ -2026,7 +2026,7 @@ test("14: share-target GET prefills the add page through the login hop", async (
   await context.clearCookies();
   await page.goto(`${BASE}/login?next=${encodeURIComponent("//evil.example/x")}`);
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin-password");
+  await page.getByLabel("Password", { exact: true }).fill("admin-password");
   await page.getByRole("button", { name: "Sign in" }).click();
   // Pin the ORIGIN, not just a trailing slash: the off-site navigation
   // to a non-resolving host ends on chrome-error://chromewebdata/, whose
@@ -2043,7 +2043,7 @@ test("14: share-target GET prefills the add page through the login hop", async (
   // `/\evil.example/x` — URL-encoded as %2F%5Cevil.example%2Fx.
   await page.goto(`${BASE}/login?next=%2F%5Cevil.example%2Fx`);
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin-password");
+  await page.getByLabel("Password", { exact: true }).fill("admin-password");
   await page.getByRole("button", { name: "Sign in" }).click();
   // Pin the ORIGIN, not just a trailing slash: the off-site navigation
   // to a non-resolving host ends on chrome-error://chromewebdata/, whose
@@ -2527,7 +2527,7 @@ test("16: login card meets AA, fits 360px, and reports failures", async ({ page,
 
   // A failed sign-in is announced, not a silent no-op.
   await username.fill("admin");
-  await page.getByLabel("Password").fill("not-the-password");
+  await page.getByLabel("Password", { exact: true }).fill("not-the-password");
   await signIn.click();
   await expect(page.getByRole("alert")).toHaveText(/Invalid username or password|Too many attempts/);
   await expect(card).toBeVisible();
