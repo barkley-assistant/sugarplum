@@ -1277,6 +1277,13 @@ button.filter-chip {
   margin: var(--sp-2) 0;
 }
 
+/* #134: reorder mode's one quiet guard line, in the filter row's slot. */
+.reorder-hint {
+  margin: var(--sp-2) 0;
+  font-size: var(--text-sm);
+  color: var(--text-2);
+}
+
 /* Skeleton matches the feed shape: transparent rows, 56px thumb (tier-2 G2). */
 .skeleton-list {
   display: flex;
@@ -1667,6 +1674,24 @@ button.filter-chip {
 }
 
 .toast-close:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* #134: the toast's optional single action (the reorder Undo). Pushed right so
+   it groups with the dismiss button and the message keeps the left edge. */
+.toast-action {
+  margin-left: auto;
+  min-height: 44px;
+  padding: 0 var(--sp-2);
+  background: transparent;
+  border: none;
+  color: var(--share-accent);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.toast-action:hover {
   background: var(--surface-2);
   color: var(--text);
 }

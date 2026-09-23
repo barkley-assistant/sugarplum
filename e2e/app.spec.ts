@@ -1393,6 +1393,147 @@ test("5g: reduced motion — reorder stays instant and writes no transforms (#91
   await expect.poll(() => cardIds(page)).toEqual(expected);
 });
 
+test("5h: reorder persistence — no-op click, save + Undo, replacement, busy, failure (#134)", async ({ page, browser }) => {
+  // Three rows so this test stands on its own (the suite's list is longer by
+  // now, but the helpers below need a row with a neighbour above it).
+  for (const title of ["Reorder undo probe", "Reorder undo filler A", "Reorder undo filler B"]) {
+    const created = await page.request.post(`${BASE}/api/wishlist/items`, { data: { title } });
+    expect(created.status()).toBe(201);
+  }
+  await page.reload();
+
+  // Handles exist only inside reorder mode (5d pins that), so enter it first.
+  await page.getByRole("button", { name: "Reorder", exact: true }).click();
+  await expect(page.locator(".item-card.is-reordering").first()).toBeVisible();
+
+  // AC3: a click on a handle is a NO-OP. Pointer down and up on one spot (which
+  // is exactly what click() is) must issue no PUT and move nothing — this is
+  // the "one tap moved the last row to 2nd" bug class, pinned against the
+  // current machinery.
+  let puts = 0;
+  page.on("request", (r) => {
+    if (r.url().endsWith("/api/wishlist/order") && r.method() === "PUT") puts++;
+  });
+  const noopIndex = await lastVisibleIndex(page);
+  const beforeClick = await cardIds(page);
+  await page.locator(".item-list .drag-handle").nth(noopIndex).click();
+  await page.waitForTimeout(300);
+  expect(puts, "a no-op click issues no PUT").toBe(0);
+  expect(await cardIds(page), "a no-op click moves nothing").toEqual(beforeClick);
+
+  // AC4: reorder mode carries one quiet hint line where the filter row sits.
+  await expect(page.locator(".reorder-hint")).toHaveText(
+    "Drag to reorder. Changes save as you go.",
+  );
+  await expect(page.locator(".filter-row")).toHaveCount(0);
+
+  // AC1: one crossing drag live-saves and offers exactly one Undo.
+  const before = await cardIds(page);
+  const dragIndex = await lastVisibleIndex(page);
+  expect(dragIndex, "a fully visible row to grab").toBeGreaterThanOrEqual(1);
+  const expected = movedUpOne(before, dragIndex);
+  await liftAndDragUpOne(page, dragIndex);
+  await page.mouse.up();
+  await expect.poll(() => cardIds(page)).toEqual(expected);
+  await expect(page.locator(".toast")).toHaveCount(1);
+  await expect(page.locator(".toast")).toContainText("Order saved");
+  const undoButton = page.locator(".toast").getByRole("button", { name: "Undo", exact: true });
+  await expect(undoButton).toBeVisible();
+
+  // AC1 (round trip): Undo restores the prior order, dismisses the snackbar,
+  // and is not itself undoable — the reload then proves it persisted.
+  await undoButton.click();
+  await expect.poll(() => cardIds(page)).toEqual(before);
+  await expect(page.locator(".toast"), "the undo is silent — no redo snackbar").toHaveCount(0);
+  await page.reload();
+  await expect.poll(() => cardIds(page)).toEqual(before);
+
+  await page.getByRole("button", { name: "Reorder", exact: true }).click();
+  await expect(page.locator(".item-card.is-reordering").first()).toBeVisible();
+
+  // AC2: a second commit REPLACES the snackbar (keyed), so its Undo targets the
+  // order before the LATEST commit — not the drag that preceded it.
+  const dragBefore = await cardIds(page);
+  const replaceIndex = await lastVisibleIndex(page);
+  await liftAndDragUpOne(page, replaceIndex);
+  await page.mouse.up();
+  const afterDrag = movedUpOne(dragBefore, replaceIndex);
+  await expect.poll(() => cardIds(page)).toEqual(afterDrag);
+  await expect(page.locator(".toast")).toHaveCount(1);
+
+  const firstHandle = page.locator(".item-list .drag-handle").first();
+  await firstHandle.focus();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  const afterKeyboard = [afterDrag[1], afterDrag[0], ...afterDrag.slice(2)];
+  await expect.poll(() => cardIds(page)).toEqual(afterKeyboard);
+  await expect(
+    page.locator(".toast"),
+    "the keyboard commit replaced the snackbar instead of stacking one",
+  ).toHaveCount(1);
+  await page.locator(".toast").getByRole("button", { name: "Undo", exact: true }).click();
+  await expect
+    .poll(() => cardIds(page), { message: "Undo targets the order before the LATEST commit" })
+    .toEqual(afterDrag);
+
+  // AC4 (absence): the hint lives in reorder mode only.
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await expect(page.locator(".reorder-hint")).toHaveCount(0);
+  await expect(page.locator(".drag-handle:visible")).toHaveCount(0);
+
+  // AC5 + AC6 need a request stub, and the app's service worker respondWith()s
+  // every API call — a request the SW owns is invisible to page.route(). Both
+  // steps therefore run on a SW-free context, the same escape hatch the hints
+  // stub below documents.
+  const swFree = await browser.newContext({ serviceWorkers: "block" });
+  try {
+    const probe = await swFree.newPage();
+    await login(probe, "admin", "admin-password");
+    await probe.getByRole("button", { name: "Reorder", exact: true }).click();
+    await expect(probe.locator(".item-card.is-reordering").first()).toBeVisible();
+
+    // AC5: the toggle reports an in-flight commit without being disabled.
+    await probe.route("**/api/wishlist/order", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await route.continue();
+    });
+    const held = probe.waitForResponse(
+      (r) => r.url().endsWith("/api/wishlist/order") && r.request().method() === "PUT",
+    );
+    const busyIndex = await lastVisibleIndex(probe);
+    await liftAndDragUpOne(probe, busyIndex);
+    await probe.mouse.up();
+    const busy = probe.getByRole("button", { name: "Saving…", exact: true });
+    await expect(busy).toBeVisible();
+    await expect(busy).toHaveAttribute("aria-busy", "true");
+    await expect(busy, "busy is feedback, not a lock").toBeEnabled();
+    expect((await held).status()).toBe(200);
+    await expect(probe.getByRole("button", { name: "Done", exact: true })).toBeVisible();
+    await probe.unrouteAll();
+
+    // AC6: a stale undo (the server rejects the full list) fails honestly — the
+    // client keeps the order on screen and toasts the danger message.
+    const failBefore = await cardIds(probe);
+    const failIndex = await lastVisibleIndex(probe);
+    await liftAndDragUpOne(probe, failIndex);
+    await probe.mouse.up();
+    const failAfter = movedUpOne(failBefore, failIndex);
+    await expect.poll(() => cardIds(probe)).toEqual(failAfter);
+    await expect(probe.locator(".toast")).toHaveCount(1);
+
+    await probe.route("**/api/wishlist/order", (route) => route.fulfill({ status: 400 }));
+    await probe.locator(".toast").getByRole("button", { name: "Undo", exact: true }).click();
+    await expect(probe.locator(".toast.danger")).toContainText("Couldn't save the new order.");
+    expect(
+      await cardIds(probe),
+      "a failed undo leaves the committed order alone",
+    ).toEqual(failAfter);
+    await probe.unrouteAll();
+  } finally {
+    await swFree.close();
+  }
+});
+
 test("6b: heading switcher opens a sheet and switches lists", async ({ page, browser }) => {
   const created = await page.request.post(`${BASE}/api/users`, {
     data: { username: "switcher-probe", password: "probe-pass", displayName: "Probe" },

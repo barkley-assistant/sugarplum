@@ -30,6 +30,13 @@ export const S = {
     addItem: "Add item",
     reorder: "Reorder",
     doneReordering: "Done",
+    /** #134: the live-save confirmation, with its one Undo action. */
+    orderSaved: "Order saved",
+    undo: "Undo",
+    /** #134: shown on the Reorder/Done toggle while a commit PUT is in flight. */
+    saving: "Saving…",
+    /** #134: reorder mode's one-line guard — the filter row's slot. */
+    reorderHint: "Drag to reorder. Changes save as you go.",
     heading: (name: string) => `${name}'s wishlist`,
     itemCount: (n: number) => `${n} item${n === 1 ? "" : "s"}`,
     switcherLabel: "Switch wishlist",
