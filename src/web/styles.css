@@ -2984,27 +2984,6 @@ button.row-open:hover {
   white-space: nowrap;
 }
 
-/* ============================================================
-   #71 — Desktop reading column for the non-feed pages
-   The feed keeps the full 1060px .app-main column (issue: "the feed keeps
-   its refined media-list width"). The detail page and the add/edit forms
-   cap to a comfortable centered column at the app's existing 1024px
-   desktop boundary — one layout, one gate, one token. The boot skeletons
-   share the rules so the skeleton -> page swap never re-centers (no
-   layout shift on slow loads). Mobile and tablet (<1024px) are
-   untouched: every rule here is inside the gate.
-   ============================================================ */
-@media (min-width: 1024px) {
-  .item-page,
-  .add-page,
-  .skeleton-item,
-  .skeleton-form {
-    width: 100%;
-    max-width: var(--content-col-max);
-    margin-inline: auto;
-  }
-}
-
 /* ---------- Amethyst A10: dark link family ---------- */
 /* Plum-600 text links sat at 3.89:1 (on --surface-3) / 4.46:1 (on --bg) in
    dark — below AA. Dark links, the detail edit affordance and the row /

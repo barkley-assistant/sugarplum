@@ -165,11 +165,12 @@
      and 8.21:1 on dark (AA at row sizes). text-3 would be 2.46:1 — a fail. */
   --purchased-text: var(--text-2);
 
+  /* The ONE authenticated desktop content width. `.app-main` caps the shell
+     column; every page wrapper inside it fills that column (#162 removed the
+     route-specific 720px reading cap that competed with it). Add no
+     per-route max-width below this — assert shared widths in the e2e guard
+     instead (e2e/app.spec.ts, the desktop content-width contract test). */
   --app-main-max: 1060px;
-  /* #71: reading-measure cap for the non-feed pages (detail, add, edit) and
-     their boot skeletons. The feed keeps the full --app-main-max column;
-     this cap only applies >=1024px (styles.css "Desktop reading column"). */
-  --content-col-max: 720px;
 
   --ease-row: 120ms ease;
 
