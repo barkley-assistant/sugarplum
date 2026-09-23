@@ -2596,11 +2596,54 @@ test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ pa
     expect(chrome.btnBorder).toBe("none"); // NO button borders
     expect(chrome.btnBg).toBe("rgba(0, 0, 0, 0)"); // no fills
 
+    // #132: no painted pseudo-element on any bar item — the dot is gone.
+    for (const item of await bar.locator(".action-bar-item").all()) {
+      const after = await item.evaluate((el) => getComputedStyle(el, "::after").content);
+      expect(after, `#132: no dot / no ::after chrome @${width}px`).toBe("none");
+    }
+    // #132: the hairline reads as a divider — --border-2, not the 60% mix
+    // that measured 1.12:1 on --bg (the dark-scheme pin lives in test 23).
+    expect(chrome.barBorderTopColor, `hairline token @${width}px`).toBe("rgb(212, 212, 216)");
+    // #132: breathing room — >= 8px air above the icon, >= 8px below the label.
+    const air = await bar
+      .locator(".action-bar-item")
+      .first()
+      .evaluate((el) => {
+        const svg = el.querySelector("svg");
+        const label = el.querySelector(".action-bar-label");
+        if (!svg || !label) throw new Error("bar item parts missing");
+        const itemBox = el.getBoundingClientRect();
+        return {
+          above: svg.getBoundingClientRect().top - itemBox.top,
+          below: itemBox.bottom - label.getBoundingClientRect().bottom,
+        };
+      });
+    expect(air.above, `air above icon @${width}px`).toBeGreaterThanOrEqual(8);
+    expect(air.below, `air below label @${width}px`).toBeGreaterThanOrEqual(8);
+
     // 44px+ touch targets on a full-width bar.
     for (const item of await bar.locator(".action-bar-item").all()) {
       const box = await item.boundingBox();
       expect(Math.round(box?.height ?? 0), `target height at ${width}px`).toBeGreaterThanOrEqual(44);
     }
+
+    // #132: one icon spec — every stroked element of every bar glyph at 1.8
+    // (Plus 1 path, Share 3 circles + 1 path, Gear 1 circle + 1 path = 7).
+    const strokes = await bar.evaluate((el) =>
+      Array.from(el.querySelectorAll("svg [stroke-width]")).map((n) =>
+        n.getAttribute("stroke-width"),
+      ),
+    );
+    expect(strokes, `stroked elements @${width}px`).toHaveLength(7);
+    expect(strokes.every((s) => s === "1.8"), `stroke spec @${width}px`).toBe(true);
+    // #132: Share's node holes are open — r 2.5 (hole 3.2px, Lucide ratio).
+    const radii = await bar
+      .getByRole("button", { name: "Share my list" })
+      .evaluate((el) =>
+        Array.from(el.querySelectorAll("circle")).map((c) => c.getAttribute("r")),
+      );
+    expect(radii, `Share node radii @${width}px`).toEqual(["2.5", "2.5", "2.5"]);
+
     const barBox = await bar.boundingBox();
     expect(Math.round(barBox?.width ?? 0), `bar width at ${width}px`).toBe(width);
     expect(Math.round(barBox?.y ?? 0) + Math.round(barBox?.height ?? 0)).toBe(844); // flush to the bottom
@@ -3155,6 +3198,38 @@ test("23: bottom action bar persists on every authenticated route (#95)", async 
       ).not.toBe(await addBtn.evaluate((el) => getComputedStyle(el).color));
       expect(await contrast(settingsBtn), `accent contrast @${width}/${scheme}`)
         .toBeGreaterThanOrEqual(4.5);
+
+      // #132: no dot on the current tab either — painted, not just classed.
+      const afterContent = await settingsBtn.evaluate(
+        (el) => getComputedStyle(el, "::after").content,
+      );
+      expect(afterContent, `dot gone @${width}/${scheme}`).toBe("none");
+      // #132: the current label is the heavier one (600) — one treatment,
+      // and the idle tabs stay 400.
+      const labelWeight = await settingsBtn
+        .locator(".action-bar-label")
+        .evaluate((el) => getComputedStyle(el).fontWeight);
+      const idleWeight = await addBtn
+        .locator(".action-bar-label")
+        .evaluate((el) => getComputedStyle(el).fontWeight);
+      expect(labelWeight, `current label weight @${width}/${scheme}`).toBe("600");
+      expect(idleWeight, `idle label weight @${width}/${scheme}`).toBe("400");
+      // #132: one baseline — the icons of the current and idle tabs share a
+      // top edge (the deleted dot used to shift the active pair up ~4px).
+      const tops = await bar.evaluate((el) =>
+        Array.from(el.querySelectorAll(".action-bar-item svg")).map(
+          (s) => s.getBoundingClientRect().top,
+        ),
+      );
+      expect(
+        Math.max(...tops) - Math.min(...tops),
+        `icon baseline spread @${width}/${scheme}`,
+      ).toBeLessThanOrEqual(0.5);
+      // #132: the hairline is visible in BOTH schemes (--border-2 per scheme).
+      const barBorder = await bar.evaluate((el) => getComputedStyle(el).borderTopColor);
+      expect(barBorder, `hairline @${width}/${scheme}`).toBe(
+        scheme === "light" ? "rgb(212, 212, 216)" : "rgb(58, 51, 80)",
+      );
 
       // No occlusion on a non-feed page: at the bottom of the scroll the
       // last settings section must clear the bar's top edge (the :has()
