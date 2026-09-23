@@ -390,7 +390,8 @@ export function AppPage() {
   /** #134: restore the order the last commit replaced. Ignored while a drag or
    *  its drop settle is live: that settle owns the in-flight commit PUT, and
    *  two racing PUTs would decide the order non-deterministically. A failed
-   *  undo rolls back to the order on screen and toasts honestly. */
+   *  undo leaves the list at the order the server still holds (this path never
+   *  applied one of its own) and toasts honestly. */
   function undoReorder() {
     if (dragLiveRef.current) return;
     const prior = undoOrderRef.current;
