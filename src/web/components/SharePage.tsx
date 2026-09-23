@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ShareItem, ShareView } from "../../shared/types";
 import { S } from "../strings";
+import { classifyResponse, classifyWriteFailure } from "../net";
 import { useToast } from "../toast";
 import { useConfirm } from "../confirm";
 import { formatPrice } from "../format";
@@ -94,8 +95,9 @@ export function SharePage({ token }: { token: string }) {
     });
     if (!ok) return;
     setBusy(itemId);
+    let res: Response | null = null;
     try {
-      const res = await fetch(`/api/share/${token}/items/${itemId}/purchase`, {
+      res = await fetch(`/api/share/${token}/items/${itemId}/purchase`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ confirm: true }),
@@ -119,8 +121,11 @@ export function SharePage({ token }: { token: string }) {
             }
           : prev,
       );
-    } catch {
-      toast(S.share.markFailed, "danger");
+    } catch (err) {
+      // #117: a guest write that cannot leave the device is framed as the
+      // connection, not as a failed mark.
+      const kind = res ? await classifyResponse(res) : classifyWriteFailure(err);
+      toast(kind === "offline" ? S.offline.write : S.share.markFailed, "danger");
     } finally {
       setBusy(null);
     }

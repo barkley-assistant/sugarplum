@@ -3,6 +3,7 @@ import type { OwnedItem, PriceHintState, PriceHintsResponse } from "../../shared
 import { formatDate, formatPrice, urlHost } from "../format";
 import { navigate } from "../router";
 import { S } from "../strings";
+import { classifyResponse, classifyWriteFailure } from "../net";
 import { useConfirm } from "../confirm";
 import { useToast } from "../toast";
 import { useBootMe } from "../use-boot-me";
@@ -85,7 +86,8 @@ export function ItemPage({ id }: { id: string }) {
   async function refreshItem() {
     const res = await fetch(`/api/wishlist/items/${id}/refresh`, { method: "POST" });
     if (!res.ok) {
-      toast(S.errors.retryItem, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.retryItem, "danger");
       return;
     }
     // The 202 means "queued".
@@ -98,7 +100,8 @@ export function ItemPage({ id }: { id: string }) {
   async function resetPurchased() {
     const res = await fetch(`/api/wishlist/items/${id}/purchased`, { method: "DELETE" });
     if (res.status !== 204) {
-      toast(S.errors.generic, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.generic, "danger");
       return;
     }
     await reload();
@@ -116,7 +119,8 @@ export function ItemPage({ id }: { id: string }) {
     if (!ok) return;
     const res = await fetch(`/api/wishlist/items/${id}/owner-purchased`, { method: "PUT" });
     if (!res.ok) {
-      toast(S.errors.generic, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.generic, "danger");
       return;
     }
     setItem((await res.json()) as OwnedItem);
@@ -125,7 +129,8 @@ export function ItemPage({ id }: { id: string }) {
   async function unmarkOwnerPurchased() {
     const res = await fetch(`/api/wishlist/items/${id}/owner-purchased`, { method: "DELETE" });
     if (res.status !== 204) {
-      toast(S.errors.generic, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.generic, "danger");
       return;
     }
     await reload();
@@ -138,14 +143,16 @@ export function ItemPage({ id }: { id: string }) {
     let res: Response;
     try {
       res = await fetch(`/api/wishlist/items/${id}/hints`, { method: "POST" });
-    } catch {
+    } catch (err) {
       setHintState({ status: "error", hints: [], disabled: false });
-      toast(S.errors.checkPrices, "danger");
+      const kind = classifyWriteFailure(err);
+      toast(kind === "offline" ? S.offline.write : S.errors.checkPrices, "danger");
       return;
     }
     if (!res.ok) {
       setHintState({ status: "error", hints: [], disabled: false });
-      toast(S.errors.checkPrices, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.checkPrices, "danger");
       return;
     }
     const body = (await res.json()) as PriceHintsResponse;
@@ -160,7 +167,8 @@ export function ItemPage({ id }: { id: string }) {
     if (!ok) return;
     const res = await fetch(`/api/wishlist/items/${id}`, { method: "DELETE" });
     if (!res.ok) {
-      toast(S.errors.deleteItem, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.deleteItem, "danger");
       return;
     }
     // The item no longer exists: staying on /items/:id would render the

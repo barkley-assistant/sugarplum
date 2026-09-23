@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { S } from "../strings";
+import { classifyResponse, classifyWriteFailure } from "../net";
 import { navigate } from "../router";
 import { useToast } from "../toast";
 import { useAdminBoot } from "../use-admin-boot";
@@ -35,6 +36,13 @@ export function SettingsUserNewPage() {
         body: JSON.stringify({ username, password, displayName: displayName || undefined, isAdmin }),
       });
       if (!res.ok) {
+        // #117: the SW's {error:"offline"} body is internal copy — the
+        // offline framing replaces it; a real server answer keeps its own.
+        const kind = await classifyResponse(res);
+        if (kind === "offline") {
+          setError(S.offline.write);
+          return;
+        }
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
         setError(body?.error ?? S.admin.createFailed);
         return;
@@ -42,8 +50,9 @@ export function SettingsUserNewPage() {
       toast(S.admin.userCreated);
       // The users screen refetches on mount, so the new row is there.
       navigate("/settings/users");
-    } catch {
-      setError(S.admin.networkError);
+    } catch (err) {
+      const kind = classifyWriteFailure(err);
+      setError(kind === "offline" ? S.offline.write : S.admin.networkError);
     } finally {
       setBusy(false);
     }

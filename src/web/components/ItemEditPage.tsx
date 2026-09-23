@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { OwnedItem } from "../../shared/types";
 import { navigate } from "../router";
 import { S } from "../strings";
+import { classifyResponse, classifyWriteFailure } from "../net";
 import { useBootMe } from "../use-boot-me";
 import { usePageFocus } from "../use-page-focus";
 import { AppShell } from "./AppShell";
@@ -54,12 +55,23 @@ export function ItemEditPage({ id }: { id: string }) {
     payload.url = values.url || null;
     payload.cheaperUrl = values.cheaperUrl || null;
 
-    const res = await fetch(`/api/wishlist/items/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error(S.errors.saveItem);
+    let res: Response;
+    try {
+      res = await fetch(`/api/wishlist/items/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      // #117: the form renders the message it is thrown — the KIND is decided
+      // here, where the connection is known.
+      const kind = classifyWriteFailure(err);
+      throw new Error(kind === "offline" ? S.offline.form : S.errors.saveItem, { cause: err });
+    }
+    if (!res.ok) {
+      const kind = await classifyResponse(res);
+      throw new Error(kind === "offline" ? S.offline.form : S.errors.saveItem);
+    }
     // Back to the item view.
     navigate(`/items/${id}`);
   }

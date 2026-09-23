@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import type { Me } from "../../shared/types";
 import { S } from "../strings";
+import { classifyResponse, classifyWriteFailure } from "../net";
 import { useToast } from "../toast";
 import { clearStoredIdentity, writeStoredMe } from "../me-store";
 import { navigate } from "../router";
@@ -43,8 +44,9 @@ export function SettingsPage() {
     value: boolean,
   ) {
     if (!me) return;
+    let res: Response | null = null;
     try {
-      const res = await fetch("/api/auth/me/settings", {
+      res = await fetch("/api/auth/me/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [key]: value }),
@@ -53,8 +55,11 @@ export function SettingsPage() {
       const next = { ...me, [key]: value };
       setUpdated(next);
       writeStoredMe(next);
-    } catch {
-      toast(S.errors.changeSettings, "danger");
+    } catch (err) {
+      // #117: the connection's fault is named as such; a real server answer
+      // keeps the action's own copy.
+      const kind = res ? await classifyResponse(res) : classifyWriteFailure(err);
+      toast(kind === "offline" ? S.offline.write : S.errors.changeSettings, "danger");
     }
   }
 
@@ -62,8 +67,9 @@ export function SettingsPage() {
     e.preventDefault();
     if (!me || profileBusy) return;
     setProfileBusy(true);
+    let res: Response | null = null;
     try {
-      const res = await fetch("/api/auth/me/profile", {
+      res = await fetch("/api/auth/me/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ displayName }),
@@ -74,8 +80,9 @@ export function SettingsPage() {
       setDisplayNameDraft(next.displayName);
       writeStoredMe(next);
       toast(S.settings.profileSaved);
-    } catch {
-      toast(S.errors.changeSettings, "danger");
+    } catch (err) {
+      const kind = res ? await classifyResponse(res) : classifyWriteFailure(err);
+      toast(kind === "offline" ? S.offline.write : S.errors.changeSettings, "danger");
     } finally {
       setProfileBusy(false);
     }
@@ -90,8 +97,9 @@ export function SettingsPage() {
       return;
     }
     setPasswordBusy(true);
+    let res: Response | null = null;
     try {
-      const res = await fetch("/api/auth/me/password", {
+      res = await fetch("/api/auth/me/password", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword, newPassword }),
@@ -107,8 +115,11 @@ export function SettingsPage() {
       await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
       clearStoredIdentity();
       navigate("/login");
-    } catch {
-      setPasswordError(S.errors.changeSettings);
+    } catch (err) {
+      // #117: this failure renders inline, not as a toast, and it says the
+      // same thing — the write did not leave the device.
+      const kind = res ? await classifyResponse(res) : classifyWriteFailure(err);
+      setPasswordError(kind === "offline" ? S.offline.write : S.errors.changeSettings);
     } finally {
       setPasswordBusy(false);
     }

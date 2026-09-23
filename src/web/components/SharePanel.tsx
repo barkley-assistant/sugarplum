@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ShareLinkResponse } from "../../shared/types";
 import { S } from "../strings";
+import { classifyResponse, classifyWriteFailure } from "../net";
 import { useToast } from "../toast";
 import { useConfirm } from "../confirm";
 
@@ -43,13 +44,15 @@ export function SharePanel() {
       if (!ok) return;
     }
     setBusyOp("create");
+    let res: Response | null = null;
     try {
-      const res = await fetch("/api/share", { method: "POST" });
+      res = await fetch("/api/share", { method: "POST" });
       if (!res.ok) throw new Error();
       setLink((await res.json()) as ShareLinkResponse);
       setCopied(false);
-    } catch {
-      toast(S.errors.generic, "danger");
+    } catch (err) {
+      const kind = res ? await classifyResponse(res) : classifyWriteFailure(err);
+      toast(kind === "offline" ? S.offline.write : S.errors.generic, "danger");
     } finally {
       setBusyOp(null);
     }
@@ -63,12 +66,14 @@ export function SharePanel() {
     });
     if (!ok) return;
     setBusyOp("revoke");
+    let res: Response | null = null;
     try {
-      const res = await fetch("/api/share", { method: "DELETE" });
+      res = await fetch("/api/share", { method: "DELETE" });
       if (!res.ok && res.status !== 204) throw new Error();
       setLink({ token: null, path: null });
-    } catch {
-      toast(S.errors.generic, "danger");
+    } catch (err) {
+      const kind = res ? await classifyResponse(res) : classifyWriteFailure(err);
+      toast(kind === "offline" ? S.offline.write : S.errors.generic, "danger");
     } finally {
       setBusyOp(null);
     }

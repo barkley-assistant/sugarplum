@@ -6,6 +6,7 @@ import type {
   WishlistSummaryRow,
 } from "../../shared/types";
 import { S } from "../strings";
+import { classifyResponse, classifyWriteFailure } from "../net";
 import { useToast } from "../toast";
 import { useDragReorder } from "../reorder";
 import { parseShareTarget } from "../format";
@@ -306,13 +307,17 @@ export function AppPage() {
   }
 
   async function deleteItem(id: string) {
+    let res: Response | null = null;
     try {
-      const res = await fetch(`/api/wishlist/items/${id}`, { method: "DELETE" });
+      res = await fetch(`/api/wishlist/items/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       if (me) await refreshOwnList(me.id);
       await refreshSummary();
-    } catch {
-      toast(S.errors.deleteItem, "danger");
+    } catch (err) {
+      // #117: the connection's fault is named as such; a real server answer
+      // keeps the action's own copy.
+      const kind = res ? await classifyResponse(res) : classifyWriteFailure(err);
+      toast(kind === "offline" ? S.offline.write : S.errors.deleteItem, "danger");
     }
   }
 
@@ -321,7 +326,8 @@ export function AppPage() {
   async function resetPurchased(id: string) {
     const res = await fetch(`/api/wishlist/items/${id}/purchased`, { method: "DELETE" });
     if (res.status !== 204) {
-      toast(S.errors.generic, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.generic, "danger");
       return;
     }
     if (me) await refreshOwnList(me.id);
@@ -331,7 +337,8 @@ export function AppPage() {
   async function markOwnerPurchased(id: string) {
     const res = await fetch(`/api/wishlist/items/${id}/owner-purchased`, { method: "PUT" });
     if (!res.ok) {
-      toast(S.errors.generic, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.generic, "danger");
       return;
     }
     if (me) await refreshOwnList(me.id);
@@ -340,7 +347,8 @@ export function AppPage() {
   async function unmarkOwnerPurchased(id: string) {
     const res = await fetch(`/api/wishlist/items/${id}/owner-purchased`, { method: "DELETE" });
     if (res.status !== 204) {
-      toast(S.errors.generic, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.generic, "danger");
       return;
     }
     if (me) await refreshOwnList(me.id);
@@ -356,8 +364,9 @@ export function AppPage() {
     const previousItems = ownItems;
     const previousIds = ownItems.map((item) => item.id);
     setSavingPuts((n) => n + 1);
+    let res: Response | null = null;
     try {
-      const res = await fetch("/api/wishlist/order", {
+      res = await fetch("/api/wishlist/order", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ itemIds: ids }),
@@ -375,13 +384,17 @@ export function AppPage() {
         );
       }
       if (me) await refreshOwnList(me.id);
-    } catch {
+    } catch (err) {
       // A failed COMMIT rolls back to the last server-known order. A failed
       // UNDO must not: it never applied an optimistic order of its own, so the
       // list already shows what the server holds — restoring the stale
       // `ownItems` here would diverge from the server until the next refresh.
+      // #117: the rollback stays on the offline path — the server never
+      // received the new order, so the old one is the honest state, and only
+      // the copy names the connection.
       if (!opts?.silent) setOwnItems(previousItems);
-      toast(S.errors.reorder, "danger");
+      const kind = res ? await classifyResponse(res) : classifyWriteFailure(err);
+      toast(kind === "offline" ? S.offline.write : S.errors.reorder, "danger");
     } finally {
       setSavingPuts((n) => Math.max(0, n - 1));
     }
@@ -431,7 +444,8 @@ export function AppPage() {
   async function refreshItem(id: string) {
     const res = await fetch(`/api/wishlist/items/${id}/refresh`, { method: "POST" });
     if (!res.ok) {
-      toast(S.errors.retryItem, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.retryItem, "danger");
       return;
     }
     if (me) {
@@ -458,7 +472,8 @@ export function AppPage() {
     if (!viewing) return;
     const res = await fetch(`/api/wishlist/items/${id}/claim`, { method: "POST" });
     if (!res.ok) {
-      toast(S.errors.claimItem, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.claimItem, "danger");
       return;
     }
     await viewList(viewing);
@@ -469,7 +484,8 @@ export function AppPage() {
     if (!viewing) return;
     const res = await fetch(`/api/wishlist/items/${id}/unclaim`, { method: "POST" });
     if (!res.ok) {
-      toast(S.errors.unclaimItem, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.unclaimItem, "danger");
       return;
     }
     await viewList(viewing);
