@@ -249,10 +249,12 @@ export const S = {
     install: "Install app",
   },
   bar: {
-    /** Visible labels on the mobile bottom action bar (#73). Add reuses the
-     *  feed's action copy; Share is short (its accessible name stays
-     *  "Share my list" via aria-label on the trigger). */
-    add: "Add item",
+    /** Visible labels on the mobile bottom action bar (#73). Both shortcuts
+     *  are short while their accessible names stay the app's full phrases via
+     *  aria-label on the trigger: Share → "Share my list", Add → "Add item"
+     *  (#129 — the tab sits on the same screen as the add form's own "Add
+     *  item" submit, so the visible label must not read as a second CTA). */
+    add: "Add",
     share: "Share",
     settings: "Settings",
     /** Landmark label for the bottom bar (screen readers announce
