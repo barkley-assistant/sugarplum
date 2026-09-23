@@ -3009,8 +3009,12 @@ button.row-open:hover {
     min-height: calc(var(--action-bar-h) + var(--safe-bottom));
     padding: 0 var(--sp-2) var(--safe-bottom);
     background: var(--bg); /* app surface, not a contrasting bar */
-    /* Same hairline recipe as .topbar's bottom border: one divider grammar. */
-    border-top: 1px solid color-mix(in srgb, var(--border) 60%, var(--bg));
+    /* #132: one divider grammar with the app's row disclosures. The old 60%
+       mix of --border read 1.12:1 light / 1.14:1 dark on this opaque --bg
+       (invisible — the mix reads on the topbar only because that sits on
+       blurred content). --border-2 measures 1.42:1 / 1.59:1 here: visible,
+       still a hairline, below the 3:1 field-outline contract (tokens.css). */
+    border-top: 1px solid var(--border-2);
   }
 
   /* Buttons: transparent, borderless, icon over label. The global button
@@ -3022,11 +3026,11 @@ button.row-open:hover {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: var(--sp-1);
     flex: 1 1 0; /* equal thirds */
     min-width: 44px;
     min-height: var(--action-bar-h);
-    padding: 6px 0 4px;
+    padding: var(--sp-2) 0;
     margin: 0;
     border: none;
     border-radius: var(--r-flat);
@@ -3064,17 +3068,19 @@ button.row-open:hover {
   /* #95: the bar destination matching the current route carries
      .is-current (aria-current="page" mirrors it in the DOM) — the accent
      #73 left dormant for exactly this. The feed and the item pages are
-     not bar destinations, so they mark nothing. */
+     not bar destinations, so they mark nothing.
+     #132: the accent is color + label weight, and nothing else. The stray
+     4px dot that used to hang below the current label is deleted: as a flex
+     child it stretched the active item and lifted its icon+label pair 4px
+     off the other two items' baseline, and it read as a notification badge. */
   .action-bar-item.is-current {
     color: var(--plum-500);
   }
 
-  .action-bar-item.is-current::after {
-    content: "";
-    width: 4px;
-    height: 4px;
-    border-radius: var(--r-pill);
-    background: var(--plum-500);
+  /* #132: the current label is the heavier one — the app's existing
+     emphasis weight (h1-h4, buttons, .menu-item headings). */
+  .action-bar-item.is-current .action-bar-label {
+    font-weight: 600;
   }
 
   /* Occlusion guard: the bar is fixed, and .app-main is the last

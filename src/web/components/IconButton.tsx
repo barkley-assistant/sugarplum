@@ -52,12 +52,20 @@ export function PlusIcon() {
   );
 }
 
+/** Share glyph (#73; #132 optical fix). The three nodes are open rings, not
+ *  filled discs: r=2.5 at the shared 1.8 stroke leaves a 3.2px hole
+ *  (hole:stroke 1.78), the Lucide share-2 proportion at our 20px box
+ *  (2.5/20 = 3/24). At the old r=2.2 the hole closed to 2.6px (hole:stroke
+ *  1.44) and the nodes rendered ~2.26x the ink of the plus — the glyph read
+ *  heavier than its neighbours at the same stroke spec. The connector
+ *  endpoints sit 2.24-2.39px from the node centres, inside the [1.6, 3.4]
+ *  ring band, so they stay buried in the stroke at r=2.5. */
 export function ShareIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <circle cx="5" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.8" />
-      <circle cx="14.5" cy="4.5" r="2.2" stroke="currentColor" strokeWidth="1.8" />
-      <circle cx="14.5" cy="15.5" r="2.2" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="5" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="14.5" cy="4.5" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="14.5" cy="15.5" r="2.5" stroke="currentColor" strokeWidth="1.8" />
       <path
         d="M7 9l5.5-3.2M7 11l5.5 3.2"
         stroke="currentColor"
