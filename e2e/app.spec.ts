@@ -2549,6 +2549,12 @@ test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ pa
       await expect(bar.getByRole("button", { name })).toBeVisible();
     }
     await expect(bar.getByText("Share", { exact: true })).toBeVisible(); // visible label
+    // #129: the Add tab's VISIBLE label is the short "Add" too (its accessible
+    // name stays the full "Add item" above), so /add never shows two elements
+    // reading "Add item" — the form CTA and a nav destination would otherwise
+    // both look like the same submit.
+    await expect(bar.getByText("Add", { exact: true })).toBeVisible();
+    await expect(bar.getByText("Add item", { exact: true })).toHaveCount(0);
 
     // Mockup grammar: fixed, borderless buttons on the app background, one
     // hairline divider, no fills.
@@ -5290,4 +5296,136 @@ test("37: #125 — one header on every authenticated page, Back-to-list button, 
       expect([200, 204]).toContain(removed.status());
     }
   }
+});
+
+test("38: #129 — one visible Add item, grouped add actions, no stranding", async ({ page }) => {
+  // The three filed complaints are one story: the bar's Add tab must read as
+  // NAVIGATION ("Add", like Share) rather than a second lit-up "Add item" CTA,
+  // the guarded exit must sit in the form's action cluster instead of alone at
+  // the bottom of a blank page, and the validation error belongs with the
+  // submit it reports on.
+  /** Playwright's boundingBox is {x,y,width,height}; these assertions are
+   *  about the vertical stack, so name the edges. */
+  const box = async (locator: Locator) => {
+    const b = (await locator.boundingBox())!;
+    return { top: b.y, bottom: b.y + b.height, width: b.width };
+  };
+  for (const width of [360, 390, 430, 1280] as const) {
+    const mobile = width < 640; // the app's one width seam (#73/#95)
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${BASE}/add`);
+    await expect(page.getByRole("heading", { name: "Add item" })).toBeVisible();
+
+    // A. Exactly two elements render the words "Add item" as text: the h1 and
+    //    the submit — #121's canonical pair, still the only add-flow CTA. A
+    //    pristine form carries no exit at all (#127's rule).
+    await expect(page.getByText("Add item", { exact: true })).toHaveCount(2);
+    await expect(page.locator(".add-submit")).toHaveText("Add item");
+    expect(await page.title(), `@${width}: document title`).toBe("Add item · sugarplum");
+    await expect(page.getByRole("button", { name: "Discard" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Cancel" })).toHaveCount(0);
+
+    // B. The bar: the tab's VISIBLE label is the short word, its ACCESSIBLE
+    //    name stays the app's full phrase, and Add is the current destination.
+    if (mobile) {
+      const bar = page.getByRole("navigation", { name: "Primary actions" });
+      await expect(bar.locator(".action-bar-item")).toHaveCount(3);
+      await expect(bar.getByText("Add", { exact: true })).toBeVisible();
+      await expect(bar.getByText("Add item", { exact: true })).toHaveCount(0);
+      for (const name of ["Add item", "Share my list", "Settings"]) {
+        await expect(bar.getByRole("button", { name })).toBeVisible();
+      }
+      const addTab = bar.getByRole("button", { name: "Add item" });
+      await expect(addTab).toHaveAttribute("aria-current", "page");
+      await expect(addTab).toHaveClass(/is-current/);
+    } else {
+      await expect(page.locator(".action-bar"), `@${width}: no bar above the seam`).toHaveCount(0);
+    }
+
+    let probe = await horizontalEscapes(page);
+    expect(probe.docOverflow, `pristine overflow at ${width}px`).toBe(false);
+    expect(probe.offenders, `pristine escapes at ${width}px`).toEqual([]);
+
+    // C. A draft: exactly one guarded Discard, inside the action cluster,
+    //    directly under the submit, above the disclosure hairline, and the
+    //    same width as the primary it groups with.
+    await page.getByLabel("Link").fill(`https://example.com/129-draft-${width}`);
+    const cluster = page.locator(".add-actions");
+    const discard = cluster.getByRole("button", { name: "Discard" });
+    await expect(discard).toHaveCount(1);
+    const submitBox = await box(page.locator(".add-submit"));
+    const discardBox = await box(discard);
+    const clusterBox = await box(cluster);
+    const discloseBox = await box(page.getByRole("button", { name: "Add details manually" }));
+    expect(Math.round(discardBox.width), `@${width}: the exit matches the primary's width`).toBe(
+      Math.round(submitBox.width),
+    );
+    expect(Math.round(discardBox.top - submitBox.bottom), `@${width}: one tight group`).toBeLessThanOrEqual(40);
+    expect(Math.round(clusterBox.bottom), `@${width}: the cluster ends above the hairline`).toBeLessThanOrEqual(
+      Math.round(discloseBox.top),
+    );
+    // And it is not the form's last control: the disclosure (its optional
+    // fields behind it) still follows the exit in DOM order.
+    expect(await cluster.evaluate((el) => el.nextElementSibling?.className ?? "")).toBe("add-disclose");
+
+    probe = await horizontalEscapes(page);
+    expect(probe.docOverflow, `draft overflow at ${width}px`).toBe(false);
+    expect(probe.offenders, `draft escapes at ${width}px`).toEqual([]);
+  }
+
+  // D. The submit's validation error renders inside the cluster, under the
+  //    submit and above the hairline — on screen without scrolling at every
+  //    mobile width (it used to fall below the fold in the expanded form).
+  for (const width of [360, 390, 430] as const) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${BASE}/add`);
+    await expect(page.getByRole("heading", { name: "Add item" })).toBeVisible();
+    await page.locator(".add-submit").click();
+    const error = page.locator(".add-actions .error");
+    await expect(error).toBeVisible();
+    await expect(error).toHaveAttribute("role", "alert");
+    await expect(error).toHaveText("Add a title or a link.");
+    const errorBox = await box(error);
+    const submitBox = await box(page.locator(".add-submit"));
+    const discloseBox = await box(page.getByRole("button", { name: "Add details manually" }));
+    expect(Math.round(errorBox.top), `@${width}: the error follows the submit`).toBeGreaterThanOrEqual(
+      Math.round(submitBox.bottom),
+    );
+    expect(Math.round(errorBox.bottom), `@${width}: the error precedes the hairline`).toBeLessThanOrEqual(
+      Math.round(discloseBox.top),
+    );
+    expect(Math.round(errorBox.bottom), `@${width}: the error is on screen`).toBeLessThanOrEqual(844);
+  }
+
+  // E. A notes-only draft is BOTH a draft and invalid: the exit orders after
+  //    the error, still inside the cluster and above the hairline.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${BASE}/add`);
+  await page.getByRole("button", { name: "Add details manually" }).click();
+  await page.getByLabel("Notes").fill("half-typed note");
+  await page.locator(".add-submit").click();
+  const cluster = page.locator(".add-actions");
+  await expect(cluster.getByRole("button", { name: "Discard" })).toHaveCount(1);
+  const errorBox = await box(cluster.locator(".error"));
+  const discardBox = await box(cluster.getByRole("button", { name: "Discard" }));
+  const discloseBox = await box(page.getByRole("button", { name: "Add details manually" }));
+  expect(Math.round(discardBox.top), "the exit follows the error").toBeGreaterThanOrEqual(
+    Math.round(errorBox.bottom),
+  );
+  expect(Math.round(discardBox.bottom), "the exit stays above the hairline").toBeLessThanOrEqual(
+    Math.round(discloseBox.top),
+  );
+
+  // F. Keyboard order follows the visual order: with a draft present the exit
+  //    is the stop between the submit and the disclosure.
+  await page.goto(`${BASE}/add`);
+  await expect(page.getByRole("heading", { name: "Add item" })).toBeVisible();
+  await page.getByLabel("Link").fill("https://example.com/129-tab-order");
+  await page.getByLabel("Link").focus();
+  await page.keyboard.press("Tab");
+  await expect(page.locator(".add-submit")).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Discard" })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Add details manually" })).toBeFocused();
 });
