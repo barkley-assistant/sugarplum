@@ -114,6 +114,33 @@ async function horizontalEscapes(page: Page) {
   });
 }
 
+/** #162: the content width `.app-main` offers at the current viewport — the
+ *  ONE desktop width every authenticated page wrapper must equal. Derived
+ *  from the element, never hardcoded, so a future --app-main-max change
+ *  cannot silently break the contract (or hide behind a stale literal). */
+async function appMainContentWidth(page: Page) {
+  return page.locator(".app-main").evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return el.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  });
+}
+
+/** #162: the three facts the shared-content-width contract asserts about one
+ *  page wrapper — its rendered width, the computed max-width that would cap
+ *  it (must be `none`), and its centering against `.app-main`. */
+async function pageColumn(page: Page, selector: string) {
+  return page.locator(selector).first().evaluate((el) => {
+    const box = el.getBoundingClientRect();
+    const main = el.closest(".app-main")!.getBoundingClientRect();
+    return {
+      width: box.width,
+      maxWidth: getComputedStyle(el).maxWidth,
+      pageMid: box.left + box.width / 2,
+      mainMid: main.left + main.width / 2,
+    };
+  });
+}
+
 /** Waits for an overlay's own entry animation to settle, so geometry probes
  *  measure the resting layout instead of a mid-slide frame (the desktop
  *  drawer enters from translateX(100%)). */
@@ -3041,18 +3068,22 @@ test("20: quiet ghost icon buttons — no standing chrome, soft hover (#75)", as
   expect(outline).toContain("124, 58, 237"); // --plum-500 light #7c3aed = rgb(124,58,237)
 });
 
-test("21: desktop reading column — non-feed pages cap at 720px, feed does not (#71)", async ({ page }) => {
-  // #71: on desktop the non-feed pages (detail, add, edit) stop stretching
-  // their drawer-era internals across the full 1060px .app-main column and
-  // render a centered 720px reading column instead. The feed keeps the full
-  // column. Geometry is asserted with computed styles + boundingBox (the
-  // house idiom from tests 18/20) — screenshots cannot go red, geometry can.
-  const COL = 720;
+test("21: one desktop content width — every authenticated page fills the app column (#162)", async ({ page }) => {
+  // #162: the desktop content width is ONE contract, owned by `.app-main`
+  // (--app-main-max, 1060px). Every authenticated page wrapper fills that
+  // column and none re-narrows itself. Before #162 the detail, add and edit
+  // wrappers (and their boot skeletons) carried a route-specific 720px cap at
+  // >=1024px, so the page body sat 308px narrower than the shell and the feed.
+  // Geometry is asserted with computed styles + boundingBox (the house idiom
+  // from tests 18/20) — screenshots cannot go red, geometry can.
 
   // The serial chain seeds "History probe" in 4b. When this test runs alone
   // (the filtered RED/GREEN runs) seed the same shape, so the assertions
   // below measure the layout rather than a missing fixture.
-  const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as { id: string };
+  const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as {
+    id: string;
+    showUserManagement: boolean;
+  };
   const list = (await (await page.request.get(`${BASE}/api/users/${me.id}/wishlist`)).json()) as Array<{ id: string; title: string }>;
   let probe = list.find((item) => item.title === "History probe");
   if (!probe) {
@@ -3063,117 +3094,146 @@ test("21: desktop reading column — non-feed pages cap at 720px, feed does not 
     probe = { id: ((await created.json()) as { id: string }).id, title: "History probe" };
   }
 
-  // --- Detail page: cap + centering at every desktop width, both schemes.
-  for (const scheme of ["light", "dark"] as const) {
-    await page.emulateMedia({ colorScheme: scheme });
-    for (const width of [1024, 1280, 1440]) {
+  // #98: the two admin screens sit behind the user-management opt-in. Flip it
+  // through the API (the test 9/37 idiom — no UI ladder), sweep, hand it back.
+  const uiOn = await page.request.put(`${BASE}/api/auth/me/settings`, {
+    data: { showUserManagement: true },
+  });
+  expect(uiOn.status()).toBe(200);
+
+  try {
+    // Every in-scope authenticated surface and the wrapper that owns its
+    // column. `/settings` is `.settings-stack` — its `.settings-section`
+    // children are the cards, not the page column.
+    const routes = [
+      { path: "/", wrapper: ".list-layout" },
+      { path: `/items/${probe.id}`, wrapper: ".item-page" },
+      { path: `/items/${probe.id}/edit`, wrapper: ".add-page" },
+      { path: "/add", wrapper: ".add-page" },
+      { path: "/settings", wrapper: ".settings-stack" },
+      { path: "/settings/users", wrapper: ".settings-section" },
+      { path: "/settings/users/new", wrapper: ".settings-section" },
+    ];
+
+    // --- The sweep: every in-scope route, both schemes, every desktop width.
+    // `expected` is read live off `.app-main` at the feed — never hardcoded, so
+    // a future --app-main-max change cannot hide behind a stale literal.
+    const expectedByWidth = new Map<number, number>();
+    for (const width of [1024, 1280, 1440, 1592]) {
       await page.setViewportSize({ width, height: 900 });
+      for (const scheme of ["light", "dark"] as const) {
+        await page.emulateMedia({ colorScheme: scheme });
+        await page.goto(`${BASE}/`);
+        await expect(page.locator(".list-layout")).toBeVisible();
+        const expected = await appMainContentWidth(page);
+        expectedByWidth.set(width, expected);
+
+        for (const route of routes) {
+          await page.goto(`${BASE}${route.path}`);
+          const column = page.locator(route.wrapper).first();
+          await expect(column, `${scheme} @${width}: ${route.wrapper} on ${route.path}`).toBeVisible();
+
+          const geo = await pageColumn(page, route.wrapper);
+          // The guard: no route-specific cap. A future `max-width` on any of
+          // these wrappers turns this red immediately.
+          expect(
+            geo.maxWidth,
+            `${scheme} @${width}: ${route.path} ${route.wrapper} carries no route cap`,
+          ).toBe("none");
+          // One effective width: the wrapper fills the app column exactly.
+          expect(
+            Math.abs(geo.width - expected),
+            `${scheme} @${width}: ${route.path} ${route.wrapper} fills the app column (${geo.width} vs ${expected})`,
+          ).toBeLessThanOrEqual(1);
+          // Centered in the shell (midpoint == .app-main's midpoint).
+          expect(
+            Math.abs(geo.pageMid - geo.mainMid),
+            `${scheme} @${width}: ${route.path} ${route.wrapper} centered`,
+          ).toBeLessThanOrEqual(1);
+          // No overflow: widening must not push a child past the viewport.
+          const overflow = await horizontalEscapes(page);
+          expect(overflow.docOverflow, `${scheme} @${width}: ${route.path} overflow`).toBe(false);
+          expect(overflow.offenders, `${scheme} @${width}: ${route.path} escapes`).toEqual([]);
+        }
+      }
+    }
+
+    // Feed reference: the feed is no longer "the one wide surface" — it EQUALS
+    // the shared width, which is what makes the sweep meaningful rather than
+    // tautological.
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.setViewportSize({ width: 1280, height: 900 });
+    const expected1280 = expectedByWidth.get(1280)!;
+    await page.goto(`${BASE}/`);
+    await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+    expect(
+      Math.abs((await pageColumn(page, ".list-layout")).width - expected1280),
+      "the feed equals the shared content width",
+    ).toBeLessThanOrEqual(1);
+
+    // Skeleton parity: the boot skeleton renders inside the same column as the
+    // page it stands in for, so the skeleton→page swap never re-centers. Boot
+    // is transient, so this is the old test's two-tier probe: the live box when
+    // the skeleton is still mounted, else the detached class probe's computed
+    // style (the CSS rule IS the contract — and after #162 there is no cap rule
+    // left to read, so `none` is the stable half of the check).
+    for (const pair of [
+      { path: "/add", skeleton: "skeleton-form", wrapper: ".add-page" },
+      { path: `/items/${probe.id}`, skeleton: "skeleton-item", wrapper: ".item-page" },
+    ]) {
+      await page.goto(`${BASE}${pair.path}`);
+      const boot = page.locator(`.${pair.skeleton}`);
+      if ((await boot.count()) > 0) {
+        expect(
+          Math.abs((await boot.boundingBox())!.width - expected1280),
+          `${pair.skeleton} boot box matches ${pair.wrapper}`,
+        ).toBeLessThanOrEqual(1);
+      } else {
+        const probeMax = await page.evaluate((cls) => {
+          const el = document.createElement("div");
+          el.className = cls;
+          document.body.appendChild(el);
+          const maxWidth = getComputedStyle(el).maxWidth;
+          el.remove();
+          return maxWidth;
+        }, pair.skeleton);
+        expect(probeMax, `${pair.skeleton} carries no route cap`).toBe("none");
+      }
+    }
+
+    // Mobile lock: below the 1024px gate there was never a cap, and this change
+    // cannot have touched it — keep the old test's sub-gate loop as the
+    // regression guard for the mobile-first layout.
+    for (const width of [360, 390, 430, 768, 1023]) {
+      await page.setViewportSize({ width, height: 844 });
       await page.goto(`${BASE}/items/${probe.id}`);
       const itemPage = page.locator(".item-page");
       await expect(itemPage).toBeVisible();
-
-      const capped = await itemPage.evaluate((el) => ({
-        maxWidth: getComputedStyle(el).maxWidth,
-        box: el.getBoundingClientRect().width,
-      }));
-      expect(capped.maxWidth, `${scheme} @${width}: .item-page max-width`).toBe(`${COL}px`);
-      expect(capped.box, `${scheme} @${width}: .item-page rendered width`).toBeLessThanOrEqual(COL);
-
-      // Centered: .item-page's midpoint == .app-main's midpoint (both are
-      // auto-margin centered on the same axis).
-      const centers = await itemPage.evaluate((el) => {
-        const pageBox = el.getBoundingClientRect();
-        const main = el.closest(".app-main")!.getBoundingClientRect();
-        return { pageMid: pageBox.left + pageBox.width / 2, mainMid: main.left + main.width / 2 };
+      const fluid = await itemPage.evaluate((el) => {
+        const main = el.closest(".app-main")!;
+        const cs = getComputedStyle(main);
+        return {
+          maxWidth: getComputedStyle(el).maxWidth,
+          box: el.getBoundingClientRect().width,
+          contentWidth:
+            main.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight),
+        };
       });
-      expect(Math.abs(centers.pageMid - centers.mainMid), `${scheme} @${width}: column centered`).toBeLessThanOrEqual(1);
+      expect(fluid.maxWidth, `@${width}: no cap below the gate`).toBe("none");
+      expect(fluid.box, `@${width}: page fills the app column`).toBeGreaterThanOrEqual(fluid.contentWidth - 1);
 
       const overflow = await horizontalEscapes(page);
-      expect(overflow.docOverflow, `${scheme} @${width}: detail overflow`).toBe(false);
-      expect(overflow.offenders, `${scheme} @${width}: detail escapes`).toEqual([]);
+      expect(overflow.docOverflow, `@${width}: overflow`).toBe(false);
+      expect(overflow.offenders, `@${width}: escapes`).toEqual([]);
     }
-  }
-
-  // --- Add page: same cap; the submit pill spans the column, not the viewport.
-  await page.emulateMedia({ colorScheme: "light" });
-  for (const width of [1024, 1280, 1440]) {
-    await page.setViewportSize({ width, height: 900 });
-    await page.goto(`${BASE}/add`);
-    const addPage = page.locator(".add-page");
-    await expect(addPage).toBeVisible();
-    expect((await addPage.boundingBox())!.width, `@${width}: .add-page column width`).toBeLessThanOrEqual(COL);
-
-    const submit = page.locator(".add-submit");
-    await expect(submit).toBeVisible();
-    expect((await submit.boundingBox())!.width, `@${width}: submit pill spans the column`).toBeLessThanOrEqual(COL);
-
-    const overflow = await horizontalEscapes(page);
-    expect(overflow.docOverflow, `@${width}: add overflow`).toBe(false);
-    expect(overflow.offenders, `@${width}: add escapes`).toEqual([]);
-  }
-
-  // --- Skeleton parity: the boot skeleton renders inside the same column, so
-  // the skeleton→page swap never re-centers (no layout shift on slow loads).
-  await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto(`${BASE}/add`);
-  const skeleton = page.locator(".skeleton-form");
-  if ((await skeleton.count()) > 0) {
-    expect((await skeleton.boundingBox())!.width, "boot skeleton width matches the column").toBeLessThanOrEqual(COL);
-  } else {
-    // The boot already settled. getComputedStyle on a detached-class probe
-    // still resolves media queries in Chromium, so the rule itself is the
-    // contract here (the live box above is best-effort).
-    const probeMax = await page.evaluate(() => {
-      const el = document.createElement("div");
-      el.className = "skeleton-form";
-      document.body.appendChild(el);
-      const maxWidth = getComputedStyle(el).maxWidth;
-      el.remove();
-      return maxWidth;
+  } finally {
+    const uiOff = await page.request.put(`${BASE}/api/auth/me/settings`, {
+      data: { showUserManagement: me.showUserManagement },
     });
-    expect(probeMax, "skeleton-form carries the 720px cap rule").toBe(`${COL}px`);
+    expect(uiOff.status()).toBe(200);
+    // Leave the viewport desktop for any later assertions.
+    await page.setViewportSize({ width: 1280, height: 900 });
   }
-
-  // --- Edit page: shares .add-page — one spot check.
-  await page.goto(`${BASE}/items/${probe.id}/edit`);
-  const editPage = page.locator(".add-page");
-  await expect(editPage).toBeVisible();
-  expect((await editPage.boundingBox())!.width, "edit page column width").toBeLessThanOrEqual(COL);
-
-  // --- Feed lock: the feed does NOT get the cap (its rows span the full
-  // 1060px column minus the 16px gutters).
-  await page.goto(`${BASE}/`);
-  await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
-  const rowWidth = await page.locator(".product-row-grid").first().evaluate((el) => el.getBoundingClientRect().width);
-  expect(rowWidth, "feed rows keep the full app column").toBeGreaterThan(COL);
-
-  // --- Below the 1024px gate there is NO cap: mobile (≤430px) and tablet
-  // stay fluid, and the overflow probe stays clean at every width.
-  for (const width of [430, 768, 1023]) {
-    await page.setViewportSize({ width, height: 844 });
-    await page.goto(`${BASE}/items/${probe.id}`);
-    const itemPage = page.locator(".item-page");
-    await expect(itemPage).toBeVisible();
-    const fluid = await itemPage.evaluate((el) => {
-      const main = el.closest(".app-main")!;
-      const cs = getComputedStyle(main);
-      return {
-        maxWidth: getComputedStyle(el).maxWidth,
-        box: el.getBoundingClientRect().width,
-        contentWidth:
-          main.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight),
-      };
-    });
-    expect(fluid.maxWidth, `@${width}: no 720 cap below the gate`).toBe("none");
-    expect(fluid.box, `@${width}: page fills the app column`).toBeGreaterThanOrEqual(fluid.contentWidth - 1);
-
-    const overflow = await horizontalEscapes(page);
-    expect(overflow.docOverflow, `@${width}: overflow`).toBe(false);
-    expect(overflow.offenders, `@${width}: escapes`).toEqual([]);
-  }
-
-  // Leave the viewport desktop for any later assertions.
-  await page.setViewportSize({ width: 1280, height: 900 });
 });
 
 test("22: owner purchased mark — mark, badge, unmark, and privacy (#76)", async ({
@@ -3543,9 +3603,9 @@ test("24: item row and reset row share their slot at every width (#97)", async (
     expect(probe.offenders, `true escapes at ${width}px`).toEqual([]);
   }
 
-  // 4-field case (Other-currency open) at the desktop reading column: three
-  // equal compact slots, Title still dominant. On main the engine metrics made
-  // this 231/86/231 and crushed Title to 135px.
+  // 4-field case (Other-currency open) at the unified desktop content width:
+  // three equal compact slots, Title still dominant. On main the engine
+  // metrics made this 231/86/231 and crushed Title to 135px.
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto(`${BASE}/items/${item.id}/edit`);
   await page.getByLabel("Currency").selectOption("Other");
