@@ -784,7 +784,10 @@ test("4d: item page actions, edit route round-trip and delete", async ({ page })
   );
   expect(scrollGap, "#126 detail section gap").toBe("16px");
 
-  await itemPage.getByRole("button", { name: "More actions" }).click();
+  // #128: the ⋮ lives in the app bar now, and the page body carries none —
+  // the scope pins the home so a regression back into the body cannot pass.
+  await expect(itemPage.getByRole("button", { name: "More actions" })).toHaveCount(0);
+  await page.locator(".topbar").getByRole("button", { name: "More actions" }).click();
   const menu = page.getByRole("menu", { name: "More actions" });
   // Re-check/retry is URL- and fetch-state-gated; the background fetch may
   // resolve before this menu opens, so either valid state is accepted.
@@ -817,7 +820,7 @@ test("4d: item page actions, edit route round-trip and delete", async ({ page })
   await expect(page.locator(".item-page")).toContainText(`Added ${added}`);
 
   // Delete confirms, then lands on the feed with the card gone.
-  await page.locator(".item-page").getByRole("button", { name: "More actions" }).click();
+  await page.locator(".topbar").getByRole("button", { name: "More actions" }).click();
   await page.getByRole("menu", { name: "More actions" }).getByRole("menuitem", { name: "Delete" }).click();
   const confirm = page.getByRole("alertdialog");
   await expect(confirm).toBeVisible();
@@ -846,6 +849,18 @@ test("4e: item page keeps one layout and no overflow at any width", async ({ pag
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
+  // #128: the mobile back chevron is a real 44px target sitting beside (never
+  // over) the lockup it duplicates — the two hit areas must not overlap.
+  const chevron = page.locator(".topbar-back-chevron");
+  await expect(chevron).toBeVisible();
+  const chevronBox = (await chevron.boundingBox())!;
+  const brandBox = (await page.locator(".brand").boundingBox())!;
+  expect(Math.round(chevronBox.width), "chevron width @390").toBeGreaterThanOrEqual(44);
+  expect(Math.round(chevronBox.height), "chevron height @390").toBeGreaterThanOrEqual(44);
+  expect(
+    Math.round(brandBox.x - (chevronBox.x + chevronBox.width)),
+    "the lockup clears the chevron",
+  ).toBeGreaterThanOrEqual(8);
   await page.getByRole("link", { name: "Back to list" }).click();
   await expect(page).toHaveURL(`${BASE}/`);
 });
@@ -952,8 +967,9 @@ test("4f: item page does not trap focus and keeps the menu popover contract", as
   }
   expect(escaped, `Tab left the item page (no focus trap); path=${visited.join(" → ")}`).toBe(true);
 
-  // The overflow menu keeps its own small-overlay keyboard contract.
-  await itemPage.getByRole("button", { name: "More actions" }).click();
+  // The overflow menu keeps its own small-overlay keyboard contract. #128:
+  // the trigger moved into the app bar, so the walk above no longer counts it.
+  await page.locator(".topbar").getByRole("button", { name: "More actions" }).click();
   const menu = page.getByRole("menu", { name: "More actions" });
   await expect(menu.locator(".overflow-separator")).toHaveCount(2);
   await expect(menu.locator(".menu-item-danger")).toHaveCount(1);
@@ -2795,8 +2811,11 @@ test("20: quiet ghost icon buttons — no standing chrome, soft hover (#75)", as
     await expect.poll(() => borderColor(avatar), { message: `${colorScheme}/avatar hover hairline (no plum)` }).toBe(border);
     await page.mouse.move(0, 0); // leave hover before the next probe
 
-    // --- Detail ⋮: transparent circle standing; quiet hover tint from
+    // --- Detail ⋮: transparent standing; quiet hover tint from
     // .icon-btn:hover (the trigger carries "icon-btn detail-menu-trigger").
+    // #128 moved it out of the page body into the app bar; the class string
+    // and therefore this locator survived the move, and the contract the two
+    // probes below assert is the same in the new home.
     // Two-step idiom from test 4e2 (app.spec.ts:532-534): the wishlist route
     // is /api/users/:id (wishlist.ts:253) — there is no "me" literal route.
     await page.goto(`${BASE}/items/${itemId}`);
@@ -2994,7 +3013,8 @@ test("22: owner purchased mark — mark, badge, unmark, and privacy (#76)", asyn
   await expect(page).toHaveURL(`${BASE}/items/${item.id}`);
   const itemPage = page.locator(".item-page");
   await expect(itemPage.locator(".owner-purchased-badge")).toHaveText("Bought by you");
-  await itemPage.getByRole("button", { name: "More actions" }).click();
+  // #128: the ⋮ now lives in the app bar, not in the page body.
+  await page.locator(".topbar").getByRole("button", { name: "More actions" }).click();
   await page
     .getByRole("menu", { name: "More actions" })
     .getByRole("menuitem", { name: "Unmark purchased" })
@@ -5026,7 +5046,9 @@ test("36: #127 — purchased cluster, guarded discard, canonical add pair", asyn
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto(`${BASE}/items/${item.id}`);
   const detailPage = page.locator(".item-page");
-  await detailPage.getByRole("button", { name: "More actions" }).click();
+  // #128: the detail ⋮ lives in the app bar now — the body carries none.
+  await expect(detailPage.getByRole("button", { name: "More actions" })).toHaveCount(0);
+  await page.locator(".topbar").getByRole("button", { name: "More actions" }).click();
   await expect(menu).toBeVisible();
   expect(await inventory()).toEqual(["Mark as purchased", "Reset purchased mark", "Delete"]);
   // The cluster LEADS this menu (the probe has no url), so only the danger
@@ -5428,4 +5450,178 @@ test("38: #129 — one visible Add item, grouped add actions, no stranding", asy
   await expect(page.getByRole("button", { name: "Discard" })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(page.getByRole("button", { name: "Add details manually" })).toBeFocused();
+});
+
+test("39: #128 — mobile back chevron on every non-feed page, ⋮ in the header", async ({ page }) => {
+  // The filed complaint was two-fold and both halves are asserted here: at
+  // mobile the only way back off the detail and settings screens was an
+  // unlabeled logo tile, and the item page's ⋮ floated in the page body.
+  // The chevron's presence SET falls out of the shell's brandHref bit, so the
+  // spec pins the set itself (present on every non-feed route, absent on the
+  // feed and above the seam) rather than any per-page wiring. (Numbered 39,
+  // not the plan's "22": that slot is the #76 owner-purchased spec.)
+  const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as { id: string };
+  const list = (await (await page.request.get(`${BASE}/api/users/${me.id}/wishlist`)).json()) as Array<{ id: string; title: string }>;
+  let probe = list.find((item) => item.title === "History probe");
+  if (!probe) {
+    const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
+      data: { title: "History probe", priceCents: "12.50", currency: "GBP" },
+    });
+    expect(seeded.status()).toBe(201);
+    probe = { id: ((await seeded.json()) as { id: string }).id, title: "History probe" };
+  }
+  const itemId = probe.id;
+  const chevron = page.locator(".topbar-back-chevron");
+
+  // --- 1. Item detail: exactly one leading topbar button, named "Back to
+  //        list" like the brand link it makes visible, 44px on both axes. ---
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${BASE}/items/${itemId}`);
+  await expect(page.locator(".item-page .detail-title")).toBeVisible();
+  // AC5: the retired body row is really gone — the page's first content row is
+  // the #125 context bar, not a header holding the ⋮.
+  await expect(page.locator(".detail-header"), "the ⋮'s body row is retired").toHaveCount(0);
+  await expect(
+    page.locator(".item-page").locator("> :first-child"),
+    "the context bar is the item page's first row",
+  ).toHaveClass(/list-switcher--compact/);
+  await expect(chevron, "@390: one chevron on the item view").toHaveCount(1);
+  await expect(chevron).toBeVisible();
+  // The name resolves to exactly one button at this width: the desktop
+  // Back-to-list BUTTON is not mounted under the seam, and the lockup is a
+  // role=link, so there is no second match to be ambiguous about.
+  await expect(page.getByRole("button", { name: "Back to list" })).toHaveCount(1);
+  const chevronBox = (await chevron.boundingBox())!;
+  expect(Math.round(chevronBox.width), "chevron width @390").toBeGreaterThanOrEqual(44);
+  expect(Math.round(chevronBox.height), "chevron height @390").toBeGreaterThanOrEqual(44);
+  // …and it sits BESIDE the lockup, never over it: both are back affordances
+  // to the same place, so their hit areas must not fight (#116 geometry).
+  const brandBox = (await page.locator(".brand").boundingBox())!;
+  expect(Math.round(chevronBox.x + chevronBox.width), "chevron clears the lockup").toBeLessThanOrEqual(
+    Math.round(brandBox.x),
+  );
+
+  // --- 2. Its destination is the list, client-side (no document load). ----
+  const before = await loads(page);
+  await chevron.click();
+  await expect(page).toHaveURL(`${BASE}/`);
+  await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+  expect(await loads(page), "the chevron is a client-side navigation").toBe(before);
+
+  // --- 3. Every other non-feed authenticated route carries it too. --------
+  const uiOn = await page.request.put(`${BASE}/api/auth/me/settings`, {
+    data: { showUserManagement: true },
+  });
+  expect(uiOn.status()).toBe(200);
+  try {
+    for (const path of [
+      "/add",
+      "/settings",
+      "/settings/users",
+      "/settings/users/new",
+      `/items/${itemId}/edit`,
+    ]) {
+      await page.goto(`${BASE}${path}`);
+      await expect(page.locator(".topbar"), `topbar on ${path}`).toBeVisible();
+      await expect(chevron, `chevron on ${path} @390`).toHaveCount(1);
+      await expect(chevron, `chevron visible on ${path} @390`).toBeVisible();
+    }
+  } finally {
+    const uiOff = await page.request.put(`${BASE}/api/auth/me/settings`, {
+      data: { showUserManagement: false },
+    });
+    expect(uiOff.status()).toBe(200);
+  }
+
+  // --- 4. Absent where it would be a lie: the feed has nowhere back to go,
+  //        and above the seam #125's header owns the affordance. ----------
+  await page.goto(`${BASE}/`);
+  await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+  await expect(chevron, "@390: no chevron on the feed").toHaveCount(0);
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${BASE}/items/${itemId}`);
+  await expect(page.locator(".item-page .detail-title")).toBeVisible();
+  await expect(chevron, "@1280: the desktop header needs no chevron").toHaveCount(0);
+  await expect(page.locator(".topbar-back"), "@1280: #125's Back-to-list button stays").toBeVisible();
+
+  // --- 5. The ⋮: in the app bar at BOTH widths, never in the page body. --
+  for (const width of [390, 1280] as const) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${BASE}/items/${itemId}`);
+    await expect(page.locator(".item-page .detail-title")).toBeVisible();
+    const trigger = page.locator(".topbar .detail-menu-trigger");
+    await expect(trigger, `⋮ in the topbar @${width}`).toBeVisible();
+    await expect(page.locator(".item-page .detail-menu-trigger"), `⋮ in the body @${width}`).toHaveCount(0);
+
+    await trigger.click();
+    // Under the seam the menu portals to a bottom sheet (role=dialog); above
+    // it, an anchored popover (role=menu). Same items either way.
+    const surface =
+      width < 640
+        ? page.getByRole("dialog", { name: "More actions" })
+        : page.getByRole("menu", { name: "More actions" });
+    await expect(surface, `the menu opens @${width}`).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Delete" })).toBeVisible();
+    if (width >= 640) {
+      // The anchored popover hangs off .topbar-menu (right: 0), inside the
+      // blurred sticky bar — the geometry risk this move introduces. It must
+      // land inside the viewport, not clipped by the bar or the seam.
+      const menuBox = (await surface.boundingBox())!;
+      expect(Math.round(menuBox.x), `menu left edge @${width}`).toBeGreaterThanOrEqual(0);
+      expect(Math.round(menuBox.x + menuBox.width), `menu right edge @${width}`).toBeLessThanOrEqual(width);
+      expect(Math.round(menuBox.y), `menu drops below the trigger @${width}`).toBeGreaterThan(0);
+    }
+    await page.keyboard.press("Escape");
+    await expect(surface, `Escape closes the menu @${width}`).toHaveCount(0);
+    await expect(page).toHaveURL(`${BASE}/items/${itemId}`);
+  }
+
+  // --- 6. Desktop order: the ⋮ sits left of the actions cluster, which keeps
+  //        the right edge (the issue's "top-right, in the app bar"). -------
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${BASE}/items/${itemId}`);
+  await expect(page.locator(".item-page .detail-title")).toBeVisible();
+  const dots = (await page.locator(".topbar .detail-menu-trigger").boundingBox())!;
+  const addChip = (await page
+    .locator(".topbar-actions")
+    .getByRole("button", { name: "Add item", exact: true })
+    .boundingBox())!;
+  expect(Math.round(dots.x + dots.width), "⋮ renders left of the Add chip").toBeLessThanOrEqual(
+    Math.round(addChip.x),
+  );
+
+  // --- 7. Safe area: the issue listed "header respects notch/dynamic-island
+  //        insets" as a gap, but the topbar has carried env(safe-area-inset-top)
+  //        since the shell foundation (commit 2defab7) — the filed evidence was
+  //        gathered under devtools device emulation, where env() computes to 0.
+  //        So this is a NO-REGRESSION pin, not a change: the applied CSS still
+  //        resolves the token, and the shell still opts into the cover insets
+  //        (without viewport-fit=cover env(safe-area-inset-*) is always 0). ---
+  const cssText = (
+    await page.evaluate(() =>
+      Array.from(document.styleSheets)
+        .map((sheet) => {
+          try {
+            return Array.from(sheet.cssRules)
+              .map((rule) => rule.cssText)
+              .join("\n");
+          } catch {
+            return "";
+          }
+        })
+        .join("\n"),
+    )
+  ).replace(/\s+/g, " "); // the bundler re-spaces calc(); compare on tokens
+  expect(cssText, "safe-area token is defined and resolved").toContain(
+    "safe-area-inset-top",
+  );
+  expect(
+    cssText,
+    "the topbar's top padding still consumes the safe-area token",
+  ).toContain("calc(var(--topbar-pad-y) + var(--safe-top))");
+  expect(
+    await page.getAttribute('meta[name="viewport"]', "content"),
+    "the shell opts into the display cutout insets",
+  ).toContain("viewport-fit=cover");
 });
