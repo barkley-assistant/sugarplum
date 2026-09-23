@@ -6197,3 +6197,162 @@ test("42: #161 — page spacing rhythm: the context-to-content boundary and the 
     await page.setViewportSize({ width: 1280, height: 900 });
   }
 });
+
+test("43: #157 — the mobile topbar centers the brand lockup on every route", async ({
+  page,
+  browser,
+}) => {
+  // The filed defect: under 640px the topbar distributed its children with
+  // `space-between`, so the lockup's centre was the middle GAP's centre, never
+  // the viewport's — measured 25-185px left of centre at phone widths, and at a
+  // different x on the feed (no chevron) than on the chevron routes. #157's
+  // requirement is ONE lockup position on every route, so the assertion is the
+  // lockup's union box (mark + wordmark) against the viewport centreline — the
+  // unit the issue calls "the brand lockup". `.brand`'s own box is the box
+  // being centred, so measuring it would be circular.
+  const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "Header centering probe", priceCents: "12.50", currency: "GBP" },
+  });
+  expect(seeded.status()).toBe(201);
+  const item = (await seeded.json()) as { id: string };
+  const shared = await page.request.post(`${BASE}/api/share`);
+  expect(shared.status()).toBe(201);
+  const shareToken = ((await shared.json()) as { token: string }).token;
+
+  /** The lockup's union box, in one evaluate so the two boxes come from the
+   *  same layout pass. */
+  const lockup = (target: Page) =>
+    target.evaluate(() => {
+      const mark = document.querySelector(".topbar .brand-mark")!.getBoundingClientRect();
+      const name = document.querySelector(".topbar .brand-name")!.getBoundingClientRect();
+      const left = Math.min(mark.left, name.left);
+      const right = Math.max(mark.right, name.right);
+      return {
+        left,
+        right,
+        offset: (left + right) / 2 - window.innerWidth / 2,
+        viewport: window.innerWidth,
+      };
+    });
+
+  const routes = [`/items/${item.id}`, `/items/${item.id}/edit`, "/add", "/settings", "/"];
+
+  try {
+    // --- A. The centreline contract, on every route, at the phone widths
+    //        AGENTS.md pins — plus the 639px edge of the seam. --------------
+    for (const width of [360, 390, 430, 639]) {
+      await page.setViewportSize({ width, height: 844 });
+      for (const path of routes) {
+        await page.goto(`${BASE}${path}`);
+        await expect(page.locator(".topbar .brand-name"), `lockup on ${path} @${width}`).toBeVisible();
+        const measured = await lockup(page);
+        expect(
+          Math.abs(measured.offset),
+          `@${width} ${path}: the lockup sits on the viewport centreline (measured ${measured.offset.toFixed(1)}px off)`,
+        ).toBeLessThanOrEqual(0.5);
+      }
+    }
+    // …and the mechanism that produces it is really the mobile grid, not a
+    // coincidence of the three widths above.
+    await page.setViewportSize({ width: 639, height: 844 });
+    await page.goto(`${BASE}/items/${item.id}`);
+    await expect(page.locator(".topbar .brand-name")).toBeVisible();
+    expect(
+      await page.locator(".topbar").evaluate((el) => getComputedStyle(el).display),
+      "@639: the topbar is the #157 three-track grid",
+    ).toBe("grid");
+
+    // --- B. The chevron keeps the leading edge, its 44px target, and the
+    //        app's 8px clearance from the centred lockup (#116's band). -----
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${BASE}/items/${item.id}`);
+    await expect(page.locator(".topbar .brand-name")).toBeVisible();
+    const chevron = page.locator(".topbar-back-chevron");
+    await expect(chevron, "@390: one chevron on the item view").toHaveCount(1);
+    const chevronBox = (await chevron.boundingBox())!;
+    expect(Math.round(chevronBox.width), "chevron width @390").toBeGreaterThanOrEqual(44);
+    expect(Math.round(chevronBox.height), "chevron height @390").toBeGreaterThanOrEqual(44);
+    expect(
+      Math.round(chevronBox.x),
+      "the chevron keeps the bar's own leading gutter (x=16)",
+    ).toBe(16);
+    const centred = await lockup(page);
+    expect(
+      Math.round(centred.left - (chevronBox.x + chevronBox.width)),
+      "the centred lockup still clears the chevron",
+    ).toBeGreaterThanOrEqual(8);
+
+    // --- C. The 640px seam: the grid is gone, the flex header is back at the
+    //        leading edge and #125's cluster owns the right. ----------------
+    await page.setViewportSize({ width: 640, height: 900 });
+    await page.goto(`${BASE}/items/${item.id}`);
+    await expect(page.locator(".topbar .brand-name")).toBeVisible();
+    const seam = await page.locator(".topbar").evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return {
+        display: cs.display,
+        justify: cs.justifyContent,
+        brandX: document.querySelector(".topbar .brand")!.getBoundingClientRect().left,
+      };
+    });
+    expect(seam.display, "@640: back to the flex header").toBe("flex");
+    expect(seam.justify, "@640: the desktop distribution is untouched").toBe("space-between");
+    expect(Math.round(seam.brandX), "@640: the brand is back at the leading edge").toBe(16);
+    await expect(chevron, "@640: #125's header owns the affordance").toHaveCount(0);
+
+    // --- D. Both affordances still navigate, client-side (no document load). -
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${BASE}/items/${item.id}`);
+    await expect(page.locator(".topbar .brand-name")).toBeVisible();
+    let before = await loads(page);
+    await page.locator(".topbar .brand").click();
+    await expect(page).toHaveURL(`${BASE}/`);
+    expect(await loads(page), "the lockup link is a client-side navigation").toBe(before);
+
+    await page.goto(`${BASE}/items/${item.id}`);
+    await expect(page.locator(".topbar .brand-name")).toBeVisible();
+    before = await loads(page);
+    await chevron.click();
+    await expect(page).toHaveURL(`${BASE}/`);
+    expect(await loads(page), "the chevron is a client-side navigation").toBe(before);
+
+    // --- E. #116 preserved: centering grows no box. The lockup stays a 28px
+    //        box with a 44px hit band — the grid places it, it does not size
+    //        it. ------------------------------------------------------------
+    await page.goto(`${BASE}/items/${item.id}`);
+    await expect(page.locator(".topbar .brand-name")).toBeVisible();
+    const extent = await hitExtent(page, ".brand");
+    expect(extent.boxHeight, "the lockup box is untouched by the centering").toBeLessThan(29);
+    expect(extent.hitHeight, "the lockup keeps its 44px hit band").toBeGreaterThanOrEqual(44);
+
+    // --- F. The anonymous share view renders ONE topbar child and is centred
+    //        too: the grid must not depend on the chevron's presence, and a
+    //        CSS rule keyed on it would have to read React's mount. ---------
+    const anon = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    try {
+      const anonPage = await anon.newPage();
+      for (const width of [360, 390, 430, 639]) {
+        await anonPage.setViewportSize({ width, height: 844 });
+        await anonPage.goto(`${BASE}/share/${shareToken}`);
+        await expect(anonPage.locator(".topbar .brand-name"), `share lockup @${width}`).toBeVisible();
+        const measured = await lockup(anonPage);
+        expect(
+          Math.abs(measured.offset),
+          `@${width} share: the lockup sits on the viewport centreline (measured ${measured.offset.toFixed(1)}px off)`,
+        ).toBeLessThanOrEqual(0.5);
+        await expect(anonPage.locator(".topbar-back-chevron"), `share chevron @${width}`).toHaveCount(0);
+        await expect(anonPage.locator(".topbar-right"), `share cluster @${width}`).toHaveCount(0);
+      }
+    } finally {
+      await anon.close();
+    }
+  } finally {
+    // Hand the board back to the serial state: no probe row, no share link.
+    const removed = await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
+    expect([200, 204]).toContain(removed.status());
+    const revoked = await page.request.delete(`${BASE}/api/share`);
+    expect([200, 204]).toContain(revoked.status());
+    // Leave the viewport desktop for any later assertions.
+    await page.setViewportSize({ width: 1280, height: 900 });
+  }
+});

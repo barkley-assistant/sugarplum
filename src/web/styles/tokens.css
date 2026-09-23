@@ -145,6 +145,15 @@
 
   --topbar-pad-y: 6px;
   --topbar-h: 52px;
+  /* #157: the mobile app bar's three jobs in fixed tracks — leading control,
+     centred brand, trailing cluster. A track list, not a spacing step: the
+     middle track is `auto` so the brand's own width derives the centre, and
+     the two `minmax(0, 1fr)` tracks absorb the remainder in EITHER direction,
+     which is what keeps the brand centred when a chevron is present (item /
+     edit / add / settings), when it is absent (feed), and when the trailing
+     cluster is absent too (the anonymous share view). One width-scoped rule
+     in styles.css consumes it; no rule may restate the track list. */
+  --topbar-tracks-mobile: minmax(0, 1fr) auto minmax(0, 1fr);
 
   --chip-bg: transparent;
   --chip-border: transparent;

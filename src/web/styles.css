@@ -2431,6 +2431,50 @@ button.row-open:hover {
   }
 }
 
+/* #157: the mobile topbar is a three-track grid — leading control, centred
+   brand, trailing cluster — so the lockup's centre is the bar's centre
+   regardless of how wide the chevron (44px) and the right cluster (54-106px)
+   happen to be. The #128 `space-between` result pinned the wordmark against
+   the chevron instead, so the lockup measured 25-185px left of centre at
+   320-639px. Every child stays IN FLOW in its own track: the chevron keeps
+   the bar's --sp-4 leading gutter, the brand keeps its 28px box (its 44px
+   hit band is #116's ::after, not a grown box), and the cluster keeps its
+   right edge. With one child (the anonymous share view) or two (the feed) the
+   same tracks still centre the brand — no route-specific rule, and no :has()
+   on a conditionally-mounted chevron. */
+@media (max-width: 639px) {
+  .topbar {
+    display: grid;
+    grid-template-columns: var(--topbar-tracks-mobile);
+    /* The tracks' own free space is the separation; a grid `gap` would add a
+       fixed step between the brand track and the free tracks and pull the
+       lockup off the exact centre. */
+    gap: 0;
+  }
+
+  .topbar-back-chevron {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .topbar .brand {
+    grid-column: 2;
+    justify-self: center;
+    /* #116's overlay is vertical-only, so it cannot be narrowed to buy
+       clearance; the cluster's own gap (below) does that job instead. */
+    margin-inline: 0;
+  }
+
+  .topbar-right {
+    grid-column: 3;
+    justify-self: end;
+    /* 4px between the two controls of one cluster at mobile, so the centred
+       lockup clears the ⋮ trigger's 44px box from 360px up. Desktop keeps
+       --sp-2. */
+    gap: var(--sp-1);
+  }
+}
+
 /* ---------- List layout: single fluid column ---------- */
 .list-layout {
   display: flex;
@@ -3197,15 +3241,13 @@ button.row-open:hover {
    either side (#116), so the two hit areas never overlap.
    ============================================================ */
 
-/* The shell renders at most three topbar children now (chevron, brand,
-   .topbar-right) instead of two, and `justify-content: space-between` would
-   split the free space into TWO gaps — floating the wordmark into the middle
-   of the bar. The auto margin absorbs that free space instead, so the
-   chevron + lockup stay a left-hand group and the actions keep the right
-   edge. Without a chevron the two-child result is identical to before. */
-.topbar .brand {
-  margin-inline-end: auto;
-}
+/* #128 shipped `margin-inline-end: auto` here to stop `space-between` from
+   splitting the bar's free space into two gaps. #157 replaced the whole
+   mechanism: under 640px the topbar is a three-track grid and the brand is
+   placed by `grid-column: 2; justify-self: center` (see the clamp after
+   .topbar-actions). The auto margin is gone because a margin on a
+   `justify-self: center` grid item would pull the lockup off the centre
+   again. At >= 640px the two-child flex result is unchanged. */
 
 /* #128: the anchor for a page-owned menu mounted in the topbar (the item
    view's ⋮). Same one-liner contract as .user-menu / .share-anchor: it is
