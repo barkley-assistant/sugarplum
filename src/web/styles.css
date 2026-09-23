@@ -2469,25 +2469,6 @@ button.row-open:hover {
   flex: 0 0 auto;
 }
 
-.detail-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--sp-2) var(--sp-4) 0;
-  flex: 0 0 auto;
-  position: relative;
-}
-
-/* #75: the round ⋮ loses its standing chip (fill + ring) and reads as a
-   plain ghost circle like .icon-btn; only the shape (--r-full) remains
-   distinct. Hover comes from .icon-btn:hover, which this element already
-   carries via its "icon-btn detail-menu-trigger" class pair. */
-.detail-menu-trigger {
-  border-radius: var(--r-pill);
-  border: 1px solid transparent;
-  background: transparent;
-}
-
 .detail-scroll {
   flex: 1;
   min-height: 0;
@@ -2509,14 +2490,6 @@ button.row-open:hover {
   display: flex;
   flex-direction: column;
   min-width: 0;
-}
-
-.item-page .detail-header {
-  padding: 0 0 var(--sp-3);
-  /* #72: the close icon is gone, so the overflow trigger is the header's only
-     child — keep it right-aligned (space-between would left-align it).
-     position: relative stays: it is the .menu-sheet popover's anchor. */
-  justify-content: flex-end;
 }
 
 .item-page .detail-scroll {
@@ -3154,4 +3127,37 @@ button.row-open:hover {
 
 .list-switcher--compact .page-title {
   margin: 0;
+}
+
+/* ============================================================
+   #128 — mobile back navigation
+   A real chevron back affordance in the topbar on every non-feed page, and
+   the item view's ⋮ moved out of the page body into the app bar.
+   The chevron itself needs no rules: .icon-btn already carries the 44px
+   touch floor and the ghost variant the quiet look, and it is keyed off
+   brandHref in AppShell, so it exists only on pages that have somewhere to
+   go back to, and only under 640px. The topbar's own --sp-4 gap separates it
+   from the lockup — comfortably wider than the 8px .brand::after adds to
+   either side (#116), so the two hit areas never overlap.
+   ============================================================ */
+
+/* The shell renders at most three topbar children now (chevron, brand,
+   .topbar-right) instead of two, and `justify-content: space-between` would
+   split the free space into TWO gaps — floating the wordmark into the middle
+   of the bar. The auto margin absorbs that free space instead, so the
+   chevron + lockup stay a left-hand group and the actions keep the right
+   edge. Without a chevron the two-child result is identical to before. */
+.topbar .brand {
+  margin-inline-end: auto;
+}
+
+/* #128: the anchor for a page-owned menu mounted in the topbar (the item
+   view's ⋮). Same one-liner contract as .user-menu / .share-anchor: it is
+   what the absolutely-positioned .menu-sheet (right: 0, top: 100% + 8px)
+   measures against. The avatar menu proves the recipe inside the blurred,
+   sticky topbar; the mobile branch of OverflowMenu portals its sheet to
+   document.body, so no backdrop-filter clipping either way. */
+.topbar-menu {
+  position: relative;
+  display: inline-flex;
 }

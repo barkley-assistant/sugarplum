@@ -2,7 +2,9 @@ import type { ReactNode, Ref } from "react";
 import type { Me } from "../../shared/types";
 import { S } from "../strings";
 import { navigate } from "../router";
+import { useMedia } from "../use-media";
 import { HeaderCluster } from "./HeaderCluster";
+import { ChevronLeftIcon, IconButton } from "./IconButton";
 import { SkeletonList } from "./SkeletonList";
 
 interface AppShellProps {
@@ -19,9 +21,17 @@ interface AppShellProps {
   /** Render the cluster's Back-to-list button (the item view). */
   showBackToList?: boolean;
   /** When set, the brand renders as a home link with this accessible name
-   *  (the /settings page); otherwise it is a plain lockup. */
+   *  (the /settings page); otherwise it is a plain lockup. It is also the
+   *  bit the mobile back chevron keys off: every non-feed authenticated page
+   *  sets it, the feed never does, so the chevron's presence falls out of
+   *  the data rather than out of per-page discipline (AC2). */
   brandHref?: string;
   brandLinkLabel?: string;
+  /** The page's OWN overflow menu, rendered at the head of .topbar-right so
+   *  it sits in the app bar instead of floating in the page body (#128, the
+   *  item view is the first consumer). The page keeps owning the trigger and
+   *  the items — the shell stays stateless. */
+  headerMenu?: ReactNode;
   children: ReactNode;
   refreshing?: boolean;
 }
@@ -56,9 +66,9 @@ function Brand({ href, linkLabel }: { href?: string; linkLabel?: string }) {
   return <div className="brand">{lockup}</div>;
 }
 
-/** One app shell for App, Settings and Share: sticky topbar (brand +
- *  actions + user menu) and a fluid main column. Login keeps its own auth
- *  layout. */
+/** One app shell for App, Settings and Share: sticky topbar (back chevron +
+ *  brand + actions + user menu) and a fluid main column. Login keeps its own
+ *  auth layout. */
 export function AppShell({
   me,
   hideHeaderAdd = false,
@@ -66,22 +76,48 @@ export function AppShell({
   showBackToList = false,
   brandHref,
   brandLinkLabel,
+  headerMenu,
   children,
   refreshing = false,
 }: AppShellProps) {
+  // The same JS seam the header cluster uses (#73/#125): the app renders
+  // exactly ONE control per width, never a hidden duplicate, so the mobile
+  // chevron is mounted at mobile width and absent above it — not display:none.
+  const isDesktop = useMedia("(min-width: 640px)");
   return (
     <main className="app-shell">
       {refreshing && <div className="progress-hairline" aria-hidden="true" />}
       <header className="topbar">
+        {/* #128: the mobile back affordance. Every non-feed authenticated
+            page hands the shell brandHref="/", so one condition covers the
+            detail, edit, add and settings screens alike (including their
+            error and not-found branches, which render no cluster); the feed
+            and the anonymous share surface never set it, so no chevron. The
+            destination is the same as the brand link it sits beside: a
+            predictable "back to the list", never history.back() (which
+            exits the app on a cold deep link). #72's close icon stays gone. */}
+        {!isDesktop && brandHref && (
+          <IconButton
+            variant="ghost"
+            className="topbar-back-chevron"
+            label={brandLinkLabel ?? S.settings.backToList}
+            onClick={() => navigate(brandHref)}
+          >
+            <ChevronLeftIcon />
+          </IconButton>
+        )}
         <Brand href={brandHref} linkLabel={brandLinkLabel} />
-        {me && (
+        {(me || headerMenu) && (
           <div className="topbar-right">
-            <HeaderCluster
-              me={me}
-              hideAdd={hideHeaderAdd}
-              hideActions={hideHeaderActions}
-              showBackToList={showBackToList}
-            />
+            {headerMenu && <div className="topbar-menu">{headerMenu}</div>}
+            {me && (
+              <HeaderCluster
+                me={me}
+                hideAdd={hideHeaderAdd}
+                hideActions={hideHeaderActions}
+                showBackToList={showBackToList}
+              />
+            )}
           </div>
         )}
       </header>

@@ -237,23 +237,28 @@ export function ItemPage({ id }: { id: string }) {
   const editHref = `/items/${item.id}/edit`;
 
   return (
-    <AppShell me={me} showBackToList brandHref="/" brandLinkLabel={S.settings.backToList}>
+    <AppShell
+      me={me}
+      showBackToList
+      brandHref="/"
+      brandLinkLabel={S.settings.backToList}
+      // #128: the item page's overflow menu lives in the app bar, not in the
+      // page body — the "floating ⋮" the issue filed. It is passed as a node
+      // so ItemPage keeps owning the trigger and the state-dependent items.
+      headerMenu={
+        <OverflowMenu
+          triggerLabel={S.item.moreActions}
+          triggerIcon={<DotsIcon />}
+          triggerClassName="icon-btn detail-menu-trigger"
+          menuLabel={S.item.moreActions}
+          items={secondaryMenuItems()}
+        />
+      }
+    >
       <div className="item-page" data-item-id={item.id}>
         {/* #125: the context row every non-feed page carries — which list this
             item belongs to, and the way to another one. */}
         <ListContextBar me={me} />
-        <div className="detail-header">
-          {/* #72: the close icon is gone — a page is dismissed by the
-              browser's own back button (the feed when opened from it, the
-              previous site on a cold deep link), same as any web page. */}
-          <OverflowMenu
-            triggerLabel={S.item.moreActions}
-            triggerIcon={<DotsIcon />}
-            triggerClassName="icon-btn detail-menu-trigger"
-            menuLabel={S.item.moreActions}
-            items={secondaryMenuItems()}
-          />
-        </div>
 
         <div className="detail-scroll">
           <div className="detail-hero">
