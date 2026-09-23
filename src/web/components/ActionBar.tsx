@@ -54,10 +54,14 @@ export function ActionBar({
 }: ActionBarProps) {
   return (
     <nav className="action-bar" aria-label={S.bar.navigation}>
+      {/* #129: the visible label is the short "Add" (S.bar.add) so /add never
+          shows two elements reading "Add item"; the accessible name stays the
+          app's full phrase, exactly like Share's trigger. */}
       <button
         type="button"
         className={`action-bar-item${currentDestination === "add" ? " is-current" : ""}`}
         aria-current={currentDestination === "add" ? "page" : undefined}
+        aria-label={S.list.addItem}
         onClick={onAdd}
       >
         <PlusIcon />

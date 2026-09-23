@@ -15,6 +15,11 @@ export const S = {
     signingIn: "Signing in…",
     username: "Username",
     password: "Password",
+    /** #120: the login password field's reveal control. The accessible name
+     *  changes with the state; the field itself keeps S.auth.password as its
+     *  only label. Named for reuse by the settings password fields later. */
+    revealPassword: "Show password",
+    hidePassword: "Hide password",
     signOut: "Log out",
     invalidCredentials: "Invalid username or password.",
     signInFailed: "Sign-in failed.",
@@ -30,6 +35,13 @@ export const S = {
     addItem: "Add item",
     reorder: "Reorder",
     doneReordering: "Done",
+    /** #134: the live-save confirmation, with its one Undo action. */
+    orderSaved: "Order saved",
+    undo: "Undo",
+    /** #134: shown on the Reorder/Done toggle while a commit PUT is in flight. */
+    saving: "Saving…",
+    /** #134: reorder mode's one-line guard — the filter row's slot. */
+    reorderHint: "Drag to reorder. Changes save as you go.",
     heading: (name: string) => `${name}'s wishlist`,
     itemCount: (n: number) => `${n} item${n === 1 ? "" : "s"}`,
     switcherLabel: "Switch wishlist",
@@ -249,10 +261,12 @@ export const S = {
     install: "Install app",
   },
   bar: {
-    /** Visible labels on the mobile bottom action bar (#73). Add reuses the
-     *  feed's action copy; Share is short (its accessible name stays
-     *  "Share my list" via aria-label on the trigger). */
-    add: "Add item",
+    /** Visible labels on the mobile bottom action bar (#73). Both shortcuts
+     *  are short while their accessible names stay the app's full phrases via
+     *  aria-label on the trigger: Share → "Share my list", Add → "Add item"
+     *  (#129 — the tab sits on the same screen as the add form's own "Add
+     *  item" submit, so the visible label must not read as a second CTA). */
+    add: "Add",
     share: "Share",
     settings: "Settings",
     /** Landmark label for the bottom bar (screen readers announce
@@ -275,6 +289,17 @@ export const S = {
     deleteItem: "Could not delete item.",
     reorder: "Couldn't save the new order.",
     generic: "Something went wrong. Try again.",
+  },
+  /** #117: the CONNECTION, not the request. A write that did not leave the
+   *  device is still reported as a failure — there is no queue and no retry —
+   *  so the copy says what happened and what it would take to fix it, instead
+   *  of naming an action the user cannot tell apart from a server error. */
+  offline: {
+    /** Every non-form write surface (delete, toggle, reorder, admin action). */
+    write: "You appear to be offline — this change was not saved.",
+    /** The form surfaces: "this change" is ambiguous while the user is
+     *  looking at a draft that is still on screen. */
+    form: "You appear to be offline — this item was not saved.",
   },
   empty: {
     own: "Nothing saved yet.",

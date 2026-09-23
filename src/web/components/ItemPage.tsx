@@ -3,6 +3,7 @@ import type { OwnedItem, PriceHintState, PriceHintsResponse } from "../../shared
 import { formatDate, formatPrice, urlHost } from "../format";
 import { navigate } from "../router";
 import { S } from "../strings";
+import { classifyResponse, classifyWriteFailure } from "../net";
 import { useConfirm } from "../confirm";
 import { useToast } from "../toast";
 import { useBootMe } from "../use-boot-me";
@@ -13,6 +14,7 @@ import { DetailMeta } from "./DetailMeta";
 import { EmptyState } from "./EmptyState";
 import { HintsPanel } from "./HintsPanel";
 import { DotsIcon } from "./IconButton";
+import { ListContextBar } from "./ListContextBar";
 import { OverflowMenu, type OverflowItem } from "./OverflowMenu";
 import { ProductImage } from "./ProductImage";
 import { PriceHistoryCard } from "./PriceHistoryCard";
@@ -84,7 +86,8 @@ export function ItemPage({ id }: { id: string }) {
   async function refreshItem() {
     const res = await fetch(`/api/wishlist/items/${id}/refresh`, { method: "POST" });
     if (!res.ok) {
-      toast(S.errors.retryItem, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.retryItem, "danger");
       return;
     }
     // The 202 means "queued".
@@ -97,7 +100,8 @@ export function ItemPage({ id }: { id: string }) {
   async function resetPurchased() {
     const res = await fetch(`/api/wishlist/items/${id}/purchased`, { method: "DELETE" });
     if (res.status !== 204) {
-      toast(S.errors.generic, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.generic, "danger");
       return;
     }
     await reload();
@@ -115,7 +119,8 @@ export function ItemPage({ id }: { id: string }) {
     if (!ok) return;
     const res = await fetch(`/api/wishlist/items/${id}/owner-purchased`, { method: "PUT" });
     if (!res.ok) {
-      toast(S.errors.generic, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.generic, "danger");
       return;
     }
     setItem((await res.json()) as OwnedItem);
@@ -124,7 +129,8 @@ export function ItemPage({ id }: { id: string }) {
   async function unmarkOwnerPurchased() {
     const res = await fetch(`/api/wishlist/items/${id}/owner-purchased`, { method: "DELETE" });
     if (res.status !== 204) {
-      toast(S.errors.generic, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.generic, "danger");
       return;
     }
     await reload();
@@ -137,14 +143,16 @@ export function ItemPage({ id }: { id: string }) {
     let res: Response;
     try {
       res = await fetch(`/api/wishlist/items/${id}/hints`, { method: "POST" });
-    } catch {
+    } catch (err) {
       setHintState({ status: "error", hints: [], disabled: false });
-      toast(S.errors.checkPrices, "danger");
+      const kind = classifyWriteFailure(err);
+      toast(kind === "offline" ? S.offline.write : S.errors.checkPrices, "danger");
       return;
     }
     if (!res.ok) {
       setHintState({ status: "error", hints: [], disabled: false });
-      toast(S.errors.checkPrices, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.checkPrices, "danger");
       return;
     }
     const body = (await res.json()) as PriceHintsResponse;
@@ -159,7 +167,8 @@ export function ItemPage({ id }: { id: string }) {
     if (!ok) return;
     const res = await fetch(`/api/wishlist/items/${id}`, { method: "DELETE" });
     if (!res.ok) {
-      toast(S.errors.deleteItem, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.deleteItem, "danger");
       return;
     }
     // The item no longer exists: staying on /items/:id would render the
@@ -212,19 +221,19 @@ export function ItemPage({ id }: { id: string }) {
   if (boot.status === "loading") return <ItemSkeleton />;
   if (boot.status === "error") {
     return (
-      <AppShell brandHref="/" brandLinkLabel={S.settings.backToList}>
+      <AppShell me={me} brandHref="/" brandLinkLabel={S.settings.backToList}>
         <p className="error" role="alert">{boot.message}</p>
       </AppShell>
     );
   }
   if (notFound) {
     return (
-      <AppShell brandHref="/" brandLinkLabel={S.settings.backToList}>
+      <AppShell me={me} showBackToList brandHref="/" brandLinkLabel={S.settings.backToList}>
         <EmptyState title={S.item.notFound} />
       </AppShell>
     );
   }
-  if (!item) return <ItemSkeleton />;
+  if (!me || !item) return <ItemSkeleton />;
 
   const stats = item.priceStats;
   const delta = priceDelta(item.priceCents, item.currency, stats);
@@ -236,20 +245,28 @@ export function ItemPage({ id }: { id: string }) {
   const editHref = `/items/${item.id}/edit`;
 
   return (
-    <AppShell brandHref="/" brandLinkLabel={S.settings.backToList}>
+    <AppShell
+      me={me}
+      showBackToList
+      brandHref="/"
+      brandLinkLabel={S.settings.backToList}
+      // #128: the item page's overflow menu lives in the app bar, not in the
+      // page body — the "floating ⋮" the issue filed. It is passed as a node
+      // so ItemPage keeps owning the trigger and the state-dependent items.
+      headerMenu={
+        <OverflowMenu
+          triggerLabel={S.item.moreActions}
+          triggerIcon={<DotsIcon />}
+          triggerClassName="icon-btn detail-menu-trigger"
+          menuLabel={S.item.moreActions}
+          items={secondaryMenuItems()}
+        />
+      }
+    >
       <div className="item-page" data-item-id={item.id}>
-        <div className="detail-header">
-          {/* #72: the close icon is gone — a page is dismissed by the
-              browser's own back button (the feed when opened from it, the
-              previous site on a cold deep link), same as any web page. */}
-          <OverflowMenu
-            triggerLabel={S.item.moreActions}
-            triggerIcon={<DotsIcon />}
-            triggerClassName="icon-btn detail-menu-trigger"
-            menuLabel={S.item.moreActions}
-            items={secondaryMenuItems()}
-          />
-        </div>
+        {/* #125: the context row every non-feed page carries — which list this
+            item belongs to, and the way to another one. */}
+        <ListContextBar me={me} />
 
         <div className="detail-scroll">
           <div className="detail-hero">

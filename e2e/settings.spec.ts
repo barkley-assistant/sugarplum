@@ -17,7 +17,7 @@ async function login(page: Page, username: string, password: string): Promise<vo
   await page.context().clearCookies();
   await page.goto(`${BASE}/login`);
   await page.getByLabel("Username").fill(username);
-  await page.getByLabel("Password").fill(password);
+  await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
 }
@@ -175,12 +175,12 @@ test("5: member changes their own password and signs in again", async ({ page })
 
     // Old password fails.
     await ctx.getByLabel("Username").fill(MEMBER.username);
-    await ctx.getByLabel("Password").fill(MEMBER.password);
+    await ctx.getByLabel("Password", { exact: true }).fill(MEMBER.password);
     await ctx.getByRole("button", { name: "Sign in" }).click();
     await expect(ctx.getByText("Invalid username or password.")).toBeVisible();
 
     // New password works.
-    await ctx.getByLabel("Password").fill(MEMBER.newPassword);
+    await ctx.getByLabel("Password", { exact: true }).fill(MEMBER.newPassword);
     await ctx.getByRole("button", { name: "Sign in" }).click();
     await expect(ctx.getByRole("heading", { name: /wishlist/ })).toBeVisible();
   } finally {

@@ -12,7 +12,7 @@ async function signIn(page: Page): Promise<void> {
   await page.context().clearCookies();
   await page.goto(`${BASE}/login`);
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin-password");
+  await page.getByLabel("Password", { exact: true }).fill("admin-password");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
 }

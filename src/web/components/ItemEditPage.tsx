@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import type { OwnedItem } from "../../shared/types";
 import { navigate } from "../router";
 import { S } from "../strings";
+import { classifyResponse, classifyWriteFailure } from "../net";
 import { useBootMe } from "../use-boot-me";
 import { usePageFocus } from "../use-page-focus";
 import { AppShell } from "./AppShell";
 import { EmptyState } from "./EmptyState";
 import { FormSkeleton } from "./Skeletons";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
+import { ListContextBar } from "./ListContextBar";
 
 /** The edit form as a page (#62): the full form (no progressive disclosure —
  *  an existing item already has every field), saved back to the item view.
@@ -53,12 +55,23 @@ export function ItemEditPage({ id }: { id: string }) {
     payload.url = values.url || null;
     payload.cheaperUrl = values.cheaperUrl || null;
 
-    const res = await fetch(`/api/wishlist/items/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error(S.errors.saveItem);
+    let res: Response;
+    try {
+      res = await fetch(`/api/wishlist/items/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      // #117: the form renders the message it is thrown — the KIND is decided
+      // here, where the connection is known.
+      const kind = classifyWriteFailure(err);
+      throw new Error(kind === "offline" ? S.offline.form : S.errors.saveItem, { cause: err });
+    }
+    if (!res.ok) {
+      const kind = await classifyResponse(res);
+      throw new Error(kind === "offline" ? S.offline.form : S.errors.saveItem);
+    }
     // Back to the item view.
     navigate(`/items/${id}`);
   }
@@ -73,19 +86,22 @@ export function ItemEditPage({ id }: { id: string }) {
   }
   if (notFound) {
     return (
-      <AppShell brandHref="/" brandLinkLabel={S.settings.backToList}>
+      <AppShell me={me} brandHref="/" brandLinkLabel={S.settings.backToList}>
         <EmptyState title={S.item.notFound} />
       </AppShell>
     );
   }
-  if (!item) return <FormSkeleton />;
+  if (!me || !item) return <FormSkeleton />;
 
   return (
-    <AppShell brandHref="/" brandLinkLabel={S.settings.backToList}>
+    <AppShell me={me} brandHref="/" brandLinkLabel={S.settings.backToList}>
       <div className="add-page">
         {/* #121: heading mirrors the "Edit item" button that navigates
             here; the commit stays "Save". */}
         <h1 ref={headingRef} tabIndex={-1} className="page-title page-title--form">{S.detail.editItem}</h1>
+        {/* #125: the header is uniform now, so the page also says which list
+            the item belongs to. */}
+        <ListContextBar me={me} />
         <ItemForm
           initial={item}
           submitLabel={S.form.save}

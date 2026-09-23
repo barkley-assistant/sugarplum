@@ -6,22 +6,21 @@ import type {
   WishlistSummaryRow,
 } from "../../shared/types";
 import { S } from "../strings";
+import { classifyResponse, classifyWriteFailure } from "../net";
 import { useToast } from "../toast";
 import { useDragReorder } from "../reorder";
 import { parseShareTarget } from "../format";
 import { navigate } from "../router";
-import { useMedia } from "../use-media";
 import {
   clearPendingFocusItemId,
   peekPendingFocusItemId,
   saveFeedSnapshot,
   takeFeedSnapshot,
+  takeFeedViewingHandoff,
   trackFeedScroll,
   trackedFeedScrollY,
 } from "../feed-handoff";
-import { useInstallPrompt } from "../pwa/install";
 import {
-  clearStoredIdentity,
   readStoredMe,
   readStoredSummary,
   writeStoredMe,
@@ -30,12 +29,9 @@ import {
 import { EmptyState } from "./EmptyState";
 import { FilterChips } from "./FilterChips";
 import { ItemList, type OwnerRef } from "./ItemList";
-import { ShareMenu } from "./ShareMenu";
 import { GuestItemDetailSheet, type GuestItemDetail } from "./GuestItemDetailSheet";
 import { AppShell, AppShellLoading } from "./AppShell";
-import { IconButton, PlusIcon, ShareIcon } from "./IconButton";
 import { ListSwitcher } from "./ListSwitcher";
-import { UserMenu } from "./UserMenu";
 
 export function AppPage() {
   const [me, setMe] = useState<Me | null>(null);
@@ -43,15 +39,26 @@ export function AppPage() {
   const [ownItems, setOwnItems] = useState<OwnedItem[]>([]);
   const [viewing, setViewing] = useState<string | null>(null);
   const [otherItems, setOtherItems] = useState<PublicItem[]>([]);
-  const [shareOpen, setShareOpen] = useState(false);
   const [booted, setBooted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [guestItemId, setGuestItemId] = useState<string | null>(null);
   const [reordering, setReordering] = useState(false);
+  /** #134: in-flight commit PUTs. A COUNT, not a boolean: a second drag may
+   *  start while the first PUT is still out (accepted — see the busy-label
+   *  decision), and a boolean would let the first `finally` clear the label
+   *  while the second PUT is pending. */
+  const [savingPuts, setSavingPuts] = useState(0);
   const reorderToggleRef = useRef<HTMLButtonElement | null>(null);
-  const shareTriggerRef = useRef<HTMLButtonElement | null>(null);
+  /** #134: the order to PUT back if the user taps Undo on the "Order saved"
+   *  snackbar (null = nothing to undo). Read at click time, never captured in
+   *  a closure — a replaced snackbar must offer the LATEST commit's target. */
+  const undoOrderRef = useRef<string[] | null>(null);
+  /** #134: mirror of `reorder.isDragging` for the Undo guard. The toast's
+   *  action closure is baked when the commit runs, and by then isDragging has
+   *  already been flushed false — only a ref sees a drag that started after. */
+  const dragLiveRef = useRef(false);
   /** #62 D8: scroll position handed back from feed-handoff, applied after the
    *  restored rows commit (the list must exist before scrollTo can stick). */
   const handoffScrollRef = useRef<number | null>(null);
@@ -60,11 +67,12 @@ export function AppPage() {
   const pendingPollStartRef = useRef<number | null>(null);
   const toast = useToast();
   const reorder = useDragReorder(ownItems, onReorder);
-  const install = useInstallPrompt();
-  /** #73: one action cluster per width. Desktop keeps the header cluster;
-   *  mobile moves Add/Share to the bottom bar and drops the avatar-menu
-   *  Settings entry (the bar owns that destination). */
-  const isDesktop = useMedia("(min-width: 640px)");
+
+  // #134: keep the Undo guard's view of a live drag (or drop settle) current.
+  // No dep array: the mirror must follow every render of the hook's state.
+  useEffect(() => {
+    dragLiveRef.current = reorder.isDragging;
+  });
 
   useEffect(() => {
     void boot();
@@ -150,6 +158,13 @@ export function AppPage() {
   }, [booted, ownItems]);
 
   async function boot() {
+    // #125: a list chosen from a SUBPAGE's switcher. Read once, at the top:
+    // the handoff is one-shot, and a boot that cannot honour it (share-target
+    // redirect, offline fallback) must still consume it rather than let it
+    // surprise a later boot. `undefined` means "no handoff"; `null` means
+    // "the signed-in user's own list" and overrides the snapshot's viewing
+    // user.
+    const viewingHandoff = takeFeedViewingHandoff();
     try {
       // Share-target seam: the server maps /add (the manifest action) to the
       // shell, so a share arrival normally renders AddPage directly. This
@@ -198,18 +213,31 @@ export function AppPage() {
       const snap = takeFeedSnapshot();
       if (snap && snap.meId === meBody.id) {
         setOwnItems(snap.ownItems);
-        setOtherItems(snap.otherItems);
         setSummary(snap.summary);
-        setViewing(snap.viewingUserId);
-        setActiveTag(snap.activeTag);
-        handoffScrollRef.current = snap.scrollY;
+        const viewingUser = viewingHandoff === undefined ? snap.viewingUserId : viewingHandoff;
+        setViewing(viewingUser);
+        // The snapshot's filter, scroll offset and rows belong to the list
+        // that was on screen. A handoff that lands on a DIFFERENT list starts
+        // it at the top: restoring the old offset would open the new list at
+        // a clamped arbitrary position, and its rows would be the wrong
+        // list's rows under the new heading (plan D4).
+        if (viewingUser === snap.viewingUserId) {
+          setActiveTag(snap.activeTag);
+          handoffScrollRef.current = snap.scrollY;
+          setOtherItems(snap.otherItems);
+        }
         setBooted(true); // data is on screen: no skeleton flash
         void Promise.all([refreshSummary(meBody.id), refreshOwnList(meBody.id)]);
+        // Revalidate the other user's list only when a handoff put it on
+        // screen. A plain snapshot restore is the feed the user left, rows
+        // and all — plan D4 invokes viewList for the handoff case only.
+        if (viewingHandoff !== undefined && viewingUser !== null) void viewList(viewingUser);
         return;
       }
 
       await Promise.all([refreshSummary(), refreshOwnList(meBody.id)]);
       setBooted(true);
+      if (viewingHandoff) void viewList(viewingHandoff);
     } catch {
       const stored = readStoredMe();
       if (!stored) {
@@ -279,13 +307,17 @@ export function AppPage() {
   }
 
   async function deleteItem(id: string) {
+    let res: Response | null = null;
     try {
-      const res = await fetch(`/api/wishlist/items/${id}`, { method: "DELETE" });
+      res = await fetch(`/api/wishlist/items/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       if (me) await refreshOwnList(me.id);
       await refreshSummary();
-    } catch {
-      toast(S.errors.deleteItem, "danger");
+    } catch (err) {
+      // #117: the connection's fault is named as such; a real server answer
+      // keeps the action's own copy.
+      const kind = res ? await classifyResponse(res) : classifyWriteFailure(err);
+      toast(kind === "offline" ? S.offline.write : S.errors.deleteItem, "danger");
     }
   }
 
@@ -294,7 +326,8 @@ export function AppPage() {
   async function resetPurchased(id: string) {
     const res = await fetch(`/api/wishlist/items/${id}/purchased`, { method: "DELETE" });
     if (res.status !== 204) {
-      toast(S.errors.generic, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.generic, "danger");
       return;
     }
     if (me) await refreshOwnList(me.id);
@@ -304,7 +337,8 @@ export function AppPage() {
   async function markOwnerPurchased(id: string) {
     const res = await fetch(`/api/wishlist/items/${id}/owner-purchased`, { method: "PUT" });
     if (!res.ok) {
-      toast(S.errors.generic, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.generic, "danger");
       return;
     }
     if (me) await refreshOwnList(me.id);
@@ -313,28 +347,70 @@ export function AppPage() {
   async function unmarkOwnerPurchased(id: string) {
     const res = await fetch(`/api/wishlist/items/${id}/owner-purchased`, { method: "DELETE" });
     if (res.status !== 204) {
-      toast(S.errors.generic, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.generic, "danger");
       return;
     }
     if (me) await refreshOwnList(me.id);
   }
 
   /** Optimistic reorder commit: PUT the full ordered id array. On failure,
-   *  restore the pre-drag order and surface a danger toast. */
-  async function onReorder(ids: string[]) {
-    const previous = ownItems;
+   *  restore the pre-commit order and surface a danger toast. On success the
+   *  commit is live-saved and (unless `silent`) offers one Undo — the prior
+   *  order, captured before the PUT so it is the order the server just
+   *  replaced. Undo re-enters this same path, silently: an undo is not itself
+   *  undoable (no redo ping-pong). */
+  async function onReorder(ids: string[], opts?: { silent?: boolean }) {
+    const previousItems = ownItems;
+    const previousIds = ownItems.map((item) => item.id);
+    setSavingPuts((n) => n + 1);
+    let res: Response | null = null;
     try {
-      const res = await fetch("/api/wishlist/order", {
+      res = await fetch("/api/wishlist/order", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ itemIds: ids }),
       });
       if (!res.ok) throw new Error();
+      if (!opts?.silent) {
+        undoOrderRef.current = previousIds;
+        // Keyed: a second commit replaces this snackbar instead of stacking,
+        // so its Undo always targets the order before the LATEST commit.
+        toast(
+          S.list.orderSaved,
+          "info",
+          { label: S.list.undo, onSelect: undoReorder },
+          "reorder",
+        );
+      }
       if (me) await refreshOwnList(me.id);
-    } catch {
-      setOwnItems(previous);
-      toast(S.errors.reorder, "danger");
+    } catch (err) {
+      // A failed COMMIT rolls back to the last server-known order. A failed
+      // UNDO must not: it never applied an optimistic order of its own, so the
+      // list already shows what the server holds — restoring the stale
+      // `ownItems` here would diverge from the server until the next refresh.
+      // #117: the rollback stays on the offline path — the server never
+      // received the new order, so the old one is the honest state, and only
+      // the copy names the connection.
+      if (!opts?.silent) setOwnItems(previousItems);
+      const kind = res ? await classifyResponse(res) : classifyWriteFailure(err);
+      toast(kind === "offline" ? S.offline.write : S.errors.reorder, "danger");
+    } finally {
+      setSavingPuts((n) => Math.max(0, n - 1));
     }
+  }
+
+  /** #134: restore the order the last commit replaced. Ignored while a drag or
+   *  its drop settle is live: that settle owns the in-flight commit PUT, and
+   *  two racing PUTs would decide the order non-deterministically. A failed
+   *  undo leaves the list at the order the server still holds (this path never
+   *  applied one of its own) and toasts honestly. */
+  function undoReorder() {
+    if (dragLiveRef.current) return;
+    const prior = undoOrderRef.current;
+    undoOrderRef.current = null;
+    if (!prior) return;
+    void onReorder(prior, { silent: true });
   }
 
   function exitReorderMode() {
@@ -368,7 +444,8 @@ export function AppPage() {
   async function refreshItem(id: string) {
     const res = await fetch(`/api/wishlist/items/${id}/refresh`, { method: "POST" });
     if (!res.ok) {
-      toast(S.errors.retryItem, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.retryItem, "danger");
       return;
     }
     if (me) {
@@ -395,7 +472,8 @@ export function AppPage() {
     if (!viewing) return;
     const res = await fetch(`/api/wishlist/items/${id}/claim`, { method: "POST" });
     if (!res.ok) {
-      toast(S.errors.claimItem, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.claimItem, "danger");
       return;
     }
     await viewList(viewing);
@@ -406,21 +484,12 @@ export function AppPage() {
     if (!viewing) return;
     const res = await fetch(`/api/wishlist/items/${id}/unclaim`, { method: "POST" });
     if (!res.ok) {
-      toast(S.errors.unclaimItem, "danger");
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.unclaimItem, "danger");
       return;
     }
     await viewList(viewing);
     await refreshSummary();
-  }
-
-  async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    clearStoredIdentity();
-    navigate("/login");
-  }
-
-  function goToSettings() {
-    navigate("/settings");
   }
 
   if (error && !me) {
@@ -434,7 +503,10 @@ export function AppPage() {
   }
 
   if (!booted || !me) {
-    return <AppShellLoading />;
+    // #125 C.3: seed the boot shell with the cached identity so the header
+    // does not morph (52 → 66px) when /api/auth/me answers. The guest share
+    // boot does not pass it — anonymous stays anonymous.
+    return <AppShellLoading me={readStoredMe()} />;
   }
 
   const ownRef: OwnerRef = { id: me.id, displayName: me.displayName || me.username };
@@ -531,55 +603,17 @@ export function AppPage() {
     );
   }
 
+  /** #125: the feed keeps its own rules about WHICH actions apply — Add and
+   *  Share only while the own list is on screen and non-empty (the issue
+   *  freezes the feed) — but the cluster itself is the shared one every other
+   *  page now renders. */
   const showOwnerActions = !viewing && ownItems.length > 0;
-  /** Desktop header cluster — mobile gets the same actions in the bottom bar
-   *  instead (#73 D4: exactly one cluster is in the DOM at any width). */
-  const ownerActions = showOwnerActions && isDesktop ? (
-    <>
-      <IconButton variant="ghost" label={S.list.addItem} onClick={() => navigate("/add")}>
-        <PlusIcon />
-      </IconButton>
-      <div className="share-anchor">
-        <IconButton
-          ref={shareTriggerRef}
-          variant="ghost"
-          label={S.share.shareList}
-          onClick={() => setShareOpen((v) => !v)}
-          aria-expanded={shareOpen}
-          aria-haspopup="dialog"
-        >
-          <ShareIcon />
-        </IconButton>
-        <ShareMenu open={shareOpen} onClose={() => setShareOpen(false)} triggerRef={shareTriggerRef} />
-      </div>
-    </>
-  ) : null;
-
-  const userMenu = (
-    <UserMenu
-      displayName={me.displayName || me.username}
-      onLogout={logout}
-      onSettings={isDesktop ? goToSettings : undefined}
-      extra={
-        install.canInstall ? (
-          <button
-            type="button"
-            className="menu-item"
-            role="menuitem"
-            onClick={install.promptInstall}
-          >
-            {S.pwa.install}
-          </button>
-        ) : undefined
-      }
-    />
-  );
 
   return (
     <AppShell
       refreshing={refreshing}
-      headerActions={ownerActions}
-      headerRight={userMenu}
+      me={me}
+      hideHeaderActions={!showOwnerActions}
     >
       {error && <p className="error" role="alert">{error}</p>}
 
@@ -598,9 +632,14 @@ export function AppPage() {
                   type="button"
                   className="secondary compact-action"
                   aria-pressed={reordering}
+                  aria-busy={reordering && savingPuts > 0 ? true : undefined}
                   onClick={reordering ? exitReorderMode : enterReorderMode}
                 >
-                  {reordering ? S.list.doneReordering : S.list.reorder}
+                  {reordering
+                    ? savingPuts > 0
+                      ? S.list.saving
+                      : S.list.doneReordering
+                    : S.list.reorder}
                 </button>
               ) : undefined
             }
@@ -611,6 +650,9 @@ export function AppPage() {
               active={activeTag}
               onSelect={setActiveTag}
             />
+          )}
+          {!viewing && reordering && ownItems.length > 0 && (
+            <p className="reorder-hint">{S.list.reorderHint}</p>
           )}
           {renderList()}
         </section>

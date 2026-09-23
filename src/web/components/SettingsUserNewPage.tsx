@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { S } from "../strings";
+import { classifyResponse, classifyWriteFailure } from "../net";
 import { navigate } from "../router";
 import { useToast } from "../toast";
 import { useAdminBoot } from "../use-admin-boot";
 import { usePageFocus } from "../use-page-focus";
 import { AppShell, PageHeader } from "./AppShell";
+import { ListContextBar } from "./ListContextBar";
 import { SettingsSkeleton } from "./Skeletons";
-import { SettingsUserMenu } from "./SettingsUserMenu";
 
 /** /settings/users/new (#96): the create-user form, moved off the Account
  *  screen verbatim (same .item-form / .field-row markup and #new-* input ids,
@@ -35,6 +36,13 @@ export function SettingsUserNewPage() {
         body: JSON.stringify({ username, password, displayName: displayName || undefined, isAdmin }),
       });
       if (!res.ok) {
+        // #117: the SW's {error:"offline"} body is internal copy — the
+        // offline framing replaces it; a real server answer keeps its own.
+        const kind = await classifyResponse(res);
+        if (kind === "offline") {
+          setError(S.offline.write);
+          return;
+        }
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
         setError(body?.error ?? S.admin.createFailed);
         return;
@@ -42,8 +50,9 @@ export function SettingsUserNewPage() {
       toast(S.admin.userCreated);
       // The users screen refetches on mount, so the new row is there.
       navigate("/settings/users");
-    } catch {
-      setError(S.admin.networkError);
+    } catch (err) {
+      const kind = classifyWriteFailure(err);
+      setError(kind === "offline" ? S.offline.write : S.admin.networkError);
     } finally {
       setBusy(false);
     }
@@ -62,11 +71,10 @@ export function SettingsUserNewPage() {
   if (!boot.me.isAdmin || !boot.me.showUserManagement) return <SettingsSkeleton />;
 
   return (
-    <AppShell
-      brandHref="/"
-      headerRight={<SettingsUserMenu displayName={boot.me.displayName || boot.me.username} />}
-    >
+    <AppShell me={boot.me} brandHref="/">
       <PageHeader title={S.settings.titleNewUser} headingRef={headingRef} variant="form" />
+      {/* #125: same header, same context row as every other authed page. */}
+      <ListContextBar me={boot.me} />
 
       <div className="settings-screen-head">
         <button type="button" className="back-link" onClick={() => navigate("/settings/users")}>

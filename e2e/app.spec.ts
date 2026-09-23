@@ -18,7 +18,7 @@ async function login(page: Page, username: string, password: string): Promise<vo
   await page.context().clearCookies();
   await page.goto(`${BASE}/login`);
   await page.getByLabel("Username").fill(username);
-  await page.getByLabel("Password").fill(password);
+  await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   // App shell appears once the session is established (heading = switcher).
   await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
@@ -586,16 +586,19 @@ test("3f: #112 add-page disclosure hover stays neutral and readable, both scheme
     expect(await value(submit, "background-color"), `${scheme}: CTA hover intact`).toBe(CTA[scheme]);
   }
 
-  // Keyboard: the disclosure stays a Tab stop (DOM order on /add is URL field
-  // -> primary submit -> disclosure), focus alone never paints the bar, and
-  // the global focus ring is drawn.
+  // Keyboard: the disclosure stays a Tab stop. The page heading is focused on
+  // mount (usePageFocus), so tabbing walks the content in DOM order — #125 put
+  // the list-context row (its switcher trigger) between the heading and the
+  // form, which is what makes the disclosure the FOURTH stop instead of the
+  // third. Focus alone never paints the bar, and the global focus ring is
+  // drawn.
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto(`${BASE}/add`);
   await page.mouse.move(0, 0);
   const disclose = page.getByRole("button", { name: "Add details manually" });
   await expect(disclose).toBeVisible();
-  for (let i = 0; i < 3; i++) await page.keyboard.press("Tab");
-  await expect(disclose, "the disclosure is the third Tab stop").toBeFocused();
+  for (let i = 0; i < 4; i++) await page.keyboard.press("Tab");
+  await expect(disclose, "the disclosure is the fourth Tab stop").toBeFocused();
   expect(await value(disclose, "background-color"), "keyboard focus paints no bar").toBe(NONE);
   expect(await value(disclose, "outline-style"), "keyboard focus keeps the ring").toBe("solid");
   expect(await value(disclose, "outline-width"), "keyboard focus ring width").toBe("2px");
@@ -781,7 +784,10 @@ test("4d: item page actions, edit route round-trip and delete", async ({ page })
   );
   expect(scrollGap, "#126 detail section gap").toBe("16px");
 
-  await itemPage.getByRole("button", { name: "More actions" }).click();
+  // #128: the ⋮ lives in the app bar now, and the page body carries none —
+  // the scope pins the home so a regression back into the body cannot pass.
+  await expect(itemPage.getByRole("button", { name: "More actions" })).toHaveCount(0);
+  await page.locator(".topbar").getByRole("button", { name: "More actions" }).click();
   const menu = page.getByRole("menu", { name: "More actions" });
   // Re-check/retry is URL- and fetch-state-gated; the background fetch may
   // resolve before this menu opens, so either valid state is accepted.
@@ -814,7 +820,7 @@ test("4d: item page actions, edit route round-trip and delete", async ({ page })
   await expect(page.locator(".item-page")).toContainText(`Added ${added}`);
 
   // Delete confirms, then lands on the feed with the card gone.
-  await page.locator(".item-page").getByRole("button", { name: "More actions" }).click();
+  await page.locator(".topbar").getByRole("button", { name: "More actions" }).click();
   await page.getByRole("menu", { name: "More actions" }).getByRole("menuitem", { name: "Delete" }).click();
   const confirm = page.getByRole("alertdialog");
   await expect(confirm).toBeVisible();
@@ -843,6 +849,18 @@ test("4e: item page keeps one layout and no overflow at any width", async ({ pag
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
+  // #128: the mobile back chevron is a real 44px target sitting beside (never
+  // over) the lockup it duplicates — the two hit areas must not overlap.
+  const chevron = page.locator(".topbar-back-chevron");
+  await expect(chevron).toBeVisible();
+  const chevronBox = (await chevron.boundingBox())!;
+  const brandBox = (await page.locator(".brand").boundingBox())!;
+  expect(Math.round(chevronBox.width), "chevron width @390").toBeGreaterThanOrEqual(44);
+  expect(Math.round(chevronBox.height), "chevron height @390").toBeGreaterThanOrEqual(44);
+  expect(
+    Math.round(brandBox.x - (chevronBox.x + chevronBox.width)),
+    "the lockup clears the chevron",
+  ).toBeGreaterThanOrEqual(8);
   await page.getByRole("link", { name: "Back to list" }).click();
   await expect(page).toHaveURL(`${BASE}/`);
 });
@@ -949,8 +967,9 @@ test("4f: item page does not trap focus and keeps the menu popover contract", as
   }
   expect(escaped, `Tab left the item page (no focus trap); path=${visited.join(" → ")}`).toBe(true);
 
-  // The overflow menu keeps its own small-overlay keyboard contract.
-  await itemPage.getByRole("button", { name: "More actions" }).click();
+  // The overflow menu keeps its own small-overlay keyboard contract. #128:
+  // the trigger moved into the app bar, so the walk above no longer counts it.
+  await page.locator(".topbar").getByRole("button", { name: "More actions" }).click();
   const menu = page.getByRole("menu", { name: "More actions" });
   await expect(menu.locator(".overflow-separator")).toHaveCount(2);
   await expect(menu.locator(".menu-item-danger")).toHaveCount(1);
@@ -1385,6 +1404,147 @@ test("5g: reduced motion — reorder stays instant and writes no transforms (#91
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.reload();
   await expect.poll(() => cardIds(page)).toEqual(expected);
+});
+
+test("5h: reorder persistence — no-op click, save + Undo, replacement, busy, failure (#134)", async ({ page, browser }) => {
+  // Three rows so this test stands on its own (the suite's list is longer by
+  // now, but the helpers below need a row with a neighbour above it).
+  for (const title of ["Reorder undo probe", "Reorder undo filler A", "Reorder undo filler B"]) {
+    const created = await page.request.post(`${BASE}/api/wishlist/items`, { data: { title } });
+    expect(created.status()).toBe(201);
+  }
+  await page.reload();
+
+  // Handles exist only inside reorder mode (5d pins that), so enter it first.
+  await page.getByRole("button", { name: "Reorder", exact: true }).click();
+  await expect(page.locator(".item-card.is-reordering").first()).toBeVisible();
+
+  // AC3: a click on a handle is a NO-OP. Pointer down and up on one spot (which
+  // is exactly what click() is) must issue no PUT and move nothing — this is
+  // the "one tap moved the last row to 2nd" bug class, pinned against the
+  // current machinery.
+  let puts = 0;
+  page.on("request", (r) => {
+    if (r.url().endsWith("/api/wishlist/order") && r.method() === "PUT") puts++;
+  });
+  const noopIndex = await lastVisibleIndex(page);
+  const beforeClick = await cardIds(page);
+  await page.locator(".item-list .drag-handle").nth(noopIndex).click();
+  await page.waitForTimeout(300);
+  expect(puts, "a no-op click issues no PUT").toBe(0);
+  expect(await cardIds(page), "a no-op click moves nothing").toEqual(beforeClick);
+
+  // AC4: reorder mode carries one quiet hint line where the filter row sits.
+  await expect(page.locator(".reorder-hint")).toHaveText(
+    "Drag to reorder. Changes save as you go.",
+  );
+  await expect(page.locator(".filter-row")).toHaveCount(0);
+
+  // AC1: one crossing drag live-saves and offers exactly one Undo.
+  const before = await cardIds(page);
+  const dragIndex = await lastVisibleIndex(page);
+  expect(dragIndex, "a fully visible row to grab").toBeGreaterThanOrEqual(1);
+  const expected = movedUpOne(before, dragIndex);
+  await liftAndDragUpOne(page, dragIndex);
+  await page.mouse.up();
+  await expect.poll(() => cardIds(page)).toEqual(expected);
+  await expect(page.locator(".toast")).toHaveCount(1);
+  await expect(page.locator(".toast")).toContainText("Order saved");
+  const undoButton = page.locator(".toast").getByRole("button", { name: "Undo", exact: true });
+  await expect(undoButton).toBeVisible();
+
+  // AC1 (round trip): Undo restores the prior order, dismisses the snackbar,
+  // and is not itself undoable — the reload then proves it persisted.
+  await undoButton.click();
+  await expect.poll(() => cardIds(page)).toEqual(before);
+  await expect(page.locator(".toast"), "the undo is silent — no redo snackbar").toHaveCount(0);
+  await page.reload();
+  await expect.poll(() => cardIds(page)).toEqual(before);
+
+  await page.getByRole("button", { name: "Reorder", exact: true }).click();
+  await expect(page.locator(".item-card.is-reordering").first()).toBeVisible();
+
+  // AC2: a second commit REPLACES the snackbar (keyed), so its Undo targets the
+  // order before the LATEST commit — not the drag that preceded it.
+  const dragBefore = await cardIds(page);
+  const replaceIndex = await lastVisibleIndex(page);
+  await liftAndDragUpOne(page, replaceIndex);
+  await page.mouse.up();
+  const afterDrag = movedUpOne(dragBefore, replaceIndex);
+  await expect.poll(() => cardIds(page)).toEqual(afterDrag);
+  await expect(page.locator(".toast")).toHaveCount(1);
+
+  const firstHandle = page.locator(".item-list .drag-handle").first();
+  await firstHandle.focus();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  const afterKeyboard = [afterDrag[1], afterDrag[0], ...afterDrag.slice(2)];
+  await expect.poll(() => cardIds(page)).toEqual(afterKeyboard);
+  await expect(
+    page.locator(".toast"),
+    "the keyboard commit replaced the snackbar instead of stacking one",
+  ).toHaveCount(1);
+  await page.locator(".toast").getByRole("button", { name: "Undo", exact: true }).click();
+  await expect
+    .poll(() => cardIds(page), { message: "Undo targets the order before the LATEST commit" })
+    .toEqual(afterDrag);
+
+  // AC4 (absence): the hint lives in reorder mode only.
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await expect(page.locator(".reorder-hint")).toHaveCount(0);
+  await expect(page.locator(".drag-handle:visible")).toHaveCount(0);
+
+  // AC5 + AC6 need a request stub, and the app's service worker respondWith()s
+  // every API call — a request the SW owns is invisible to page.route(). Both
+  // steps therefore run on a SW-free context, the same escape hatch the hints
+  // stub below documents.
+  const swFree = await browser.newContext({ serviceWorkers: "block" });
+  try {
+    const probe = await swFree.newPage();
+    await login(probe, "admin", "admin-password");
+    await probe.getByRole("button", { name: "Reorder", exact: true }).click();
+    await expect(probe.locator(".item-card.is-reordering").first()).toBeVisible();
+
+    // AC5: the toggle reports an in-flight commit without being disabled.
+    await probe.route("**/api/wishlist/order", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await route.continue();
+    });
+    const held = probe.waitForResponse(
+      (r) => r.url().endsWith("/api/wishlist/order") && r.request().method() === "PUT",
+    );
+    const busyIndex = await lastVisibleIndex(probe);
+    await liftAndDragUpOne(probe, busyIndex);
+    await probe.mouse.up();
+    const busy = probe.getByRole("button", { name: "Saving…", exact: true });
+    await expect(busy).toBeVisible();
+    await expect(busy).toHaveAttribute("aria-busy", "true");
+    await expect(busy, "busy is feedback, not a lock").toBeEnabled();
+    expect((await held).status()).toBe(200);
+    await expect(probe.getByRole("button", { name: "Done", exact: true })).toBeVisible();
+    await probe.unrouteAll();
+
+    // AC6: a stale undo (the server rejects the full list) fails honestly — the
+    // client keeps the order on screen and toasts the danger message.
+    const failBefore = await cardIds(probe);
+    const failIndex = await lastVisibleIndex(probe);
+    await liftAndDragUpOne(probe, failIndex);
+    await probe.mouse.up();
+    const failAfter = movedUpOne(failBefore, failIndex);
+    await expect.poll(() => cardIds(probe)).toEqual(failAfter);
+    await expect(probe.locator(".toast")).toHaveCount(1);
+
+    await probe.route("**/api/wishlist/order", (route) => route.fulfill({ status: 400 }));
+    await probe.locator(".toast").getByRole("button", { name: "Undo", exact: true }).click();
+    await expect(probe.locator(".toast.danger")).toContainText("Couldn't save the new order.");
+    expect(
+      await cardIds(probe),
+      "a failed undo leaves the committed order alone",
+    ).toEqual(failAfter);
+    await probe.unrouteAll();
+  } finally {
+    await swFree.close();
+  }
 });
 
 test("6b: heading switcher opens a sheet and switches lists", async ({ page, browser }) => {
@@ -1863,7 +2023,7 @@ test("14: share-target GET prefills the add page through the login hop", async (
   // drop the prefill onto /.
   await expect(page).toHaveURL(/\/login\?next=/);
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin-password");
+  await page.getByLabel("Password", { exact: true }).fill("admin-password");
   await page.getByRole("button", { name: "Sign in" }).click();
 
   // After sign-in we land back on /add (the page, not a sheet) with the
@@ -1879,7 +2039,7 @@ test("14: share-target GET prefills the add page through the login hop", async (
   await context.clearCookies();
   await page.goto(`${BASE}/login?next=${encodeURIComponent("//evil.example/x")}`);
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin-password");
+  await page.getByLabel("Password", { exact: true }).fill("admin-password");
   await page.getByRole("button", { name: "Sign in" }).click();
   // Pin the ORIGIN, not just a trailing slash: the off-site navigation
   // to a non-resolving host ends on chrome-error://chromewebdata/, whose
@@ -1896,7 +2056,7 @@ test("14: share-target GET prefills the add page through the login hop", async (
   // `/\evil.example/x` — URL-encoded as %2F%5Cevil.example%2Fx.
   await page.goto(`${BASE}/login?next=%2F%5Cevil.example%2Fx`);
   await page.getByLabel("Username").fill("admin");
-  await page.getByLabel("Password").fill("admin-password");
+  await page.getByLabel("Password", { exact: true }).fill("admin-password");
   await page.getByRole("button", { name: "Sign in" }).click();
   // Pin the ORIGIN, not just a trailing slash: the off-site navigation
   // to a non-resolving host ends on chrome-error://chromewebdata/, whose
@@ -2380,7 +2540,7 @@ test("16: login card meets AA, fits 360px, and reports failures", async ({ page,
 
   // A failed sign-in is announced, not a silent no-op.
   await username.fill("admin");
-  await page.getByLabel("Password").fill("not-the-password");
+  await page.getByLabel("Password", { exact: true }).fill("not-the-password");
   await signIn.click();
   await expect(page.getByRole("alert")).toHaveText(/Invalid username or password|Too many attempts/);
   await expect(card).toBeVisible();
@@ -2561,6 +2721,12 @@ test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ pa
       await expect(bar.getByRole("button", { name })).toBeVisible();
     }
     await expect(bar.getByText("Share", { exact: true })).toBeVisible(); // visible label
+    // #129: the Add tab's VISIBLE label is the short "Add" too (its accessible
+    // name stays the full "Add item" above), so /add never shows two elements
+    // reading "Add item" — the form CTA and a nav destination would otherwise
+    // both look like the same submit.
+    await expect(bar.getByText("Add", { exact: true })).toBeVisible();
+    await expect(bar.getByText("Add item", { exact: true })).toHaveCount(0);
 
     // Mockup grammar: fixed, borderless buttons on the app background, one
     // hairline divider, no fills.
@@ -2586,11 +2752,54 @@ test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ pa
     expect(chrome.btnBorder).toBe("none"); // NO button borders
     expect(chrome.btnBg).toBe("rgba(0, 0, 0, 0)"); // no fills
 
+    // #132: no painted pseudo-element on any bar item — the dot is gone.
+    for (const item of await bar.locator(".action-bar-item").all()) {
+      const after = await item.evaluate((el) => getComputedStyle(el, "::after").content);
+      expect(after, `#132: no dot / no ::after chrome @${width}px`).toBe("none");
+    }
+    // #132: the hairline reads as a divider — --border-2, not the 60% mix
+    // that measured 1.12:1 on --bg (the dark-scheme pin lives in test 23).
+    expect(chrome.barBorderTopColor, `hairline token @${width}px`).toBe("rgb(212, 212, 216)");
+    // #132: breathing room — >= 8px air above the icon, >= 8px below the label.
+    const air = await bar
+      .locator(".action-bar-item")
+      .first()
+      .evaluate((el) => {
+        const svg = el.querySelector("svg");
+        const label = el.querySelector(".action-bar-label");
+        if (!svg || !label) throw new Error("bar item parts missing");
+        const itemBox = el.getBoundingClientRect();
+        return {
+          above: svg.getBoundingClientRect().top - itemBox.top,
+          below: itemBox.bottom - label.getBoundingClientRect().bottom,
+        };
+      });
+    expect(air.above, `air above icon @${width}px`).toBeGreaterThanOrEqual(8);
+    expect(air.below, `air below label @${width}px`).toBeGreaterThanOrEqual(8);
+
     // 44px+ touch targets on a full-width bar.
     for (const item of await bar.locator(".action-bar-item").all()) {
       const box = await item.boundingBox();
       expect(Math.round(box?.height ?? 0), `target height at ${width}px`).toBeGreaterThanOrEqual(44);
     }
+
+    // #132: one icon spec — every stroked element of every bar glyph at 1.8
+    // (Plus 1 path, Share 3 circles + 1 path, Gear 1 circle + 1 path = 7).
+    const strokes = await bar.evaluate((el) =>
+      Array.from(el.querySelectorAll("svg [stroke-width]")).map((n) =>
+        n.getAttribute("stroke-width"),
+      ),
+    );
+    expect(strokes, `stroked elements @${width}px`).toHaveLength(7);
+    expect(strokes.every((s) => s === "1.8"), `stroke spec @${width}px`).toBe(true);
+    // #132: Share's node holes are open — r 2.5 (hole 3.2px, Lucide ratio).
+    const radii = await bar
+      .getByRole("button", { name: "Share my list" })
+      .evaluate((el) =>
+        Array.from(el.querySelectorAll("circle")).map((c) => c.getAttribute("r")),
+      );
+    expect(radii, `Share node radii @${width}px`).toEqual(["2.5", "2.5", "2.5"]);
+
     const barBox = await bar.boundingBox();
     expect(Math.round(barBox?.width ?? 0), `bar width at ${width}px`).toBe(width);
     expect(Math.round(barBox?.y ?? 0) + Math.round(barBox?.height ?? 0)).toBe(844); // flush to the bottom
@@ -2801,8 +3010,11 @@ test("20: quiet ghost icon buttons — no standing chrome, soft hover (#75)", as
     await expect.poll(() => borderColor(avatar), { message: `${colorScheme}/avatar hover hairline (no plum)` }).toBe(border);
     await page.mouse.move(0, 0); // leave hover before the next probe
 
-    // --- Detail ⋮: transparent circle standing; quiet hover tint from
+    // --- Detail ⋮: transparent standing; quiet hover tint from
     // .icon-btn:hover (the trigger carries "icon-btn detail-menu-trigger").
+    // #128 moved it out of the page body into the app bar; the class string
+    // and therefore this locator survived the move, and the contract the two
+    // probes below assert is the same in the new home.
     // Two-step idiom from test 4e2 (app.spec.ts:532-534): the wishlist route
     // is /api/users/:id (wishlist.ts:253) — there is no "me" literal route.
     await page.goto(`${BASE}/items/${itemId}`);
@@ -3000,7 +3212,8 @@ test("22: owner purchased mark — mark, badge, unmark, and privacy (#76)", asyn
   await expect(page).toHaveURL(`${BASE}/items/${item.id}`);
   const itemPage = page.locator(".item-page");
   await expect(itemPage.locator(".owner-purchased-badge")).toHaveText("Bought by you");
-  await itemPage.getByRole("button", { name: "More actions" }).click();
+  // #128: the ⋮ now lives in the app bar, not in the page body.
+  await page.locator(".topbar").getByRole("button", { name: "More actions" }).click();
   await page
     .getByRole("menu", { name: "More actions" })
     .getByRole("menuitem", { name: "Unmark purchased" })
@@ -3141,6 +3354,38 @@ test("23: bottom action bar persists on every authenticated route (#95)", async 
       ).not.toBe(await addBtn.evaluate((el) => getComputedStyle(el).color));
       expect(await contrast(settingsBtn), `accent contrast @${width}/${scheme}`)
         .toBeGreaterThanOrEqual(4.5);
+
+      // #132: no dot on the current tab either — painted, not just classed.
+      const afterContent = await settingsBtn.evaluate(
+        (el) => getComputedStyle(el, "::after").content,
+      );
+      expect(afterContent, `dot gone @${width}/${scheme}`).toBe("none");
+      // #132: the current label is the heavier one (600) — one treatment,
+      // and the idle tabs stay 400.
+      const labelWeight = await settingsBtn
+        .locator(".action-bar-label")
+        .evaluate((el) => getComputedStyle(el).fontWeight);
+      const idleWeight = await addBtn
+        .locator(".action-bar-label")
+        .evaluate((el) => getComputedStyle(el).fontWeight);
+      expect(labelWeight, `current label weight @${width}/${scheme}`).toBe("600");
+      expect(idleWeight, `idle label weight @${width}/${scheme}`).toBe("400");
+      // #132: one baseline — the icons of the current and idle tabs share a
+      // top edge (the deleted dot used to shift the active pair up ~4px).
+      const tops = await bar.evaluate((el) =>
+        Array.from(el.querySelectorAll(".action-bar-item svg")).map(
+          (s) => s.getBoundingClientRect().top,
+        ),
+      );
+      expect(
+        Math.max(...tops) - Math.min(...tops),
+        `icon baseline spread @${width}/${scheme}`,
+      ).toBeLessThanOrEqual(0.5);
+      // #132: the hairline is visible in BOTH schemes (--border-2 per scheme).
+      const barBorder = await bar.evaluate((el) => getComputedStyle(el).borderTopColor);
+      expect(barBorder, `hairline @${width}/${scheme}`).toBe(
+        scheme === "light" ? "rgb(212, 212, 216)" : "rgb(58, 51, 80)",
+      );
 
       // No occlusion on a non-feed page: at the bottom of the scroll the
       // last settings section must clear the bar's top edge (the :has()
@@ -3394,8 +3639,8 @@ test("24: item row and reset row share their slot at every width (#97)", async (
   // same family — 40.6px on main, ≥44px now.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${BASE}/settings/users`);
-  // /settings/users gates its table behind the admin boot ladder, so a read
-  // issued on the load event can still see the skeleton. Wait for the rows.
+  // The table's rows arrive from an async fetch; measuring straight after the
+  // goto raced it (empty NodeList → 0 heights). Wait for the row first.
   await expect(page.locator(".admin-actions button").first()).toBeVisible();
   const adminActionHeights = await page.evaluate(() =>
     Array.from(document.querySelectorAll(".admin-actions button")).map(
@@ -3866,14 +4111,24 @@ test("28: recurring mobile controls keep the app-wide 44px touch floor (#116)", 
     await expect(page).toHaveURL(`${BASE}/`);
     // …and the padded band did not grow the bar it lives in (#116 §F risk 1:
     // the topbar is min-height driven, so a grown lockup box WOULD have pushed
-    // the 52px routes — /add, /items/:id, /items/:id/edit, /share/:token — to 57).
+    // the bar past the height the cluster routes render). #125 made the header
+    // uniform: /add now carries the same right-hand cluster as the feed, so
+    // the bar's height is the feed's — what #116 pins here is the LOCKUP, and
+    // that the lockup is not what sizes the bar.
     await page.goto(`${BASE}/add`);
     await expect(page.locator(".brand")).toBeVisible();
     const bar = await page.evaluate(() => ({
       topbar: document.querySelector(".topbar")!.getBoundingClientRect().height,
       brand: document.querySelector(".brand")!.getBoundingClientRect().height,
     }));
-    expect(Math.round(bar.topbar), "the add-page topbar keeps its shipped height").toBe(52);
+    await page.goto(`${BASE}/`);
+    await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+    const feedBar = await page.evaluate(
+      () => document.querySelector(".topbar")!.getBoundingClientRect().height,
+    );
+    expect(Math.round(bar.topbar), "#125: the add-page topbar matches the feed's").toBe(
+      Math.round(feedBar),
+    );
     expect(Math.round(bar.brand), "the lockup box is untouched").toBe(28);
   } finally {
     const removed = await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
@@ -5029,7 +5284,9 @@ test("36: #127 — purchased cluster, guarded discard, canonical add pair", asyn
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto(`${BASE}/items/${item.id}`);
   const detailPage = page.locator(".item-page");
-  await detailPage.getByRole("button", { name: "More actions" }).click();
+  // #128: the detail ⋮ lives in the app bar now — the body carries none.
+  await expect(detailPage.getByRole("button", { name: "More actions" })).toHaveCount(0);
+  await page.locator(".topbar").getByRole("button", { name: "More actions" }).click();
   await expect(menu).toBeVisible();
   expect(await inventory()).toEqual(["Mark as purchased", "Reset purchased mark", "Delete"]);
   // The cluster LEADS this menu (the probe has no url), so only the danger
@@ -5080,4 +5337,618 @@ test("36: #127 — purchased cluster, guarded discard, canonical add pair", asyn
   expect([200, 204]).toContain(removed.status());
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${BASE}/`);
+});
+
+test("37: #125 — one header on every authenticated page, Back-to-list button, subpage switcher", async ({
+  page,
+  browser,
+}) => {
+  // Two probe rows: the feed only offers Reorder from two items up, and leg 2
+  // pins the feed as unchanged — including that action.
+  const probeIds: string[] = [];
+  for (const title of ["Header probe", "Header probe two"]) {
+    const seeded = await page.request.post(`${BASE}/api/wishlist/items`, { data: { title } });
+    expect(seeded.status()).toBe(201);
+    probeIds.push(((await seeded.json()) as { id: string }).id);
+  }
+  const itemId = probeIds[0]!;
+
+  // A second member with a non-empty list: the switcher on a subpage must be
+  // able to leave the own list (D4).
+  const OTHER = { username: "header-other", password: "header-other-pass", displayName: "Header Other" };
+  const created = await page.request.post(`${BASE}/api/users`, {
+    data: { username: OTHER.username, password: OTHER.password, displayName: OTHER.displayName },
+  });
+  expect([201, 409], "the second member exists (created here or by an earlier run)").toContain(
+    created.status(),
+  );
+
+  const otherContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  try {
+    const other = await otherContext.newPage();
+    await login(other, OTHER.username, OTHER.password);
+    const otherRow = await other.request.post(`${BASE}/api/wishlist/items`, {
+      data: { title: "Other list probe" },
+    });
+    expect(otherRow.status()).toBe(201);
+
+    // --- 1. Item view: the full cluster, with a real Back-to-list BUTTON. --
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`${BASE}/items/${itemId}`);
+    await expect(page.locator(".item-page")).toBeVisible();
+
+    const cluster = page.locator(".topbar-actions");
+    await expect(cluster, "#125: the item view carries the header cluster").toBeVisible();
+    await expect(cluster.getByRole("button", { name: "Add item", exact: true })).toBeVisible();
+    await expect(cluster.getByRole("button", { name: "Share my list", exact: true })).toBeVisible();
+    const back = cluster.getByRole("button", { name: "Back to list", exact: true });
+    await expect(back, "#125: a visible Back-to-list button, not just the text link").toBeVisible();
+    // Same control family as the feed's Reorder, and a real 44px target.
+    await expect(back).toHaveClass(/secondary/);
+    await expect(back).toHaveClass(/topbar-back/);
+    expect(Math.round((await back.boundingBox())!.height), "Back to list target").toBeGreaterThanOrEqual(44);
+    // The brand LINK keeps its own role (3c/4d/9/12 click it).
+    await expect(page.getByRole("link", { name: "Back to list" })).toBeVisible();
+    // …and the page says which list it belongs to (the compact context bar).
+    await expect(page.locator(".list-switcher--compact .list-switcher-name")).toHaveText(
+      "Admin's wishlist",
+    );
+
+    const loadsBefore = await loads(page);
+    await back.click();
+    await expect(page).toHaveURL(`${BASE}/`);
+    expect(await loads(page), "Back to list is a client-side navigation").toBe(loadsBefore);
+
+    // --- 2. Feed: UNCHANGED (display-scale switcher + Reorder, no bar). ----
+    await expect(page.locator(".list-switcher .page-title")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Reorder", exact: true })).toBeVisible();
+    await expect(page.locator(".list-switcher--compact")).toHaveCount(0);
+
+    // --- 3. /add: the same cluster, WITHOUT the Add chip (its destination is
+    //        this page), so the submit stays the page's only "Add item". ----
+    await page.goto(`${BASE}/add`);
+    await expect(page.getByRole("heading", { name: "Add item" })).toBeVisible();
+    const addCluster = page.locator(".topbar-actions");
+    await expect(addCluster, "#125: /add carries the header cluster too").toBeVisible();
+    await expect(addCluster.getByRole("button", { name: "Share my list", exact: true })).toBeVisible();
+    await expect(addCluster.getByRole("button", { name: "Add item", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Add item", exact: true })).toHaveCount(1);
+    await expect(addCluster.getByRole("button", { name: "Back to list", exact: true })).toHaveCount(0);
+    await expect(page.locator(".list-switcher--compact")).toBeVisible();
+
+    // --- 4. Settings: same cluster + bar; the avatar menu drops its own
+    //        Settings row there, and keeps it on a page that is not Settings.
+    await page.goto(`${BASE}/settings`);
+    await expect(page.getByRole("heading", { name: "Account & Preferences", level: 2 })).toBeVisible();
+    const settingsCluster = page.locator(".topbar-actions");
+    await expect(settingsCluster.getByRole("button", { name: "Add item", exact: true })).toBeVisible();
+    await expect(settingsCluster.getByRole("button", { name: "Share my list", exact: true })).toBeVisible();
+    await expect(page.locator(".list-switcher--compact")).toBeVisible();
+    await page.locator('.user-menu-button[aria-label="Admin"]').click();
+    const menu = page.getByRole("menu", { name: "Admin" });
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: "Log out" })).toBeVisible();
+    await expect(menu.getByRole("menuitem", { name: "Settings" })).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(menu).toHaveCount(0);
+
+    await page.goto(`${BASE}/items/${itemId}`);
+    await page.locator('.user-menu-button[aria-label="Admin"]').click();
+    const itemMenu = page.getByRole("menu", { name: "Admin" });
+    await expect(itemMenu.getByRole("menuitem", { name: "Settings" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(itemMenu).toHaveCount(0);
+
+    // --- 5. The two admin screens too (opt-in on), then hand it back off. ---
+    const uiOn = await page.request.put(`${BASE}/api/auth/me/settings`, {
+      data: { showUserManagement: true },
+    });
+    expect(uiOn.status()).toBe(200);
+    for (const path of ["/settings/users", "/settings/users/new"]) {
+      await page.goto(`${BASE}${path}`);
+      await expect(page.locator(".topbar-actions"), `cluster on ${path}`).toBeVisible();
+      await expect(page.locator(".list-switcher--compact"), `bar on ${path}`).toBeVisible();
+    }
+    const uiOff = await page.request.put(`${BASE}/api/auth/me/settings`, {
+      data: { showUserManagement: false },
+    });
+    expect(uiOff.status()).toBe(200);
+
+    // --- 6. D4: the subpage switcher navigates to that list's feed. -------
+    await page.goto(`${BASE}/items/${itemId}`);
+    await page.locator(".list-switcher--compact .list-switcher-trigger").click();
+    const popover = page.getByRole("menu", { name: "Switch wishlist" });
+    await expect(popover).toBeVisible();
+    await popover.getByRole("menuitemradio", { name: /Header Other/ }).click();
+    await expect(page).toHaveURL(`${BASE}/`);
+    await expect(page.getByRole("heading", { name: "Header Other's wishlist" })).toBeVisible();
+    // …and the feed's own switcher is still how you come back.
+    await page.getByRole("button", { name: /wishlist/ }).click();
+    await page.getByRole("menuitemradio", { name: /Admin/ }).click();
+    await expect(page.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+
+    // --- 6b. The own row is the OTHER half of scope 4 ("own name -> own
+    //        feed"), and the compact bar marks it as the list on screen. ---
+    await page.goto(`${BASE}/items/${itemId}`);
+    await page.locator(".list-switcher--compact .list-switcher-trigger").click();
+    const ownPopover = page.getByRole("menu", { name: "Switch wishlist" });
+    await expect(ownPopover).toBeVisible();
+    const ownRow = ownPopover.getByRole("menuitemradio", { name: /Admin/ });
+    await expect(ownRow, "#125: the compact switcher checks the own row").toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    await expect(
+      ownPopover.getByRole("menuitemradio", { name: /Header Other/ }),
+      "#125: only the list on screen is current",
+    ).toHaveAttribute("aria-checked", "false");
+    await ownRow.click();
+    await expect(page).toHaveURL(`${BASE}/`);
+    await expect(page.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+    // OWNER mode, not the guest projection: the owner-only actions are back.
+    await expect(page.getByRole("button", { name: "Reorder", exact: true })).toBeVisible();
+    await expect(
+      page.locator(".topbar-actions").getByRole("button", { name: "Add item", exact: true }),
+    ).toBeVisible();
+
+    // --- 6c. …and that own-list handoff overrides a feed snapshot left on
+    //        someone else's list: `null` means "own list", `undefined` means
+    //        "no handoff" (feed-handoff). Leave the feed while it shows
+    //        Header Other, then pick the own row from the subpage. --------
+    await page.getByRole("button", { name: /wishlist/ }).click();
+    await page.getByRole("menuitemradio", { name: /Header Other/ }).click();
+    await expect(page.getByRole("heading", { name: "Header Other's wishlist" })).toBeVisible();
+    await page.locator('.user-menu-button[aria-label="Admin"]').click();
+    await page.getByRole("menu", { name: "Admin" }).getByRole("menuitem", { name: "Settings" }).click();
+    await expect(page).toHaveURL(`${BASE}/settings`);
+    await page.locator(".list-switcher--compact .list-switcher-trigger").click();
+    await page
+      .getByRole("menu", { name: "Switch wishlist" })
+      .getByRole("menuitemradio", { name: /Admin/ })
+      .click();
+    await expect(page).toHaveURL(`${BASE}/`);
+    await expect(
+      page.getByRole("heading", { name: "Admin's wishlist" }),
+      "#125: the own-list handoff overrides the snapshot's other-user view",
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Reorder", exact: true })).toBeVisible();
+
+    // --- 7. D6: mobile keeps the bottom bar and no desktop cluster. -------
+    await page.setViewportSize({ width: 390, height: 844 });
+    for (const path of [`/items/${itemId}`, "/add", "/settings"]) {
+      await page.goto(`${BASE}${path}`);
+      await expect(page.locator(".topbar-actions"), `cluster on ${path} @390`).toHaveCount(0);
+      await expect(page.locator(".topbar-back"), `back button on ${path} @390`).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "Back to list" })).toBeVisible();
+      await expect(page.getByRole("navigation", { name: "Primary actions" })).toBeVisible();
+    }
+
+    // --- 8. One header height, and no overflow, at every width. ----------
+    for (const width of [360, 390, 430, 768, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      for (const path of ["/", "/add", "/settings", `/items/${itemId}`]) {
+        await page.goto(`${BASE}${path}`);
+        await expect(page.locator(".topbar")).toBeVisible();
+        const probe = await horizontalEscapes(page);
+        expect(probe.docOverflow, `${path} overflow at ${width}px`).toBe(false);
+        expect(probe.offenders, `${path} escapes at ${width}px`).toEqual([]);
+      }
+      if (width < 640) continue;
+      const heights: number[] = [];
+      for (const path of ["/", "/add", "/settings", `/items/${itemId}`]) {
+        await page.goto(`${BASE}${path}`);
+        await expect(page.locator(".topbar")).toBeVisible();
+        heights.push(
+          Math.round(
+            await page.locator(".topbar").evaluate((el) => el.getBoundingClientRect().height),
+          ),
+        );
+      }
+      expect(
+        new Set(heights).size,
+        `#125: the header never changes shape — heights at ${width}px: ${heights.join(",")}`,
+      ).toBe(1);
+    }
+  } finally {
+    await otherContext.close();
+    for (const id of probeIds) {
+      const removed = await page.request.delete(`${BASE}/api/wishlist/items/${id}`);
+      expect([200, 204]).toContain(removed.status());
+    }
+  }
+});
+
+test("38: #129 — one visible Add item, grouped add actions, no stranding", async ({ page }) => {
+  // The three filed complaints are one story: the bar's Add tab must read as
+  // NAVIGATION ("Add", like Share) rather than a second lit-up "Add item" CTA,
+  // the guarded exit must sit in the form's action cluster instead of alone at
+  // the bottom of a blank page, and the validation error belongs with the
+  // submit it reports on.
+  /** Playwright's boundingBox is {x,y,width,height}; these assertions are
+   *  about the vertical stack, so name the edges. */
+  const box = async (locator: Locator) => {
+    const b = (await locator.boundingBox())!;
+    return { top: b.y, bottom: b.y + b.height, width: b.width };
+  };
+  for (const width of [360, 390, 430, 1280] as const) {
+    const mobile = width < 640; // the app's one width seam (#73/#95)
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${BASE}/add`);
+    await expect(page.getByRole("heading", { name: "Add item" })).toBeVisible();
+
+    // A. Exactly two elements render the words "Add item" as text: the h1 and
+    //    the submit — #121's canonical pair, still the only add-flow CTA. A
+    //    pristine form carries no exit at all (#127's rule).
+    await expect(page.getByText("Add item", { exact: true })).toHaveCount(2);
+    await expect(page.locator(".add-submit")).toHaveText("Add item");
+    expect(await page.title(), `@${width}: document title`).toBe("Add item · sugarplum");
+    await expect(page.getByRole("button", { name: "Discard" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Cancel" })).toHaveCount(0);
+
+    // B. The bar: the tab's VISIBLE label is the short word, its ACCESSIBLE
+    //    name stays the app's full phrase, and Add is the current destination.
+    if (mobile) {
+      const bar = page.getByRole("navigation", { name: "Primary actions" });
+      await expect(bar.locator(".action-bar-item")).toHaveCount(3);
+      await expect(bar.getByText("Add", { exact: true })).toBeVisible();
+      await expect(bar.getByText("Add item", { exact: true })).toHaveCount(0);
+      for (const name of ["Add item", "Share my list", "Settings"]) {
+        await expect(bar.getByRole("button", { name })).toBeVisible();
+      }
+      const addTab = bar.getByRole("button", { name: "Add item" });
+      await expect(addTab).toHaveAttribute("aria-current", "page");
+      await expect(addTab).toHaveClass(/is-current/);
+    } else {
+      await expect(page.locator(".action-bar"), `@${width}: no bar above the seam`).toHaveCount(0);
+    }
+
+    let probe = await horizontalEscapes(page);
+    expect(probe.docOverflow, `pristine overflow at ${width}px`).toBe(false);
+    expect(probe.offenders, `pristine escapes at ${width}px`).toEqual([]);
+
+    // C. A draft: exactly one guarded Discard, inside the action cluster,
+    //    directly under the submit, above the disclosure hairline, and the
+    //    same width as the primary it groups with.
+    await page.getByLabel("Link").fill(`https://example.com/129-draft-${width}`);
+    const cluster = page.locator(".add-actions");
+    const discard = cluster.getByRole("button", { name: "Discard" });
+    await expect(discard).toHaveCount(1);
+    const submitBox = await box(page.locator(".add-submit"));
+    const discardBox = await box(discard);
+    const clusterBox = await box(cluster);
+    const discloseBox = await box(page.getByRole("button", { name: "Add details manually" }));
+    expect(Math.round(discardBox.width), `@${width}: the exit matches the primary's width`).toBe(
+      Math.round(submitBox.width),
+    );
+    expect(Math.round(discardBox.top - submitBox.bottom), `@${width}: one tight group`).toBeLessThanOrEqual(40);
+    expect(Math.round(clusterBox.bottom), `@${width}: the cluster ends above the hairline`).toBeLessThanOrEqual(
+      Math.round(discloseBox.top),
+    );
+    // And it is not the form's last control: the disclosure (its optional
+    // fields behind it) still follows the exit in DOM order.
+    expect(await cluster.evaluate((el) => el.nextElementSibling?.className ?? "")).toBe("add-disclose");
+
+    probe = await horizontalEscapes(page);
+    expect(probe.docOverflow, `draft overflow at ${width}px`).toBe(false);
+    expect(probe.offenders, `draft escapes at ${width}px`).toEqual([]);
+  }
+
+  // D. The submit's validation error renders inside the cluster, under the
+  //    submit and above the hairline — on screen without scrolling at every
+  //    mobile width (it used to fall below the fold in the expanded form).
+  for (const width of [360, 390, 430] as const) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${BASE}/add`);
+    await expect(page.getByRole("heading", { name: "Add item" })).toBeVisible();
+    await page.locator(".add-submit").click();
+    const error = page.locator(".add-actions .error");
+    await expect(error).toBeVisible();
+    await expect(error).toHaveAttribute("role", "alert");
+    await expect(error).toHaveText("Add a title or a link.");
+    const errorBox = await box(error);
+    const submitBox = await box(page.locator(".add-submit"));
+    const discloseBox = await box(page.getByRole("button", { name: "Add details manually" }));
+    expect(Math.round(errorBox.top), `@${width}: the error follows the submit`).toBeGreaterThanOrEqual(
+      Math.round(submitBox.bottom),
+    );
+    expect(Math.round(errorBox.bottom), `@${width}: the error precedes the hairline`).toBeLessThanOrEqual(
+      Math.round(discloseBox.top),
+    );
+    expect(Math.round(errorBox.bottom), `@${width}: the error is on screen`).toBeLessThanOrEqual(844);
+  }
+
+  // E. A notes-only draft is BOTH a draft and invalid: the exit orders after
+  //    the error, still inside the cluster and above the hairline.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${BASE}/add`);
+  await page.getByRole("button", { name: "Add details manually" }).click();
+  await page.getByLabel("Notes").fill("half-typed note");
+  await page.locator(".add-submit").click();
+  const cluster = page.locator(".add-actions");
+  await expect(cluster.getByRole("button", { name: "Discard" })).toHaveCount(1);
+  const errorBox = await box(cluster.locator(".error"));
+  const discardBox = await box(cluster.getByRole("button", { name: "Discard" }));
+  const discloseBox = await box(page.getByRole("button", { name: "Add details manually" }));
+  expect(Math.round(discardBox.top), "the exit follows the error").toBeGreaterThanOrEqual(
+    Math.round(errorBox.bottom),
+  );
+  expect(Math.round(discardBox.bottom), "the exit stays above the hairline").toBeLessThanOrEqual(
+    Math.round(discloseBox.top),
+  );
+
+  // F. Keyboard order follows the visual order: with a draft present the exit
+  //    is the stop between the submit and the disclosure.
+  await page.goto(`${BASE}/add`);
+  await expect(page.getByRole("heading", { name: "Add item" })).toBeVisible();
+  await page.getByLabel("Link").fill("https://example.com/129-tab-order");
+  await page.getByLabel("Link").focus();
+  await page.keyboard.press("Tab");
+  await expect(page.locator(".add-submit")).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Discard" })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Add details manually" })).toBeFocused();
+});
+
+test("39: #128 — mobile back chevron on every non-feed page, ⋮ in the header", async ({ page }) => {
+  // The filed complaint was two-fold and both halves are asserted here: at
+  // mobile the only way back off the detail and settings screens was an
+  // unlabeled logo tile, and the item page's ⋮ floated in the page body.
+  // The chevron's presence SET falls out of the shell's brandHref bit, so the
+  // spec pins the set itself (present on every non-feed route, absent on the
+  // feed and above the seam) rather than any per-page wiring. (Numbered 39,
+  // not the plan's "22": that slot is the #76 owner-purchased spec.)
+  const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as { id: string };
+  const list = (await (await page.request.get(`${BASE}/api/users/${me.id}/wishlist`)).json()) as Array<{ id: string; title: string }>;
+  let probe = list.find((item) => item.title === "History probe");
+  if (!probe) {
+    const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
+      data: { title: "History probe", priceCents: "12.50", currency: "GBP" },
+    });
+    expect(seeded.status()).toBe(201);
+    probe = { id: ((await seeded.json()) as { id: string }).id, title: "History probe" };
+  }
+  const itemId = probe.id;
+  const chevron = page.locator(".topbar-back-chevron");
+
+  // --- 1. Item detail: exactly one leading topbar button, named "Back to
+  //        list" like the brand link it makes visible, 44px on both axes. ---
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${BASE}/items/${itemId}`);
+  await expect(page.locator(".item-page .detail-title")).toBeVisible();
+  // AC5: the retired body row is really gone — the page's first content row is
+  // the #125 context bar, not a header holding the ⋮.
+  await expect(page.locator(".detail-header"), "the ⋮'s body row is retired").toHaveCount(0);
+  await expect(
+    page.locator(".item-page").locator("> :first-child"),
+    "the context bar is the item page's first row",
+  ).toHaveClass(/list-switcher--compact/);
+  await expect(chevron, "@390: one chevron on the item view").toHaveCount(1);
+  await expect(chevron).toBeVisible();
+  // The name resolves to exactly one button at this width: the desktop
+  // Back-to-list BUTTON is not mounted under the seam, and the lockup is a
+  // role=link, so there is no second match to be ambiguous about.
+  await expect(page.getByRole("button", { name: "Back to list" })).toHaveCount(1);
+  const chevronBox = (await chevron.boundingBox())!;
+  expect(Math.round(chevronBox.width), "chevron width @390").toBeGreaterThanOrEqual(44);
+  expect(Math.round(chevronBox.height), "chevron height @390").toBeGreaterThanOrEqual(44);
+  // …and it sits BESIDE the lockup, never over it: both are back affordances
+  // to the same place, so their hit areas must not fight (#116 geometry).
+  const brandBox = (await page.locator(".brand").boundingBox())!;
+  expect(Math.round(chevronBox.x + chevronBox.width), "chevron clears the lockup").toBeLessThanOrEqual(
+    Math.round(brandBox.x),
+  );
+
+  // --- 2. Its destination is the list, client-side (no document load). ----
+  const before = await loads(page);
+  await chevron.click();
+  await expect(page).toHaveURL(`${BASE}/`);
+  await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+  expect(await loads(page), "the chevron is a client-side navigation").toBe(before);
+
+  // --- 3. Every other non-feed authenticated route carries it too. --------
+  const uiOn = await page.request.put(`${BASE}/api/auth/me/settings`, {
+    data: { showUserManagement: true },
+  });
+  expect(uiOn.status()).toBe(200);
+  try {
+    for (const path of [
+      "/add",
+      "/settings",
+      "/settings/users",
+      "/settings/users/new",
+      `/items/${itemId}/edit`,
+    ]) {
+      await page.goto(`${BASE}${path}`);
+      await expect(page.locator(".topbar"), `topbar on ${path}`).toBeVisible();
+      await expect(chevron, `chevron on ${path} @390`).toHaveCount(1);
+      await expect(chevron, `chevron visible on ${path} @390`).toBeVisible();
+    }
+  } finally {
+    const uiOff = await page.request.put(`${BASE}/api/auth/me/settings`, {
+      data: { showUserManagement: false },
+    });
+    expect(uiOff.status()).toBe(200);
+  }
+
+  // --- 4. Absent where it would be a lie: the feed has nowhere back to go,
+  //        and above the seam #125's header owns the affordance. ----------
+  await page.goto(`${BASE}/`);
+  await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+  await expect(chevron, "@390: no chevron on the feed").toHaveCount(0);
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${BASE}/items/${itemId}`);
+  await expect(page.locator(".item-page .detail-title")).toBeVisible();
+  await expect(chevron, "@1280: the desktop header needs no chevron").toHaveCount(0);
+  await expect(page.locator(".topbar-back"), "@1280: #125's Back-to-list button stays").toBeVisible();
+
+  // --- 5. The ⋮: in the app bar at BOTH widths, never in the page body. --
+  for (const width of [390, 1280] as const) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${BASE}/items/${itemId}`);
+    await expect(page.locator(".item-page .detail-title")).toBeVisible();
+    const trigger = page.locator(".topbar .detail-menu-trigger");
+    await expect(trigger, `⋮ in the topbar @${width}`).toBeVisible();
+    await expect(page.locator(".item-page .detail-menu-trigger"), `⋮ in the body @${width}`).toHaveCount(0);
+
+    await trigger.click();
+    // Under the seam the menu portals to a bottom sheet (role=dialog); above
+    // it, an anchored popover (role=menu). Same items either way.
+    const surface =
+      width < 640
+        ? page.getByRole("dialog", { name: "More actions" })
+        : page.getByRole("menu", { name: "More actions" });
+    await expect(surface, `the menu opens @${width}`).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Delete" })).toBeVisible();
+    if (width >= 640) {
+      // The anchored popover hangs off .topbar-menu (right: 0), inside the
+      // blurred sticky bar — the geometry risk this move introduces. It must
+      // land inside the viewport, not clipped by the bar or the seam.
+      const menuBox = (await surface.boundingBox())!;
+      expect(Math.round(menuBox.x), `menu left edge @${width}`).toBeGreaterThanOrEqual(0);
+      expect(Math.round(menuBox.x + menuBox.width), `menu right edge @${width}`).toBeLessThanOrEqual(width);
+      expect(Math.round(menuBox.y), `menu drops below the trigger @${width}`).toBeGreaterThan(0);
+    }
+    await page.keyboard.press("Escape");
+    await expect(surface, `Escape closes the menu @${width}`).toHaveCount(0);
+    await expect(page).toHaveURL(`${BASE}/items/${itemId}`);
+  }
+
+  // --- 6. Desktop order: the ⋮ sits left of the actions cluster, which keeps
+  //        the right edge (the issue's "top-right, in the app bar"). -------
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${BASE}/items/${itemId}`);
+  await expect(page.locator(".item-page .detail-title")).toBeVisible();
+  const dots = (await page.locator(".topbar .detail-menu-trigger").boundingBox())!;
+  const addChip = (await page
+    .locator(".topbar-actions")
+    .getByRole("button", { name: "Add item", exact: true })
+    .boundingBox())!;
+  expect(Math.round(dots.x + dots.width), "⋮ renders left of the Add chip").toBeLessThanOrEqual(
+    Math.round(addChip.x),
+  );
+
+  // --- 7. Safe area: the issue listed "header respects notch/dynamic-island
+  //        insets" as a gap, but the topbar has carried env(safe-area-inset-top)
+  //        since the shell foundation (commit 2defab7) — the filed evidence was
+  //        gathered under devtools device emulation, where env() computes to 0.
+  //        So this is a NO-REGRESSION pin, not a change: the applied CSS still
+  //        resolves the token, and the shell still opts into the cover insets
+  //        (without viewport-fit=cover env(safe-area-inset-*) is always 0). ---
+  const cssText = (
+    await page.evaluate(() =>
+      Array.from(document.styleSheets)
+        .map((sheet) => {
+          try {
+            return Array.from(sheet.cssRules)
+              .map((rule) => rule.cssText)
+              .join("\n");
+          } catch {
+            return "";
+          }
+        })
+        .join("\n"),
+    )
+  ).replace(/\s+/g, " "); // the bundler re-spaces calc(); compare on tokens
+  expect(cssText, "safe-area token is defined and resolved").toContain(
+    "safe-area-inset-top",
+  );
+  expect(
+    cssText,
+    "the topbar's top padding still consumes the safe-area token",
+  ).toContain("calc(var(--topbar-pad-y) + var(--safe-top))");
+  expect(
+    await page.getAttribute('meta[name="viewport"]', "content"),
+    "the shell opts into the display cutout insets",
+  ).toContain("viewport-fit=cover");
+});
+
+test("40: #117 — the SW's offline sentinel survives more than one write", async ({ page, context }) => {
+  await login(page, "admin", "admin-password");
+  await page.goto(`${BASE}/`);
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.waitForTimeout(400); // let the activated worker claim this client
+  await context.setOffline(true);
+  try {
+    // Two DELETEs in ONE session, body read each time. A Response body is
+    // single-use: the sentinel must be built per request, or the first write
+    // consumes it and every later one rejects with a transport error — which
+    // reaches the SPA as the generic action failure instead of the offline
+    // framing below.
+    const outcomes: string[] = [];
+    for (let i = 0; i < 2; i++) {
+      outcomes.push(
+        await page.evaluate(async () => {
+          const res = await fetch("/api/wishlist/items/probe-none", { method: "DELETE" });
+          return `${res.status}:${await res.clone().text()}`;
+        }),
+      );
+    }
+    expect(outcomes[0]).toBe('503:{"error":"offline"}');
+    expect(outcomes[1], "the sentinel must not be consumed by the first write").toBe(
+      '503:{"error":"offline"}',
+    );
+  } finally {
+    await context.setOffline(false);
+  }
+});
+
+test("41: #117 — offline writes are framed as offline, never as a plain failure", async ({ page, context }) => {
+  await login(page, "admin", "admin-password");
+  // Two rows so the feed and reorder mode both have work to do, then one
+  // online load so the SW owns the API calls and has the list cached.
+  for (const title of ["Offline probe A", "Offline probe B"]) {
+    const res = await page.request.post(`${BASE}/api/wishlist/items`, { data: { title } });
+    expect(res.status()).toBe(201);
+  }
+  await page.goto(`${BASE}/`);
+  await expect(page.getByRole("heading", { name: "Offline probe A" })).toBeVisible();
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.waitForTimeout(400);
+
+  const OFFLINE_COPY = "You appear to be offline — this change was not saved.";
+
+  await context.setOffline(true);
+  try {
+    // (b) feed delete — the issue's headline case. The copy names the
+    //     connection and the row is still there: the write failed, loudly.
+    const card = page.locator(".item-card", { hasText: "Offline probe A" }).first();
+    await card.getByRole("button", { name: "More actions" }).click();
+    await page.getByRole("menu", { name: "More actions" }).getByRole("menuitem", { name: "Delete" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
+    await expect(page.locator(".toast")).toContainText(OFFLINE_COPY);
+    await expect(card, "no fake success — the rejected row is still on screen").toBeVisible();
+
+    // (c) settings toggle — the issue's second named case.
+    await page.goto(`${BASE}/settings`);
+    await expect(page.getByRole("heading", { name: "Account & Preferences", level: 2 })).toBeVisible();
+    await page.getByRole("switch", { name: /Show unverified price hints/ }).click();
+    await expect(page.locator(".toast")).toContainText(OFFLINE_COPY);
+
+    // (d) the add form's submit — the form surface says "this item", not
+    //     "this change", and the page does not navigate.
+    await page.goto(`${BASE}/add`);
+    await page.getByLabel("Link").fill("https://example.invalid/offline-probe");
+    await page.locator(".add-submit").click();
+    await expect(page.locator(".add-actions .error")).toHaveText(
+      "You appear to be offline — this item was not saved.",
+    );
+    await expect(page, "no fake success — the form is still the page").toHaveURL(`${BASE}/add`);
+
+    // (e) reorder commit — the rollback is the honest state (the server never
+    //     received the new order) and it still runs; only the copy is offline.
+    await page.goto(`${BASE}/`);
+    await page.getByRole("button", { name: "Reorder", exact: true }).click();
+    await expect(page.locator(".item-card.is-reordering").first()).toBeVisible();
+    const before = await cardIds(page);
+    await liftAndDragUpOne(page, 1);
+    await page.mouse.up();
+    await expect(page.locator(".toast")).toContainText(OFFLINE_COPY);
+    await expect
+      .poll(() => cardIds(page), { message: "the offline commit rolled the order back" })
+      .toEqual(before);
+  } finally {
+    await context.setOffline(false);
+  }
 });

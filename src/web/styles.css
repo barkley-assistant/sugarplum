@@ -395,6 +395,29 @@ label {
   font-weight: 600;
 }
 
+/* #120: the login password field's reveal control. The wrapper IS the field,
+   so the card's 0.6rem gap rhythm is unchanged; the input keeps its full
+   width and reserves the toggle's 44px plus the field's own 0.7rem gutter as
+   right padding (3rem = 48px), so typed text never runs under the glyph. */
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 3rem;
+}
+
+.password-reveal {
+  position: absolute;
+  top: 0;
+  right: 0;
+  /* 44px on both axes: the app-wide touch floor (#116). The glyph is centred
+     by .icon-btn's own inline-flex; .icon-btn's hover/focus/target rules are
+     reused verbatim, not duplicated. */
+  width: 44px;
+  height: 44px;
+}
+
 /* ---------- App shell ---------- */
 .app-shell {
   min-height: 100vh;
@@ -447,14 +470,13 @@ label {
 
 /* #116: on every non-feed page the lockup IS the back affordance (aria-label
    "Back to list"), and 28px is the app's shortest real target. A grown box is
-   not free there: the topbar is min-height-driven and only four routes carry a
-   54px sibling (.topbar-right), so /add, /items/:id, /items/:id/edit and
-   /share/:token render 52px and a 44px lockup box pushed them to 57px
-   (measured). A padded hit overlay gives the same 44px target (28 + 2x8) with
-   the topbar height byte-identical on every route, and taps land on the lockup
-   itself. The overlay stays inside the bar's own padding band (brand top
-   11.5 -> 3.5, bottom 39.5 -> 47.5 of the 52px bar), so it steals no taps from
-   the page below. */
+   not free there: the topbar is min-height-driven, so a 44px lockup box pushed
+   the bar taller than the routes that already carry a right-hand cluster
+   (measured 57px where the cluster routes render 66px). A padded hit overlay
+   gives the same 44px target (28 + 2x8) with the lockup box byte-identical on
+   every route, and taps land on the lockup itself. The overlay stays inside
+   the bar's own padding band (brand top 19 -> 11, bottom 47 -> 55 of the 66px
+   authed bar), so it steals no taps from the page below. */
 .brand::after {
   content: "";
   position: absolute;
@@ -1278,6 +1300,13 @@ button.filter-chip {
   margin: var(--sp-2) 0;
 }
 
+/* #134: reorder mode's one quiet guard line, in the filter row's slot. */
+.reorder-hint {
+  margin: var(--sp-2) 0;
+  font-size: var(--text-sm);
+  color: var(--text-2);
+}
+
 /* Skeleton matches the feed shape: transparent rows, 56px thumb (tier-2 G2). */
 .skeleton-list {
   display: flex;
@@ -1518,6 +1547,23 @@ button.filter-chip {
   margin-top: var(--sp-2);
 }
 
+/* #129: the add form's action cluster — the submit, its validation error and
+   the guarded #127 exit group together ABOVE the disclosure, so no control
+   ever strands alone in the page's lower blank. Column flex inherits the
+   form's own rhythm; the tight --sp-2 gap is what reads as one group. */
+.add-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+/* #129: the guarded exit is a full-width quiet secondary — the same tap size
+   as the primary it groups with. The .form-actions row keeps edit-mode's
+   inline grammar; only the add cluster stacks. */
+.add-actions .form-actions .secondary {
+  width: 100%;
+}
+
 .add-disclose {
   display: flex;
   align-items: center;
@@ -1651,6 +1697,24 @@ button.filter-chip {
 }
 
 .toast-close:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* #134: the toast's optional single action (the reorder Undo). Pushed right so
+   it groups with the dismiss button and the message keeps the left edge. */
+.toast-action {
+  margin-left: auto;
+  min-height: 44px;
+  padding: 0 var(--sp-2);
+  background: transparent;
+  border: none;
+  color: var(--share-accent);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.toast-action:hover {
   background: var(--surface-2);
   color: var(--text);
 }
@@ -2338,6 +2402,19 @@ button.row-open:hover {
   gap: var(--sp-1);
 }
 
+/* #125: `.topbar-actions` is desktop-only chrome — under 640px the same
+   actions live on the bottom bar. React gates it on a matchMedia state, which
+   flips a frame AFTER the viewport does, so a resize to a phone width would
+   paint the full desktop cluster (the item view's Back to list + Add + Share
+   is ~276px) inside a 360px bar for one frame and overflow the document.
+   A media query lands in the same layout pass as the resize, so the transient
+   frame cannot escape. */
+@media (max-width: 639px) {
+  .topbar-actions {
+    display: none;
+  }
+}
+
 /* ---------- List layout: single fluid column ---------- */
 .list-layout {
   display: flex;
@@ -2440,25 +2517,6 @@ button.row-open:hover {
   flex: 0 0 auto;
 }
 
-.detail-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--sp-2) var(--sp-4) 0;
-  flex: 0 0 auto;
-  position: relative;
-}
-
-/* #75: the round ⋮ loses its standing chip (fill + ring) and reads as a
-   plain ghost circle like .icon-btn; only the shape (--r-full) remains
-   distinct. Hover comes from .icon-btn:hover, which this element already
-   carries via its "icon-btn detail-menu-trigger" class pair. */
-.detail-menu-trigger {
-  border-radius: var(--r-pill);
-  border: 1px solid transparent;
-  background: transparent;
-}
-
 .detail-scroll {
   flex: 1;
   min-height: 0;
@@ -2480,14 +2538,6 @@ button.row-open:hover {
   display: flex;
   flex-direction: column;
   min-width: 0;
-}
-
-.item-page .detail-header {
-  padding: 0 0 var(--sp-3);
-  /* #72: the close icon is gone, so the overflow trigger is the header's only
-     child — keep it right-aligned (space-between would left-align it).
-     position: relative stays: it is the .menu-sheet popover's anchor. */
-  justify-content: flex-end;
 }
 
 .item-page .detail-scroll {
@@ -3007,8 +3057,12 @@ button.row-open:hover {
     min-height: calc(var(--action-bar-h) + var(--safe-bottom));
     padding: 0 var(--sp-2) var(--safe-bottom);
     background: var(--bg); /* app surface, not a contrasting bar */
-    /* Same hairline recipe as .topbar's bottom border: one divider grammar. */
-    border-top: 1px solid color-mix(in srgb, var(--border) 60%, var(--bg));
+    /* #132: one divider grammar with the app's row disclosures. The old 60%
+       mix of --border read 1.12:1 light / 1.14:1 dark on this opaque --bg
+       (invisible — the mix reads on the topbar only because that sits on
+       blurred content). --border-2 measures 1.42:1 / 1.59:1 here: visible,
+       still a hairline, below the 3:1 field-outline contract (tokens.css). */
+    border-top: 1px solid var(--border-2);
   }
 
   /* Buttons: transparent, borderless, icon over label. The global button
@@ -3020,11 +3074,11 @@ button.row-open:hover {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: var(--sp-1);
     flex: 1 1 0; /* equal thirds */
     min-width: 44px;
     min-height: var(--action-bar-h);
-    padding: 6px 0 4px;
+    padding: var(--sp-2) 0;
     margin: 0;
     border: none;
     border-radius: var(--r-flat);
@@ -3062,17 +3116,19 @@ button.row-open:hover {
   /* #95: the bar destination matching the current route carries
      .is-current (aria-current="page" mirrors it in the DOM) — the accent
      #73 left dormant for exactly this. The feed and the item pages are
-     not bar destinations, so they mark nothing. */
+     not bar destinations, so they mark nothing.
+     #132: the accent is color + label weight, and nothing else. The stray
+     4px dot that used to hang below the current label is deleted: as a flex
+     child it stretched the active item and lifted its icon+label pair 4px
+     off the other two items' baseline, and it read as a notification badge. */
   .action-bar-item.is-current {
     color: var(--plum-500);
   }
 
-  .action-bar-item.is-current::after {
-    content: "";
-    width: 4px;
-    height: 4px;
-    border-radius: var(--r-pill);
-    background: var(--plum-500);
+  /* #132: the current label is the heavier one — the app's existing
+     emphasis weight (h1-h4, buttons, .menu-item headings). */
+  .action-bar-item.is-current .action-bar-label {
+    font-weight: 600;
   }
 
   /* Occlusion guard: the bar is fixed, and .app-main is the last
@@ -3088,4 +3144,74 @@ button.row-open:hover {
   #root:has(.action-bar) .toast-host {
     bottom: calc(var(--sp-4) + var(--action-bar-h) + var(--safe-bottom));
   }
+}
+
+/* ============================================================
+   #125 — one header on every authenticated page
+   AppShell renders the same identity cluster (Back to list where it applies,
+   Add, Share, avatar) on every authed route, and every non-feed page carries
+   the compact context bar as the first row of its content column.
+   ============================================================ */
+
+/* The item view's way back to the feed: the feed's Reorder grammar
+   (button.secondary + the compact-action family), as the LEAD chip of the
+   actions cluster. min-height restates the app-wide 44px floor for the
+   topbar context — the Reorder sizing lives under .list-heading-action and
+   does not reach here. */
+.topbar-back {
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  margin-inline-end: var(--sp-1);
+}
+
+/* The compact list-switcher bar. One row — whose list, and how many items —
+   at the page scale (--page-title--form) rather than the feed's display
+   scale, so it reads as a context row under the page's own title. Declared
+   after the feed's `.list-switcher .list-heading` rules on purpose: same
+   specificity, source order decides. */
+.list-switcher--compact .list-heading {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: var(--sp-1) var(--sp-3);
+}
+
+.list-switcher--compact .page-title {
+  margin: 0;
+}
+
+/* ============================================================
+   #128 — mobile back navigation
+   A real chevron back affordance in the topbar on every non-feed page, and
+   the item view's ⋮ moved out of the page body into the app bar.
+   The chevron itself needs no rules: .icon-btn already carries the 44px
+   touch floor and the ghost variant the quiet look, and it is keyed off
+   brandHref in AppShell, so it exists only on pages that have somewhere to
+   go back to, and only under 640px. The topbar's own --sp-4 gap separates it
+   from the lockup — comfortably wider than the 8px .brand::after adds to
+   either side (#116), so the two hit areas never overlap.
+   ============================================================ */
+
+/* The shell renders at most three topbar children now (chevron, brand,
+   .topbar-right) instead of two, and `justify-content: space-between` would
+   split the free space into TWO gaps — floating the wordmark into the middle
+   of the bar. The auto margin absorbs that free space instead, so the
+   chevron + lockup stay a left-hand group and the actions keep the right
+   edge. Without a chevron the two-child result is identical to before. */
+.topbar .brand {
+  margin-inline-end: auto;
+}
+
+/* #128: the anchor for a page-owned menu mounted in the topbar (the item
+   view's ⋮). Same one-liner contract as .user-menu / .share-anchor: it is
+   what the absolutely-positioned .menu-sheet (right: 0, top: 100% + 8px)
+   measures against. The avatar menu proves the recipe inside the blurred,
+   sticky topbar; the mobile branch of OverflowMenu portals its sheet to
+   document.body, so no backdrop-filter clipping either way. */
+.topbar-menu {
+  position: relative;
+  display: inline-flex;
 }

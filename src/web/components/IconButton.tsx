@@ -52,12 +52,20 @@ export function PlusIcon() {
   );
 }
 
+/** Share glyph (#73; #132 optical fix). The three nodes are open rings, not
+ *  filled discs: r=2.5 at the shared 1.8 stroke leaves a 3.2px hole
+ *  (hole:stroke 1.78), the Lucide share-2 proportion at our 20px box
+ *  (2.5/20 = 3/24). At the old r=2.2 the hole closed to 2.6px (hole:stroke
+ *  1.44) and the nodes rendered ~2.26x the ink of the plus — the glyph read
+ *  heavier than its neighbours at the same stroke spec. The connector
+ *  endpoints sit 2.24-2.39px from the node centres, inside the [1.6, 3.4]
+ *  ring band, so they stay buried in the stroke at r=2.5. */
 export function ShareIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <circle cx="5" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.8" />
-      <circle cx="14.5" cy="4.5" r="2.2" stroke="currentColor" strokeWidth="1.8" />
-      <circle cx="14.5" cy="15.5" r="2.2" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="5" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="14.5" cy="4.5" r="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="14.5" cy="15.5" r="2.5" stroke="currentColor" strokeWidth="1.8" />
       <path
         d="M7 9l5.5-3.2M7 11l5.5 3.2"
         stroke="currentColor"
@@ -106,6 +114,60 @@ export function ChevronRightIcon() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+/** #128: the mirror of the disclosure chevron — the mobile topbar's back
+ *  affordance. Same language as the other icons: 20px box, 1.8px stroke,
+ *  currentColor. */
+export function ChevronLeftIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="m12 5-5 5 5 5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** #120: the login password field's default state — an open eye. The glyph
+ *  states the CONTROL's affordance, so the hidden-password state shows the
+ *  open eye and the revealed state shows the slashed one. Same language as
+ *  the other icons: 20px box, 1.8px stroke, currentColor. The almond is one
+ *  closed cubic lens (not two arcs meeting at a point, which pinches at the
+ *  1.8 stroke in a 20px box) with an iris at r=2.2, leaving a 1.0px lid
+ *  either side of the centred line. */
+export function EyeIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="M2 10c2.6-3.6 5-5.4 8-5.4S15.4 6.4 18 10c-2.6 3.6-5 5.4-8 5.4S4.6 13.6 2 10Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="10" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+/** #120: the revealed state — the same eye, struck through. */
+export function EyeOffIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="M2 10c2.6-3.6 5-5.4 8-5.4S15.4 6.4 18 10c-2.6 3.6-5 5.4-8 5.4S4.6 13.6 2 10Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="10" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M4.5 4.5 15.5 15.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }

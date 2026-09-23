@@ -7,17 +7,45 @@ import {
   type ReactNode,
 } from "react";
 
+interface ToastAction {
+  label: string;
+  onSelect: () => void;
+}
+
 interface Toast {
   id: number;
   message: string;
   variant: "info" | "danger";
+  /** Optional single action button (e.g. the reorder Undo). */
+  action?: ToastAction;
+  /** Opt-in identity: a toast carrying a key REPLACES the previous toast with
+   *  the same key instead of stacking. Used by the reorder snackbar, where
+   *  only the latest commit's Undo makes sense. */
+  key?: string;
 }
 
-type ShowToast = (message: string, variant?: "info" | "danger") => void;
+type ShowToast = (
+  message: string,
+  variant?: "info" | "danger",
+  action?: ToastAction,
+  key?: string,
+) => void;
 
 const ToastContext = createContext<ShowToast | null>(null);
 
-/** Transient bottom-sheet notifications. Auto-dismiss after 4s, manual
+/** The stack rule: a keyed toast replaces the same-keyed toast in place, a
+ *  keyless toast always appends. Pure, so the rule is unit-tested. */
+export function upsertByKey<T extends { id: number; key?: string }>(
+  prev: T[],
+  next: T,
+): T[] {
+  return next.key === undefined
+    ? [...prev, next]
+    : [...prev.filter((t) => t.key !== next.key), next];
+}
+
+/** Transient bottom-sheet notifications. Auto-dismiss after 4s (6s when the
+ *  toast carries an action, so there is time to read and decide), manual
  *  dismiss on tap; danger variant gets a red accent. */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -28,10 +56,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const show = useCallback<ShowToast>(
-    (message, variant = "info") => {
+    (message, variant = "info", action, key) => {
       const id = nextId.current++;
-      setToasts((prev) => [...prev, { id, message, variant }]);
-      window.setTimeout(() => dismiss(id), 4000);
+      setToasts((prev) => upsertByKey(prev, { id, message, variant, action, key }));
+      // A replaced toast's own timer fires against an id that no longer
+      // exists — `dismiss` filters by id, so it is a no-op.
+      window.setTimeout(() => dismiss(id), action ? 6000 : 4000);
     },
     [dismiss],
   );
@@ -63,6 +93,18 @@ function ToastHost({
       {toasts.map((t) => (
         <div key={t.id} className={`toast${t.variant === "danger" ? " danger" : ""}`}>
           <span>{t.message}</span>
+          {t.action && (
+            <button
+              type="button"
+              className="toast-action"
+              onClick={() => {
+                onDismiss(t.id);
+                t.action?.onSelect();
+              }}
+            >
+              {t.action.label}
+            </button>
+          )}
           <button
             type="button"
             className="toast-close"
