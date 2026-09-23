@@ -48,10 +48,14 @@ const CACHE = ${JSON.stringify(cacheName)};
 const DATA_CACHE = "sugarplum-data-v1";
 const PRECACHE = ${JSON.stringify(precache)};
 const SHELL_ROUTES = ${JSON.stringify(SHELL_ROUTES)};
-const OFFLINE_JSON = new Response(
-  JSON.stringify({ error: "offline" }),
-  { status: 503, headers: { "Content-Type": "application/json" } },
-);
+// A Response body is single-use: the sentinel is BUILT per failed request, so
+// every offline write gets a readable 503 instead of the first one consuming
+// the shared instance and handing the rest a transport TypeError.
+const offlineJSON = () =>
+  new Response(
+    JSON.stringify({ error: "offline" }),
+    { status: 503, headers: { "Content-Type": "application/json" } },
+  );
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -77,7 +81,7 @@ self.addEventListener("fetch", (event) => {
 
   // Writes require connection by design: never queue, surface a JSON 503.
   if (req.method !== "GET") {
-    event.respondWith(fetch(req).catch(() => OFFLINE_JSON));
+    event.respondWith(fetch(req).catch(() => offlineJSON()));
     return;
   }
 
@@ -116,7 +120,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(DATA_CACHE).then((c) => c.put(req, copy));
           return res;
         })
-        .catch(() => caches.match(req).then((cached) => cached || OFFLINE_JSON)),
+        .catch(() => caches.match(req).then((cached) => cached || offlineJSON())),
     );
     return;
   }
@@ -124,7 +128,7 @@ self.addEventListener("fetch", (event) => {
   // Other /api/* (auth, admin, auth'd image bytes): network only — image
   // bytes must never enter the cache (shared-device privacy).
   if (path.startsWith("/api/")) {
-    event.respondWith(fetch(req).catch(() => OFFLINE_JSON));
+    event.respondWith(fetch(req).catch(() => offlineJSON()));
     return;
   }
 
