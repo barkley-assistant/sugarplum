@@ -5841,3 +5841,92 @@ test("39: #128 — mobile back chevron on every non-feed page, ⋮ in the header
     "the shell opts into the display cutout insets",
   ).toContain("viewport-fit=cover");
 });
+
+test("40: #117 — the SW's offline sentinel survives more than one write", async ({ page, context }) => {
+  await login(page, "admin", "admin-password");
+  await page.goto(`${BASE}/`);
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.waitForTimeout(400); // let the activated worker claim this client
+  await context.setOffline(true);
+  try {
+    // Two DELETEs in ONE session, body read each time. A Response body is
+    // single-use: the sentinel must be built per request, or the first write
+    // consumes it and every later one rejects with a transport error — which
+    // reaches the SPA as the generic action failure instead of the offline
+    // framing below.
+    const outcomes: string[] = [];
+    for (let i = 0; i < 2; i++) {
+      outcomes.push(
+        await page.evaluate(async () => {
+          const res = await fetch("/api/wishlist/items/probe-none", { method: "DELETE" });
+          return `${res.status}:${await res.clone().text()}`;
+        }),
+      );
+    }
+    expect(outcomes[0]).toBe('503:{"error":"offline"}');
+    expect(outcomes[1], "the sentinel must not be consumed by the first write").toBe(
+      '503:{"error":"offline"}',
+    );
+  } finally {
+    await context.setOffline(false);
+  }
+});
+
+test("41: #117 — offline writes are framed as offline, never as a plain failure", async ({ page, context }) => {
+  await login(page, "admin", "admin-password");
+  // Two rows so the feed and reorder mode both have work to do, then one
+  // online load so the SW owns the API calls and has the list cached.
+  for (const title of ["Offline probe A", "Offline probe B"]) {
+    const res = await page.request.post(`${BASE}/api/wishlist/items`, { data: { title } });
+    expect(res.status()).toBe(201);
+  }
+  await page.goto(`${BASE}/`);
+  await expect(page.getByRole("heading", { name: "Offline probe A" })).toBeVisible();
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.waitForTimeout(400);
+
+  const OFFLINE_COPY = "You appear to be offline — this change was not saved.";
+
+  await context.setOffline(true);
+  try {
+    // (b) feed delete — the issue's headline case. The copy names the
+    //     connection and the row is still there: the write failed, loudly.
+    const card = page.locator(".item-card", { hasText: "Offline probe A" }).first();
+    await card.getByRole("button", { name: "More actions" }).click();
+    await page.getByRole("menu", { name: "More actions" }).getByRole("menuitem", { name: "Delete" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
+    await expect(page.locator(".toast")).toContainText(OFFLINE_COPY);
+    await expect(card, "no fake success — the rejected row is still on screen").toBeVisible();
+
+    // (c) settings toggle — the issue's second named case.
+    await page.goto(`${BASE}/settings`);
+    await expect(page.getByRole("heading", { name: "Account & Preferences", level: 2 })).toBeVisible();
+    await page.getByRole("switch", { name: /Show unverified price hints/ }).click();
+    await expect(page.locator(".toast")).toContainText(OFFLINE_COPY);
+
+    // (d) the add form's submit — the form surface says "this item", not
+    //     "this change", and the page does not navigate.
+    await page.goto(`${BASE}/add`);
+    await page.getByLabel("Link").fill("https://example.invalid/offline-probe");
+    await page.locator(".add-submit").click();
+    await expect(page.locator(".add-actions .error")).toHaveText(
+      "You appear to be offline — this item was not saved.",
+    );
+    await expect(page, "no fake success — the form is still the page").toHaveURL(`${BASE}/add`);
+
+    // (e) reorder commit — the rollback is the honest state (the server never
+    //     received the new order) and it still runs; only the copy is offline.
+    await page.goto(`${BASE}/`);
+    await page.getByRole("button", { name: "Reorder", exact: true }).click();
+    await expect(page.locator(".item-card.is-reordering").first()).toBeVisible();
+    const before = await cardIds(page);
+    await liftAndDragUpOne(page, 1);
+    await page.mouse.up();
+    await expect(page.locator(".toast")).toContainText(OFFLINE_COPY);
+    await expect
+      .poll(() => cardIds(page), { message: "the offline commit rolled the order back" })
+      .toEqual(before);
+  } finally {
+    await context.setOffline(false);
+  }
+});
