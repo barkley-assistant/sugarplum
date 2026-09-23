@@ -44,7 +44,20 @@ export function AppPage() {
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [guestItemId, setGuestItemId] = useState<string | null>(null);
   const [reordering, setReordering] = useState(false);
+  /** #134: in-flight commit PUTs. A COUNT, not a boolean: a second drag may
+   *  start while the first PUT is still out (accepted — see the busy-label
+   *  decision), and a boolean would let the first `finally` clear the label
+   *  while the second PUT is pending. */
+  const [savingPuts, setSavingPuts] = useState(0);
   const reorderToggleRef = useRef<HTMLButtonElement | null>(null);
+  /** #134: the order to PUT back if the user taps Undo on the "Order saved"
+   *  snackbar (null = nothing to undo). Read at click time, never captured in
+   *  a closure — a replaced snackbar must offer the LATEST commit's target. */
+  const undoOrderRef = useRef<string[] | null>(null);
+  /** #134: mirror of `reorder.isDragging` for the Undo guard. The toast's
+   *  action closure is baked when the commit runs, and by then isDragging has
+   *  already been flushed false — only a ref sees a drag that started after. */
+  const dragLiveRef = useRef(false);
   /** #62 D8: scroll position handed back from feed-handoff, applied after the
    *  restored rows commit (the list must exist before scrollTo can stick). */
   const handoffScrollRef = useRef<number | null>(null);
@@ -53,6 +66,12 @@ export function AppPage() {
   const pendingPollStartRef = useRef<number | null>(null);
   const toast = useToast();
   const reorder = useDragReorder(ownItems, onReorder);
+
+  // #134: keep the Undo guard's view of a live drag (or drop settle) current.
+  // No dep array: the mirror must follow every render of the hook's state.
+  useEffect(() => {
+    dragLiveRef.current = reorder.isDragging;
+  });
 
   useEffect(() => {
     void boot();
@@ -328,9 +347,15 @@ export function AppPage() {
   }
 
   /** Optimistic reorder commit: PUT the full ordered id array. On failure,
-   *  restore the pre-drag order and surface a danger toast. */
-  async function onReorder(ids: string[]) {
-    const previous = ownItems;
+   *  restore the pre-commit order and surface a danger toast. On success the
+   *  commit is live-saved and (unless `silent`) offers one Undo — the prior
+   *  order, captured before the PUT so it is the order the server just
+   *  replaced. Undo re-enters this same path, silently: an undo is not itself
+   *  undoable (no redo ping-pong). */
+  async function onReorder(ids: string[], opts?: { silent?: boolean }) {
+    const previousItems = ownItems;
+    const previousIds = ownItems.map((item) => item.id);
+    setSavingPuts((n) => n + 1);
     try {
       const res = await fetch("/api/wishlist/order", {
         method: "PUT",
@@ -338,11 +363,40 @@ export function AppPage() {
         body: JSON.stringify({ itemIds: ids }),
       });
       if (!res.ok) throw new Error();
+      if (!opts?.silent) {
+        undoOrderRef.current = previousIds;
+        // Keyed: a second commit replaces this snackbar instead of stacking,
+        // so its Undo always targets the order before the LATEST commit.
+        toast(
+          S.list.orderSaved,
+          "info",
+          { label: S.list.undo, onSelect: undoReorder },
+          "reorder",
+        );
+      }
       if (me) await refreshOwnList(me.id);
     } catch {
-      setOwnItems(previous);
+      // A failed COMMIT rolls back to the last server-known order. A failed
+      // UNDO must not: it never applied an optimistic order of its own, so the
+      // list already shows what the server holds — restoring the stale
+      // `ownItems` here would diverge from the server until the next refresh.
+      if (!opts?.silent) setOwnItems(previousItems);
       toast(S.errors.reorder, "danger");
+    } finally {
+      setSavingPuts((n) => Math.max(0, n - 1));
     }
+  }
+
+  /** #134: restore the order the last commit replaced. Ignored while a drag or
+   *  its drop settle is live: that settle owns the in-flight commit PUT, and
+   *  two racing PUTs would decide the order non-deterministically. A failed
+   *  undo rolls back to the order on screen and toasts honestly. */
+  function undoReorder() {
+    if (dragLiveRef.current) return;
+    const prior = undoOrderRef.current;
+    undoOrderRef.current = null;
+    if (!prior) return;
+    void onReorder(prior, { silent: true });
   }
 
   function exitReorderMode() {
@@ -561,9 +615,14 @@ export function AppPage() {
                   type="button"
                   className="secondary compact-action"
                   aria-pressed={reordering}
+                  aria-busy={reordering && savingPuts > 0 ? true : undefined}
                   onClick={reordering ? exitReorderMode : enterReorderMode}
                 >
-                  {reordering ? S.list.doneReordering : S.list.reorder}
+                  {reordering
+                    ? savingPuts > 0
+                      ? S.list.saving
+                      : S.list.doneReordering
+                    : S.list.reorder}
                 </button>
               ) : undefined
             }
@@ -574,6 +633,9 @@ export function AppPage() {
               active={activeTag}
               onSelect={setActiveTag}
             />
+          )}
+          {!viewing && reordering && ownItems.length > 0 && (
+            <p className="reorder-hint">{S.list.reorderHint}</p>
           )}
           {renderList()}
         </section>
