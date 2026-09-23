@@ -1,0 +1,2236 @@
+{
+  "mode": "before",
+  "root": "/home/agent/projects/barkley-assistant/sugarplum",
+  "shots": [
+    {
+      "name": "feed-360-light",
+      "probe": {
+        "url": "/",
+        "docTitle": "sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.928627 0.928627 0.935686)",
+          "borderTopContrast": 20.01,
+          "background": "rgb(250, 250, 250)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 0,
+        "headerShareCircles": null,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "feed-390-light",
+      "probe": {
+        "url": "/",
+        "docTitle": "sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.928627 0.928627 0.935686)",
+          "borderTopContrast": 20.01,
+          "background": "rgb(250, 250, 250)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 0,
+        "headerShareCircles": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "feed-430-light",
+      "probe": {
+        "url": "/",
+        "docTitle": "sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.928627 0.928627 0.935686)",
+          "borderTopContrast": 20.01,
+          "background": "rgb(250, 250, 250)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 0,
+        "headerShareCircles": null,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "feed-768-light",
+      "probe": {
+        "url": "/",
+        "docTitle": "sugarplum",
+        "bar": {
+          "present": false
+        },
+        "items": [],
+        "iconTopSpread": null,
+        "headerShareCircles": [
+          "2.2",
+          "2.2",
+          "2.2"
+        ],
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "feed-1280-light",
+      "probe": {
+        "url": "/",
+        "docTitle": "sugarplum",
+        "bar": {
+          "present": false
+        },
+        "items": [],
+        "iconTopSpread": null,
+        "headerShareCircles": [
+          "2.2",
+          "2.2",
+          "2.2"
+        ],
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "settings-360-light",
+      "probe": {
+        "url": "/settings",
+        "docTitle": "Settings · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.928627 0.928627 0.935686)",
+          "borderTopContrast": 20.01,
+          "background": "rgb(250, 250, 250)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": true,
+            "ariaCurrent": "page",
+            "afterContent": "\"\"",
+            "color": "rgb(124, 58, 237)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 794.41,
+            "airAboveIcon": 6.41,
+            "airBelowLabel": 12.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 4,
+        "headerShareCircles": null,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "settings-390-light",
+      "probe": {
+        "url": "/settings",
+        "docTitle": "Settings · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.928627 0.928627 0.935686)",
+          "borderTopContrast": 20.01,
+          "background": "rgb(250, 250, 250)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": true,
+            "ariaCurrent": "page",
+            "afterContent": "\"\"",
+            "color": "rgb(124, 58, 237)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 794.41,
+            "airAboveIcon": 6.41,
+            "airBelowLabel": 12.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 4,
+        "headerShareCircles": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "bar-zoom-390-light",
+      "probe": {
+        "url": "/settings",
+        "docTitle": "Settings · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.928627 0.928627 0.935686)",
+          "borderTopContrast": 20.01,
+          "background": "rgb(250, 250, 250)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": true,
+            "ariaCurrent": "page",
+            "afterContent": "\"\"",
+            "color": "rgb(124, 58, 237)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 794.41,
+            "airAboveIcon": 6.41,
+            "airBelowLabel": 12.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 4,
+        "headerShareCircles": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "settings-430-light",
+      "probe": {
+        "url": "/settings",
+        "docTitle": "Settings · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.928627 0.928627 0.935686)",
+          "borderTopContrast": 20.01,
+          "background": "rgb(250, 250, 250)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": true,
+            "ariaCurrent": "page",
+            "afterContent": "\"\"",
+            "color": "rgb(124, 58, 237)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 794.41,
+            "airAboveIcon": 6.41,
+            "airBelowLabel": 12.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 4,
+        "headerShareCircles": null,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "settings-768-light",
+      "probe": {
+        "url": "/settings",
+        "docTitle": "Settings · sugarplum",
+        "bar": {
+          "present": false
+        },
+        "items": [],
+        "iconTopSpread": null,
+        "headerShareCircles": [
+          "2.2",
+          "2.2",
+          "2.2"
+        ],
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "settings-1280-light",
+      "probe": {
+        "url": "/settings",
+        "docTitle": "Settings · sugarplum",
+        "bar": {
+          "present": false
+        },
+        "items": [],
+        "iconTopSpread": null,
+        "headerShareCircles": [
+          "2.2",
+          "2.2",
+          "2.2"
+        ],
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "add-390-light",
+      "probe": {
+        "url": "/add",
+        "docTitle": "Add item · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.928627 0.928627 0.935686)",
+          "borderTopContrast": 20.01,
+          "background": "rgb(250, 250, 250)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": true,
+            "ariaCurrent": "page",
+            "afterContent": "\"\"",
+            "color": "rgb(124, 58, 237)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 794.41,
+            "airAboveIcon": 6.41,
+            "airBelowLabel": 12.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 4,
+        "headerShareCircles": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "add-bar-zoom-390-light",
+      "probe": {
+        "url": "/add",
+        "docTitle": "Add item · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.928627 0.928627 0.935686)",
+          "borderTopContrast": 20.01,
+          "background": "rgb(250, 250, 250)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": true,
+            "ariaCurrent": "page",
+            "afterContent": "\"\"",
+            "color": "rgb(124, 58, 237)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 794.41,
+            "airAboveIcon": 6.41,
+            "airBelowLabel": 12.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 4,
+        "headerShareCircles": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "detail-390-light",
+      "probe": {
+        "url": "/items/67a705a2-3768-48de-a3e9-389f3187e0b6",
+        "docTitle": "Copper Measuring Spoons · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.928627 0.928627 0.935686)",
+          "borderTopContrast": 20.01,
+          "background": "rgb(250, 250, 250)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 0,
+        "headerShareCircles": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "detail-bar-zoom-390-light",
+      "probe": {
+        "url": "/items/67a705a2-3768-48de-a3e9-389f3187e0b6",
+        "docTitle": "Copper Measuring Spoons · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.928627 0.928627 0.935686)",
+          "borderTopContrast": 20.01,
+          "background": "rgb(250, 250, 250)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(82, 82, 91)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 0,
+        "headerShareCircles": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "header-share-768-light",
+      "probe": {
+        "url": "/",
+        "docTitle": "sugarplum",
+        "bar": {
+          "present": false
+        },
+        "items": [],
+        "iconTopSpread": null,
+        "headerShareCircles": [
+          "2.2",
+          "2.2",
+          "2.2"
+        ],
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "header-share-1280-light",
+      "probe": {
+        "url": "/",
+        "docTitle": "sugarplum",
+        "bar": {
+          "present": false
+        },
+        "items": [],
+        "iconTopSpread": null,
+        "headerShareCircles": [
+          "2.2",
+          "2.2",
+          "2.2"
+        ],
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "feed-360-dark",
+      "probe": {
+        "url": "/",
+        "docTitle": "sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.127059 0.109804 0.167843)",
+          "borderTopContrast": 1.11,
+          "background": "rgb(18, 16, 23)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 0,
+        "headerShareCircles": null,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "feed-390-dark",
+      "probe": {
+        "url": "/",
+        "docTitle": "sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.127059 0.109804 0.167843)",
+          "borderTopContrast": 1.11,
+          "background": "rgb(18, 16, 23)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 0,
+        "headerShareCircles": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "feed-430-dark",
+      "probe": {
+        "url": "/",
+        "docTitle": "sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.127059 0.109804 0.167843)",
+          "borderTopContrast": 1.11,
+          "background": "rgb(18, 16, 23)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 0,
+        "headerShareCircles": null,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "feed-768-dark",
+      "probe": {
+        "url": "/",
+        "docTitle": "sugarplum",
+        "bar": {
+          "present": false
+        },
+        "items": [],
+        "iconTopSpread": null,
+        "headerShareCircles": [
+          "2.2",
+          "2.2",
+          "2.2"
+        ],
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "feed-1280-dark",
+      "probe": {
+        "url": "/",
+        "docTitle": "sugarplum",
+        "bar": {
+          "present": false
+        },
+        "items": [],
+        "iconTopSpread": null,
+        "headerShareCircles": [
+          "2.2",
+          "2.2",
+          "2.2"
+        ],
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "settings-360-dark",
+      "probe": {
+        "url": "/settings",
+        "docTitle": "Settings · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.127059 0.109804 0.167843)",
+          "borderTopContrast": 1.11,
+          "background": "rgb(18, 16, 23)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": true,
+            "ariaCurrent": "page",
+            "afterContent": "\"\"",
+            "color": "rgb(167, 139, 250)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 794.41,
+            "airAboveIcon": 6.41,
+            "airBelowLabel": 12.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 4,
+        "headerShareCircles": null,
+        "scrollWidth": 360,
+        "clientWidth": 360
+      }
+    },
+    {
+      "name": "settings-390-dark",
+      "probe": {
+        "url": "/settings",
+        "docTitle": "Settings · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.127059 0.109804 0.167843)",
+          "borderTopContrast": 1.11,
+          "background": "rgb(18, 16, 23)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": true,
+            "ariaCurrent": "page",
+            "afterContent": "\"\"",
+            "color": "rgb(167, 139, 250)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 794.41,
+            "airAboveIcon": 6.41,
+            "airBelowLabel": 12.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 4,
+        "headerShareCircles": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "bar-zoom-390-dark",
+      "probe": {
+        "url": "/settings",
+        "docTitle": "Settings · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.127059 0.109804 0.167843)",
+          "borderTopContrast": 1.11,
+          "background": "rgb(18, 16, 23)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": true,
+            "ariaCurrent": "page",
+            "afterContent": "\"\"",
+            "color": "rgb(167, 139, 250)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 794.41,
+            "airAboveIcon": 6.41,
+            "airBelowLabel": 12.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 4,
+        "headerShareCircles": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "settings-430-dark",
+      "probe": {
+        "url": "/settings",
+        "docTitle": "Settings · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.127059 0.109804 0.167843)",
+          "borderTopContrast": 1.11,
+          "background": "rgb(18, 16, 23)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": true,
+            "ariaCurrent": "page",
+            "afterContent": "\"\"",
+            "color": "rgb(167, 139, 250)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 794.41,
+            "airAboveIcon": 6.41,
+            "airBelowLabel": 12.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 4,
+        "headerShareCircles": null,
+        "scrollWidth": 430,
+        "clientWidth": 430
+      }
+    },
+    {
+      "name": "settings-768-dark",
+      "probe": {
+        "url": "/settings",
+        "docTitle": "Settings · sugarplum",
+        "bar": {
+          "present": false
+        },
+        "items": [],
+        "iconTopSpread": null,
+        "headerShareCircles": [
+          "2.2",
+          "2.2",
+          "2.2"
+        ],
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "settings-1280-dark",
+      "probe": {
+        "url": "/settings",
+        "docTitle": "Settings · sugarplum",
+        "bar": {
+          "present": false
+        },
+        "items": [],
+        "iconTopSpread": null,
+        "headerShareCircles": [
+          "2.2",
+          "2.2",
+          "2.2"
+        ],
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    },
+    {
+      "name": "add-390-dark",
+      "probe": {
+        "url": "/add",
+        "docTitle": "Add item · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.127059 0.109804 0.167843)",
+          "borderTopContrast": 1.11,
+          "background": "rgb(18, 16, 23)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": true,
+            "ariaCurrent": "page",
+            "afterContent": "\"\"",
+            "color": "rgb(167, 139, 250)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 794.41,
+            "airAboveIcon": 6.41,
+            "airBelowLabel": 12.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 4,
+        "headerShareCircles": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "add-bar-zoom-390-dark",
+      "probe": {
+        "url": "/add",
+        "docTitle": "Add item · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.127059 0.109804 0.167843)",
+          "borderTopContrast": 1.11,
+          "background": "rgb(18, 16, 23)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": true,
+            "ariaCurrent": "page",
+            "afterContent": "\"\"",
+            "color": "rgb(167, 139, 250)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 794.41,
+            "airAboveIcon": 6.41,
+            "airBelowLabel": 12.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 4,
+        "headerShareCircles": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "detail-390-dark",
+      "probe": {
+        "url": "/items/67a705a2-3768-48de-a3e9-389f3187e0b6",
+        "docTitle": "Copper Measuring Spoons · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.127059 0.109804 0.167843)",
+          "borderTopContrast": 1.11,
+          "background": "rgb(18, 16, 23)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 0,
+        "headerShareCircles": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "detail-bar-zoom-390-dark",
+      "probe": {
+        "url": "/items/67a705a2-3768-48de-a3e9-389f3187e0b6",
+        "docTitle": "Copper Measuring Spoons · sugarplum",
+        "bar": {
+          "present": true,
+          "height": 57,
+          "y": 787,
+          "borderTopWidth": "1px",
+          "borderTopColor": "color(srgb 0.127059 0.109804 0.167843)",
+          "borderTopContrast": 1.11,
+          "background": "rgb(18, 16, 23)",
+          "padding": "0px 8px",
+          "minHeight": "56px"
+        },
+        "items": [
+          {
+            "label": "Add",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8"
+            ],
+            "circles": []
+          },
+          {
+            "label": "Share",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8",
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.2",
+              "2.2",
+              "2.2"
+            ]
+          },
+          {
+            "label": "Settings",
+            "isCurrent": false,
+            "ariaCurrent": null,
+            "afterContent": "none",
+            "color": "rgb(179, 174, 192)",
+            "labelWeight": "400",
+            "height": 56,
+            "paddingTop": "6px",
+            "paddingBottom": "4px",
+            "gap": "4px",
+            "iconTop": 798.41,
+            "airAboveIcon": 10.41,
+            "airBelowLabel": 8.41,
+            "strokes": [
+              "1.8",
+              "1.8"
+            ],
+            "circles": [
+              "2.6"
+            ]
+          }
+        ],
+        "iconTopSpread": 0,
+        "headerShareCircles": null,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      }
+    },
+    {
+      "name": "header-share-768-dark",
+      "probe": {
+        "url": "/",
+        "docTitle": "sugarplum",
+        "bar": {
+          "present": false
+        },
+        "items": [],
+        "iconTopSpread": null,
+        "headerShareCircles": [
+          "2.2",
+          "2.2",
+          "2.2"
+        ],
+        "scrollWidth": 768,
+        "clientWidth": 768
+      }
+    },
+    {
+      "name": "header-share-1280-dark",
+      "probe": {
+        "url": "/",
+        "docTitle": "sugarplum",
+        "bar": {
+          "present": false
+        },
+        "items": [],
+        "iconTopSpread": null,
+        "headerShareCircles": [
+          "2.2",
+          "2.2",
+          "2.2"
+        ],
+        "scrollWidth": 1280,
+        "clientWidth": 1280
+      }
+    }
+  ]
+}
