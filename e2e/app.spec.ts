@@ -6524,3 +6524,317 @@ test("44: #158 — the selected wishlist survives a reload and Back/Forward", as
     await otherContext.close();
   }
 });
+
+/**
+ * #158 correction harness: stall the BODY of a matching read.
+ *
+ * The race the correction closes only exists in the gap between `fetch`
+ * resolving (response headers in) and `res.json()` resolving (end of body), so
+ * the test has to hold the app inside that gap. `page.route` cannot express it:
+ * `route.fulfill` hands headers and body over as one chunk, so delaying it
+ * delays the headers too — which the (already correct) header-time check
+ * catches, making the test pass on the bug. This harness therefore wraps
+ * `window.fetch` and re-streams the REAL response behind a timer: status and
+ * headers reach the app immediately and body chunks start flowing `ms` later,
+ * exactly like a large body over a slow connection.
+ *
+ * The state rides in sessionStorage (same-origin, survives the test's own
+ * navigations) so the test can arm a rule and watch both edges from outside:
+ * HELD is written when the headers are handed over with the body still
+ * pending, RELEASED when the body has actually been delivered.
+ */
+const BODY_RULE = "sugarplum-e2e/body-rule";
+const BODY_HELD = "sugarplum-e2e/body-held";
+const BODY_RELEASED = "sugarplum-e2e/body-released";
+
+async function installBodyDelay(context: BrowserContext): Promise<void> {
+  await context.addInitScript(
+    ({ ruleKey, heldKey, releasedKey }) => {
+      // Widened to the DOM signature: this project also loads Bun's global
+      // types, whose `fetch` carries `preconnect`, which a plain wrapper
+      // cannot satisfy. At runtime this is the page's own `window.fetch`.
+      const win = window as unknown as {
+        fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+      };
+      const realFetch = win.fetch.bind(window);
+      win.fetch = async (input, init) => {
+        const res = await realFetch(input, init);
+        const raw = sessionStorage.getItem(ruleKey);
+        if (!raw) return res;
+        const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+        const rule = JSON.parse(raw) as { match: string; ms: number };
+        if (!url.includes(rule.match) || !res.ok || !res.body) return res;
+        sessionStorage.setItem(heldKey, url);
+        const source = res.body.getReader();
+        const body = new ReadableStream<Uint8Array>({
+          start(controller) {
+            setTimeout(() => {
+              void (async () => {
+                for (;;) {
+                  const { done, value } = await source.read();
+                  if (done) break;
+                  controller.enqueue(value);
+                }
+                controller.close();
+                sessionStorage.setItem(releasedKey, url);
+              })();
+            }, rule.ms);
+          },
+        });
+        // Content type only: forwarding the original header set would
+        // re-declare the transfer encoding the browser has already decoded.
+        const headers = new Headers();
+        const type = res.headers.get("content-type");
+        if (type) headers.set("content-type", type);
+        return new Response(body, { status: res.status, statusText: res.statusText, headers });
+      };
+    },
+    { ruleKey: BODY_RULE, heldKey: BODY_HELD, releasedKey: BODY_RELEASED },
+  );
+}
+
+/** Arm the delay for URLs containing `match`; clears both edge markers. */
+async function armBodyDelay(page: Page, match: string, ms: number): Promise<void> {
+  await page.evaluate(
+    ({ ruleKey, heldKey, releasedKey, rule }) => {
+      sessionStorage.setItem(ruleKey, JSON.stringify(rule));
+      sessionStorage.removeItem(heldKey);
+      sessionStorage.removeItem(releasedKey);
+    },
+    { ruleKey: BODY_RULE, heldKey: BODY_HELD, releasedKey: BODY_RELEASED, rule: { match, ms } },
+  );
+}
+
+/** Wait until the harness recorded `url` at the given edge. */
+async function waitForBodyEdge(page: Page, key: string, url: string): Promise<void> {
+  await page.waitForFunction(
+    ({ storageKey, needle }) => (sessionStorage.getItem(storageKey) ?? "").includes(needle),
+    { storageKey: key, needle: url },
+  );
+}
+
+/** Create a member; idempotent so a re-run against the shared DB is safe. */
+async function ensureMember(
+  page: Page,
+  member: { username: string; password: string; displayName: string },
+): Promise<void> {
+  const created = await page.request.post(`${BASE}/api/users`, { data: member });
+  expect([201, 409], `${member.username} exists (created here or by an earlier run)`).toContain(
+    created.status(),
+  );
+}
+
+/** The id behind a display name, read from the member summary. */
+async function memberId(page: Page, displayName: string): Promise<string> {
+  const res = await page.request.get(`${BASE}/api/wishlist/summary`);
+  expect(res.status(), "the member summary answers").toBe(200);
+  const rows = (await res.json()) as { userId: string; displayName: string }[];
+  const found = rows.find((row) => row.displayName === displayName);
+  expect(found, `${displayName} is a switchable list`).toBeDefined();
+  return found!.userId;
+}
+
+/** Open the feed's list switcher (a bottom sheet at phone widths) and pick a row. */
+async function switchTo(page: Page, row: RegExp): Promise<void> {
+  await page.getByRole("button", { name: /wishlist/ }).click();
+  const sheet = page.getByRole("dialog", { name: "Switch wishlist" });
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("button", { name: row }).click();
+}
+
+test("45: #158 — a route change during an in-flight read cannot paint the other list", async ({
+  page,
+  browser,
+}) => {
+  const A = { username: "stale-read-a", password: "stale-read-a-pass", displayName: "Stale Read A" };
+  const B = { username: "stale-read-b", password: "stale-read-b-pass", displayName: "Stale Read B" };
+  await ensureMember(page, A);
+  await ensureMember(page, B);
+
+  // One session per member seeds a recognisable row into that member's own
+  // list (an item POST lands in the caller's list), so the two lists are told
+  // apart by their content and not only by their heading.
+  const seeds = await browser.newContext();
+  const seeder = await seeds.newPage();
+  const seeded: Record<string, string> = {};
+  let adminRowId: string | undefined;
+
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  await installBodyDelay(context);
+  const probe = await context.newPage();
+
+  try {
+    for (const member of [A, B]) {
+      await login(seeder, member.username, member.password);
+      const res = await seeder.request.post(`${BASE}/api/wishlist/items`, {
+        data: { title: `${member.displayName} probe` },
+      });
+      expect(res.status()).toBe(201);
+      seeded[member.username] = ((await res.json()) as { id: string }).id;
+    }
+    // …plus a row in the ADMIN's own list: the optional reviewer note below
+    // needs one an own-list render can be recognised by.
+    const adminRow = await page.request.post(`${BASE}/api/wishlist/items`, {
+      data: { title: "Admin own-list probe" },
+    });
+    expect(adminRow.status()).toBe(201);
+    adminRowId = ((await adminRow.json()) as { id: string }).id;
+
+    await login(probe, "admin", "admin-password");
+    await expect(probe.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+    const aId = await memberId(probe, A.displayName);
+    const bId = await memberId(probe, B.displayName);
+    const aList = `/api/users/${aId}/wishlist`;
+
+    // A's read is the ONLY delayed one: it hands back its headers and then
+    // stops, which is the window the race lives in.
+    await armBodyDelay(probe, aList, 1500);
+    await switchTo(probe, /Stale Read A/);
+    await expect(probe).toHaveURL(new RegExp(`${BASE}/\\?list=${aId}$`));
+    await waitForBodyEdge(probe, BODY_HELD, aList); // headers in, body pending
+
+    // Switch to B while A's body is still in flight. B's read is not delayed,
+    // so B's rows land first and A's stale body lands after them.
+    await switchTo(probe, /Stale Read B/);
+    await expect(probe).toHaveURL(new RegExp(`${BASE}/\\?list=${bId}$`));
+    await expect(probe.getByRole("heading", { name: "Stale Read B's wishlist" })).toBeVisible();
+    await expect(probe.locator(".item-card", { hasText: "Stale Read B probe" })).toHaveCount(1);
+
+    // Park on the delayed body itself rather than a fixed sleep, then let any
+    // stale commit paint before asserting.
+    await waitForBodyEdge(probe, BODY_RELEASED, aList);
+    await probe.waitForTimeout(250);
+
+    await expect(
+      probe.getByRole("heading", { name: "Stale Read B's wishlist" }),
+      "the heading still names the route's list",
+    ).toBeVisible();
+    await expect(
+      probe.locator(".item-card", { hasText: "Stale Read A probe" }),
+      "the stale list's rows never render under the current heading",
+    ).toHaveCount(0);
+    await expect(probe.locator(".item-card", { hasText: "Stale Read B probe" })).toHaveCount(1);
+    await expect(probe.locator(".skeleton-list"), "the feed resolved").toHaveCount(0);
+
+    // Optional reviewer note: `?list=` naming the signed-in user is the OWN
+    // list, not a guest view of yourself with claim affordances. The URL is
+    // left as typed — the same policy the malformed selector gets (AC6).
+    await probe.goto(`${BASE}/?list=${await memberId(probe, "Admin")}`);
+    const ownRow = probe.locator(".item-card", { hasText: "Admin own-list probe" });
+    await expect(probe.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+    await expect(ownRow).toHaveCount(1);
+    await expect(ownRow.locator(".claim-btn"), "the own list is never guest-rendered").toHaveCount(0);
+    await expect(ownRow.getByRole("button", { name: "More actions" })).toHaveCount(1);
+  } finally {
+    // Each seeded row goes with the session that owns it (DELETE is
+    // owner-only); the admin's own row with the admin's.
+    for (const member of [A, B]) {
+      const id = seeded[member.username];
+      if (!id) continue;
+      await login(seeder, member.username, member.password);
+      const removed = await seeder.request.delete(`${BASE}/api/wishlist/items/${id}`);
+      expect([200, 204]).toContain(removed.status());
+    }
+    if (adminRowId) {
+      const removedAdmin = await page.request.delete(`${BASE}/api/wishlist/items/${adminRowId}`);
+      expect([200, 204]).toContain(removedAdmin.status());
+    }
+    await context.close();
+    await seeds.close();
+  }
+});
+
+test("46: #158 — a stale claim re-read cannot strand the feed on a skeleton", async ({
+  page,
+  browser,
+}) => {
+  // Three members: the reader (admin), the list claimed on, and the list the
+  // route moves to while the claim's re-read is still in flight.
+  const B = {
+    username: "claim-race-b",
+    password: "claim-race-b-pass",
+    displayName: "Claim Race B",
+  };
+  const C = {
+    username: "claim-race-c",
+    password: "claim-race-c-pass",
+    displayName: "Claim Race C",
+  };
+  await ensureMember(page, B);
+  await ensureMember(page, C);
+
+  const seeds = await browser.newContext();
+  const seeder = await seeds.newPage();
+  const seeded: Record<string, string> = {};
+
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  await installBodyDelay(context);
+  const probe = await context.newPage();
+
+  try {
+    // B's row must be UNCLAIMED — it is the claim affordance the flow clicks.
+    for (const member of [B, C]) {
+      await login(seeder, member.username, member.password);
+      const res = await seeder.request.post(`${BASE}/api/wishlist/items`, {
+        data: { title: `${member.displayName} probe` },
+      });
+      expect(res.status()).toBe(201);
+      seeded[member.username] = ((await res.json()) as { id: string }).id;
+    }
+
+    await login(probe, "admin", "admin-password");
+    const bId = await memberId(probe, B.displayName);
+    const cId = await memberId(probe, C.displayName);
+    const bList = `/api/users/${bId}/wishlist`;
+
+    // Read B's list un-delayed and wait for its row: the Claim control has to
+    // be on screen before the flow under test can start.
+    await switchTo(probe, /Claim Race B/);
+    await expect(probe).toHaveURL(new RegExp(`${BASE}/\\?list=${bId}$`));
+    const bCard = probe.locator(".item-card", {
+      has: probe.getByRole("heading", { name: "Claim Race B probe" }),
+    });
+    await expect(bCard).toHaveCount(1);
+
+    // Arm the delay for B's list, then claim: `claim()` re-reads the list it
+    // was called for, so that read is the pair-writing continuation that must
+    // not commit after the route moves on.
+    await armBodyDelay(probe, bList, 1500);
+    await bCard.getByRole("button", { name: "Claim", exact: true }).click();
+    await waitForBodyEdge(probe, BODY_HELD, bList); // claim re-read: body pending
+
+    // Move to C's list while B's re-read is still in flight.
+    await switchTo(probe, /Claim Race C/);
+    await expect(probe).toHaveURL(new RegExp(`${BASE}/\\?list=${cId}$`));
+    await expect(probe.locator(".item-card", { hasText: "Claim Race C probe" })).toHaveCount(1);
+
+    await waitForBodyEdge(probe, BODY_RELEASED, bList);
+    await probe.waitForTimeout(250);
+
+    // The stale pair is dropped, not committed: the feed keeps C's rows and is
+    // NOT parked on the placeholder. A skeleton here would be permanent — the
+    // mismatch it renders for has no fetch left behind it to re-tag the rows.
+    await expect(probe.getByRole("heading", { name: "Claim Race C's wishlist" })).toBeVisible();
+    await expect(
+      probe.locator(".skeleton-list"),
+      "the stale re-read did not strand the feed on the placeholder",
+    ).toHaveCount(0);
+    await expect(probe.locator(".item-card", { hasText: "Claim Race C probe" })).toHaveCount(1);
+    await expect(probe.locator(".item-card", { hasText: "Claim Race B probe" })).toHaveCount(0);
+
+    // …and it stays that way, rather than recovering on a later frame.
+    await probe.waitForTimeout(500);
+    await expect(probe.locator(".skeleton-list")).toHaveCount(0);
+    await expect(probe.locator(".item-card", { hasText: "Claim Race C probe" })).toHaveCount(1);
+  } finally {
+    for (const member of [B, C]) {
+      const id = seeded[member.username];
+      if (!id) continue;
+      await login(seeder, member.username, member.password);
+      const removed = await seeder.request.delete(`${BASE}/api/wishlist/items/${id}`);
+      expect([200, 204]).toContain(removed.status());
+    }
+    await context.close();
+    await seeds.close();
+  }
+});

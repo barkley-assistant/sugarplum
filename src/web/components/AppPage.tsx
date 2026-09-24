@@ -43,7 +43,20 @@ export function AppPage() {
   // mirroring it — a mirror is the bug this fixes. `list` is null for the
   // signed-in user's own list, and non-null only for a well-formed UUID.
   const route = useRoute();
-  const viewing: string | null = route.name === "home" ? route.list : null;
+  /** #158: `?list=` naming the SIGNED-IN user is the own list, not a guest
+   *  view of yourself — the public projection would render your own rows with
+   *  claim affordances. The id is normalized away here; the URL is left as
+   *  typed, the same policy the malformed selector gets (see AC6). */
+  const viewing: string | null =
+    route.name === "home" && route.list !== me?.id ? route.list : null;
+  /** #158: `viewing` as the async continuations below must read it. They
+   *  commit after an await, and a closure would freeze the route they started
+   *  on: a write landing after the route moved on pairs its rows with its own
+   *  tag while the route names another list, and the render guard then blocks
+   *  the feed with no fetch left behind it. Assigned during render rather
+   *  than in an effect so it is never a commit behind the route. */
+  const viewingRef = useRef(viewing);
+  viewingRef.current = viewing;
   /** #158: the list `otherItems` belongs to. The feed may not render those
    *  rows while this disagrees with `viewing` — that is the
    *  wrong-rows-under-the-wrong-heading failure the issue forbids. */
@@ -104,7 +117,16 @@ export function AppPage() {
         const res = await fetch(`/api/users/${viewing}/wishlist`);
         if (cancelled) return;
         if (!res.ok) throw new Error();
-        setOtherItems((await res.json()) as PublicItem[]);
+        const rows = (await res.json()) as PublicItem[];
+        // #158: the LAST suspension point, so it carries the last check.
+        // `fetch` resolves at the response headers and `json()` at the end of
+        // the body, and a large body really does stream (#158's stale-while-
+        // revalidate SW serves full reads). A route change during the body
+        // would otherwise commit these rows while the `finally` below (also
+        // cancelled-guarded) skips the tag — rows and tag straddling a route
+        // change, which is exactly the wrong-rows-under-a-heading failure.
+        if (cancelled) return;
+        setOtherItems(rows);
       } catch {
         if (cancelled) return;
         // A 404 for an unknown id, or any other failure: this list is NOT an
@@ -260,7 +282,7 @@ export function AppPage() {
       // #158: the snapshot may only restore the list the ROUTE names. A
       // snapshot taken on another list belongs to a different history entry;
       // restoring its rows here would put list B under list A's heading.
-      const snapMatchesRoute = snap !== null && (snap.viewingUserId ?? null) === viewing;
+      const snapMatchesRoute = snap !== null && (snap.viewingUserId ?? null) === viewingRef.current;
       if (snap && snap.meId === meBody.id && snapMatchesRoute) {
         setOwnItems(snap.ownItems);
         setSummary(snap.summary);
@@ -332,7 +354,15 @@ export function AppPage() {
     try {
       const res = await fetch(`/api/users/${userId}/wishlist`);
       if (res.ok) {
-        setOtherItems((await res.json()) as PublicItem[]);
+        const rows = (await res.json()) as PublicItem[];
+        // #158: commit the pair only while the route still names this list.
+        // This re-read is triggered by a claim/unclaim, so it can outlive a
+        // switch to another list: committing then pairs rows+tag for THIS
+        // list while the route names another, and the render guard — which
+        // exists to stop exactly that — would block the feed with no fetch
+        // behind it, hanging on the skeleton until the next navigation.
+        if (viewingRef.current !== userId) return;
+        setOtherItems(rows);
         setShownOtherUserId(userId);
       }
     } finally {
