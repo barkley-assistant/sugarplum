@@ -5,10 +5,11 @@
  * Precedence is locked to the research report (§RECOMMENDATION steps 2-4):
  *   title    = og:title → twitter:title → JSON-LD name → <title>
  *              → generic promo/site-suffix strip (wave 14)
- *   price    = og:price:amount → product:price:amount → JSON-LD offers.price
- *              → DOM fallback tier (see below)
- *   currency = og:price:currency → product:price:currency → JSON-LD offers.priceCurrency
- *              → DOM fallback tier
+ *   price    = og:price:amount → product:price:amount → JSON-LD offers
+ *              (single offer, AggregateOffer.lowPrice, or lowest offer of an
+ *              array — #159) → DOM fallback tier (see below)
+ *   currency = og:price:currency → product:price:currency → JSON-LD offers
+ *              priceCurrency → DOM fallback tier
  *   image    = og:image → JSON-LD image → twitter:image → DOM fallback tier → favicon
  *   siteName = og:site_name → og:site (nonstandard, Steam ships it) → hostname sans www.
  *
@@ -186,6 +187,55 @@ function cleanCurrency(value: unknown): string | null {
   return text ? text : null;
 }
 
+/** The price/currency of ONE chosen offer from a Product's `offers` value.
+ *
+ *  Schema.org allows `offers` to be a single object OR an array, and an offer
+ *  may be an `Offer` (`price`) or an `AggregateOffer` (`lowPrice`, with a
+ *  `highPrice` that is NOT the price a shopper pays to start). Reading
+ *  `offers.price` on an array yields undefined and silently drops the whole
+ *  structured tier (VideoGamePerfection, #159). Both values are returned as
+ *  `unknown` — `parsePriceToCents` / `cleanCurrency` reject anything unusable,
+ *  so this must NOT invent a value: a candidate that fails validation is
+ *  skipped, and if none is valid both come back undefined and the DOM tiers
+ *  still run.
+ *
+ *  Selection: the LOWEST valid price across the candidates. For an
+ *  AggregateOffer that is `lowPrice` (the starting offer); for an array of
+ *  concrete Offers it is the cheapest, which is the "starting price" the item
+ *  page shows. Never throws; the winner supplies BOTH its price and its own
+ *  currency, so a partial answer is impossible. `highPrice` is never used. */
+function selectStructuredOffer(
+  offers: unknown,
+): { price: unknown; currency: unknown } {
+  const candidates = Array.isArray(offers) ? offers : [offers];
+  let bestPrice: unknown;
+  let bestCurrency: unknown;
+  let bestCents = Number.POSITIVE_INFINITY;
+
+  for (const candidate of candidates) {
+    if (candidate === null || typeof candidate !== "object") continue;
+    const offer = candidate as Record<string, unknown>;
+    // Present means a real value, not null/undefined and not an empty or
+    // whitespace-only string. `lowPrice: ""` is "absent" (fall through to
+    // price); `lowPrice: "0.00"` and `lowPrice: 0` are a genuine free price.
+    const lowPrice = offer["lowPrice"];
+    const hasLowPrice =
+      lowPrice !== undefined &&
+      lowPrice !== null &&
+      String(lowPrice).trim() !== "";
+    const raw = hasLowPrice ? lowPrice : offer["price"];
+    const cents = parsePriceToCents(raw);
+    if (cents === null) continue;
+    if (cents < bestCents) {
+      bestCents = cents;
+      bestPrice = raw;
+      bestCurrency = offer["priceCurrency"];
+    }
+  }
+
+  return { price: bestPrice, currency: bestCurrency };
+}
+
 /** Depth-first walk over one parsed JSON-LD block (objects + arrays, so
  *  @graph nesting is covered) returning the FIRST Product/ProductGroup node.
  *  For ProductGroup the effective product data comes from hasVariant[0]. */
@@ -209,12 +259,12 @@ function findProductNode(node: unknown): FoundProduct | null {
         ? (obj["hasVariant"][0] as Record<string, unknown>)
         : null;
     const offers =
-      isGroup && variant ? variant["offers"] : (obj["offers"] as Record<string, unknown> | undefined);
-    const offersObj = offers && typeof offers === "object" ? (offers as Record<string, unknown>) : null;
+      isGroup && variant ? variant["offers"] : obj["offers"];
+    const selected = selectStructuredOffer(offers);
     return {
       name: obj["name"],
-      offersPrice: offersObj?.["price"],
-      offersCurrency: offersObj?.["priceCurrency"],
+      offersPrice: selected.price,
+      offersCurrency: selected.currency,
       image: isGroup && variant ? variant["image"] : obj["image"],
     };
   }
