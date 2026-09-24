@@ -6725,6 +6725,50 @@ test("45: #158 — a route change during an in-flight read cannot paint the othe
     await expect(ownRow).toHaveCount(1);
     await expect(ownRow.locator(".claim-btn"), "the own list is never guest-rendered").toHaveCount(0);
     await expect(ownRow.getByRole("button", { name: "More actions" })).toHaveCount(1);
+
+    // #158 round-2: the SAME in-flight-read race, but cancelled back to the
+    // OWN list. Switching to A's list raises the indicator; switching back
+    // before A's body resolves takes the resolution effect's own-list branch,
+    // which fetches nothing of its own — so that branch is the only party
+    // left that can retire the indicator, because the cancelled run's
+    // `finally` is cancelled-guarded and deliberately skips the clear.
+    // Unretired, `refreshing` stays true and the shell paints
+    // `.progress-hairline` for the rest of the session: loading UI with no
+    // fetch behind it, the same failure class as the permanent skeleton.
+    await expect(
+      probe.locator(".status--fetching"),
+      "precondition: no own row is mid-enrichment, whose poll would clear the indicator for the wrong reason",
+    ).toHaveCount(0);
+
+    await armBodyDelay(probe, aList, 1500);
+    await switchTo(probe, /Stale Read A/);
+    await expect(probe).toHaveURL(new RegExp(`${BASE}/\\?list=${aId}$`));
+    await waitForBodyEdge(probe, BODY_HELD, aList); // A's body pending
+    await expect(
+      probe.locator(".progress-hairline"),
+      "the in-flight read raised the indicator",
+    ).toHaveCount(1);
+
+    // Back to the own list while A's body is still in flight.
+    await switchTo(probe, /Admin/);
+    await expect(probe).toHaveURL(new RegExp(`${BASE}/$`));
+    await expect(probe.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+    await expect(ownRow).toHaveCount(1);
+    await expect(
+      probe.locator(".progress-hairline"),
+      "the own-list resolution retired the cancelled read's indicator",
+    ).toHaveCount(0);
+
+    // Let the cancelled read finish: its `finally` is the clear that is
+    // skipped, and nothing else on an idle own list fetches.
+    await waitForBodyEdge(probe, BODY_RELEASED, aList);
+    await probe.waitForTimeout(250);
+    await expect(probe.locator(".progress-hairline")).toHaveCount(0);
+
+    // …and it stays retired, rather than going stale on a later frame.
+    await probe.waitForTimeout(500);
+    await expect(probe.locator(".progress-hairline")).toHaveCount(0);
+    await expect(probe.locator(".skeleton-list")).toHaveCount(0);
   } finally {
     // Each seeded row goes with the session that owns it (DELETE is
     // owner-only); the admin's own row with the admin's.

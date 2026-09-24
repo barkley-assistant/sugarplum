@@ -110,6 +110,14 @@ export function AppPage() {
       setError(null); // every resolution of the route starts clean
       if (viewing === null) {
         setShownOtherUserId(null);
+        // #158 round-2: the own list resolves synchronously right here and
+        // fetches nothing, so this early return is the ONLY party left to
+        // retire the indicator. A switch back to the own list mid-read
+        // cancels the other list's run, whose `finally` is cancelled-guarded
+        // and deliberately skips the clear — leaving the shell painting the
+        // progress hairline (loading UI with no fetch behind it) until some
+        // unrelated user-driven fetch happens to clear it.
+        setRefreshing(false);
         return;
       }
       setRefreshing(true);
