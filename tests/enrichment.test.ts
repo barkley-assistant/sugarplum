@@ -100,23 +100,31 @@ function serveSwitchablePage(): {
 
 const AMAZON_HIRES = "https://m.media-amazon.com/images/I/91Mzr09ls6L._AC_SL1500_.jpg";
 
-/** The amazon-dp-nooffer fixture over a LOCAL server: its media-amazon image
- *  URL is rewritten to this server, so extraction+image stay on localhost and
- *  still exercise the real generic DOM tier (title + image, no main-ASIN
- *  price — exactly what a no-featured-offer Amazon page yields). */
-function serveAmazonNoOfferPage(): ReturnType<typeof serve> {
-  const fixture = Bun.file(join(FIXTURES, "amazon-dp-nooffer.html")).text();
+/** An Amazon-shaped fixture over a LOCAL server: its media-amazon image URL is
+ *  rewritten to this server, so extraction+image stay on localhost and still
+ *  exercise the real generic DOM tier. */
+function serveAmazonPage(
+  fixture: string,
+  hires: string,
+  imgPath: string,
+): ReturnType<typeof serve> {
+  const html = Bun.file(join(FIXTURES, fixture)).text();
   return serve({
     port: 0,
     fetch: async (req) => {
       const url = new URL(req.url);
-      if (url.pathname === "/img/lego.jpg") {
+      if (url.pathname === imgPath) {
         return new Response(JPEG_BYTES, { headers: { "Content-Type": "image/jpeg" } });
       }
-      const html = (await fixture).replace(AMAZON_HIRES, `${url.origin}/img/lego.jpg`);
-      return new Response(html);
+      return new Response((await html).replace(hires, `${url.origin}${imgPath}`));
     },
   });
+}
+
+/** The amazon-dp-nooffer fixture locally: title + image, no main-ASIN price —
+ *  exactly what a no-featured-offer Amazon page yields. */
+function serveAmazonNoOfferPage(): ReturnType<typeof serve> {
+  return serveAmazonPage("amazon-dp-nooffer.html", AMAZON_HIRES, "/img/lego.jpg");
 }
 
 let app: TestAppHandle;
@@ -213,6 +221,97 @@ describe("async enrichment", () => {
       shop.stop(true);
     }
   });
+
+  test("#160: mixed New & Used page → only the NEW price reaches price_cents and history", async () => {
+    await login(admin, "admin", "admin-password");
+    const userId = await myId(admin);
+    const page = serveAmazonPage(
+      "amazon-dp-mixed-accordion.html",
+      "https://m.media-amazon.com/images/I/61K1QhKmzRL._AC_SL1500_.jpg",
+      "/img/soundcore.jpg",
+    );
+    try {
+      const res = await admin.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${page.port}/dp/B0DWDDNK1Q`,
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+      expect(await waitForFetchState(admin, userId, item.id, "complete")).toBe(true);
+
+      const list = await admin.request("GET", `/api/users/${userId}/wishlist`);
+      const items = (await list.json()) as OwnedItem[];
+      const enriched = items.find((i) => i.id === item.id) as OwnedItem;
+      expect(enriched.priceCents).toBe("34.97"); // the NEW block, not the £26.25 floor
+      expect(enriched.currency).toBe("GBP");
+      expect(enriched.priceSource).toBe("scrape");
+
+      const history = app.app.db
+        .query("SELECT price_cents, currency, source FROM price_history WHERE item_id = ?")
+        .all(item.id) as { price_cents: number; currency: string; source: string }[];
+      expect(
+        history.some((h) => h.price_cents === 3497 && h.currency === "GBP" && h.source === "scrape"),
+      ).toBe(true);
+      // The all-conditions floor must never become a price observation.
+      expect(history.some((h) => h.price_cents === 2625)).toBe(false);
+    } finally {
+      page.stop(true);
+    }
+  }, 20_000);
+
+  test("#160: used-only page → no direct price, no history row, item still complete", async () => {
+    await login(admin, "admin", "admin-password");
+    const userId = await myId(admin);
+    const page = serveAmazonPage(
+      "amazon-dp-used-only.html",
+      "https://m.media-amazon.com/images/I/61Rk4Wk1PCL._AC_SL1500_.jpg",
+      "/img/delonghi.jpg",
+    );
+    try {
+      const res = await admin.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${page.port}/dp/B0C1USEDON`,
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+      expect(await waitForFetchState(admin, userId, item.id, "complete")).toBe(true);
+      // fetch_state flips before the image download finishes — poll for it.
+      expect(
+        await waitFor(async () => {
+          const r = app.app.db
+            .query("SELECT image_path FROM wishlist_items WHERE id = ?")
+            .get(item.id) as { image_path: string | null };
+          return r.image_path !== null;
+        }),
+      ).toBe(true);
+
+      const row = app.app.db
+        .query(
+          `SELECT fetch_state, last_fetch_error, title, price_cents, price_source, image_path
+           FROM wishlist_items WHERE id = ?`,
+        )
+        .get(item.id) as {
+        fetch_state: string;
+        last_fetch_error: string | null;
+        title: string;
+        price_cents: number | null;
+        price_source: string | null;
+        image_path: string | null;
+      };
+      // Usable, not a dead end: title + image land, the direct price does not.
+      expect(row.fetch_state).toBe("complete");
+      expect(row.last_fetch_error).toBeNull();
+      expect(row.title).toContain("De'Longhi Dedica");
+      expect(row.image_path).toBe(`${item.id}.jpg`);
+      expect(row.price_cents).toBeNull();
+      expect(row.price_source).toBeNull();
+
+      const history = app.app.db
+        .query("SELECT price_cents, source FROM price_history WHERE item_id = ?")
+        .all(item.id) as { price_cents: number; source: string }[];
+      expect(history).toHaveLength(0);
+    } finally {
+      page.stop(true);
+    }
+  }, 20_000);
 
   test("bot-walled URL → fetchState 'failed' + last_fetch_error mentions heuristic; item still listed", async () => {
     await login(admin, "admin", "admin-password");

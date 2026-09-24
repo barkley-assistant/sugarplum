@@ -4,7 +4,9 @@ import { serve } from "bun";
 import {
   extractProduct,
   parseSymbolPriceToCents,
+  resolveDomPrice,
   stripStoreTitleNoise,
+  type DomPrice,
 } from "../src/server/scraper/parse";
 import { scrapeProduct } from "../src/server/scraper";
 import { fetchPage, detectBotWall } from "../src/server/scraper/fetch";
@@ -235,6 +237,121 @@ describe("extractProduct DOM fallback tier (no og/json-ld pages)", () => {
     // ASIN, carousel) precedes the main ASIN's £19.00.
     const p = await parseFixture("amazon-dp.html", AMAZON_DP);
     expect(p.priceCents).not.toBe(2488);
+  });
+});
+
+describe("extractProduct DOM buying-option condition (#160)", () => {
+  const AMAZON_ACCORDION = "https://www.amazon.co.uk/dp/B0DWDDNK1Q";
+  const AMAZON_NOATTR = "https://www.amazon.co.uk/dp/B0FPXD23ST";
+  const AMAZON_USED_ONLY = "https://www.amazon.co.uk/dp/B0C1USEDON";
+  const AMAZON_RENEWED = "https://www.amazon.co.uk/dp/B0RENEWED1";
+  const AMAZON_NEW_ONLY = "https://www.amazon.co.uk/dp/B0DLGMVR4C";
+
+  test("mixed accordion: a third-party seller's NEW block wins, the used floor is never returned", async () => {
+    const html = await Bun.file(join(FIXTURES, "amazon-dp-mixed-accordion.html")).text();
+    // The accepted NEW offer is explicitly NOT sold by Amazon — the condition,
+    // not the seller, is the filter.
+    expect(html).toContain("Sold by GadgetBay UK");
+    const p = await extractProduct(html, AMAZON_ACCORDION);
+    expect(p.priceCents).toBe(3497); // the NEW block, not the £26.25 floor
+    expect(p.priceCents).not.toBe(2625);
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("mixed page with no condition attribute: featured offer kept, all-conditions floor rejected", async () => {
+    const p = await parseFixture("amazon-dp-mixed-noattr.html", AMAZON_NOATTR);
+    expect(p.priceCents).toBe(1300); // the featured corePrice offer
+    expect(p.priceCents).not.toBe(1252); // the ingress floor
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("used-only page: no direct price, even with a new-conditioned ingress", async () => {
+    const p = await parseFixture("amazon-dp-used-only.html", AMAZON_USED_ONLY);
+    expect(p.priceCents).toBeNull();
+    expect(p.currency).toBeNull();
+    expect(p.priceCents).not.toBe(1450);
+  });
+
+  test("renewed block rejected: the NEW block wins, not the cheaper renewed one", async () => {
+    const p = await parseFixture("amazon-dp-mixed-renewed.html", AMAZON_RENEWED);
+    expect(p.priceCents).toBe(5299);
+    expect(p.priceCents).not.toBe(4799);
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("existing new-only fixture is unchanged by the condition tier", async () => {
+    const p = await parseFixture("amazon-dp.html", AMAZON_NEW_ONLY);
+    expect(p.priceCents).toBe(1900);
+    expect(p.currency).toBe("GBP");
+  });
+});
+
+describe("resolveDomPrice (#160 branch table)", () => {
+  const none: DomPrice = { text: null, condition: null };
+
+  test("NEW block wins over a cheaper all-conditions ingress", () => {
+    const p = resolveDomPrice(
+      { text: "£26.25", condition: null },
+      "ALL",
+      { text: "£34.97", condition: "NEW" },
+      true,
+    );
+    expect(p).toEqual({ cents: 3497, currency: "GBP" });
+  });
+
+  test("non-new block → no price, even when the ingress is new-conditioned", () => {
+    const p = resolveDomPrice(
+      { text: "£14.50", condition: null },
+      "NEW",
+      { text: "£14.50", condition: "USED" },
+      true,
+    );
+    expect(p).toBeNull();
+  });
+
+  test("every non-new condition is rejected, not just USED", () => {
+    for (const condition of ["RENEWED", "REFURBISHED", "OPEN_BOX", "UNKNOWN", "PRE_OWNED"]) {
+      expect(
+        resolveDomPrice(none, "NEW", { text: "£10.00", condition }, true),
+      ).toBeNull();
+    }
+  });
+
+  test("new-only page: the new-conditioned ingress is the price (unchanged behaviour)", () => {
+    const p = resolveDomPrice({ text: "£19.00", condition: null }, "NEW", none, false);
+    expect(p).toEqual({ cents: 1900, currency: "GBP" });
+  });
+
+  test("conditionDeclared false + non-new ingress → the featured corePrice offer", () => {
+    const p = resolveDomPrice({ text: "£12.52", condition: null }, "ALL", { text: "£13.00", condition: null }, false);
+    expect(p).toEqual({ cents: 1300, currency: "GBP" });
+  });
+
+  test("conditionDeclared true with only a null-condition block → no price", () => {
+    expect(
+      resolveDomPrice({ text: "£12.52", condition: null }, "ALL", { text: "£13.00", condition: null }, true),
+    ).toBeNull();
+  });
+
+  test("unrecognised condition on the only block: no NEW ingress → no price", () => {
+    expect(
+      resolveDomPrice(none, "ALL", { text: "£10.00", condition: "COLLECTIBLE_PLUS" }, true),
+    ).toBeNull();
+  });
+
+  test("unrecognised condition on the only block: NEW ingress still wins", () => {
+    const p = resolveDomPrice(
+      { text: "£9.50", condition: null },
+      "NEW",
+      { text: "£10.00", condition: "COLLECTIBLE_PLUS" },
+      true,
+    );
+    expect(p).toEqual({ cents: 950, currency: "GBP" });
+  });
+
+  test("no price captured anywhere → null (no price invented)", () => {
+    expect(resolveDomPrice(none, null, none, false)).toBeNull();
+    expect(resolveDomPrice(none, "NEW", { text: null, condition: "NEW" }, true)).toBeNull();
   });
 });
 

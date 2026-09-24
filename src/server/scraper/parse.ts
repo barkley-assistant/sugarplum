@@ -24,7 +24,9 @@
  * data in id-anchored DOM blocks. The tier is deliberately SITE-AGNOSTIC —
  * plain HTML selectors, no hostname checks anywhere in this file — and it only
  * ever fills values the metadata tiers left null:
- *   price = #aod-ingress-link .a-price (offer floor) → div[id^=corePrice] .a-price
+ *   price = div[id^=corePrice] .a-price in a NEW buying option → #aod-ingress-link
+ *           .a-price (only when the ingress itself is new-conditioned) →
+ *           div[id^=corePrice] .a-price (featured offer, no condition declared)
  *   image = img#landingImage[data-old-hires] → img#landingImage[data-a-dynamic-image] first key
  * Anchoring to those ids is the invariant that keeps OTHER-ASIN carousel
  * prices/images out of the result: a bare `.a-price` scan picks a neighbour
@@ -37,6 +39,18 @@
  * `.game_purchase_price`) text through the same symbol parser. Steam has no
  * og:price:* and no JSON-LD, so this tier is its only price source; "Free To
  * Play" yields null (honest "no price"), never 0.
+ *
+ * Buying-option condition (#160): the DOM tier tracks
+ * `data-csa-c-buying-option-type` on the wrapper elements a shop puts around
+ * each price block, so every captured price carries the condition it was
+ * declared in. NEW is the only positive evidence; a USED/RENEWED/REFURBISHED/…
+ * block is never a direct price. An `#aod-ingress-link` whose href says
+ * `condition=ALL` is the all-conditions floor, NOT the new price, so it is a
+ * fallback only for a page that declares no condition attributes at all AND
+ * whose ingress is itself new-conditioned. A page whose only offers are
+ * non-new yields no price — the item stays usable through the existing
+ * labelled hint path. The tracking is generic (no hostname check): any shop
+ * that ships the attribute gets it free.
  */
 
 export interface ParsedProduct {
@@ -92,6 +106,71 @@ export function parseSymbolPriceToCents(
   const cents = Number(whole) * 100 + Number(frac.padEnd(2, "0"));
   if (!Number.isFinite(cents) || cents > MAX_CENTS) return null;
   return { cents, currency };
+}
+
+/** Buying-option conditions that are NOT a new product. Anything outside this
+ *  set is "unknown", which is treated as not-new — the safe direction. */
+const NON_NEW_CONDITIONS = new Set([
+  "USED",
+  "RENEWED",
+  "REFURBISHED",
+  "OPEN_BOX",
+  "OPENBOX",
+  "COLLECTIBLE",
+  "RENTAL",
+  "UNKNOWN",
+  "OTHER",
+  "PRE_OWNED",
+  "DAMAGED",
+]);
+
+/** `"USED"` → true. `"NEW"` → false. `null` / anything unrecognised → false
+ *  (an absent condition is "undeclared", not "new"; callers decide what that
+ *  means for their tier). */
+function isNonNewCondition(condition: string | null): boolean {
+  return condition !== null && NON_NEW_CONDITIONS.has(condition.toUpperCase());
+}
+
+/** `…&condition=NEW` from an ingress href. HTMLRewriter hands attribute values
+ *  back ENTITY-ENCODED (`&amp;`), so both separators are matched. */
+function ingressConditionOf(href: string | null): string | null {
+  if (href === null) return null;
+  const m = /[&?](?:amp;)?condition=([A-Za-z_]+)/.exec(href);
+  return m?.[1] ? m[1].toUpperCase() : null;
+}
+
+/** One captured DOM price plus the buying-option condition it was declared in. */
+export interface DomPrice {
+  text: string | null;
+  /** Nearest enclosing data-csa-c-buying-option-type, uppercase; null when the
+   *  page declares no condition at all. */
+  condition: string | null;
+}
+
+/** The condition decision for the DOM price tier (#160), extracted so every
+ *  branch is unit-testable without building HTML.
+ *
+ *  A NEW block wins outright. A non-new block means the page's offers are not
+ *  new, so there is no direct price — the ingress is never consulted then,
+ *  whatever its href says. With no condition evidence on the block, the
+ *  ingress is used only when it is itself new-conditioned (a new-only page,
+ *  unchanged behaviour); if the page declares conditions somewhere but none of
+ *  them is NEW, nothing is guessed. A page that declares no condition at all
+ *  falls through to the featured corePrice offer — the buybox price — which is
+ *  strictly better evidence than the all-conditions floor.
+ *
+ *  Exported (with DomPrice) so the branch table is unit-testable directly. */
+export function resolveDomPrice(
+  ingressPrice: DomPrice,
+  ingressPriceCondition: string | null,
+  corePrice: DomPrice,
+  conditionDeclared: boolean,
+): { cents: number; currency: string } | null {
+  if (corePrice.condition === "NEW") return parseSymbolPriceToCents(corePrice.text);
+  if (isNonNewCondition(corePrice.condition)) return null;
+  if (ingressPriceCondition === "NEW") return parseSymbolPriceToCents(ingressPrice.text);
+  if (conditionDeclared) return null;
+  return parseSymbolPriceToCents(corePrice.text);
 }
 
 /** HTMLRewriter hands TEXT chunks back raw — entities are NOT decoded (measured
@@ -294,11 +373,23 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
   // with no featured offer — #corePrice_desktop renders empty) must not leak
   // into the next .a-price on the page, which belongs to a sponsored carousel
   // for a DIFFERENT ASIN.
+  // Buying-option condition tracking (#160): Amazon wraps each price block in
+  // a div[data-csa-c-buying-option-type], so a price carries the condition it
+  // was declared in. The stack is pushed on the wrapper's open tag and popped
+  // on its end tag (verified: HTMLRewriter element handlers maintain this and
+  // the depth returns to 0 on a well-formed document), so a nested
+  // div[id^=corePrice] sees its NEAREST ancestor's condition.
+  const conditionStack: string[] = [];
+  let conditionDeclared = false;
+  let ingressPriceCondition: string | null = null;
+
   let ingressDepth = 0;
   let corePriceDepth = 0;
   let capturingPrice: "ingress" | "core" | null = null;
-  let ingressPriceText: string | null = null;
-  let corePriceText: string | null = null;
+  // Only the FIRST capture per kind is kept, matching the tier's existing
+  // "first block" discipline.
+  const ingressPrice: DomPrice = { text: null, condition: null };
+  const corePrice: DomPrice = { text: null, condition: null };
   let landingHires: string | null = null;
   let landingDynamic: string | null = null;
 
@@ -369,6 +460,9 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
     .on("a#aod-ingress-link", {
       element(el) {
         ingressDepth++;
+        if (ingressPriceCondition === null) {
+          ingressPriceCondition = ingressConditionOf(el.getAttribute("href"));
+        }
         el.onEndTag(() => {
           ingressDepth--;
         });
@@ -382,16 +476,32 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
         });
       },
     })
+    .on("div[data-csa-c-buying-option-type]", {
+      element(el) {
+        conditionDeclared = true;
+        const declared = el.getAttribute("data-csa-c-buying-option-type");
+        conditionStack.push(declared ? declared.toUpperCase() : "");
+        el.onEndTag(() => {
+          conditionStack.pop();
+        });
+      },
+    })
     .on(".a-offscreen", {
       element() {
         if (capturingPrice !== null) return;
-        if (ingressDepth > 0 && ingressPriceText === null) capturingPrice = "ingress";
-        else if (corePriceDepth > 0 && corePriceText === null) capturingPrice = "core";
+        if (ingressDepth > 0 && ingressPrice.text === null) capturingPrice = "ingress";
+        else if (corePriceDepth > 0 && corePrice.text === null) capturingPrice = "core";
       },
       text(t) {
         if (capturingPrice === null) return;
-        if (capturingPrice === "ingress") ingressPriceText = (ingressPriceText ?? "") + t.text;
-        else corePriceText = (corePriceText ?? "") + t.text;
+        // Stamp the condition at CAPTURE time — it must be the wrapper that
+        // enclosed the block when its price was read, not whatever is on the
+        // stack later.
+        const condition =
+          conditionStack.length > 0 ? conditionStack[conditionStack.length - 1]! : null;
+        const target = capturingPrice === "ingress" ? ingressPrice : corePrice;
+        target.text = (target.text ?? "") + t.text;
+        target.condition ??= condition;
         if (t.lastInTextNode) capturingPrice = null;
       },
     })
@@ -450,9 +560,15 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
     .text();
 
   const ldNode = jsonld.length > 0 ? findProductNode(jsonld) : null;
-  // Offer floor first (the only price that exists on some ASINs), apex/core
-  // price block second. Both id-anchored — never a bare .a-price.
-  const domPrice = parseSymbolPriceToCents(ingressPriceText ?? corePriceText);
+  // Condition-aware DOM price (#160). Both captures are id-anchored — never a
+  // bare .a-price; the ingress is only an offer floor, so the condition of the
+  // block it came from decides whether it may be used at all.
+  const domPrice = resolveDomPrice(
+    ingressPrice,
+    ingressPriceCondition,
+    corePrice,
+    conditionDeclared,
+  );
   const domImage = landingHires ?? firstDynamicImageKey(landingDynamic);
   const steamPrice = parseSymbolPriceToCents(steamPriceText);
 
