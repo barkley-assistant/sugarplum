@@ -13,7 +13,10 @@ export function safeNext(raw: string | null): string {
 }
 
 export type Route =
-  | { name: "home" }
+  /** The feed. `list` is the selected member's id from `?list=`, or null for
+   *  the signed-in user's own list — the one route field that is not "always
+   *  present", because "no selection" is a real value here (#158). */
+  | { name: "home"; list: string | null }
   | { name: "login"; next: string }
   /** /settings — the Account & Preferences screen (#96). */
   | { name: "settings" }
@@ -30,6 +33,21 @@ export type Route =
 /** Item ids are `randomUUID()` (lowercase hex). Same guard style as the
  *  64-hex share token: a malformed id is not a route. */
 const ITEM_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/** #158: user ids are `randomUUID()` too (src/server/routes/users.ts,
+ *  src/server/app.ts). Same guard as ITEM_ID — a malformed `?list=` is not a
+ *  route value. */
+const USER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/** #158: the feed's selected-list search parameter. Absent or malformed →
+ *  the own list (null), NOT an error view — the same fall-through a malformed
+ *  share token or item id gets. A well-formed but UNKNOWN id is not decided
+ *  here: that is a fetch failure, and the feed owns it. */
+function selectedList(search: string): string | null {
+  const raw = new URLSearchParams(search).get("list");
+  if (!raw || !USER_ID.test(raw)) return null;
+  return raw;
+}
 
 /** Exact-match route table. `/add` is its own page (#62 — it was the feed
  *  with the add sheet open before), `/items/:id` and `/items/:id/edit` are
@@ -54,7 +72,7 @@ export function parseRoute(path: string, search: string): Route {
   if (path === "/settings/users/new") return { name: "settingsUserNew" };
   if (path === "/settings/users") return { name: "settingsUsers" };
   if (path === "/settings") return { name: "settings" };
-  return { name: "home" };
+  return { name: "home", list: selectedList(search) };
 }
 
 const ROUTE_EVENT = "sugarplum:navigate";

@@ -1,7 +1,6 @@
 import type { Me } from "../../shared/types";
 import { navigate } from "../router";
 import { useWishlistSummary } from "../use-summary";
-import { setFeedViewingHandoff } from "../feed-handoff";
 import { ListSwitcher } from "./ListSwitcher";
 
 /** #125: the context bar every non-feed authenticated page carries as its
@@ -10,12 +9,11 @@ import { ListSwitcher } from "./ListSwitcher";
  *  topbar). It answers the question the stripped pages used to leave open:
  *  WHICH list am I looking at, and how do I get to another one.
  *
- *  Selecting a list hands the choice to the feed and navigates there (there
- *  is no route for "the feed is showing user X" — see feed-handoff): from a
- *  detail page, picking a list means going to that list's feed. Both halves
- *  are live: the own row hands over `null` (the own list — the value the
- *  handoff's undefined-vs-null distinction exists for), another row its
- *  user id, and the row that is on screen carries the switcher's check. */
+ *  Selecting a list navigates to that list's feed (#158: `/?list=<id>`, the
+ *  route that now carries "the feed is showing user X"; the own row maps back
+ *  to `null` and navigates to a bare `/`). Both halves are live: the own row
+ *  hands over `null`, another row its user id, and the row that is on screen
+ *  carries the switcher's check. */
 export function ListContextBar({ me }: { me: Me }) {
   const summary = useWishlistSummary(me);
   const displayName = me.displayName || me.username;
@@ -41,8 +39,7 @@ export function ListContextBar({ me }: { me: Me }) {
       currentUserId={me.id}
       count={ownCount}
       onSelect={(userId) => {
-        setFeedViewingHandoff(userId);
-        navigate("/");
+        navigate(userId === null ? "/" : `/?list=${userId}`);
       }}
     />
   );

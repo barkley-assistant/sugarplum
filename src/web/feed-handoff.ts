@@ -15,7 +15,9 @@ export interface FeedSnapshot {
   ownItems: OwnedItem[];
   otherItems: PublicItem[];
   summary: WishlistSummaryRow[];
-  /** Other-user list context (the switcher), null when viewing the own list. */
+  /** #158: WHICH list these rows belong to (null = the own list). Boot uses
+   *  it to check that a snapshot describes the list the route names before
+   *  restoring it — never as "switch to this list". */
   viewingUserId: string | null;
   activeTag: string | null;
   scrollY: number;
@@ -102,26 +104,4 @@ export function pruneFeedSnapshotItem(itemId: string): void {
   if (!snapshot) return;
   if (snapshot.viewingUserId !== null) return;
   snapshot = { ...snapshot, ownItems: snapshot.ownItems.filter((i) => i.id !== itemId) };
-}
-
-/** #125: a list chosen from a SUBPAGE's switcher. The feed owns "which list
- *  is showing" as component state, not as a URL (there is no route for it),
- *  and it unmounts on every navigation — so the choice is handed over the
- *  same way the scroll offset and the just-added row are. `undefined` means
- *  "no handoff" and is deliberately distinct from `null`, which means "the
- *  signed-in user's own list": without that distinction a handoff to the own
- *  list could not override a snapshot that was viewing someone else. One
- *  shot — the feed consumes it on boot. */
-let feedViewingHandoff: string | null | undefined;
-
-export function setFeedViewingHandoff(userId: string | null): void {
-  feedViewingHandoff = userId;
-}
-
-/** Reads the handoff and clears it: the feed applies it once, on the boot it
- *  was written for. */
-export function takeFeedViewingHandoff(): string | null | undefined {
-  const value = feedViewingHandoff;
-  feedViewingHandoff = undefined;
-  return value;
 }
