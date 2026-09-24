@@ -45,6 +45,10 @@ export const S = {
     heading: (name: string) => `${name}'s wishlist`,
     itemCount: (n: number) => `${n} item${n === 1 ? "" : "s"}`,
     switcherLabel: "Switch wishlist",
+    /** #158: the heading for a list the route names but the summary has no row
+     *  for (yet, or at all). Never the signed-in user's own name — that would
+     *  label someone else's list with the wrong person. */
+    unknownMember: "That member",
   },
   item: {
     edit: "Edit",

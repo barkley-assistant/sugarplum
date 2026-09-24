@@ -5520,7 +5520,8 @@ test("37: #125 — one header on every authenticated page, Back-to-list button, 
     const popover = page.getByRole("menu", { name: "Switch wishlist" });
     await expect(popover).toBeVisible();
     await popover.getByRole("menuitemradio", { name: /Header Other/ }).click();
-    await expect(page).toHaveURL(`${BASE}/`);
+    // #158: the subpage switcher now navigates to the list's own URL.
+    await expect(page).toHaveURL(new RegExp(`${BASE}/\\?list=[0-9a-f-]{36}$`));
     await expect(page.getByRole("heading", { name: "Header Other's wishlist" })).toBeVisible();
     // …and the feed's own switcher is still how you come back.
     await page.getByRole("button", { name: /wishlist/ }).click();
@@ -6354,5 +6355,172 @@ test("43: #157 — the mobile topbar centers the brand lockup on every route", a
     expect([200, 204]).toContain(revoked.status());
     // Leave the viewport desktop for any later assertions.
     await page.setViewportSize({ width: 1280, height: 900 });
+  }
+});
+
+test("44: #158 — the selected wishlist survives a reload and Back/Forward", async ({
+  page,
+  browser,
+}) => {
+  // A second member whose list is the switch target.
+  const OTHER = { username: "route-other", password: "route-other-pass", displayName: "Route Other" };
+  const created = await page.request.post(`${BASE}/api/users`, {
+    data: { username: OTHER.username, password: OTHER.password, displayName: OTHER.displayName },
+  });
+  expect([201, 409], "the second member exists (created here or by an earlier run)").toContain(
+    created.status(),
+  );
+
+  // Three contexts, deliberately:
+  //   other   — seeds a recognisable row into the OTHER member's list (an item
+  //             POST lands in the caller's own list, so it must be made as them)
+  //   context — the admin's continuous history chain (AC1-AC5)
+  //   share   — AC3's "copied and reopened", kept off the chain above
+  const otherContext = await browser.newContext();
+  const other = await otherContext.newPage();
+  // The docLoads counter is per-context: without this, AC2's "the reload really
+  // was a document load" would compare 0 with 0.
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  await context.addInitScript(() => {
+    sessionStorage.setItem("docLoads", String(Number(sessionStorage.getItem("docLoads") ?? 0) + 1));
+  });
+  const probe = await context.newPage();
+  let shareContext: BrowserContext | undefined;
+  let otherRowId: string | undefined;
+  let adminRowId: string | undefined;
+
+  /** Open the feed switcher (a bottom sheet at 390px) and pick a row. */
+  async function switchTo(target: Page, row: RegExp): Promise<void> {
+    await target.getByRole("button", { name: /wishlist/ }).click();
+    const sheet = target.getByRole("dialog", { name: "Switch wishlist" });
+    await expect(sheet).toBeVisible();
+    await sheet.getByRole("button", { name: row }).click();
+  }
+
+  try {
+    await login(other, OTHER.username, OTHER.password);
+    const otherRow = await other.request.post(`${BASE}/api/wishlist/items`, {
+      data: { title: "Route persistence probe" },
+    });
+    expect(otherRow.status()).toBe(201);
+    otherRowId = ((await otherRow.json()) as { id: string }).id;
+    // …and a row in the ADMIN's own list: the "wrong rows under another heading"
+    // half of AC6 needs something the admin could wrongly see.
+    const adminRow = await page.request.post(`${BASE}/api/wishlist/items`, {
+      data: { title: "Admin own-list probe" },
+    });
+    expect(adminRow.status()).toBe(201);
+    adminRowId = ((await adminRow.json()) as { id: string }).id;
+
+    await login(probe, "admin", "admin-password");
+    await expect(probe.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+    await expect(probe.locator(".item-card", { hasText: "Admin own-list probe" })).toHaveCount(1);
+    expect(probe.url(), "the own list is a bare /").toBe(`${BASE}/`);
+
+    // --- AC1: switching updates the URL, and does NOT reload. --------------
+    const loadsBefore = await loads(probe);
+    await switchTo(probe, /Route Other/);
+    await expect(probe).toHaveURL(new RegExp(`${BASE}/\\?list=[0-9a-f-]{36}$`));
+    await expect(probe.getByRole("heading", { name: "Route Other's wishlist" })).toBeVisible();
+    await expect(probe.locator(".item-card", { hasText: "Route persistence probe" })).toHaveCount(1);
+    await expect(probe.locator(".item-card", { hasText: "Admin own-list probe" })).toHaveCount(0);
+    expect(await loads(probe), "a list switch is a soft navigation").toBe(loadsBefore);
+    const otherUrl = probe.url();
+    const rowsBefore = await probe.locator(".item-card").count();
+
+    // --- AC2: a FULL reload keeps the same list and rows. -------------------
+    await probe.reload();
+    await expect(probe.getByRole("heading", { name: "Route Other's wishlist" })).toBeVisible();
+    await expect(probe.locator(".item-card", { hasText: "Route persistence probe" })).toHaveCount(1);
+    await expect(probe.locator(".item-card")).toHaveCount(rowsBefore);
+    expect(probe.url(), "the reload did not drop the parameter").toBe(otherUrl);
+    expect(await loads(probe), "the reload really was a document load").toBeGreaterThan(loadsBefore);
+
+    // --- AC3: the URL is shareable inside the session. ----------------------
+    shareContext = await browser.newContext();
+    const reopened = await shareContext.newPage();
+    await login(reopened, "admin", "admin-password");
+    await reopened.goto(otherUrl); // a fresh document at the copied URL
+    await expect(reopened.getByRole("heading", { name: "Route Other's wishlist" })).toBeVisible();
+    await expect(reopened.locator(".item-card", { hasText: "Route persistence probe" })).toHaveCount(1);
+    await expect(reopened.locator(".item-card", { hasText: "Admin own-list probe" })).toHaveCount(0);
+
+    // --- AC4: the own list is an explicit, reload-safe destination. --------
+    // Still on `probe` at ?list=…, so this also covers the own-list transition
+    // FROM another list.
+    await switchTo(probe, /Admin/);
+    await expect(probe).toHaveURL(`${BASE}/`);
+    await expect(probe.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+    await expect(probe.locator(".item-card", { hasText: "Route persistence probe" })).toHaveCount(0);
+    await expect(probe.locator(".item-card", { hasText: "Admin own-list probe" })).toHaveCount(1);
+    await probe.reload();
+    await expect(probe).toHaveURL(`${BASE}/`); // the selector is gone, not merely ignored
+    await expect(probe.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+    await expect(probe.locator(".item-card", { hasText: "Route persistence probe" })).toHaveCount(0);
+
+    // --- AC5: Back/Forward move between the two list contexts. --------------
+    // A deliberate own → other → own chain on `probe`, built with the switcher
+    // (so the pushed entries are app entries), then traversed. Each stop
+    // asserts BOTH the heading and the rows — a heading-only assertion would
+    // pass on the frame where the route has re-parsed but the list's fetch has
+    // not landed.
+    await switchTo(probe, /Route Other/);
+    await expect(probe).toHaveURL(otherUrl);
+    await expect(probe.getByRole("heading", { name: "Route Other's wishlist" })).toBeVisible();
+    await expect(probe.locator(".item-card", { hasText: "Route persistence probe" })).toHaveCount(1);
+    await switchTo(probe, /Admin/);
+    await expect(probe).toHaveURL(`${BASE}/`);
+    await probe.goBack();
+    await expect(probe).toHaveURL(otherUrl);
+    await expect(probe.getByRole("heading", { name: "Route Other's wishlist" })).toBeVisible();
+    await expect(probe.locator(".item-card", { hasText: "Route persistence probe" })).toHaveCount(1);
+    await expect(probe.locator(".item-card", { hasText: "Admin own-list probe" })).toHaveCount(0);
+    await probe.goForward();
+    await expect(probe).toHaveURL(`${BASE}/`);
+    await expect(probe.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+    await expect(probe.locator(".item-card", { hasText: "Admin own-list probe" })).toHaveCount(1);
+    await expect(probe.locator(".item-card", { hasText: "Route persistence probe" })).toHaveCount(0);
+
+    // --- AC6: a malformed or unknown selector fails safe. -------------------
+    // A malformed value parses as "no selection", so the feed renders the
+    // signed-in user's OWN list under the OWN heading. The URL is deliberately
+    // NOT rewritten (a hand-typed typo is left visible); what is asserted is
+    // data safety: the other member's row never appears under our heading.
+    for (const bad of ["not-a-uuid", "0123abcd-45ef-6789-abcd-ef012345678"]) {
+      await probe.goto(`${BASE}/?list=${bad}`);
+      await expect(probe.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
+      await expect(probe.locator(".item-card", { hasText: "Route persistence probe" })).toHaveCount(0);
+      await expect(probe.locator(".item-card", { hasText: "Admin own-list probe" })).toHaveCount(1);
+    }
+    // A well-formed id with no such user: the server 404s, and the feed must
+    // render NO rows under it — neither the own list's nor the other member's.
+    // The failure banner is asserted first, so the empty assertions below
+    // cannot pass vacuously on the pre-fetch frame.
+    const ghost = "deadbeef-0000-4000-8000-000000000000";
+    await probe.goto(`${BASE}/?list=${ghost}`);
+    await expect(probe.locator("p.error")).toContainText("Could not load your wishlist");
+    await expect(probe.locator(".item-card")).toHaveCount(0);
+    await expect(probe.locator(".item-card", { hasText: "Admin own-list probe" })).toHaveCount(0);
+    await expect(probe.locator(".item-card", { hasText: "Route persistence probe" })).toHaveCount(0);
+    await expect(probe).toHaveURL(`${BASE}/?list=${ghost}`); // the URL stays honest
+    // …and it is honest across a reload too, not just on first paint.
+    await probe.reload();
+    await expect(probe.locator("p.error")).toContainText("Could not load your wishlist");
+    await expect(probe.locator(".item-card")).toHaveCount(0);
+    await expect(probe.getByRole("heading", { name: /wishlist/ })).toBeVisible();
+  } finally {
+    // Both seeded rows go, each deleted by the session that owns it (the
+    // DELETE route is owner-only) and by the id captured at creation.
+    if (otherRowId) {
+      const removedOther = await other.request.delete(`${BASE}/api/wishlist/items/${otherRowId}`);
+      expect([200, 204]).toContain(removedOther.status());
+    }
+    if (adminRowId) {
+      const removedAdmin = await page.request.delete(`${BASE}/api/wishlist/items/${adminRowId}`);
+      expect([200, 204]).toContain(removedAdmin.status());
+    }
+    if (shareContext) await shareContext.close();
+    await context.close();
+    await otherContext.close();
   }
 });

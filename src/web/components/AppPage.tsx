@@ -10,13 +10,12 @@ import { classifyResponse, classifyWriteFailure } from "../net";
 import { useToast } from "../toast";
 import { useDragReorder } from "../reorder";
 import { parseShareTarget } from "../format";
-import { navigate } from "../router";
+import { navigate, useRoute } from "../router";
 import {
   clearPendingFocusItemId,
   peekPendingFocusItemId,
   saveFeedSnapshot,
   takeFeedSnapshot,
-  takeFeedViewingHandoff,
   trackFeedScroll,
   trackedFeedScrollY,
 } from "../feed-handoff";
@@ -32,12 +31,23 @@ import { ItemList, type OwnerRef } from "./ItemList";
 import { GuestItemDetailSheet, type GuestItemDetail } from "./GuestItemDetailSheet";
 import { AppShell, AppShellLoading } from "./AppShell";
 import { ListSwitcher } from "./ListSwitcher";
+import { SkeletonList } from "./SkeletonList";
 
 export function AppPage() {
   const [me, setMe] = useState<Me | null>(null);
   const [summary, setSummary] = useState<WishlistSummaryRow[]>([]);
   const [ownItems, setOwnItems] = useState<OwnedItem[]>([]);
-  const [viewing, setViewing] = useState<string | null>(null);
+  // #158: the selected list is ROUTE state, not component state. The route is
+  // the only representation that survives a document load and Back/Forward
+  // (useRoute re-parses on popstate), so the feed derives it rather than
+  // mirroring it — a mirror is the bug this fixes. `list` is null for the
+  // signed-in user's own list, and non-null only for a well-formed UUID.
+  const route = useRoute();
+  const viewing: string | null = route.name === "home" ? route.list : null;
+  /** #158: the list `otherItems` belongs to. The feed may not render those
+   *  rows while this disagrees with `viewing` — that is the
+   *  wrong-rows-under-the-wrong-heading failure the issue forbids. */
+  const [shownOtherUserId, setShownOtherUserId] = useState<string | null>(null);
   const [otherItems, setOtherItems] = useState<PublicItem[]>([]);
   const [booted, setBooted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +83,49 @@ export function AppPage() {
   useEffect(() => {
     dragLiveRef.current = reorder.isDragging;
   });
+
+  // #158: resolve the ROUTE's list. Runs on mount and on every route change (a
+  // switcher navigation pushes a route; Back/Forward fires popstate → useRoute
+  // re-parses → this re-runs). Two jobs: the own list drops the other user's
+  // rows so a stale projection cannot linger, and another list's id fetches
+  // that list's public projection. No fetch for the own list — boot already
+  // owns `ownItems`. Depends on `viewing` alone (the route value), so an
+  // unrelated re-render cannot re-fetch.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      setError(null); // every resolution of the route starts clean
+      if (viewing === null) {
+        setShownOtherUserId(null);
+        return;
+      }
+      setRefreshing(true);
+      try {
+        const res = await fetch(`/api/users/${viewing}/wishlist`);
+        if (cancelled) return;
+        if (!res.ok) throw new Error();
+        setOtherItems((await res.json()) as PublicItem[]);
+      } catch {
+        if (cancelled) return;
+        // A 404 for an unknown id, or any other failure: this list is NOT an
+        // empty list. Drop the rows and say so — never keep the previous
+        // list's rows under the new id's heading.
+        setOtherItems([]);
+        setError(S.errors.loadWishlist);
+      } finally {
+        if (!cancelled) {
+          // Tag the rows with the list they belong to — resolved or not — so
+          // the render guard lets this list's own (empty or failed) state
+          // through instead of holding the previous list's rows.
+          setShownOtherUserId(viewing);
+          setRefreshing(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [viewing]);
 
   useEffect(() => {
     void boot();
@@ -158,13 +211,6 @@ export function AppPage() {
   }, [booted, ownItems]);
 
   async function boot() {
-    // #125: a list chosen from a SUBPAGE's switcher. Read once, at the top:
-    // the handoff is one-shot, and a boot that cannot honour it (share-target
-    // redirect, offline fallback) must still consume it rather than let it
-    // surprise a later boot. `undefined` means "no handoff"; `null` means
-    // "the signed-in user's own list" and overrides the snapshot's viewing
-    // user.
-    const viewingHandoff = takeFeedViewingHandoff();
     try {
       // Share-target seam: the server maps /add (the manifest action) to the
       // shell, so a share arrival normally renders AddPage directly. This
@@ -211,33 +257,26 @@ export function AppPage() {
       // Guarded by meId: a logout/login-as-someone-else between routes must
       // never render the previous user's rows.
       const snap = takeFeedSnapshot();
-      if (snap && snap.meId === meBody.id) {
+      // #158: the snapshot may only restore the list the ROUTE names. A
+      // snapshot taken on another list belongs to a different history entry;
+      // restoring its rows here would put list B under list A's heading.
+      const snapMatchesRoute = snap !== null && (snap.viewingUserId ?? null) === viewing;
+      if (snap && snap.meId === meBody.id && snapMatchesRoute) {
         setOwnItems(snap.ownItems);
         setSummary(snap.summary);
-        const viewingUser = viewingHandoff === undefined ? snap.viewingUserId : viewingHandoff;
-        setViewing(viewingUser);
-        // The snapshot's filter, scroll offset and rows belong to the list
-        // that was on screen. A handoff that lands on a DIFFERENT list starts
-        // it at the top: restoring the old offset would open the new list at
-        // a clamped arbitrary position, and its rows would be the wrong
-        // list's rows under the new heading (plan D4).
-        if (viewingUser === snap.viewingUserId) {
-          setActiveTag(snap.activeTag);
-          handoffScrollRef.current = snap.scrollY;
-          setOtherItems(snap.otherItems);
-        }
+        setActiveTag(snap.activeTag);
+        handoffScrollRef.current = snap.scrollY;
+        // Tag the restored rows with the list they belong to, so the render
+        // guard lets them through.
+        setShownOtherUserId(snap.viewingUserId);
+        setOtherItems(snap.otherItems);
         setBooted(true); // data is on screen: no skeleton flash
         void Promise.all([refreshSummary(meBody.id), refreshOwnList(meBody.id)]);
-        // Revalidate the other user's list only when a handoff put it on
-        // screen. A plain snapshot restore is the feed the user left, rows
-        // and all — plan D4 invokes viewList for the handoff case only.
-        if (viewingHandoff !== undefined && viewingUser !== null) void viewList(viewingUser);
         return;
       }
 
       await Promise.all([refreshSummary(), refreshOwnList(meBody.id)]);
       setBooted(true);
-      if (viewingHandoff) void viewList(viewingHandoff);
     } catch {
       const stored = readStoredMe();
       if (!stored) {
@@ -289,21 +328,33 @@ export function AppPage() {
   async function viewList(userId: string) {
     setReordering(false);
     setGuestItemId(null);
-    setViewing(userId);
     setRefreshing(true);
     try {
       const res = await fetch(`/api/users/${userId}/wishlist`);
-      if (res.ok) setOtherItems((await res.json()) as PublicItem[]);
+      if (res.ok) {
+        setOtherItems((await res.json()) as PublicItem[]);
+        setShownOtherUserId(userId);
+      }
     } finally {
       setRefreshing(false);
     }
   }
 
+  // #158: the own list is a DESTINATION, not a state reset. `navigate("/")`
+  // replaces the whole path+search (router.ts resolves "/" against the current
+  // origin), so a `?list=` is dropped rather than accumulated — and it is a
+  // push, not a replace, so Back still returns to the list the user left.
   function backToOwnList() {
     setReordering(false);
     setGuestItemId(null);
-    setViewing(null);
-    setOtherItems([]);
+    navigate("/");
+  }
+
+  /** Selecting another list is the same move, with the parameter in the URL. */
+  function selectList(userId: string) {
+    setReordering(false);
+    setGuestItemId(null);
+    navigate(`/?list=${userId}`);
   }
 
   async function deleteItem(id: string) {
@@ -522,16 +573,27 @@ export function AppPage() {
   const allTags = Array.from(new Set(ownItems.flatMap((i) => i.tags))).sort();
   const guestItem = otherItems.find((item) => item.id === guestItemId) ?? null;
 
-  function ownerRefFor(userId: string): OwnerRef {
-    const row = summary.find((r) => r.userId === userId);
-    return row ? { id: row.userId, displayName: row.displayName } : ownRef;
+  /** #158: the display name for a list the route names but `summary` may not
+   *  describe (yet, or at all — a deleted user's id in an old history entry).
+   *  Deliberately does NOT fall back to the signed-in user's own name: that
+   *  would print the wrong heading over someone else's list. */
+  function resolvedName(userId: string): string {
+    return summary.find((r) => r.userId === userId)?.displayName ?? S.list.unknownMember;
   }
 
   function renderList() {
     if (viewing) {
-      const owner = ownerRefFor(viewing);
+      // #158: the rows on screen must belong to the list the route names.
+      // `shownOtherUserId` is the tag left by the fetch that produced
+      // `otherItems`; while it disagrees with `viewing` (a fetch in flight, a
+      // route that just changed) neither the own list's rows nor the previous
+      // list's rows may render under this heading — only the loading
+      // placeholder the boot path uses. A failed fetch tags the id too (with
+      // no rows), so it falls through to the empty state below instead of
+      // hanging here.
+      if (shownOtherUserId !== viewing) return <SkeletonList />;
       if (otherItems.length === 0) {
-        return <EmptyState title={S.empty.other(owner.displayName)} />;
+        return <EmptyState title={S.empty.other(resolvedName(viewing))} />;
       }
       return (
         <ItemList
@@ -620,11 +682,16 @@ export function AppPage() {
       <div className="list-layout">
         <section className="list-section">
           <ListSwitcher
-            currentName={viewing ? ownerRefFor(viewing).displayName : ownRef.displayName}
+            currentName={viewing ? resolvedName(viewing) : ownRef.displayName}
             rows={switcherRows}
             currentUserId={viewing}
-            count={viewing ? otherItems.length : ownItems.length}
-            onSelect={(userId) => (userId === null ? backToOwnList() : void viewList(userId))}
+            // #158: the count belongs to the rows on screen. While the route's
+            // list is still resolving, show none rather than the previous
+            // list's number.
+            count={
+              viewing === null ? ownItems.length : shownOtherUserId === viewing ? otherItems.length : undefined
+            }
+            onSelect={(userId) => (userId === null ? backToOwnList() : selectList(userId))}
             action={
               !viewing && ownItems.length > 1 ? (
                 <button
