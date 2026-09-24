@@ -84,6 +84,118 @@ describe("extractProduct", () => {
   });
 });
 
+describe("extractProduct JSON-LD offer shapes (#159)", () => {
+  const VGP = "https://videogameperfection.com/products/ossc-pro/";
+
+  test("array-of-AggregateOffer: lowPrice + priceCurrency, title/image intact", async () => {
+    const p = await parseFixture("vgp-aggregate-offer.html", VGP);
+    expect(p.priceCents).toBe(29500); // lowPrice, NOT highPrice 329.50
+    expect(p.priceCents).not.toBe(32950);
+    expect(p.currency).toBe("EUR");
+    expect(p.title).toBe("Open Source Scan Converter (OSSC) Pro");
+    expect(p.image).toBe(
+      "https://videogameperfection.com/wp-content/uploads/2023/11/ossc-pro-in-black-case1.webp",
+    );
+    expect(p.siteName).toBe("VideoGamePerfection.com");
+  });
+
+  test("the issue's repro shape (lowPrice 115.00, highPrice 148.49, EUR)", async () => {
+    const html = `<!DOCTYPE html><html><head>
+      <script type="application/ld+json">
+      {"@context":"https://schema.org/","@type":"Product","name":"Retro Cable",
+       "offers":[{"@type":"AggregateOffer","lowPrice":"115.00","highPrice":"148.49","offerCount":7,"priceCurrency":"EUR"}]}
+      </script></head><body></body></html>`;
+    const p = await extractProduct(html, "https://videogameperfection.com/products/cable/");
+    expect(p.priceCents).toBe(11500);
+    expect(p.currency).toBe("EUR");
+  });
+
+  test("array of concrete Offers → LOWEST valid price wins", async () => {
+    const html = `<!DOCTYPE html><html><head>
+      <script type="application/ld+json">
+      {"@context":"https://schema.org/","@type":"Product","name":"Cable",
+       "offers":[{"@type":"Offer","price":"20.00","priceCurrency":"EUR"},
+                 {"@type":"Offer","price":"15.00","priceCurrency":"EUR"}]}
+      </script></head><body></body></html>`;
+    const p = await extractProduct(html, VGP);
+    expect(p.priceCents).toBe(1500);
+    expect(p.currency).toBe("EUR");
+  });
+
+  test("AggregateOffer with neither a valid lowPrice nor price → null, never 0/NaN", async () => {
+    for (const bad of ["abc", "-5.00", "9999999.00", "", null]) {
+      const offers = JSON.stringify([
+        { "@type": "AggregateOffer", lowPrice: bad, priceCurrency: "EUR" },
+      ]);
+      const html = `<!DOCTYPE html><html><head>
+        <script type="application/ld+json">
+        {"@context":"https://schema.org/","@type":"Product","name":"Cable","offers":${offers}}
+        </script></head><body></body></html>`;
+      const p = await extractProduct(html, VGP);
+      expect(p.priceCents).toBeNull();
+      expect(p.currency).toBeNull();
+    }
+    // Boundary: 0.01 IS a valid price (1 cent) and must be kept, not dropped
+    // by the "is it present?" check.
+    const boundary = JSON.stringify([
+      { "@type": "AggregateOffer", lowPrice: "0.01", priceCurrency: "EUR" },
+    ]);
+    const bp = await extractProduct(
+      `<!DOCTYPE html><html><head><script type="application/ld+json">{"@type":"Product","name":"X","offers":${boundary}}</script></head><body></body></html>`,
+      VGP,
+    );
+    expect(bp.priceCents).toBe(1);
+    expect(bp.currency).toBe("EUR");
+  });
+
+  test("lowPrice 0.00 (genuinely free) is kept, not treated as missing", async () => {
+    const html = `<!DOCTYPE html><html><head>
+      <script type="application/ld+json">
+      {"@context":"https://schema.org/","@type":"Product","name":"Free Cable",
+       "offers":[{"@type":"AggregateOffer","lowPrice":"0.00","highPrice":"0.00","priceCurrency":"EUR"}]}
+      </script></head><body></body></html>`;
+    const p = await extractProduct(html, VGP);
+    expect(p.priceCents).toBe(0);
+    expect(p.currency).toBe("EUR");
+  });
+
+  test("invalid aggregate does not block the DOM tier (price still found)", async () => {
+    // The JSON-LD tier must degrade to "nothing" so the DOM tiers run — the
+    // partial-success contract.
+    const html = `<!DOCTYPE html><html><head>
+      <script type="application/ld+json">
+      {"@context":"https://schema.org/","@type":"Product","name":"Cable",
+       "offers":[{"@type":"AggregateOffer","lowPrice":"abc","priceCurrency":"EUR"}]}
+      </script></head><body>
+      <div class="game_area_purchase_game"><div class="game_purchase_price price">&#163;9.99</div></div>
+      </body></html>`;
+    const p = await extractProduct(html, "https://store.steampowered.com/app/632360/");
+    expect(p.priceCents).toBe(999);
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("object-shaped offers (regression guard for shopify/productgroup)", async () => {
+    const html = `<!DOCTYPE html><html><head>
+      <script type="application/ld+json">
+      {"@context":"https://schema.org/","@type":"Product","name":"Trio","offers":{"price":99.99,"priceCurrency":"USD"}}
+      </script></head><body></body></html>`;
+    const p = await extractProduct(html, "https://colourpop.example.com/x");
+    expect(p.priceCents).toBe(9999);
+    expect(p.currency).toBe("USD");
+  });
+
+  test("tier-1 still wins: og:price beats the AggregateOffer tier", async () => {
+    const base = await Bun.file(join(FIXTURES, "vgp-aggregate-offer.html")).text();
+    const html = base.replace(
+      "<title>",
+      `<meta property="og:price:amount" content="31.15"><meta property="og:price:currency" content="GBP"><title>`,
+    );
+    const p = await extractProduct(html, VGP);
+    expect(p.priceCents).toBe(3115);
+    expect(p.currency).toBe("GBP");
+  });
+});
+
 describe("extractProduct DOM fallback tier (no og/json-ld pages)", () => {
   const AMAZON_DP = "https://www.amazon.co.uk/dp/B0DLGMVR4C";
   const AMAZON_NOOFFER = "https://www.amazon.co.uk/dp/B0BPCCKL3N";

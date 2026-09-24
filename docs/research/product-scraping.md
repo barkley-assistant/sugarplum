@@ -273,3 +273,26 @@ app ids during the probe run (e.g. `/app/632360/`), which surfaces as
 our headers; already-stored items whose title was polluted before this wave are
 not rewritten (re-add or edit them); and if Steam renames the purchase-block
 classes the tier degrades to title-only rather than to a wrong price.
+
+---
+
+## 2026-09-24 VideoGamePerfection AggregateOffer (#159)
+
+`videogameperfection.com` product pages ship Yoast SEO JSON-LD: one `@graph`
+block containing a `BreadcrumbList` and a `Product` whose `offers` is an ARRAY
+holding one `AggregateOffer` with `lowPrice`/`highPrice`/`offerCount`/
+`priceCurrency` (all strings). The parser read `offers.price`, which is
+undefined on an array — the JSON-LD tier silently contributed nothing and the
+item stored no direct price, even though the transport never failed. Fixed by
+shape-tolerant offer selection in `findProductNode` (lowest valid price;
+AggregateOffer.lowPrice), with no hostname branch. Fixture:
+`tests/fixtures/vgp-aggregate-offer.html` (295.00 EUR).
+
+Transport ground truth, measured 2026-09-24 from the deploy host with the
+production plain UA: six VGP product URLs all returned HTTP 200 with 285-449 KB
+bodies (`server: Sucuri/Cloudproxy` is a CDN, not a challenge), and
+`scrapeProduct` resolved `strategy: "plain"` in one step. NO entry was added to
+`SITE_OVERRIDES`: the issue's "Sucuri 403" was vantage-point-specific, and an
+override would force a browser launch on a host that plain-fetches fine (and
+would stop the host from learning, per #103). If VGP ever does start blocking,
+the default chain's escalation plus the learned-override promotion covers it.

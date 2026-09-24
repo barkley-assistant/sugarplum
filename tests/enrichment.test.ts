@@ -172,6 +172,48 @@ describe("async enrichment", () => {
     }
   });
 
+  test("#159: array-of-AggregateOffer JSON-LD → direct price + scrape history row", async () => {
+    await login(admin, "admin", "admin-password");
+    const fixture = Bun.file(join(FIXTURES, "vgp-aggregate-offer.html")).text();
+    const remote =
+      "https://videogameperfection.com/wp-content/uploads/2023/11/ossc-pro-in-black-case1.webp";
+    const shop = serve({
+      port: 0,
+      fetch: async (req) => {
+        const url = new URL(req.url);
+        if (url.pathname === "/img/osscpro.webp") {
+          return new Response(JPEG_BYTES, { headers: { "Content-Type": "image/jpeg" } });
+        }
+        return new Response((await fixture).replace(remote, `${url.origin}/img/osscpro.webp`));
+      },
+    });
+    const userId = await myId(admin);
+    try {
+      const res = await admin.request("POST", "/api/wishlist/items", {
+        url: `http://127.0.0.1:${shop.port}/products/ossc-pro/`,
+      });
+      expect(res.status).toBe(201);
+      const item = (await res.json()) as OwnedItem;
+      expect(await waitForFetchState(admin, userId, item.id, "complete")).toBe(true);
+
+      const list = await admin.request("GET", `/api/users/${userId}/wishlist`);
+      const items = (await list.json()) as OwnedItem[];
+      const enriched = items.find((i) => i.id === item.id) as OwnedItem;
+      expect(enriched.priceCents).toBe("295.00");
+      expect(enriched.currency).toBe("EUR");
+      expect(enriched.priceSource).toBe("scrape");
+
+      const history = app.app.db
+        .query("SELECT price_cents, currency, source FROM price_history WHERE item_id = ?")
+        .all(item.id) as { price_cents: number; currency: string; source: string }[];
+      expect(
+        history.some((h) => h.price_cents === 29500 && h.currency === "EUR" && h.source === "scrape"),
+      ).toBe(true);
+    } finally {
+      shop.stop(true);
+    }
+  });
+
   test("bot-walled URL → fetchState 'failed' + last_fetch_error mentions heuristic; item still listed", async () => {
     await login(admin, "admin", "admin-password");
     const userId = await myId(admin);
