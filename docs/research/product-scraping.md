@@ -218,10 +218,12 @@ transport-independent: plain-first is a latency choice (~1.6–1.9s vs a browser
 launch), not a correctness one.
 
 Honest limits: when Amazon has no featured offer the price is genuinely absent,
-so the item stays price-less with a hint at best; the `#aod-ingress-link`
-number is the cheapest NEW offer floor, not necessarily the buybox price; and
-the `amazon.*` markup shapes were verified on `.co.uk` only (the generic
-extractor degrades to title-only elsewhere, never to a wrong value).
+so the item stays price-less with a hint at best; the `#aod-ingress-link` href
+on a mixed page says `condition=ALL`, so its number is the all-conditions floor
+— NOT a NEW offer floor and NOT necessarily the buybox price (corrected
+2026-09-24, see §"2026-09-24 Amazon mixed conditions (#160)"); and the
+`amazon.*` markup shapes were verified on `.co.uk` only (the generic extractor
+degrades to title-only elsewhere, never to a wrong value).
 
 ---
 
@@ -296,3 +298,40 @@ bodies (`server: Sucuri/Cloudproxy` is a CDN, not a challenge), and
 override would force a browser launch on a host that plain-fetches fine (and
 would stop the host from learning, per #103). If VGP ever does start blocking,
 the default chain's escalation plus the learned-override promotion covers it.
+
+---
+
+## 2026-09-24 Amazon mixed conditions (#160)
+
+Measured on this host against live `www.amazon.co.uk` with the production
+Firefox UA (~90 detail pages). A mixed `New & Used` item is served in TWO
+shapes, and the parser was wrong on both: it took the first `.a-offscreen`
+inside `#aod-ingress-link` (else `div[id^=corePrice]`) without ever reading the
+buying-option condition, so the all-conditions floor could become the item's
+price and a `price_history` row.
+
+| # | Fact |
+|---|------|
+| M1 | **Shape A — accordion, conditions are machine-readable.** Two `div[id^=corePrice]` blocks, each wrapped in its own `div[data-csa-c-buying-option-type]` inside `#buyBoxAccordion`: NEW first, USED second. Measured: B0DWDDNK1Q NEW £34.97 / USED £26.25; B0BBRYHTPS NEW £8.99 / USED £6.71; B0FPXHJ4Z2 NEW £47.99 / USED £42.76. |
+| M2 | **Shape B — one featured offer, NO condition attribute anywhere.** Exactly one `div[id^=corePrice]` (plus an empty `corePriceDisplay_desktop_feature_div`) and no `data-csa-c-buying-option-type` in the document. The featured price is the buybox price that carries the discount badge: B0FPXD23ST £13.00 (ingress floor £12.52), B0DHSFT1V1 £8.99 (£7.83), B0CWH283WW £63.99, B06VVPKGGJ £8.99. |
+| M3 | **The ingress is NEVER a NEW floor on a mixed page.** Every mixed page measured carries `…/ref=dp_olp_ALL_mbc?ie=UTF8&condition=ALL` with the label `New & Used (N) from`, and its `.a-offscreen` is the all-conditions floor — equal to the USED price. This falsifies the earlier claim that the `#aod-ingress-link` number is the cheapest NEW offer floor: that holds only on a new-only page (`dp_olp_NEW_mbc?…condition=NEW`, "New (19) from"), which is exactly what `tests/fixtures/amazon-dp.html` encodes — and why the old suite could not see the bug. |
+| M4 | **On shape B the new-condition fact is absent from the document.** No condition attribute, no condition marker on `#buybox`, and `/gp/offer-listing/<asin>?condition=NEW` (also `?condition=ALL`) returns the same 3.8 KB "Click the button below to continue shopping" interstitial — the offer-listing endpoint stays walled (F7). |
+| M5 | **Mechanics the fix depends on:** HTMLRewriter element handlers maintain a push/`onEndTag`-pop ancestor stack correctly (depth returns to 0 on well-formed HTML), and `el.getAttribute("href")` returns the value still ENTITY-ENCODED (`…&amp;condition=ALL`) — so the condition regex tolerates both `&` and `&amp;`. |
+
+Shipped (#160): the generic DOM price tier in `src/server/scraper/parse.ts` now
+tracks `data-csa-c-buying-option-type` and resolves the price from the captured
+condition (`resolveDomPrice`): a NEW block wins outright; a USED / RENEWED /
+REFURBISHED / OPEN_BOX / UNKNOWN / … block yields no direct price even when a
+new-conditioned ingress exists; the ingress is used only when the page declares
+no condition attributes AND its href is `condition=NEW`; and a page that
+declares no condition at all falls through to the featured corePrice offer
+(shape B), which is strictly better evidence than the all-conditions floor. A
+page whose only offers are non-new stores no price and no `price_history` row —
+the item stays usable through the labelled hint path. Fixtures:
+`tests/fixtures/amazon-dp-mixed-accordion.html` (3497, shape A),
+`amazon-dp-mixed-noattr.html` (1300, shape B), `amazon-dp-used-only.html`
+(null — synthetic: no used-only ASIN turned up in the live sample) and
+`amazon-dp-mixed-renewed.html` (NEW 5299 beats RENEWED 4799). No hostname
+branch — the tracking is generic — and the JSON-LD tier is untouched: #159's
+lowest-wins rule stays correct there because structured offers carry no
+condition field.
