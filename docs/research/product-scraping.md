@@ -335,3 +335,32 @@ the item stays usable through the labelled hint path. Fixtures:
 branch — the tracking is generic — and the JSON-LD tier is untouched: #159's
 lowest-wins rule stays correct there because structured offers carry no
 condition field.
+
+---
+
+## 2026-09-27 connection-level fingerprint blocks (#173)
+
+`fetch.ts` used to collapse EVERY thrown fetch error into `{reason:"network"}`
+with no heuristic, and the default chain treated `network` as
+unreachable-forever — so a WAF that kills the connection instead of serving a
+challenge page got one plain attempt and no browser escalation. Measured on
+this host (bun 1.4.2) the same day, with the thrown objects inspected directly:
+
+| # | Fact |
+|---|------|
+| N1 | `AbortSignal.timeout` firing → `DOMException` `name: "TimeoutError"`, message "The operation timed out.", no `cause`, `Object.keys(err) === []` — and a legacy NUMERIC `code` of `23`, which is why the classifier reads `code` with `typeof code === "string"` and not truthiness. |
+| N2 | Refused connection → `TypeError` `code: "ConnectionRefused"`, message "Unable to connect. Is the computer able to access the url?"; DNS → `TypeError` `code: "ENOTFOUND"`, message `getaddrinfo ENOTFOUND <host>`; socket killed → `TypeError` `code: "ECONNRESET"`, message "The socket connection was closed unexpectedly…". |
+| N3 | A mid-body stall (headers sent, body never closed) is aborted by the SAME signal, so the body-read catch sees N1's `TimeoutError` — not an ECONNRESET. Classifying both catch sites the same way is what makes the recorded name honest. |
+| N4 | `www.asos.com` is the live example: three URLs (`/women/`, `/men/`, one product page) through the production `fetchPage` headers → `reason: "network"`, heuristic `timeout`, ~10.0s, zero bytes. A bare `fetch` with only the UA + Accept headers got a fast 403 (372 bytes, 120ms) instead, and `curl --http2` died with `HTTP/2 stream 1 was not closed cleanly: INTERNAL_ERROR` at 0.108s — the block shape depends on the header set, and none of the three is a reachability problem. |
+
+Shipped: `classifyFetchError` (`fetch.ts`) names the transport failure at both
+catch sites and never throws; `FINGERPRINT_NETWORK_HEURISTICS` +
+`isEscalatableStep` (`learned.ts`) make `network`+`timeout`/`conn-reset`/
+`unknown` escalate on the default chain while `network`+`dns`/`refused` and
+`private-ip` stay non-escalatable, with the same predicate used by the chain
+gate and the promotion evidence so the two can never disagree; registry chains
+are untouched (they already try every entry in order). The enrichment log and
+`last_fetch_error` now read `network (timeout)` / `network (conn-reset)` rather
+than a bare `network` — that string is how an operator tells a fingerprint
+block from a dead host. The ASOS registry entry and its embedded-price parser
+tier remain issue #171's, deliberately not added here.
