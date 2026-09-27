@@ -407,6 +407,7 @@ Transport entry and parser live in `src/server/scraper/overrides.ts`
 (`asos.com`, stealth-first) and `src/server/scraper/parse.ts` (the ASOS tier).
 Fixture: `tests/fixtures/asos-pdp.html` — the two-entry trap above, the empty
 JSON-LD offer, and the sibling config assignments.
+
 ---
 
 ## 2026-09-27 Bershka Akamai bm-verify pass-through (#172)
@@ -455,7 +456,12 @@ SSRF guards) and returns that request's verdict, ONCE: the token is single-use,
 so a second interstitial is the answer, never a reason for a third request (a
 stricter tier such as the B14 host therefore fails honestly as
 `botwall (akamai-bm)`, and `botwall` is already escalatable, so no
-`learned.ts` change was needed). `extractMetaRefreshTarget` is a separate pure
+`learned.ts` change was needed). The follow requires the TOKEN-shaped target —
+the resolved URL must carry `bm-verify` — because the markers have a pinned
+false positive (the JSON-LD case pinned in the tests): a page that merely spells
+a marker and ships an ordinary meta refresh keeps its own visible
+`botwall (akamai-bm)` verdict instead of silently having another page fetched
+and returned as the product. `extractMetaRefreshTarget` is a separate pure
 function with its own 4KB window. No `SITE_OVERRIDES` entry for the host was
 added — stealth cannot pass this challenge — and the default `["plain"]` chain
 is what now succeeds. Fixtures: `tests/fixtures/bershka-interstitial.html`
