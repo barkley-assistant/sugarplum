@@ -363,4 +363,47 @@ are untouched (they already try every entry in order). The enrichment log and
 `last_fetch_error` now read `network (timeout)` / `network (conn-reset)` rather
 than a bare `network` — that string is how an operator tells a fingerprint
 block from a dead host. The ASOS registry entry and its embedded-price parser
-tier remain issue #171's, deliberately not added here.
+tier remain issue #171's, deliberately not added here — delivered separately,
+see the next section.
+
+---
+
+## 2026-09-27 ASOS embedded price payload (#171)
+
+Measured on the same day on a real `www.asos.com` PDP loaded through the
+project's own stealth transport (`scripts/stealth-fetch.py`: `ok: true`,
+status 200, 505,047 bytes, final URL
+`…/dr-martens-zebzag-mule-in-black-suede/prd/206025763`).
+
+| # | Fact |
+|---|------|
+| A1 | The body contains the `stockPriceResponse` substring 5 times; exactly ONE is the assignment, and it is written as `/*~stockPrice~*/window.asos.pdp.config.stockPriceResponse = '<payload>'`. The other hits are the consumer function and asset references, so the tier's token is the FULL assignment path, not the bare name. |
+| A2 | The payload is a single-quoted JS string holding a JSON ARRAY (no backslash escaping on the measured page — the double quotes are literal). |
+| A3 | The array has SEVEN entries: productIds `205104757, 206025763, 207330753, 209298332, 209603968, 209705634, 210109896` — the page product plus the "You Might Also Like" carousel. |
+| A4 | The array is ordered ASCENDING BY PRODUCTID, so it is not the request order: the sibling `window.asos.pdp.config.stockPriceApiUrl` lists `productIds=206025763,209298332,…` with the page product FIRST. Neither order may be relied on. |
+| A5 | Entry [0] is a DIFFERENT product — 205104757 at `current.value 29.99` / `"£29.99"` — while the page product 206025763 is entry [1] at `current.value 110` / `"£110.00"`. First-entry-wins therefore stores another product's price on a page whose own price is nearly 4× higher. |
+| A6 | Per-entry shape: `{productId, isInStock, hasMultiplePricesInStock, productPrice:{current:{value,text}, previous:{…}, rrp:{…}, currency, isMarkedDown, discountPercentage, …}, variants:[{id,isInStock,price:{current:{value,text}}}]}`. |
+| A7 | `productPrice.currency` is an ISO code (`"GBP"`) and is a SIBLING of `current`, not nested inside it; `current.text` carries the symbol form as a cross-check, not as the primary source. |
+| A8 | The page's JSON-LD `Product` node carries `"productID": 206025763` and `"offers":{}` — the same id the payload keys the page product by, and no price. This is the anchor, and it costs no extra parse because the existing JSON-LD handler already reads the block. |
+| A9 | There is NO rendered price node and NO structured price metadata: no `og:price:amount`, no `product:price:amount`, no `itemprop=price`, and all 39 occurrences of `£110.00` on the page lie INSIDE the payload string. ASOS builds the price client-side from this payload, so the payload is the only price source. |
+| A10 | The live breadcrumb JSON-LD block is malformed (`"@context":"https://***@type":"BreadcrumbList"` — the `@type` key is swallowed by the context value), so it never reaches `JSON.parse`; the Product block above it parses fine. |
+
+The rule the tier implements: capture only the anchored
+`window.asos.pdp.config.stockPriceResponse` assignment, then select the entry
+whose `productId` equals the page's OWN id — the JSON-LD `productID` first,
+else the `/prd/<id>` in the page url — and take `productPrice.current.value`
+(else `current.text`) through the existing price parsers. An unanchored pick is
+wrong rather than merely fragile, so a page with no anchor yields a null price
+and the item stays visibly incomplete; the tier fails closed, never sideways
+onto a recommendation's price.
+
+Implementation note for anyone touching the `script` handler: HTMLRewriter
+delivers a script's content as one content chunk followed by a SEPARATE EMPTY
+`lastInTextNode` chunk. A token guard applied before the `lastInTextNode` check
+therefore drops the payload entirely — the guard has to gate content chunks
+only. Measured on Bun 1.4.2 while building this tier.
+
+Transport entry and parser live in `src/server/scraper/overrides.ts`
+(`asos.com`, stealth-first) and `src/server/scraper/parse.ts` (the ASOS tier).
+Fixture: `tests/fixtures/asos-pdp.html` — the two-entry trap above, the empty
+JSON-LD offer, and the sibling config assignments.

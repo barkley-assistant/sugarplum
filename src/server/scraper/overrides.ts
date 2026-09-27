@@ -50,6 +50,26 @@ const STEAM_OVERRIDE: SiteOverride = {
     "Title/price extraction is generic — see parse.ts wave-14 tier.",
 };
 
+/** ASOS storefronts. Two measured facts drive this entry (2026-09-27):
+ *  (1) Transport: a plain fetch is killed at the connection level — HTTP/2
+ *      INTERNAL_ERROR reset (0.13s, 0 bytes) or a 10-15s timeout with zero
+ *      bytes. There is no status/body for `detectBotWall`, so the plain step
+ *      is a guaranteed wasted attempt every fetch.
+ *  (2) The real page has no og:price:/product:price:/itemprop and its JSON-LD
+ *      Product node ships an EMPTY offer — the price lives only in the
+ *      embedded `window.asos.pdp.config.stockPriceResponse` payload, read by
+ *      the ASOS tier in parse.ts. Stealth returns the full page (200, ~505KB).
+ *      Evidence: docs/research/product-scraping.md §2026-09-27 ASOS ground
+ *      truth. */
+const ASOS_OVERRIDE: SiteOverride = {
+  strategies: ["stealth-browser", "plain"],
+  notes:
+    "Connection-level WAF block on the plain fetch (HTTP/2 reset / timeout, " +
+    "0 bytes, 2026-09-27); stealth gets 200 with the full page. Price is only " +
+    "in the embedded stockPriceResponse payload — see the parse.ts ASOS tier. " +
+    "Evidence: docs/research/product-scraping.md §2026-09-27 ASOS",
+};
+
 /** key = exact hostname, lowercase, no leading "www.". */
 export const SITE_OVERRIDES: Record<string, SiteOverride> = {
   "smythstoys.com": {
@@ -62,6 +82,7 @@ export const SITE_OVERRIDES: Record<string, SiteOverride> = {
   "amazon.com": AMAZON_OVERRIDE,
   "amazon.de": AMAZON_OVERRIDE,
   "store.steampowered.com": STEAM_OVERRIDE,
+  "asos.com": ASOS_OVERRIDE,
 };
 
 /** hostname("https://WWW.SmythsToys.com/x") → "smythstoys.com" or null. */

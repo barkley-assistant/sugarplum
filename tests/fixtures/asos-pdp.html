@@ -1,0 +1,70 @@
+<!--
+  ASOS product page — hand-trimmed from a real capture (2026-09-27, HTTP 200,
+  ~505 KB) taken through the project's own stealth transport
+  (`scripts/stealth-fetch.py`; a plain fetch is killed at the connection level
+  — see docs/research/product-scraping.md §2026-09-27). Sanitised for a public
+  repo: no cookies, no basket/session state, and the per-session
+  `keyStoreDataversion` query value is redacted.
+
+  WHAT THIS FIXTURE PINS (issue #171)
+  -----------------------------------
+  The real page carries NO price in any structured or rendered form: no
+  `og:price:amount`, no `product:price:amount`, no `itemprop`, and its single
+  JSON-LD `Product` node ships an EMPTY offer (`"offers":{}`). The price exists
+  only inside `window.asos.pdp.config.stockPriceResponse`, a single-quoted JS
+  string holding a JSON ARRAY. Measured on the capture: 39 occurrences of
+  `£110.00` on the page, every one of them inside that string.
+
+  THE TRAP BAKED IN HERE
+  ----------------------
+  The array mixes the page product with the "You Might Also Like" carousel, and
+  it is NOT in request order: the sibling `stockPriceApiUrl` request lists
+  `productIds=206025763,…` (page product FIRST) while the response puts
+  `205104757` first (ascending by productId). Entry [0] here is a DIFFERENT
+  PRODUCT — productId 205104757 at £29.99 — and the page product
+  (206025763, "Dr Martens ZebZag mule in black suede") is entry [1] at £110.00.
+  A first-entry-wins implementation therefore stores £29.99 for a £110.00 page;
+  the extractor must anchor on the page's own product id (the JSON-LD
+  `productID`, else `/prd/<id>` in the URL) before it reads anything.
+
+  Also carried, so the anchored capture proves it does NOT fire on them: the
+  `stockPriceApiUrl` and `stockPriceApiTimeout` sibling assignments (the real
+  page has 4 script chunks containing the `stockPriceResponse` substring, of
+  which exactly one is the assignment) and the `/*~stockPrice~*/` comment
+  prefix ASOS really ships.
+
+  Deviation from the live capture, called out honestly: the live breadcrumb
+  block is malformed (`"@context":"https://***@type":"BreadcrumbList"` — the
+  `@type` key is swallowed by the context value), so it never reaches
+  JSON.parse. The well-formed equivalent is used here so the fixture proves a
+  present-and-parsable product sequence resolves the price, while the malformed
+  shape stays covered by tests/fixtures/mixed-ld.html.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dr Martens ZebZag mule in black suede | ASOS</title>
+<meta property="og:title" content="Dr Martens ZebZag mule in black suede | ASOS">
+<meta property="og:type" content="product">
+<meta property="og:image" content="https://images.asos-media.com/products/dr-martens-zebzag-mule-in-black-suede/206025763-1-black">
+<meta property="og:site_name" content="ASOS">
+<meta property="og:url" content="https://www.asos.com/dr-martens/dr-martens-zebzag-mule-in-black-suede/prd/206025763">
+<meta property="og:description" content="Dr Martens ZebZag mule in black suede at ASOS. Shop this season's must haves with multiple delivery and return options (Ts&amp;Cs apply).">
+<link rel="canonical" href="https://www.asos.com/dr-martens/dr-martens-zebzag-mule-in-black-suede/prd/206025763">
+<!-- The anchor: the page's own product id, and an EMPTY offer (measured). -->
+<script id="split-structured-data" type="application/ld+json">{"@context":"https://schema.org/","@type":"Product","name":"Dr Martens ZebZag mule in black suede","sku":"134114426","color":"BLACK","image":"https://images.asos-media.com/products/dr-martens-zebzag-mule-in-black-suede/206025763-1-black","brand":{"@type":"Brand","name":"Dr Martens"},"productID":206025763,"url":"https://www.asos.com/dr-martens/dr-martens-zebzag-mule-in-black-suede/prd/206025763","offers":{}}</script>
+<script id="breadcrumb-structured-data" type="application/ld+json">{"@context":"https://schema.org/","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.asos.com/"},{"@type":"ListItem","position":2,"name":"Women","item":"https://www.asos.com/women/"},{"@type":"ListItem","position":3,"name":"Shoes","item":"https://www.asos.com/women/shoes/cat/?cid=4172"},{"@type":"ListItem","position":4,"name":"Dr Martens ZebZag mule in black suede"}]}</script>
+</head>
+<body>
+<div id="product-details"><h1>Dr Martens ZebZag mule in black suede</h1></div>
+<script type="text/javascript">
+  window.asos.pdp.config = window.asos.pdp.config || {};
+  window.asos.pdp.config.stockPriceUrl = '/api/product/catalogue/v4/stockprice?productIds=';
+  window.asos.pdp.config.stockPriceApiUrl = '/api/product/catalogue/v4/stockprice?productIds=206025763,209298332,209603968,209705634,210109896,207330753,205104757&store=COM&currency=GBP&keyStoreDataversion=REDACTED&country=GB';
+  window.asos.pdp.config.stockPriceApiTimeout = 5000;
+
+  /*~stockPrice~*/window.asos.pdp.config.stockPriceResponse = '[{"productId":205104757,"isInStock":true,"isRestockingSoon":false,"hasMultiplePricesInStock":false,"hasMultipleColoursInStock":false,"productPrice":{"current":{"value":29.99,"text":"£29.99"},"previous":{"value":29.99,"text":"£29.99"},"rrp":{"value":null,"text":null},"currency":"GBP","isMarkedDown":false,"discountPercentage":0},"variants":[{"id":205104796,"isInStock":true,"price":{"current":{"value":29.99,"text":"£29.99"}}},{"id":205104798,"isInStock":true,"price":{"current":{"value":29.99,"text":"£29.99"}}}]},{"productId":206025763,"isInStock":true,"isRestockingSoon":false,"hasMultiplePricesInStock":false,"hasMultipleColoursInStock":false,"productPrice":{"current":{"value":110,"text":"£110.00"},"previous":{"value":110,"text":"£110.00"},"rrp":{"value":null,"text":null},"currency":"GBP","isMarkedDown":false,"discountPercentage":0},"variants":[{"id":206025774,"isInStock":false,"price":{"current":{"value":110,"text":"£110.00"}}},{"id":206025775,"isInStock":false,"price":{"current":{"value":110,"text":"£110.00"}}}]}]';
+</script>
+</body>
+</html>
