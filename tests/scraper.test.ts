@@ -18,9 +18,26 @@ import type { SearxngFetch } from "../src/server/searxng";
 const FIXTURES = join(import.meta.dir, "fixtures");
 const PAGE_URL = "https://colourpop.example.com/products/fresh-kiss-trio";
 
+/** Synthetic Akamai bm-verify material — the same values the interstitial
+ *  fixture ships (tests/fixtures/bershka-interstitial.html). The token is
+ *  obviously synthetic by design: no live token ever enters the repo. */
+const BM_TOKEN = "AAQAAAAO_____SYNTHETIC_TOKEN_FOR_TESTS__AAAA";
+const BM_TARGET_PATH = `/gb/example-product-c0p000000000.html?colorId=505&bm-verify=${BM_TOKEN}`;
+const BM_INTERSTITIAL = "bershka-interstitial.html";
+const BM_PDP = "bershka-pdp.html";
+const BM_MARKERS = [
+  "bm-verify=",
+  "/_sec/verify",
+  "triggerinterstitialchallenge",
+  "/interstitial/ic.html",
+];
+
+async function readFixture(name: string) {
+  return Bun.file(join(FIXTURES, name)).text();
+}
+
 async function parseFixture(name: string, pageUrl = PAGE_URL) {
-  const html = await Bun.file(join(FIXTURES, name)).text();
-  return extractProduct(html, pageUrl);
+  return extractProduct(await readFixture(name), pageUrl);
 }
 
 describe("extractProduct", () => {
@@ -981,6 +998,65 @@ describe("detectBotWall (wave 14)", () => {
     <title>Some Product</title>
   </head><body></body></html>`;
     expect(detectBotWall(html)).toBeNull();
+    // The same negative for a fully-extracting page: none of the four Akamai
+    // Bot Manager markers is a substring of an *.akamai.steamstatic.com asset
+    // URL, and an Akamai-fronted shop is not a challenge page.
+    expect(detectBotWall(await readFixture("amazon-dp.html"))).toBeNull();
+  });
+});
+
+describe("Akamai bm-verify interstitial (#172)", () => {
+  test("detectBotWall: Akamai bm-verify interstitial → 'akamai-bm'", async () => {
+    // The measured failure: a plain fetch of the product URL returns HTTP 200
+    // with this 2KB challenge body, and detection used to say `null`, so the
+    // pipeline stored it as a successful scrape with no price.
+    expect(detectBotWall(await readFixture(BM_INTERSTITIAL))).toBe("akamai-bm");
+  });
+
+  test("each Akamai marker independently matches 'akamai-bm'", () => {
+    // All four markers are present in the capture and each one alone is
+    // enough, so deleting one from the table cannot silently keep the suite
+    // green through the others.
+    const docs = [
+      `<meta http-equiv="refresh" content="5; URL='/p?bm-verify=AAQAAAAO1'">`,
+      `<script>xhr.open("POST", "/_sec/verify?provider=interstitial", true);</script>`,
+      `<script>function triggerInterstitialChallenge() {}</script>`,
+      `<noscript><iframe src="/interstitial/ic.html?provider=interstitial"></iframe></noscript>`,
+    ];
+    for (const doc of docs) expect(detectBotWall(doc)).toBe("akamai-bm");
+  });
+
+  test("the interstitial fixture carries every marker inside the 4KB window", async () => {
+    // `detectBotWall` samples the first 4,096 bytes (fetch.ts); the live
+    // capture has all four markers inside it and the fixture must too, or the
+    // pattern would only work against the live byte order.
+    const html = await readFixture(BM_INTERSTITIAL);
+    const sample = html.slice(0, 4096).toLowerCase();
+    for (const marker of BM_MARKERS) expect(sample).toContain(marker);
+    // And it must stay a small challenge body, not a page-sized document.
+    expect(html.length).toBeLessThan(3072);
+  });
+
+  test("the real PDP carries NO Akamai marker and is not a wall", async () => {
+    // Measured: the token-fetched product page contains none of the four
+    // markers anywhere, and the pre-existing `captcha` pattern does not fire
+    // on it either (the word appears beyond the 4KB sample window, if at all).
+    const html = await readFixture(BM_PDP);
+    const lower = html.toLowerCase();
+    for (const marker of BM_MARKERS) expect(lower).not.toContain(marker);
+    expect(detectBotWall(html)).toBeNull();
+  });
+
+  test("accepted trade-off: the challenge function name in page text IS a wall", () => {
+    // The marker is the identifier itself, so a page that merely SPELLS it
+    // (here inside JSON-LD) classifies as a wall. Deliberate: the measured
+    // interstitial needs the marker, and requiring `function
+    // triggerInterstitialChallenge` would be a longer regex with no measured
+    // benefit. Pinned so tightening it later is a visible, tested change.
+    const html = `<!DOCTYPE html><html><head>
+      <script type="application/ld+json">{"@type":"Product","name":"triggerInterstitialChallenge widget"}</script>
+    </head><body></body></html>`;
+    expect(detectBotWall(html)).toBe("akamai-bm");
   });
 });
 

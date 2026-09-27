@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en-gb">
+<head>
+<!-- Hand-trimmed capture of a Bershka product detail page (Inditex, captured
+     2026-09-27; served at 1,065,634 bytes once the challenge token was handed
+     back). Trimmed to the tiers the extractor actually reads: the og: title
+     and image, and the single JSON-LD Product block. The product path, SKUs and
+     image name are synthetic; the shape is what was measured.
+
+     Measured facts pinned here:
+       - ONE JSON-LD block. Its Product node carries a FOUR-element `offers`
+         array, all `price: "12.99"`, all `priceCurrency: "GBP"` — colour SKU
+         variants of the same garment at the same price, so
+         `selectStructuredOffer`'s lowest-wins rule is exercised without
+         ambiguity (all four are 1299).
+       - NO og:price:amount / og:price:currency. The live page ships none, so
+         the JSON-LD tier is the price source, not tier 1.
+       - NO og:site_name, so siteName falls back to the page hostname.
+       - The og:image query string is ENTITY-ENCODED exactly as served
+         (`&amp;w=850`); the extractor hands it back verbatim, so a later fix to
+         that defect has a fixture to fail against. Do not "tidy" it.
+       - None of the four Akamai Bot Manager markers appears anywhere in this
+         body, so the extracted page never classifies as a wall.
+     See docs/research/product-scraping.md. -->
+<meta charset="utf-8">
+<title>Fitted short sleeve print T-shirt - Women</title>
+<meta property="og:title" content="Fitted short sleeve print T-shirt - Women">
+<meta property="og:image" content="https://static.bershka.net/assets/public/abc1/example-product-p.jpg?ts=1789720111100&amp;w=850">
+<meta property="og:type" content="product">
+<meta name="description" content="Fitted short sleeve print T-shirt. Round neck.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "Fitted short sleeve print T-shirt",
+  "image": "https://static.bershka.net/assets/public/abc1/example-product-p.jpg?ts=1789720111100&w=850",
+  "description": "Fitted short sleeve print T-shirt. Round neck.",
+  "brand": { "@type": "Brand", "name": "Bershka" },
+  "offers": [
+    { "@type": "Offer", "priceCurrency": "GBP", "price": "12.99", "url": "https://www.bershka.com/gb/example-product-c0p000000000.html?colorId=505", "sku": "EXAMPLE-I2026-505" },
+    { "@type": "Offer", "priceCurrency": "GBP", "price": "12.99", "url": "https://www.bershka.com/gb/example-product-c0p000000000.html?colorId=800", "sku": "EXAMPLE-I2026-800" },
+    { "@type": "Offer", "priceCurrency": "GBP", "price": "12.99", "url": "https://www.bershka.com/gb/example-product-c0p000000000.html?colorId=251", "sku": "EXAMPLE-I2026-251" },
+    { "@type": "Offer", "priceCurrency": "GBP", "price": "12.99", "url": "https://www.bershka.com/gb/example-product-c0p000000000.html?colorId=401", "sku": "EXAMPLE-I2026-401" }
+  ]
+}
+</script>
+</head>
+<body>
+  <main>
+    <h1>Fitted short sleeve print T-shirt</h1>
+    <span class="price-current">12.99</span>
+  </main>
+</body>
+</html>

@@ -10,6 +10,10 @@
  * `unknown`. The scrape chain's escalation gate (`isEscalatableStep`) and the
  * enrichment log (`strategy:reason/heuristic`) are the consumers — a name is
  * all that is ever recorded, never the error body.
+ *
+ * Akamai Bot Manager (`akamai-bm`, #172): Inditex shops answer a plain fetch
+ * with a 2KB challenge body that carries the bm-verify token in a meta refresh,
+ * so a 200 alone does not mean the page arrived.
  */
 
 import { isPrivateLiteralUrl, finalUrlIsPrivate } from "../net/private-ip";
@@ -60,6 +64,13 @@ const BOT_WALL_PATTERNS: [RegExp, string][] = [
   // and `distil_referrer` (case-insensitive via the lowercased sample at the
   // call site) without false-matching the bare word "distil".
   [/\/_?incapsula_resource|distil_referrer/, "incapsula"],
+  // Akamai Bot Manager interstitial (measured on Bershka 2026-09-27: HTTP 200,
+  // 2,381 bytes, no redirect). ONE grouped pattern and ONE name: the four
+  // markers all appear in the same 2KB body, and the operator needs "this is
+  // the Akamai Bot Manager family", not which byte matched first. Still no
+  // bare `akamai` (see the removal note above) — none of these four is a
+  // substring of `akamai.steamstatic.com`.
+  [/bm-verify|_sec\/verify|triggerinterstitialchallenge|interstitial\/ic\.html/, "akamai-bm"],
 ];
 
 /** Lowercases the first ~4KB of the body and reports the matched heuristic. */
