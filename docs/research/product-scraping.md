@@ -407,3 +407,65 @@ Transport entry and parser live in `src/server/scraper/overrides.ts`
 (`asos.com`, stealth-first) and `src/server/scraper/parse.ts` (the ASOS tier).
 Fixture: `tests/fixtures/asos-pdp.html` — the two-entry trap above, the empty
 JSON-LD offer, and the sibling config assignments.
+
+---
+
+## 2026-09-27 Bershka Akamai bm-verify pass-through (#172)
+
+A plain fetch of a Bershka (Inditex) product URL answers HTTP **200** with a
+2KB Akamai Bot Manager interstitial instead of the page, and the body's only
+page-shaped signal is a non-breaking-space `<title>`. Detection had no Akamai
+marker, so the challenge body was classified `ok`, `extractProduct` returned a
+whitespace title with everything else null, and the item landed `complete` with
+a null price — a silent corruption, not a visible failure. Stealth is not the
+answer here: the challenge never settles in a browser (measured: navigation does
+not reach `domcontentloaded` in 57s). What works is the hand-off the
+interstitial itself ships: fetch the product URL again with the one-shot
+`bm-verify` token from its meta refresh and the real page arrives, plain, no JS.
+This is the second half of the same principle as the #173 subsection above —
+a plain fetch against a bot-walled shop must produce an honest verdict — and it
+is the reason `fetch.ts` owns both requests.
+
+| # | Fact |
+|---|------|
+| B1 | Plain fetch of the measured PDP: HTTP 200, 2,381 bytes, 189-246ms, no redirect. |
+| B2 | The interstitial's title is `&nbsp;`; extraction returns `title: " "` (one space) and nothing else. A non-null title is what made the pipeline say `ok` and drop the price. |
+| B3 | Four distinct Akamai Bot Manager markers, all inside the first 4,096 bytes: `bm-verify=` (twice — the meta refresh and the POST payload), `/_sec/verify?provider=interstitial`, `triggerInterstitialChallenge` (three times), `/interstitial/ic.html` (twice). |
+| B4 | The meta refresh target is **RELATIVE**: `content="5; URL='<product path>&bm-verify=AAQ…'"`. A bare `fetch` of that string throws `ERR_INVALID_URL` — it must be resolved against the fetched page's final URL. |
+| B5 | The interstitial sets an `ak_bmsc` cookie. Forwarding it or not makes NO difference to the refetch outcome: the token, not the cookie, is the gate. |
+| B6 | Resolving B4's target and refetching returns HTTP 200, 1,065,634 bytes — the real PDP, no interstitial. |
+| B7 | The real PDP contains NONE of the four markers anywhere in its 1MB body. It contains the word "captcha" beyond the 4KB sample window, so the pre-existing `captcha` pattern stays innocent (probed: `detectBotWall` → null). |
+| B8 | The real PDP ships exactly one JSON-LD block: a `Product` node whose `offers` is a FOUR-element array, all the same price, all the same currency, differing only by colour SKU — so `selectStructuredOffer`'s lowest-wins rule is exercised without ambiguity. |
+| B9 | Extraction on that page returns the product through the EXISTING tiers (og:title, then JSON-LD offers): the correct price and currency, a real title, and a `static.bershka.net` image. No parser change was needed — the bug was transport-only. |
+| B10 | The `og:image` source is ENTITY-ENCODED (`…&amp;w=850`) and extraction hands it back verbatim, so the image URL the download step sees still carries `&amp;`. That is a real defect (the `w=` size parameter is ignored) and is deliberately NOT fixed here; the fixture preserves the encoding so a later fix has something to fail against. |
+| B11 | Measured on the raw and the decoded image URL: both return HTTP 200 and both pass the magic-byte sniff, so the download succeeds and the wrong SIZE is stored. Out of scope for #172. |
+| B12 | Three consecutive plain fetches each returned a fresh ~2.4KB interstitial and a distinct token. A token is re-usable within a session (reused three times, all returned the full PDP). |
+| B13 | The token URL is same-origin with the requested page, so the SSRF pre-check is a no-op in practice for this host — it must still run, because another host's interstitial can point its meta refresh anywhere. |
+| B14 | Sibling Inditex hosts serve the same shape: one passes its token refetch to the real page; another returns ANOTHER interstitial on the refetch (a stricter challenge tier the token does not pass). |
+| B15 | The stricter tier is not resolved by forwarding the `ak_bmsc` cookie either (measured with and without). |
+| B16 | The defaults that make the hand-off work: no `Cookie` header, `redirect: "follow"`, `Accept-Language: en-GB,en;q=0.9` — exactly what `fetchPage` already sends. Nothing bespoke is needed. |
+
+Shipped: `BOT_WALL_PATTERNS` gains ONE grouped entry, `akamai-bm`
+(`bm-verify` | `_sec/verify` | `triggerinterstitialchallenge` |
+`interstitial/ic.html` — still no bare `akamai`, so the wave-14
+`*.akamai.steamstatic.com` false positive stays fixed), which makes the
+interstitial legible at BOTH detection sites (`fetch.ts` and
+`finishFromHtml`). `fetchPage` then follows the meta refresh through the same
+request path (`requestOnce` — headers, timeout, `redirect: "follow"` and both
+SSRF guards) and returns that request's verdict, ONCE: the token is single-use,
+so a second interstitial is the answer, never a reason for a third request (a
+stricter tier such as the B14 host therefore fails honestly as
+`botwall (akamai-bm)`, and `botwall` is already escalatable, so no
+`learned.ts` change was needed). The follow requires the TOKEN-shaped target —
+the resolved URL must carry `bm-verify` — because the markers have a pinned
+false positive (the JSON-LD case pinned in the tests): a page that merely spells
+a marker and ships an ordinary meta refresh keeps its own visible
+`botwall (akamai-bm)` verdict instead of silently having another page fetched
+and returned as the product. `extractMetaRefreshTarget` is a separate pure
+function with its own 4KB window. No `SITE_OVERRIDES` entry for the host was
+added — stealth cannot pass this challenge — and the default `["plain"]` chain
+is what now succeeds. Fixtures: `tests/fixtures/bershka-interstitial.html`
+(synthetic token, target deliberately left relative) and
+`tests/fixtures/bershka-pdp.html` (four same-price offers, `&amp;`-encoded
+image); tests in `tests/scraper.test.ts` under
+`Akamai bm-verify interstitial (#172)`.
