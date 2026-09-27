@@ -469,3 +469,69 @@ is what now succeeds. Fixtures: `tests/fixtures/bershka-interstitial.html`
 `tests/fixtures/bershka-pdp.html` (four same-price offers, `&amp;`-encoded
 image); tests in `tests/scraper.test.ts` under
 `Akamai bm-verify interstitial (#172)`.
+
+---
+
+## 2026-09-27 Next ProductGroup sibling variants (#170)
+
+A Next (UK) product page ships its product data as ONE ld+json block whose root
+is a **bare array**: a `ProductGroup` at index 0 followed by one `Product` node
+per size, every variant linked back to the group ONLY by
+`isVariantOf: {"@id": "<page url>", "@type": "ProductGroup"}`. The group node
+itself declares no `offers` and no `hasVariant`, and the JSON-LD walk returned
+at the group — reading the group's own (absent) offers — so the fourteen
+variants carrying the real prices were never visited. The item stored
+`price_cents = NULL`, `currency = NULL` with a `complete` fetch state while the
+page visibly advertised "£15 - £20". Transport was never the problem: a plain
+fetch is refused, the existing bot-wall detection classifies it, and the
+default chain escalates to stealth and gets the full page.
+
+| # | Fact |
+|---|------|
+| T1 | Plain fetch of `/style/su956648/w13137` with the production headers: HTTP **403**, 399 bytes, `server: AkamaiGHost`, body title "Access Denied". |
+| T2 | `detectBotWall` on that body → `"access denied"`, which is already in `ESCALATABLE_FAILURES`, so the default `["plain","stealth-browser"]` chain escalates without a registry entry. |
+| T3 | Stealth fetch of the same URL: `ok: true`, status **200**, **744,813 bytes**, final URL unchanged. |
+| T4 | A second stealth fetch of `/style/sv006994/g87467`: `ok: true`, 200, 724,672 bytes. |
+| T5 | One of three stealth fetches returned a 2,719-byte **Akamai behavioural challenge** instead of the page (`sec-if-cpt-container`, "Powered and protected by Akamai", reload-on-XHR). `detectBotWall` returns **null** on it — the failure mode is intermittent and undetected, out of scope here. |
+| P1 | The page ships nine ld+json blocks; blocks 1-5 and 7-9 are `WebPage` / `Organization` / `WebSite` / `WebPageElement`. **Block 6** is the product: a bare array of 15 nodes. |
+| P2 | Node [0] is `ProductGroup` with keys EXACTLY `@context,@type,@id,productGroupID,brand,name,image,description,variesBy`. **No `offers`. No `hasVariant`.** `variesBy` is `["size","color"]` (strings, not URLs). |
+| P3 | Nodes [1]-[14] are `Product`, one per size (3 Yrs … 16 Yrs), each with keys `@context,@type,@id,isVariantOf,name,sku,color,material,size,image,description,brand,additionalProperty,offers`. |
+| P4 | Every variant carries `isVariantOf: {"@id": "<page url>", "@type": "ProductGroup"}` — the SAME `@id` string as the group's own `@id`. |
+| P5 | Every variant's `offers` is a single `Offer` object: keys `@type,priceCurrency,price,itemCondition,url,availability`. |
+| P6 | The measured price ladder (size 3→16 Yrs), all `priceCurrency: "GBP"`, all `itemCondition: NewCondition`: **15, 15, 15, 15, 16, 16, 16, 16, 18, 18, 20, 20, 20, 20**. |
+| P7 | The visible price node is `<div data-testid="product-now-price"><span> £15 - £20</span></div>`. The lowest variant price (15) is exactly the "from" price. |
+| P8 | `og:title` and `<title>` are identical: `"Buy Oatmeal Cosy Cardigan (3-16yrs) from the Next UK online shop"`. |
+| P9 | NO `og:price:amount`, NO `product:price:amount`, NO `product:price:currency`, NO `itemprop="price"` anywhere in the 744,813 bytes. The JSON-LD tier is the ONLY price source. |
+| P10 | `og:site_name` is absent, so `siteName` falls back to the hostname: `next.co.uk`. |
+| P11 | The group's `image` is a single string; each variant's `image` is an ARRAY of URLs. |
+| P12 | The second capture (`/style/sv006994/g87467`) shows the same shape with a different ladder — **19, 19, 19, 19, 19, 21, 21, 21, 21, 23, 23, 25, 25, 25** (14 sizes, GBP), visible node "£19 - £25", one variant `SoldOut`. Availability is not part of the selection. |
+
+The rule: a `ProductGroup` resolves through three sources in precedence order —
+its `hasVariant[0]` (the nested shape, unchanged), then its SIBLING `Product`
+nodes whose `isVariantOf.@id` names the group's own `@id`, then the group's own
+`offers` — and the first source with a valid price wins, with
+`selectStructuredOffer` picking the LOWEST price and that winning offer's own
+currency. `isVariantOf.@id` is the only positive evidence used: a sibling naming
+a different id, or a group with no `@id` to match against, is never claimed, so
+a neighbouring product's price cannot leak into the group. The sibling list is
+the node list at the group's OWN level, threaded through the walk and refreshed
+at every array/object level (never accumulated), so a group nested under
+`@graph` is priced by its own level's variants rather than the document root.
+A group with none of the three yields a null price — the item stays visibly
+incomplete, never priced from a guess.
+
+Shipped: `nodeTypes`, `variantGroupId`, `belongsToGroup`,
+`collectSiblingVariantOffers`, `productGroupData` and `findProductNodeAt` in
+`src/server/scraper/parse.ts` (universal — no hostname check in that file, no
+transport change, no `SITE_OVERRIDES` entry; a registry entry would force a
+browser launch where the plain 403 already escalates and would stop
+`next.co.uk` from learning). Fixture `tests/fixtures/next-pdp.html` — a
+sanitised capture carrying the one ld+json block (group + six variants, ladder
+15/15/15/16/18/20) and the page's own `product-now-price` node; tests in
+`tests/scraper.test.ts` under `extractProduct ProductGroup sibling variants
+(#170)`, which include the two negative shapes (a sibling naming another group,
+a group with no `@id`) and the nested `hasVariant[0]` regression. The title is
+deliberately left unstripped: Next declares no `og:site_name`/`og:site`, so
+`stripStoreTitleNoise` has no store token to strip and the "from the Next UK
+online shop" prose stays. The undetected Akamai behavioural challenge (T5) is
+flagged for a separate issue and is NOT addressed here.

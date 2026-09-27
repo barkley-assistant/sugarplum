@@ -1685,3 +1685,135 @@ describe("scrapeProduct Steam pipeline (wave 14)", () => {
     expect(seenCookies[0]).toContain("birthtime=");
   });
 });
+
+describe("extractProduct ProductGroup sibling variants (#170)", () => {
+  const NEXT = "https://www.next.co.uk/style/su956648/w13137";
+
+  test("captured Next page: price from the SIBLING variant offers", async () => {
+    const p = await parseFixture("next-pdp.html", NEXT);
+    expect(p.priceCents).toBe(1500); // the £15 - £20 range's starting price
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("title and image still come from the group node", async () => {
+    const p = await parseFixture("next-pdp.html", NEXT);
+    expect(p.title).toBe("Buy Oatmeal Cosy Cardigan (3-16yrs) from the Next UK online shop");
+    expect(p.image).toBe(
+      "https://xcdn.next.co.uk/common/items/default/default/itemimages/3_4Ratio/product/lge/W13137s.jpg",
+    );
+    expect(p.siteName).toBe("next.co.uk");
+  });
+
+  test("lowest sibling wins, and the currency travels with that price", async () => {
+    const html = `<!DOCTYPE html><html><head><script type="application/ld+json">${JSON.stringify([
+      { "@type": "ProductGroup", "@id": NEXT, name: "D", image: "https://i/d.jpg" },
+      { "@type": "Product", name: "S3", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: { price: "20", priceCurrency: "GBP" } },
+      { "@type": "Product", name: "S4", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: { price: "18", priceCurrency: "GBP" } },
+      { "@type": "Product", name: "S5", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: { price: "25", priceCurrency: "EUR" } },
+    ])}</script></head><body></body></html>`;
+    const p = await extractProduct(html, NEXT);
+    expect(p.priceCents).toBe(1800);
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("a sibling naming a DIFFERENT group is never claimed", async () => {
+    const html = `<!DOCTYPE html><html><head><script type="application/ld+json">${JSON.stringify([
+      { "@type": "ProductGroup", "@id": NEXT, name: "D" },
+      { "@type": "Product", name: "Other", isVariantOf: { "@id": "https://example.com/other", "@type": "ProductGroup" }, offers: { price: "7", priceCurrency: "GBP" } },
+    ])}</script></head><body></body></html>`;
+    const p = await extractProduct(html, NEXT);
+    expect(p.priceCents).toBeNull();
+    expect(p.currency).toBeNull();
+  });
+
+  test("a group with no @id cannot be priced by a loose neighbouring Product", async () => {
+    const html = `<!DOCTYPE html><html><head><script type="application/ld+json">${JSON.stringify([
+      { "@type": "ProductGroup", name: "D" },
+      { "@type": "Product", name: "Neighbour", isVariantOf: { "@id": "https://anything.example/g", "@type": "ProductGroup" }, offers: { price: "7", priceCurrency: "GBP" } },
+    ])}</script></head><body></body></html>`;
+    const p = await extractProduct(html, NEXT);
+    expect(p.priceCents).toBeNull();
+  });
+
+  test("a group that NESTS its variants still uses hasVariant[0]", async () => {
+    const p = await parseFixture("productgroup.html", PAGE_URL);
+    expect(p.priceCents).toBe(9999);
+    expect(p.currency).toBe("USD");
+  });
+
+  test("group's own offers still win over unavailable siblings", async () => {
+    const html = `<!DOCTYPE html><html><head><script type="application/ld+json">${JSON.stringify([
+      { "@type": "ProductGroup", "@id": NEXT, name: "D", offers: { price: "12", priceCurrency: "GBP" } },
+      { "@type": "Product", name: "O", isVariantOf: { "@id": "https://example.com/other", "@type": "ProductGroup" }, offers: { price: "15", priceCurrency: "GBP" } },
+    ])}</script></head><body></body></html>`;
+    const p = await extractProduct(html, NEXT);
+    expect(p.priceCents).toBe(1200);
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("@graph: a group nested one level down is priced by its siblings", async () => {
+    const html = `<!DOCTYPE html><html><head><script type="application/ld+json">${JSON.stringify({
+      "@context": "https://schema.org",
+      "@graph": [
+        { "@type": "ProductGroup", "@id": NEXT, name: "D", image: "https://i/d.jpg", hasVariant: [] },
+        { "@type": "Product", name: "S3", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: { price: "20", priceCurrency: "GBP" } },
+        { "@type": "Product", name: "S4", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: { price: "15", priceCurrency: "GBP" } },
+      ],
+    })}</script></head><body></body></html>`;
+    const p = await extractProduct(html, NEXT);
+    expect(p.priceCents).toBe(1500);
+    expect(p.currency).toBe("GBP");
+    expect(p.image).toBe("https://i/d.jpg");
+  });
+
+  // #170 review findings: array-shaped sibling `offers` is the measured #159
+  // shape (VideoGamePerfection). It must compete in the lowest-wins selection
+  // exactly like an object-shaped one — before the fix a nested array was fed
+  // to selectStructuredOffer, which cannot see through it and silently stored
+  // a too-high price (or none at all).
+  test("array-shaped sibling offers compete: the lowest still wins", async () => {
+    const html = `<!DOCTYPE html><html><head><script type="application/ld+json">${JSON.stringify([
+      { "@type": "ProductGroup", "@id": NEXT, name: "D", image: "https://i/d.jpg" },
+      { "@type": "Product", name: "S3", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: [{ price: "15", priceCurrency: "GBP" }] },
+      { "@type": "Product", name: "S4", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: { price: "20", priceCurrency: "GBP" } },
+    ])}</script></head><body></body></html>`;
+    const p = await extractProduct(html, NEXT);
+    expect(p.priceCents).toBe(1500);
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("every sibling array-shaped: the lowest still wins", async () => {
+    const html = `<!DOCTYPE html><html><head><script type="application/ld+json">${JSON.stringify([
+      { "@type": "ProductGroup", "@id": NEXT, name: "D" },
+      { "@type": "Product", name: "S3", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: [{ price: "15", priceCurrency: "GBP" }] },
+      { "@type": "Product", name: "S4", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: [{ price: "20", priceCurrency: "GBP" }] },
+    ])}</script></head><body></body></html>`;
+    const p = await extractProduct(html, NEXT);
+    expect(p.priceCents).toBe(1500);
+    expect(p.currency).toBe("GBP");
+  });
+
+  // A group whose hasVariant[0] has no usable offers must not terminate the
+  // walk: the sibling Products naming it are still the price source.
+  test("hasVariant[0] with unusable offers falls through to the siblings", async () => {
+    const html = `<!DOCTYPE html><html><head><script type="application/ld+json">${JSON.stringify([
+      { "@type": "ProductGroup", "@id": NEXT, name: "D", image: "https://i/d.jpg", hasVariant: [{ name: "v1" }] },
+      { "@type": "Product", name: "S3", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: { price: "15", priceCurrency: "GBP" } },
+    ])}</script></head><body></body></html>`;
+    const p = await extractProduct(html, NEXT);
+    expect(p.priceCents).toBe(1500);
+    expect(p.currency).toBe("GBP");
+  });
+
+  // Pin the pre-#170 behaviour the PR had regressed: an unusable sibling offer
+  // must fall through to the group's own valid offers, not return null.
+  test("unusable sibling offers fall through to the group's own offers", async () => {
+    const html = `<!DOCTYPE html><html><head><script type="application/ld+json">${JSON.stringify([
+      { "@type": "ProductGroup", "@id": NEXT, name: "D", offers: { price: "12", priceCurrency: "GBP" } },
+      { "@type": "Product", name: "S3", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: { price: "not-a-price" } },
+    ])}</script></head><body></body></html>`;
+    const p = await extractProduct(html, NEXT);
+    expect(p.priceCents).toBe(1200);
+    expect(p.currency).toBe("GBP");
+  });
+});
