@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<!--
+  Next (UK) product detail page — sanitised from a real capture taken
+  2026-09-27 through the project's own stealth transport
+  (scripts/stealth-fetch.py: ok, status 200, ~745 KB, final URL
+  https://www.next.co.uk/style/su956648/w13137; a plain fetch is answered
+  with an AkamaiGHost 403 "Access Denied", 399 bytes — the existing
+  escalation chain covers it, no transport change is needed here).
+
+  WHAT THIS FIXTURE PINS (issue #170)
+  -----------------------------------
+  The page's JSON-LD is ONE block whose root is a BARE ARRAY of 15 nodes:
+    [0] a ProductGroup — name, @id, productGroupID, brand, image, description,
+        variesBy, and NO `offers` and NO `hasVariant`.
+    [1..14] fourteen Product nodes, one per size, each carrying its own
+        `offers` object (price "15".."20", priceCurrency "GBP",
+        NewCondition) and linked back to the group with
+        `isVariantOf: { "@id": "<page url>", "@type": "ProductGroup" }`.
+
+  The variants are SIBLINGS of the group, NOT nested under `hasVariant`
+  (verified on the capture: the group node's keys are exactly
+  @context,@type,@id,productGroupID,brand,name,image,description,variesBy).
+
+  Measured price ladder (size 3..16 Yrs, GBP):
+    15, 15, 15, 15, 16, 16, 16, 16, 18, 18, 20, 20, 20, 20
+  Page display: "£15 - £20" in `data-testid="product-now-price"`.
+  So the lowest variant price — the "starting price" — is 1500.
+
+  Sanitisation: the product path, sku codes, description and image URL are
+  synthetic; the size list, price ladder, currency and the JSON-LD key shapes
+  are as captured. Only the block the extractor reads is kept.
+
+  Also carried, because the live page has them and they must NOT become the
+  price source: og:title and <title> (identical, both the store-scraped
+  "Buy <name> from the Next UK online shop" form) and NO og:price:* /
+  product:price:* / itemprop anywhere in the document.
+-->
+<html lang="en-gb">
+<head>
+<meta charset="utf-8">
+<title>Buy Oatmeal Cosy Cardigan (3-16yrs) from the Next UK online shop</title>
+<meta property="og:title" content="Buy Oatmeal Cosy Cardigan (3-16yrs) from the Next UK online shop">
+<meta property="og:type" content="product">
+<meta property="og:image" content="https://xcdn.next.co.uk/common/items/default/default/itemimages/3_4Ratio/product/lge/W13137s.jpg">
+<meta property="og:description" content="Shop for Oatmeal Cosy Cardigan (3-16yrs) at Next.co.uk.">
+<script type="application/ld+json">
+[
+  {
+    "@context": "http://schema.org",
+    "@type": "ProductGroup",
+    "@id": "https://www.next.co.uk/style/su956648/w13137",
+    "productGroupID": "su956648",
+    "brand": { "@type": "Brand", "name": "Next" },
+    "name": "Cosy Cardigan (3-16yrs)",
+    "image": "https://xcdn.next.co.uk/common/items/default/default/itemimages/3_4Ratio/product/lge/W13137s.jpg",
+    "description": "<p>Soft brushed cardigan.</p>",
+    "variesBy": ["size", "color"]
+  },
+  {
+    "@context": "http://schema.org",
+    "@type": "Product",
+    "@id": "https://www.next.co.uk/style/su956648/w13137?color=13&amp;size=3",
+    "isVariantOf": { "@id": "https://www.next.co.uk/style/su956648/w13137", "@type": "ProductGroup" },
+    "name": "Oatmeal Cosy Cardigan (3-16yrs) - Size 3 Yrs",
+    "sku": "W13-137-01",
+    "color": "OATMEAL",
+    "size": "3 Yrs",
+    "image": "https://xcdn.next.co.uk/common/items/default/default/itemimages/3_4Ratio/product/lge/W13137s.jpg",
+    "brand": { "@type": "Brand", "name": "Next" },
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "GBP",
+      "price": "15",
+      "itemCondition": "https://schema.org/NewCondition",
+      "url": "https://www.next.co.uk/style/su956648/w13137?color=13&amp;size=3",
+      "availability": "https://schema.org/InStock"
+    }
+  },
+  {
+    "@context": "http://schema.org",
+    "@type": "Product",
+    "@id": "https://www.next.co.uk/style/su956648/w13137?color=13&amp;size=4",
+    "isVariantOf": { "@id": "https://www.next.co.uk/style/su956648/w13137", "@type": "ProductGroup" },
+    "name": "Oatmeal Cosy Cardigan (3-16yrs) - Size 4 Yrs",
+    "sku": "W13-137-02",
+    "color": "OATMEAL",
+    "size": "4 Yrs",
+    "image": "https://xcdn.next.co.uk/common/items/default/default/itemimages/3_4Ratio/product/lge/W13137s.jpg",
+    "brand": { "@type": "Brand", "name": "Next" },
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "GBP",
+      "price": "15",
+      "itemCondition": "https://schema.org/NewCondition",
+      "url": "https://www.next.co.uk/style/su956648/w13137?color=13&amp;size=4",
+      "availability": "https://schema.org/InStock"
+    }
+  },
+  {
+    "@context": "http://schema.org",
+    "@type": "Product",
+    "@id": "https://www.next.co.uk/style/su956648/w13137?color=13&amp;size=5",
+    "isVariantOf": { "@id": "https://www.next.co.uk/style/su956648/w13137", "@type": "ProductGroup" },
+    "name": "Oatmeal Cosy Cardigan (3-16yrs) - Size 5 Yrs",
+    "sku": "W13-137-03",
+    "color": "OATMEAL",
+    "size": "5 Yrs",
+    "image": "https://xcdn.next.co.uk/common/items/default/default/itemimages/3_4Ratio/product/lge/W13137s.jpg",
+    "brand": { "@type": "Brand", "name": "Next" },
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "GBP",
+      "price": "15",
+      "itemCondition": "https://schema.org/NewCondition",
+      "url": "https://www.next.co.uk/style/su956648/w13137?color=13&amp;size=5",
+      "availability": "https://schema.org/InStock"
+    }
+  },
+  {
+    "@context": "http://schema.org",
+    "@type": "Product",
+    "@id": "https://www.next.co.uk/style/su956648/w13137?color=13&amp;size=6",
+    "isVariantOf": { "@id": "https://www.next.co.uk/style/su956648/w13137", "@type": "ProductGroup" },
+    "name": "Oatmeal Cosy Cardigan (3-16yrs) - Size 6 Yrs",
+    "sku": "W13-137-04",
+    "color": "OATMEAL",
+    "size": "6 Yrs",
+    "image": "https://xcdn.next.co.uk/common/items/default/default/itemimages/3_4Ratio/product/lge/W13137s.jpg",
+    "brand": { "@type": "Brand", "name": "Next" },
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "GBP",
+      "price": "16",
+      "itemCondition": "https://schema.org/NewCondition",
+      "url": "https://www.next.co.uk/style/su956648/w13137?color=13&amp;size=6",
+      "availability": "https://schema.org/InStock"
+    }
+  },
+  {
+    "@context": "http://schema.org",
+    "@type": "Product",
+    "@id": "https://www.next.co.uk/style/su956648/w13137?color=13&amp;size=7",
+    "isVariantOf": { "@id": "https://www.next.co.uk/style/su956648/w13137", "@type": "ProductGroup" },
+    "name": "Oatmeal Cosy Cardigan (3-16yrs) - Size 7 Yrs",
+    "sku": "W13-137-05",
+    "color": "OATMEAL",
+    "size": "7 Yrs",
+    "image": "https://xcdn.next.co.uk/common/items/default/default/itemimages/3_4Ratio/product/lge/W13137s.jpg",
+    "brand": { "@type": "Brand", "name": "Next" },
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "GBP",
+      "price": "18",
+      "itemCondition": "https://schema.org/NewCondition",
+      "url": "https://www.next.co.uk/style/su956648/w13137?color=13&amp;size=7",
+      "availability": "https://schema.org/InStock"
+    }
+  },
+  {
+    "@context": "http://schema.org",
+    "@type": "Product",
+    "@id": "https://www.next.co.uk/style/su956648/w13137?color=13&amp;size=8",
+    "isVariantOf": { "@id": "https://www.next.co.uk/style/su956648/w13137", "@type": "ProductGroup" },
+    "name": "Oatmeal Cosy Cardigan (3-16yrs) - Size 8 Yrs",
+    "sku": "W13-137-06",
+    "color": "OATMEAL",
+    "size": "8 Yrs",
+    "image": "https://xcdn.next.co.uk/common/items/default/default/itemimages/3_4Ratio/product/lge/W13137s.jpg",
+    "brand": { "@type": "Brand", "name": "Next" },
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "GBP",
+      "price": "20",
+      "itemCondition": "https://schema.org/NewCondition",
+      "url": "https://www.next.co.uk/style/su956648/w13137?color=13&amp;size=8",
+      "availability": "https://schema.org/InStock"
+    }
+  }
+]
+</script>
+</head>
+<body>
+  <div data-testid="product-now-price"><span>£15 - £20</span></div>
+</body>
+</html>

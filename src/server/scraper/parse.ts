@@ -331,13 +331,137 @@ function selectStructuredOffer(
   return { price: bestPrice, currency: bestCurrency };
 }
 
+/** A JSON-LD node's `@type` as a list of strings. `@type` is a string, an
+ *  array of strings, or absent; every branch in this file reads it the same
+ *  way. */
+function nodeTypes(obj: Record<string, unknown>): string[] {
+  const type = obj["@type"];
+  return Array.isArray(type) ? type.map(String) : type !== undefined ? [String(type)] : [];
+}
+
+/** The `@id` a node's `isVariantOf` names, when it names one at all.
+ *
+ *  schema.org allows `isVariantOf` to be an object (`{"@id":…,"@type":…}`) or
+ *  a bare string. Only the OBJECT form carries a comparable `@id`, so the
+ *  string form yields null — "no id named" — which is the conservative
+ *  direction: a sibling that names nothing is never claimed for a group. */
+function variantGroupId(obj: Record<string, unknown>): string | null {
+  const isVariantOf = obj["isVariantOf"];
+  if (isVariantOf === null || typeof isVariantOf !== "object") return null;
+  const id = (isVariantOf as Record<string, unknown>)["@id"];
+  return typeof id === "string" ? id : null;
+}
+
+/** Does `variant` belong to the group `group`, as far as the page states?
+ *
+ *  The ONLY positive evidence the sibling variant shape offers is
+ *  `isVariantOf.@id` naming the group's `@id`. A sibling naming a DIFFERENT id
+ *  is another group's variant and is excluded. A group with no `@id` to match
+ *  against cannot be positively matched either — the loose "a Product next to
+ *  a ProductGroup" association is not evidence, and treating it as such would
+ *  price a page from a neighbouring product. */
+function belongsToGroup(variant: Record<string, unknown>, group: Record<string, unknown>): boolean {
+  const groupId = group["@id"];
+  if (typeof groupId !== "string" || !groupId) return false;
+  return variantGroupId(variant) === groupId;
+}
+
+/** The `offers` values of the Product nodes in `siblings` that name `group` in
+ *  their `isVariantOf`.
+ *
+ *  "Sibling" is literal — `siblings` is the ONLY list scanned, and the walk
+ *  never descends into nested objects, so a Product carrying its own
+ *  ProductGroup is never claimed for another group's.
+ *
+ *  Only Product nodes that actually carry `offers` contribute, so a
+ *  price-less variant cannot dilute the selection. Never throws; an empty
+ *  array means "no sibling offers", which the caller treats as "no price". */
+function collectSiblingVariantOffers(
+  siblings: readonly unknown[],
+  group: Record<string, unknown>,
+): unknown[] {
+  const collected: unknown[] = [];
+  for (const item of siblings) {
+    if (item === null || typeof item !== "object") continue;
+    const obj = item as Record<string, unknown>;
+    if (!nodeTypes(obj).includes("Product")) continue;
+    if (!belongsToGroup(obj, group)) continue;
+    if (obj["offers"] !== undefined) collected.push(obj["offers"]);
+  }
+  return collected;
+}
+
+/** The product data one ProductGroup node resolves to, in precedence order:
+ *
+ *  1. `hasVariant[0]` — a group that NESTS its variants. The nested variant's
+ *     offers and image win; behaviour here is unchanged from pre-#170 (the
+ *     shape `tests/fixtures/productgroup.html` pins).
+ *  2. Its SIBLING variant Products — the shape Next ships: the group carries
+ *     the name and image, the siblings carry the offers, and
+ *     `selectStructuredOffer` picks the LOWEST, which is the starting price a
+ *     page showing a "£15 - £20" range displays (#170).
+ *  3. The group's own `offers`, when it declares some.
+ *
+ *  A group with none of these yields an undefined price and currency — the
+ *  item stays visibly incomplete, never priced from a guess. */
+function productGroupData(group: Record<string, unknown>, siblings: readonly unknown[]) {
+  const nested = group["hasVariant"];
+  if (Array.isArray(nested) && nested.length > 0) {
+    const variant = nested[0];
+    const nestedObj =
+      variant !== null && typeof variant === "object" ? (variant as Record<string, unknown>) : null;
+    const selected = selectStructuredOffer(nestedObj === null ? undefined : nestedObj["offers"]);
+    return {
+      name: group["name"],
+      offersPrice: selected.price,
+      offersCurrency: selected.currency,
+      image: nestedObj === null ? group["image"] : nestedObj["image"],
+    };
+  }
+
+  const siblingOffers = collectSiblingVariantOffers(siblings, group);
+  if (siblingOffers.length > 0) {
+    const selected = selectStructuredOffer(
+      siblingOffers.length === 1 ? siblingOffers[0] : siblingOffers,
+    );
+    return {
+      name: group["name"],
+      offersPrice: selected.price,
+      offersCurrency: selected.currency,
+      image: group["image"],
+    };
+  }
+
+  const selected = selectStructuredOffer(group["offers"]);
+  return {
+    name: group["name"],
+    offersPrice: selected.price,
+    offersCurrency: selected.currency,
+    image: group["image"],
+  };
+}
+
 /** Depth-first walk over one parsed JSON-LD block (objects + arrays, so
- *  @graph nesting is covered) returning the FIRST Product/ProductGroup node.
- *  For ProductGroup the effective product data comes from hasVariant[0]. */
-function findProductNode(node: unknown): FoundProduct | null {
+ *  @graph nesting is covered) returning the FIRST Product/ProductGroup node,
+ *  in document order. A ProductGroup's effective product data comes from
+ *  `hasVariant[0]` when it nests its variants, and otherwise from its SIBLING
+ *  variant Products — measured: Next ships the group and its variants as
+ *  siblings in one bare array, linked only by `isVariantOf` (#170).
+ *
+ *  `siblings` is the list of nodes that share the CURRENT level — the items of
+ *  the array it lives in, or the sibling values of the object it lives in —
+ *  passed down so a group nested deeper (an `@graph`, a `mainEntity` wrapper)
+ *  can still be priced by the variant Products its own holding declares. It is
+ *  refreshed at every array and object level, never accumulated across levels. */
+function findProductNodeAt(node: unknown, siblings: readonly unknown[]): FoundProduct | null {
   if (Array.isArray(node)) {
     for (const item of node) {
-      const found = findProductNode(item);
+      if (item === null || typeof item !== "object") continue;
+      const obj = item as Record<string, unknown>;
+      if (nodeTypes(obj).includes("ProductGroup")) {
+        return productGroupData(obj, node);
+      }
+      const found = findProductNodeAt(item, node);
       if (found) return found;
     }
     return null;
@@ -345,30 +469,31 @@ function findProductNode(node: unknown): FoundProduct | null {
   if (node === null || typeof node !== "object") return null;
   const obj = node as Record<string, unknown>;
 
-  const type = obj["@type"];
-  const types = Array.isArray(type) ? type.map(String) : type !== undefined ? [String(type)] : [];
+  const types = nodeTypes(obj);
   const isGroup = types.includes("ProductGroup");
   if (types.includes("Product") || isGroup) {
-    const variant =
-      isGroup && Array.isArray(obj["hasVariant"]) && obj["hasVariant"].length > 0
-        ? (obj["hasVariant"][0] as Record<string, unknown>)
-        : null;
-    const offers =
-      isGroup && variant ? variant["offers"] : obj["offers"];
-    const selected = selectStructuredOffer(offers);
+    if (isGroup) {
+      return productGroupData(obj, siblings);
+    }
+    const selected = selectStructuredOffer(obj["offers"]);
     return {
       name: obj["name"],
       offersPrice: selected.price,
       offersCurrency: selected.currency,
-      image: isGroup && variant ? variant["image"] : obj["image"],
+      image: obj["image"],
     };
   }
 
+  const childValues = Object.values(obj);
   for (const key of Object.keys(obj)) {
-    const found = findProductNode(obj[key]);
+    const found = findProductNodeAt(obj[key], childValues);
     if (found) return found;
   }
   return null;
+}
+
+function findProductNode(node: unknown): FoundProduct | null {
+  return findProductNodeAt(node, []);
 }
 
 /** The ASOS payload token (#171). Deliberately the FULL assignment path — a
