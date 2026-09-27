@@ -127,10 +127,21 @@ export function classifyFetchError(err: unknown): string {
   return "unknown";
 }
 
-export async function fetchPage(url: string, opts: FetchPageOptions): Promise<FetchPageResult> {
+/** Raw outcome of ONE request: the transport result, with no verdict attached.
+ *  `detectBotWall` and the status gate are verdicts, so they run in the caller
+ *  where both the primary fetch and a follow-up request share them. */
+type RequestOutcome =
+  | { ok: true; html: string; finalUrl: string; status: number }
+  | FetchFailure;
+
+/** One request with the pipeline's header, timeout, `redirect: "follow"` and
+ *  SSRF discipline. The ONLY place a request is made — a second URL (the Akamai
+ *  token refetch) goes through here too, so the guards cannot drift apart. */
+async function requestOnce(url: string, opts: FetchPageOptions): Promise<RequestOutcome> {
+  const allowPrivate = opts.allowPrivate === true;
   // SSRF guard, pre-fetch: literal private/loopback host → reject before any
   // network I/O. Skipped only by the explicit allowPrivate opt-in.
-  if (!opts.allowPrivate && isPrivateLiteralUrl(url)) {
+  if (!allowPrivate && isPrivateLiteralUrl(url)) {
     return { ok: false, reason: "private-ip" };
   }
 
@@ -160,7 +171,7 @@ export async function fetchPage(url: string, opts: FetchPageOptions): Promise<Fe
   // address → reject. (The fetch already happened, but the result is dropped
   // before the body is read or parsed.)
   const finalUrl = res.url || url;
-  if (!opts.allowPrivate && (await finalUrlIsPrivate(finalUrl))) {
+  if (!allowPrivate && (await finalUrlIsPrivate(finalUrl))) {
     return { ok: false, reason: "private-ip" };
   }
 
@@ -176,11 +187,27 @@ export async function fetchPage(url: string, opts: FetchPageOptions): Promise<Fe
     return { ok: false, reason: "network", heuristic: classifyFetchError(err) };
   }
 
-  const heuristic = detectBotWall(html);
-  if (heuristic) return { ok: false, reason: "botwall", status: res.status, heuristic };
-  if (res.status >= 400) return { ok: false, reason: "http", status: res.status };
+  return { ok: true, html, finalUrl, status: res.status };
+}
+
+/** The verdict tail both requests share: bot-wall detection (a body signal) →
+ *  the HTTP status → the page. */
+function verdictFromPage(page: {
+  html: string;
+  finalUrl: string;
+  status: number;
+}): FetchPageResult {
+  const heuristic = detectBotWall(page.html);
+  if (heuristic) return { ok: false, reason: "botwall", status: page.status, heuristic };
+  if (page.status >= 400) return { ok: false, reason: "http", status: page.status };
 
   // Bodies under 2KB are candidates for "empty", but the pipeline decides:
   // parse-first keeps tiny-but-valid pages honest.
-  return { ok: true, html, finalUrl };
+  return { ok: true, html: page.html, finalUrl: page.finalUrl };
+}
+
+export async function fetchPage(url: string, opts: FetchPageOptions): Promise<FetchPageResult> {
+  const page = await requestOnce(url, opts);
+  if (!page.ok) return page;
+  return verdictFromPage(page);
 }
