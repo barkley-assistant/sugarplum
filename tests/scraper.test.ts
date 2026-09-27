@@ -1243,6 +1243,62 @@ describe("Akamai bm-verify interstitial (#172)", () => {
     }
   });
 
+  test("marker false positive with an ORDINARY meta refresh → botwall, target NOT followed", async () => {
+    // The composed defect (#172 review): `detectBotWall` has a pinned false
+    // positive (the marker as plain page text — see the JSON-LD test above) and
+    // locale/consent/redirect pages ship an ordinary meta refresh. A
+    // pass-through that follows ANY resolvable refresh fetches that page and
+    // returns IT as the product — `ok: true`, silently wrong title/price/image.
+    // The hand-off is only ever the token-shaped target, so a refresh without
+    // `bm-verify` must fall back to the visible verdict with no second request.
+    const cartMarker = "CART-PAGE-BODY-MUST-NEVER-BE-RETURNED";
+    const markerPage = `<!DOCTYPE html><html><head>
+      <script type="application/ld+json">{"@type":"Product","name":"triggerInterstitialChallenge widget"}</script>
+      <meta http-equiv="refresh" content="0; url=/cart">
+    </head><body>a legit page that merely spells a marker</body></html>`;
+    expect(detectBotWall(markerPage)).toBe("akamai-bm");
+    expect(extractMetaRefreshTarget(markerPage)).toBe("/cart");
+    const { srv, seen } = akamaiServer((url) =>
+      url.pathname === "/cart"
+        ? new Response(`<html><body>${cartMarker}</body></html>`)
+        : new Response(markerPage),
+    );
+    try {
+      const page = await fetchPage(`${srv.url}product`, { userAgent: "UA/1.0", allowPrivate: true });
+      expect(page.ok).toBe(false);
+      if (page.ok) return;
+      expect(page.reason).toBe("botwall");
+      expect(page.heuristic).toBe("akamai-bm");
+      // EXACTLY ONE request: the refresh target was never followed.
+      expect(seen).toHaveLength(1);
+      // …and nothing from the /cart body leaked into the result.
+      expect(JSON.stringify(page)).not.toContain(cartMarker);
+    } finally {
+      srv.stop(true);
+    }
+  });
+
+  test("an interstitial whose refresh target has no bm-verify token → botwall, no second request", async () => {
+    // The only measured hand-off shape is the product URL plus the one-shot
+    // `bm-verify` token (plan B4/B14). A tokenless target — a plain relative
+    // path here — is not this challenge's hand-off and is never followed.
+    const { interstitial } = await captures();
+    const tokenless = interstitial.replace(/URL='[^']*'/, "URL='/gb/example-product.html'");
+    expect(tokenless).toContain("URL='/gb/example-product.html'");
+    expect(detectBotWall(tokenless)).toBe("akamai-bm");
+    const { srv, seen } = akamaiServer(() => new Response(tokenless));
+    try {
+      const page = await fetchPage(`${srv.url}product`, { userAgent: "UA/1.0", allowPrivate: true });
+      expect(page.ok).toBe(false);
+      if (page.ok) return;
+      expect(page.reason).toBe("botwall");
+      expect(page.heuristic).toBe("akamai-bm");
+      expect(seen).toHaveLength(1);
+    } finally {
+      srv.stop(true);
+    }
+  });
+
   test("token refetch 404 → the refetch's own http verdict, not botwall", async () => {
     const { interstitial } = await captures();
     const { srv, seen } = akamaiServer((url) =>
@@ -1284,7 +1340,14 @@ describe("Akamai bm-verify interstitial (#172)", () => {
 
   test("SSRF: a meta-refresh target on a literal private host is refused before any I/O", async () => {
     const { interstitial } = await captures();
-    const hostile = interstitial.replace(/URL='[^']*'/, "URL='http://127.0.0.1:9/steal'");
+    // The hostile target must be TOKEN-shaped to be followed at all — the
+    // pass-through only follows a `&bm-verify=…` hand-off — so it carries a
+    // (bogus) token; that is what makes the second request reach the guard
+    // under test rather than being skipped as an ordinary refresh.
+    const hostile = interstitial.replace(
+      /URL='[^']*'/,
+      `URL='http://127.0.0.1:9/steal?bm-verify=${BM_TOKEN}'`,
+    );
     const seen: string[] = [];
     const fetchImpl: SearxngFetch = async (input) => {
       seen.push(String(input));

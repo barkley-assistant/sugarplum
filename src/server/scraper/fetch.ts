@@ -15,8 +15,10 @@
  * with a 2KB challenge body that carries the bm-verify token in a meta refresh,
  * so a 200 alone does not mean the page arrived. When that body is detected,
  * `fetchPage` follows the meta refresh ONCE — the product URL plus the one-shot
- * token — through the same guards, and returns that request's verdict. It never
- * loops: a second interstitial is the answer, not a reason to try again.
+ * token — through the same guards, and returns that request's verdict. Only a
+ * target carrying that token is followed: any other refresh is the visible
+ * botwall verdict, never page-controlled navigation. It never loops: a second
+ * interstitial is the answer, not a reason to try again.
  */
 
 import { isPrivateLiteralUrl, finalUrlIsPrivate } from "../net/private-ip";
@@ -246,14 +248,22 @@ const AKAMAI_BM_HEURISTIC = "akamai-bm";
 /** The URL the interstitial's meta refresh points at, resolved against the
  *  fetched page's final URL. The live target is RELATIVE, and an unresolved
  *  `fetch("/gb/…")` throws `ERR_INVALID_URL` (measured), so resolution is not
- *  optional. Non-http(s) schemes and unusable targets return null: no token URL
- *  means no refetch, and the interstitial's own verdict stands. */
+ *  optional. Only a TARGET CARRYING THE TOKEN qualifies — the one measured
+ *  hand-off shape (`<product path>&bm-verify=…`, plan B4/B14); a non-http(s)
+ *  scheme, an unusable target, or a tokenless refresh returns null, so no
+ *  second request is made and the interstitial's own verdict stands. */
 function resolveChallengeUrl(html: string, finalUrl: string): string | null {
   const target = extractMetaRefreshTarget(html);
   if (target === null) return null;
   try {
     const resolved = new URL(target, finalUrl);
-    return resolved.protocol === "http:" || resolved.protocol === "https:" ? resolved.href : null;
+    if (resolved.protocol !== "http:" && resolved.protocol !== "https:") return null;
+    // The measured hand-off is always the product URL plus the one-shot
+    // `bm-verify` token. A meta refresh without it is not this challenge's
+    // hand-off: a marker false positive on a page with an ordinary refresh
+    // must fall back to the visible botwall verdict, never silently follow
+    // page-controlled navigation.
+    return resolved.searchParams.has("bm-verify") ? resolved.href : null;
   } catch {
     return null;
   }
