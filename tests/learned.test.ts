@@ -14,6 +14,7 @@ import {
   recordScrapeOutcome,
   type ScrapeStep,
 } from "../src/server/scraper/learned";
+import { classifyFetchError } from "../src/server/scraper/fetch";
 import type { StealthDeps, StealthRunner } from "../src/server/scraper/stealth";
 import type { SearxngFetch } from "../src/server/searxng";
 
@@ -122,6 +123,79 @@ describe("escalation set (D1)", () => {
     expect([...ESCALATABLE_FAILURES].sort()).toEqual(["botwall", "empty", "http"]);
     expect(ESCALATABLE_FAILURES.has("network")).toBe(false);
     expect(ESCALATABLE_FAILURES.has("private-ip")).toBe(false);
+  });
+});
+
+describe("fetch error classification (#173)", () => {
+  /** The real Bun shapes are TypeErrors carrying a STRING `code`, measured
+   *  2026-09-27 on bun 1.4.2. */
+  function typedError(message: string, code: string): TypeError {
+    const err = new TypeError(message) as TypeError & { code: string };
+    err.code = code;
+    return err;
+  }
+
+  test("AbortSignal timeout DOMException → 'timeout' (its numeric legacy code is ignored)", () => {
+    const err = new DOMException("The operation timed out.", "TimeoutError");
+    // The guard this test protects: DOMException carries `code: 23`, so a
+    // truthiness check instead of `typeof code === "string"` would send the
+    // number into the string-code branches.
+    expect((err as unknown as { code: number }).code).toBe(23);
+    expect(classifyFetchError(err)).toBe("timeout");
+  });
+
+  test("connection refused TypeError → 'refused'", () => {
+    expect(
+      classifyFetchError(
+        typedError("Unable to connect. Is the computer able to access the url?", "ConnectionRefused"),
+      ),
+    ).toBe("refused");
+  });
+
+  test("DNS TypeError → 'dns'", () => {
+    expect(classifyFetchError(typedError("getaddrinfo ENOTFOUND example.invalid", "ENOTFOUND"))).toBe(
+      "dns",
+    );
+  });
+
+  test("ECONNRESET TypeError → 'conn-reset'", () => {
+    expect(
+      classifyFetchError(
+        typedError(
+          "The socket connection was closed unexpectedly. For more information, pass `verbose: true` in the second argument to fetch()",
+          "ECONNRESET",
+        ),
+      ),
+    ).toBe("conn-reset");
+  });
+
+  test("codeless HTTP/2 stream error → 'conn-reset'", () => {
+    expect(
+      classifyFetchError(new TypeError("HTTP/2 stream 1 was not closed cleanly: INTERNAL_ERROR")),
+    ).toBe("conn-reset");
+  });
+
+  test("an error with nothing recognisable → 'unknown'", () => {
+    expect(classifyFetchError(new Error("some new runtime failure"))).toBe("unknown");
+  });
+
+  test("TLS failures are not named as fingerprint blocks", () => {
+    expect(
+      classifyFetchError(
+        typedError("self signed certificate in certificate chain", "UNKNOWN_CERTIFICATE_VERIFICATION_ERROR"),
+      ),
+    ).toBe("unknown");
+  });
+
+  test("an error whose cause getter throws → 'unknown', never a throw", () => {
+    const wrapped = {
+      message: "wrapped",
+      get cause(): never {
+        throw new Error("nope");
+      },
+    };
+    expect(() => classifyFetchError(wrapped)).not.toThrow();
+    expect(classifyFetchError(wrapped)).toBe("unknown");
   });
 });
 
