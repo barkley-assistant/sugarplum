@@ -42,6 +42,25 @@ describe("override registry", () => {
     expect(resolveOverride("https://store.steampowered.com.evil.example.com/")).toBeUndefined();
   });
 
+  test("asos.com is registered with stealth-first chain", () => {
+    const o = resolveOverride(
+      "https://www.asos.com/dr-martens/dr-martens-zebzag-mule-in-black-suede/prd/206025763",
+    );
+    expect(o?.strategies).toEqual(["stealth-browser", "plain"]);
+    expect(o?.notes).toContain("stealth");
+    expect(o?.notes).toContain("stockPriceResponse");
+  });
+
+  test("asos matching is exact: other TLDs and look-alike hosts stay unregistered", () => {
+    expect(resolveOverride("https://www.asos.de/x")).toBeUndefined();
+    expect(resolveOverride("https://marketplace.asos.com/x")).toBeUndefined();
+    expect(resolveOverride("https://www.notasos.com/x")).toBeUndefined();
+  });
+
+  test("www.asos.com normalizes onto the apex key", () => {
+    expect(normalizeHostname("https://WWW.ASOS.com/prd/206025763")).toBe("asos.com");
+  });
+
   test("registry invariants: lowercase keys, no www., non-empty known strategies", () => {
     for (const [host, o] of Object.entries(SITE_OVERRIDES)) {
       expect(host).toBe(host.toLowerCase());

@@ -7,9 +7,11 @@
  *              → generic promo/site-suffix strip (wave 14)
  *   price    = og:price:amount → product:price:amount → JSON-LD offers
  *              (single offer, AggregateOffer.lowPrice, or lowest offer of an
- *              array — #159) → DOM fallback tier (see below)
+ *              array — #159) → DOM fallback tier (see below) → Steam tier
+ *              → ASOS embedded-payload tier (#171, see below)
  *   currency = og:price:currency → product:price:currency → JSON-LD offers
- *              priceCurrency → DOM fallback tier
+ *              priceCurrency → DOM fallback tier → Steam tier → ASOS
+ *              embedded-payload tier
  *   image    = og:image → JSON-LD image → twitter:image → DOM fallback tier → favicon
  *   siteName = og:site_name → og:site (nonstandard, Steam ships it) → hostname sans www.
  *
@@ -51,6 +53,18 @@
  * non-new yields no price — the item stays usable through the existing
  * labelled hint path. The tracking is generic (no hostname check): any shop
  * that ships the attribute gets it free.
+ *
+ * ASOS embedded-payload tier (#171): the served PDP has no og:price:*, no
+ * product:price:*, no itemprop and an EMPTY JSON-LD offer, and it renders no
+ * price node in the DOM either — ASOS builds the price client-side from
+ * `window.asos.pdp.config.stockPriceResponse`, a single-quoted JS string
+ * holding a JSON array of {productId, productPrice:{current:{value,text},
+ * currency, …}}. That array ALSO carries the "You Might Also Like" carousel,
+ * so the capture is anchored to the page's OWN product id (the JSON-LD
+ * `productID`, else a /prd/<id> in pageUrl) — taking the first entry stores a
+ * DIFFERENT product's price (measured on the 2026-09-27 capture). Anchored to
+ * the ASOS token only: no generic embedded-JSON price scraping. See
+ * docs/research/product-scraping.md §2026-09-27 ASOS ground truth.
  */
 
 export interface ParsedProduct {
@@ -260,7 +274,9 @@ export function stripStoreTitleNoise(raw: string, siteToken: string | null): str
   return text.trim() || raw.trim();
 }
 
-function cleanCurrency(value: unknown): string | null {
+/** Trim + uppercase a declared currency code. Exported so the ASOS tier
+ *  normalises `productPrice.currency` exactly like every other tier. */
+export function cleanCurrency(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const text = value.trim().toUpperCase();
   return text ? text : null;
@@ -355,6 +371,137 @@ function findProductNode(node: unknown): FoundProduct | null {
   return null;
 }
 
+/** The ASOS payload token (#171). Deliberately the FULL assignment path — a
+ *  bare "stockPriceResponse" also matches the consumer function and asset
+ *  references (measured: 4 script chunks on the real page contain the
+ *  substring, exactly 1 is the assignment). */
+const ASOS_STOCK_PRICE_TOKEN = "window.asos.pdp.config.stockPriceResponse";
+
+/** Captures the quoted JS string literal after the assignment. The
+ *  back-reference `\1` binds the closing quote to the opening one, so the
+ *  single-quoted form ASOS ships and a double-quoted form are one match; `\\.`
+ *  tolerates backslash escapes. Module scope + `lastIndex` reset by the caller
+ *  because a global regex reused in an `exec` loop otherwise resumes mid-page. */
+const ASOS_ASSIGN_RE = new RegExp(
+  // String.raw so the pattern is exactly as written — the doubled escaping a
+  // plain template literal would need is where a character-class bug hides.
+  String.raw`${ASOS_STOCK_PRICE_TOKEN}\s*=\s*(["'])((?:\\.|(?!\1)[^\\])*)\1`,
+  "g",
+);
+
+/** Fallback anchor: the product id in a canonical ASOS PDP url (/prd/<id>). */
+const ASOS_PRD_RE = /\/prd\/(\d{6,})/;
+
+/** Depth-first walk over one parsed JSON-LD block returning the FIRST
+ *  Product/ProductGroup node's own product id as a string, or null.
+ *
+ *  This is the ASOS tier's anchor: the embedded payload's entries are keyed by
+ *  `productId`, and the page's JSON-LD declares the SAME id space (bare
+ *  integers) under `productID` — so the page product can be identified without
+ *  a hostname check in this file. The sibling spellings a Product node may use
+ *  are read in order. Never throws; null means "no anchor", and the caller
+ *  then falls back to the url. Exported so the anchor rule is unit-testable
+ *  without building HTML. */
+export function findAsosProductId(node: unknown): string | null {
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      const found = findAsosProductId(item);
+      if (found !== null) return found;
+    }
+    return null;
+  }
+  if (node === null || typeof node !== "object") return null;
+  const obj = node as Record<string, unknown>;
+
+  const type = obj["@type"];
+  const types = Array.isArray(type) ? type.map(String) : type !== undefined ? [String(type)] : [];
+  if (types.includes("Product") || types.includes("ProductGroup")) {
+    for (const key of ["productID", "productId", "sku", "mpn"]) {
+      const value = obj[key];
+      if (value === undefined || value === null) continue;
+      const text = String(value).trim();
+      if (text) return text;
+    }
+    return null;
+  }
+
+  for (const key of Object.keys(obj)) {
+    const found = findAsosProductId(obj[key]);
+    if (found !== null) return found;
+  }
+  return null;
+}
+
+/** Pick the page product's price out of one parsed ASOS stockPriceResponse
+ *  value. `anchor` is the page's OWN product id.
+ *
+ *  The array the payload holds also carries the "You Might Also Like"
+ *  recommendations, in an order that does NOT match the sibling
+ *  stockPriceApiUrl request (measured: entry[0] is a different product at a
+ *  different price). An unanchored pick is therefore WRONG, not merely
+ *  fragile — a null anchor returns null instead of entry[0], and a payload
+ *  that does not contain the page product yields null rather than a
+ *  plausible-looking neighbour price.
+ *
+ *  Within the chosen entry the price is read `productPrice.current.value`
+ *  (a typed number) first, then `current.text` through the symbol parser (the
+ *  presentation form, and the only source that can also supply a currency when
+ *  `productPrice.currency` is missing). Never throws; null means "nothing
+ *  usable", never 0. A returned object always carries cents; its currency is
+ *  null only when the payload declares none AND the text form carried no
+ *  symbol, so the caller's `??` chain leaves currency null rather than
+ *  inventing one. */
+export function pickAsosPrice(
+  payload: unknown,
+  anchor: string | null,
+): { cents: number; currency: string | null } | null {
+  if (anchor === null || anchor === "") return null;
+  const entries = Array.isArray(payload) ? payload : [payload];
+  for (const item of entries) {
+    if (item === null || typeof item !== "object") continue;
+    const entry = item as Record<string, unknown>;
+    // String() on both sides: the payload keys the id as a JSON number and the
+    // JSON-LD anchor is read as a string.
+    if (String(entry["productId"]) !== anchor) continue;
+    const productPrice = entry["productPrice"];
+    if (productPrice === null || typeof productPrice !== "object") return null;
+    const price = productPrice as Record<string, unknown>;
+    const current = price["current"];
+    const node =
+      current !== null && typeof current === "object" ? (current as Record<string, unknown>) : {};
+    const fromValue = parsePriceToCents(node["value"]);
+    const fromText = parseSymbolPriceToCents(node["text"]);
+    const cents = fromValue ?? fromText?.cents ?? null;
+    if (cents === null) return null;
+    return {
+      cents,
+      currency: cleanCurrency(price["currency"]) ?? fromText?.currency ?? null,
+    };
+  }
+  return null;
+}
+
+/** First captured payload that yields an anchored price. The real page carries
+ *  exactly one assignment; the loop exists because the capture is a scan over
+ *  whatever the page contains, not because more than one is expected. A
+ *  malformed payload is skipped, never thrown out of. */
+function firstAsosPrice(
+  payloads: string[],
+  anchor: string,
+): { cents: number; currency: string | null } | null {
+  for (const raw of payloads) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw) as unknown;
+    } catch {
+      continue;
+    }
+    const picked = pickAsosPrice(parsed, anchor);
+    if (picked !== null) return picked;
+  }
+  return null;
+}
+
 export async function extractProduct(html: string, pageUrl: string): Promise<ParsedProduct> {
   const og: Record<string, string> = {};
   const product: Record<string, string> = {};
@@ -402,6 +549,14 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
   let steamCapTarget: "dfp" | "gpp" | null = null;
   let steamBuf: string[] = [];
 
+  // ASOS embedded payload (#171). Script text arrives chunked, so the joined
+  // text is matched per script element on lastInTextNode — the same discipline
+  // the ld+json handler above uses. `asosPageId` is filled by the SAME JSON-LD
+  // blocks the structured tier walks, at no extra cost.
+  let asosPageId: string | null = null;
+  let asosScriptBuf: string[] = [];
+  const asosPayloads: string[] = [];
+
   await new HTMLRewriter()
     .on('meta[property^="og:"]', {
       element(el) {
@@ -446,14 +601,46 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
       },
       text(t) {
         ldBuffer.push(t.text);
-        if (t.lastInTextNode) {
-          const raw = ldBuffer.join("");
-          ldBuffer = [];
-          try {
-            jsonld.push(JSON.parse(raw) as unknown);
-          } catch {
-            // Malformed block — skip it; other blocks still accumulate.
-          }
+        if (!t.lastInTextNode) return;
+        const raw = ldBuffer.join("");
+        ldBuffer = [];
+        try {
+          const node: unknown = JSON.parse(raw);
+          jsonld.push(node);
+          // The ASOS tier's anchor (#171): the page's own declared product id.
+          asosPageId ??= findAsosProductId(node);
+        } catch {
+          // Malformed block — skip it; other blocks still accumulate.
+        }
+      },
+    })
+    .on("script", {
+      // Every script, no attribute filter — the ASOS assignment lives in a
+      // plain <script>. The ld+json elements above match here too and are
+      // rejected by the token guard below.
+      element() {
+        asosScriptBuf = [];
+      },
+      text(t) {
+        // The token guard is a cost guard, not correctness: the real page
+        // hands back 469 script text nodes and only 4 carry the token. It
+        // applies to CONTENT chunks only — HTMLRewriter closes a script with a
+        // separate EMPTY `lastInTextNode` chunk (measured), and guarding that
+        // one away would drop the payload entirely.
+        if (t.text) {
+          if (asosScriptBuf.length === 0 && !t.text.includes(ASOS_STOCK_PRICE_TOKEN)) return;
+          asosScriptBuf.push(t.text);
+        }
+        if (!t.lastInTextNode) return;
+        const joined = asosScriptBuf.join("");
+        asosScriptBuf = [];
+        if (!joined) return;
+        // The regex is module-scope + global, so lastIndex MUST be reset
+        // before each scan (otherwise the next call resumes mid-page).
+        ASOS_ASSIGN_RE.lastIndex = 0;
+        let m: RegExpExecArray | null;
+        while ((m = ASOS_ASSIGN_RE.exec(joined)) !== null) {
+          asosPayloads.push(m[2]!);
         }
       },
     })
@@ -571,6 +758,12 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
   );
   const domImage = landingHires ?? firstDynamicImageKey(landingDynamic);
   const steamPrice = parseSymbolPriceToCents(steamPriceText);
+  // ASOS tier (#171). The anchor is the page's own product id: the JSON-LD
+  // `productID` when the page declared one, else the /prd/<id> in the url.
+  // Without an anchor there is no honest price to report — the payload also
+  // carries recommendation products, so entry[0] is never a fallback.
+  const asosAnchor = asosPageId ?? (ASOS_PRD_RE.exec(pageUrl)?.[1] ?? null);
+  const asosPrice = asosAnchor === null ? null : firstAsosPrice(asosPayloads, asosAnchor);
 
   // Store promo noise is stripped from the ONE chosen title candidate (not from
   // every tier): the site token comes from declared metadata only, so a page
@@ -595,6 +788,9 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
       parsePriceToCents(ldNode?.offersPrice) ??
       domPrice?.cents ??
       steamPrice?.cents ??
+      // The ASOS tier is last on purpose: it is the least-verified source on
+      // the page, so every declared metadata tier wins over it.
+      asosPrice?.cents ??
       null,
     currency:
       cleanCurrency(og["og:price:currency"]) ??
@@ -602,6 +798,7 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
       cleanCurrency(ldNode?.offersCurrency) ??
       domPrice?.currency ??
       steamPrice?.currency ??
+      asosPrice?.currency ??
       null,
     image:
       normalizeImageUrl(og["og:image"], pageUrl) ??

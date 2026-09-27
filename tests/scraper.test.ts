@@ -3,7 +3,9 @@ import { join } from "node:path";
 import { serve } from "bun";
 import {
   extractProduct,
+  findAsosProductId,
   parseSymbolPriceToCents,
+  pickAsosPrice,
   resolveDomPrice,
   stripStoreTitleNoise,
   type DomPrice,
@@ -421,6 +423,264 @@ describe("extractProduct Steam tier (wave 14)", () => {
     const p = await extractProduct(html, STEAM);
     expect(p.priceCents).toBe(1234);
     expect(p.currency).toBe("USD");
+  });
+});
+
+describe("extractProduct ASOS embedded payload (#171)", () => {
+  const ASOS =
+    "https://www.asos.com/dr-martens/dr-martens-zebzag-mule-in-black-suede/prd/206025763";
+  const ASOS_NO_ID = "https://www.asos.com/x/y";
+
+  /** A minimal ASOS-shaped page whose ONLY price source is the embedded
+   *  assignment. `jsonldId` is the anchor the page declares (null = none). */
+  const inline = (payload: string, jsonldId: string | null = "206025763") =>
+    `<!DOCTYPE html><html><head><title>X</title>${
+      jsonldId === null
+        ? ""
+        : `<script type="application/ld+json">{"@type":"Product","name":"X","productID":${jsonldId}}</script>`
+    }</head><body><script>window.asos.pdp.config.stockPriceResponse = '${payload}';</script></body></html>`;
+
+  const entry = (productId: number, productPrice: unknown) =>
+    JSON.stringify({ productId, productPrice });
+
+  const fixtureHtml = () => Bun.file(join(FIXTURES, "asos-pdp.html")).text();
+  const stripLd = (html: string) =>
+    html.replace(/<script id="[^"]*" type="application\/ld\+json">[\s\S]*?<\/script>/g, "");
+
+  test("captured ASOS page: price from the payload, anchored to the page product", async () => {
+    const p = await parseFixture("asos-pdp.html", ASOS);
+    expect(p.priceCents).toBe(11000); // £110.00 — the PAGE product
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("the anchor is load-bearing: the first payload entry is a DIFFERENT product", async () => {
+    const p = await parseFixture("asos-pdp.html", ASOS);
+    // Entry [0] is productId 205104757 at £29.99 — a recommendation. A
+    // first-entry-wins implementation returns 2999 here and fails this test.
+    expect(p.priceCents).not.toBe(2999);
+    expect(p.priceCents).toBeGreaterThan(0);
+  });
+
+  test("title/image/siteName still resolve from the metadata tiers", async () => {
+    const p = await parseFixture("asos-pdp.html", ASOS);
+    expect(p.title).toBe("Dr Martens ZebZag mule in black suede");
+    expect(p.image).toBe(
+      "https://images.asos-media.com/products/dr-martens-zebzag-mule-in-black-suede/206025763-1-black",
+    );
+    expect(p.siteName).toBe("ASOS");
+  });
+
+  test("tier 1 wins: og:price:amount beats the ASOS payload tier", async () => {
+    const html = (await fixtureHtml()).replace(
+      "<title>",
+      `<meta property="og:price:amount" content="31.15"><meta property="og:price:currency" content="GBP"><title>`,
+    );
+    const p = await extractProduct(html, ASOS);
+    expect(p.priceCents).toBe(3115);
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("anchor falls back to /prd/<id> in the URL when the JSON-LD id is unusable", async () => {
+    const p = await extractProduct(stripLd(await fixtureHtml()), ASOS);
+    expect(p.priceCents).toBe(11000);
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("no anchor at all → null, never the recommendation's price", async () => {
+    const p = await extractProduct(stripLd(await fixtureHtml()), ASOS_NO_ID);
+    expect(p.priceCents).toBeNull();
+    expect(p.currency).toBeNull();
+    expect(p.priceCents).not.toBe(2999);
+  });
+
+  test("a payload that lacks the page product → null, never entry[0]", async () => {
+    const p = await extractProduct(
+      inline(`[${entry(205104757, { current: { value: 29.99, text: "£29.99" }, currency: "GBP" })}]`),
+      ASOS,
+    );
+    expect(p.priceCents).toBeNull();
+    expect(p.currency).toBeNull();
+  });
+
+  test("empty payload array → null", async () => {
+    const p = await extractProduct(inline("[]"), ASOS);
+    expect(p.priceCents).toBeNull();
+    expect(p.currency).toBeNull();
+  });
+
+  test("malformed payload → null, no throw", async () => {
+    const html = inline(`[{"productId":`);
+    const p = await extractProduct(html, ASOS);
+    expect(p.priceCents).toBeNull();
+  });
+
+  test("entry without productPrice → null", async () => {
+    const p = await extractProduct(inline(`[{"productId":206025763}]`), ASOS);
+    expect(p.priceCents).toBeNull();
+  });
+
+  test("current.value null falls back to current.text", async () => {
+    const p = await extractProduct(
+      inline(`[${entry(206025763, { current: { value: null, text: "£110.00" } })}]`),
+      ASOS,
+    );
+    expect(p.priceCents).toBe(11000);
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("missing productPrice.currency falls back to the symbol in current.text", async () => {
+    const p = await extractProduct(
+      inline(`[${entry(206025763, { current: { value: 42.5, text: "£42.50" } })}]`),
+      ASOS,
+    );
+    expect(p.priceCents).toBe(4250);
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("a non-GBP payload keeps its own currency", async () => {
+    const p = await extractProduct(
+      inline(
+        `[${entry(206025763, { current: { value: 19.99, text: "€19.99" }, currency: "EUR" })}]`,
+      ),
+      ASOS,
+    );
+    expect(p.priceCents).toBe(1999);
+    expect(p.currency).toBe("EUR");
+  });
+
+  test("a value above the MAX_CENTS cap is rejected, not clamped", async () => {
+    const p = await extractProduct(
+      inline(`[${entry(206025763, { current: { value: 9999999 }, currency: "GBP" })}]`),
+      ASOS,
+    );
+    expect(p.priceCents).toBeNull();
+  });
+
+  test("the sibling config assignments never match as payloads", async () => {
+    const html = `<!DOCTYPE html><html><head><title>X</title>
+      <script type="application/ld+json">{"@type":"Product","name":"X","productID":206025763}</script>
+      </head><body><script>
+      window.asos.pdp.config.stockPriceUrl = '/api/product/catalogue/v4/stockprice?productIds=';
+      window.asos.pdp.config.stockPriceApiUrl = '/api/product/catalogue/v4/stockprice?productIds=206025763,205104757';
+      window.asos.pdp.config.stockPriceApiTimeout = 5000;
+      </script></body></html>`;
+    const p = await extractProduct(html, ASOS);
+    expect(p.priceCents).toBeNull();
+    expect(p.currency).toBeNull();
+  });
+
+  test("no existing fixture gains a price from the ASOS tier", async () => {
+    // The values each existing test already asserts — the invariant here is
+    // "unchanged", not "zero". `undefined` = that test does not assert it.
+    const cases: Array<[string, string, number | null, string | null | undefined]> = [
+      ["shopify.html", PAGE_URL, 2500, "USD"],
+      ["productgroup.html", PAGE_URL, 9999, "USD"],
+      ["mixed-ld.html", PAGE_URL, 1999, undefined],
+      ["nometa.html", PAGE_URL, null, undefined],
+      ["badprice.html", PAGE_URL, null, undefined],
+      [
+        "vgp-aggregate-offer.html",
+        "https://videogameperfection.com/products/ossc-pro/",
+        29500,
+        "EUR",
+      ],
+      ["amazon-dp.html", "https://www.amazon.co.uk/dp/B0DLGMVR4C", 1900, "GBP"],
+      ["amazon-dp-nooffer.html", "https://www.amazon.co.uk/dp/B0BPCCKL3N", null, null],
+      ["amazon-dp-mixed-accordion.html", "https://www.amazon.co.uk/dp/B0DWDDNK1Q", 3497, "GBP"],
+      ["amazon-dp-mixed-noattr.html", "https://www.amazon.co.uk/dp/B0FPXD23ST", 1300, "GBP"],
+      ["amazon-dp-used-only.html", "https://www.amazon.co.uk/dp/B0C1USEDON", null, null],
+      ["amazon-dp-mixed-renewed.html", "https://www.amazon.co.uk/dp/B0RENEWED1", 5299, "GBP"],
+      ["steam-discounted.html", "https://store.steampowered.com/app/1086940/", 3499, "GBP"],
+      ["steam-plain.html", "https://store.steampowered.com/app/632360/", 1999, "GBP"],
+      ["steam-f2p.html", "https://store.steampowered.com/app/570/", null, null],
+      [
+        "steam-agecheck.html",
+        "https://store.steampowered.com/agecheck/app/1086940/",
+        null,
+        undefined,
+      ],
+    ];
+    for (const [name, url, price, currency] of cases) {
+      const p = await parseFixture(name, url);
+      expect({ name, price: p.priceCents }).toEqual({ name, price });
+      if (currency !== undefined) {
+        expect({ name, currency: p.currency }).toEqual({ name, currency });
+      }
+    }
+
+    // The two fixtures whose existing tests assert image/title only — the ASOS
+    // tier must not touch either, so those assertions are the invariant.
+    const relativeOg = await parseFixture("relative-og.html");
+    expect(relativeOg.image).toBe("https://cdn.example.com/img/a.jpg");
+    const twitter = await parseFixture("twitter.html");
+    expect(twitter.title).toBe("Steam-ish Title");
+    expect(twitter.image).toBe("https://cdn.example.com/header.jpg");
+  });
+});
+
+describe("ASOS payload picker (#171)", () => {
+  const RECOMMENDATION = {
+    productId: 205104757,
+    productPrice: { current: { value: 29.99, text: "£29.99" }, currency: "GBP" },
+  };
+  const PAGE_PRODUCT = {
+    productId: 206025763,
+    productPrice: { current: { value: 110, text: "£110.00" }, currency: "GBP" },
+  };
+
+  test("pickAsosPrice selects by anchor, not position", () => {
+    expect(pickAsosPrice([RECOMMENDATION, PAGE_PRODUCT], "206025763")).toEqual({
+      cents: 11000,
+      currency: "GBP",
+    });
+  });
+
+  test("pickAsosPrice with a null anchor returns null even when the array is non-empty", () => {
+    expect(pickAsosPrice([RECOMMENDATION, PAGE_PRODUCT], null)).toBeNull();
+  });
+
+  test("pickAsosPrice with a non-matching anchor returns null", () => {
+    expect(pickAsosPrice([RECOMMENDATION, PAGE_PRODUCT], "1")).toBeNull();
+  });
+
+  test("pickAsosPrice accepts a single object payload", () => {
+    expect(pickAsosPrice(PAGE_PRODUCT, "206025763")).toEqual({ cents: 11000, currency: "GBP" });
+  });
+
+  test("pickAsosPrice tolerates a numeric productId against a string anchor", () => {
+    // The payload keys the id as a JSON number; the JSON-LD anchor is read as
+    // a string. Both sides go through String().
+    expect(pickAsosPrice([PAGE_PRODUCT], String(206025763))).toEqual({
+      cents: 11000,
+      currency: "GBP",
+    });
+  });
+
+  test("pickAsosPrice never throws on garbage", () => {
+    for (const payload of [null, "x", 42, {}, [null, 3]]) {
+      expect(pickAsosPrice(payload, "206025763")).toBeNull();
+    }
+  });
+
+  test("pickAsosPrice with no currency anywhere → null currency, not a guess", () => {
+    expect(
+      pickAsosPrice([{ productId: 206025763, productPrice: { current: { value: 50, text: "" } } }], "206025763"),
+    ).toEqual({ cents: 5000, currency: null });
+  });
+
+  test("findAsosProductId reads productID, then productId, then sku", () => {
+    expect(findAsosProductId({ "@type": "Product", productID: 206025763 })).toBe("206025763");
+    expect(findAsosProductId({ "@type": "Product", productId: "123" })).toBe("123");
+    expect(findAsosProductId({ "@type": "Product", sku: "134114426" })).toBe("134114426");
+  });
+
+  test("findAsosProductId ignores a non-Product node", () => {
+    expect(
+      findAsosProductId({
+        "@type": "BreadcrumbList",
+        itemListElement: [{ "@type": "ListItem", position: 1, name: "Home" }],
+      }),
+    ).toBeNull();
   });
 });
 
