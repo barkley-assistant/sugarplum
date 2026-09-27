@@ -402,8 +402,11 @@ function collectSiblingVariantOffers(
  *     page showing a "£15 - £20" range displays (#170).
  *  3. The group's own `offers`, when it declares some.
  *
- *  A group with none of these yields an undefined price and currency — the
- *  item stays visibly incomplete, never priced from a guess. */
+ *  A source WINS only when its selection yields a VALID price; a source that
+ *  is present but unusable — `hasVariant[0]` without offers, sibling offers
+ *  that fail validation — falls through to the next one instead of ending the
+ *  walk. A group whose sources all fail yields an undefined price and
+ *  currency — the item stays visibly incomplete, never priced from a guess. */
 function productGroupData(group: Record<string, unknown>, siblings: readonly unknown[]) {
   const nested = group["hasVariant"];
   if (Array.isArray(nested) && nested.length > 0) {
@@ -411,25 +414,31 @@ function productGroupData(group: Record<string, unknown>, siblings: readonly unk
     const nestedObj =
       variant !== null && typeof variant === "object" ? (variant as Record<string, unknown>) : null;
     const selected = selectStructuredOffer(nestedObj === null ? undefined : nestedObj["offers"]);
-    return {
-      name: group["name"],
-      offersPrice: selected.price,
-      offersCurrency: selected.currency,
-      image: nestedObj === null ? group["image"] : nestedObj["image"],
-    };
+    if (selected.price !== undefined) {
+      return {
+        name: group["name"],
+        offersPrice: selected.price,
+        offersCurrency: selected.currency,
+        image: nestedObj === null ? group["image"] : nestedObj["image"],
+      };
+    }
   }
 
   const siblingOffers = collectSiblingVariantOffers(siblings, group);
   if (siblingOffers.length > 0) {
-    const selected = selectStructuredOffer(
-      siblingOffers.length === 1 ? siblingOffers[0] : siblingOffers,
-    );
-    return {
-      name: group["name"],
-      offersPrice: selected.price,
-      offersCurrency: selected.currency,
-      image: group["image"],
-    };
+    // `.flat()`: a sibling whose `offers` is array-shaped contributes its
+    // concrete Offers as separate candidates — the measured #159 shape. A flat
+    // list of offer objects is exactly `selectStructuredOffer`'s candidate
+    // shape, so object- and array-shaped siblings compete alike.
+    const selected = selectStructuredOffer(siblingOffers.flat());
+    if (selected.price !== undefined) {
+      return {
+        name: group["name"],
+        offersPrice: selected.price,
+        offersCurrency: selected.currency,
+        image: group["image"],
+      };
+    }
   }
 
   const selected = selectStructuredOffer(group["offers"]);

@@ -1765,4 +1765,55 @@ describe("extractProduct ProductGroup sibling variants (#170)", () => {
     expect(p.currency).toBe("GBP");
     expect(p.image).toBe("https://i/d.jpg");
   });
+
+  // #170 review findings: array-shaped sibling `offers` is the measured #159
+  // shape (VideoGamePerfection). It must compete in the lowest-wins selection
+  // exactly like an object-shaped one — before the fix a nested array was fed
+  // to selectStructuredOffer, which cannot see through it and silently stored
+  // a too-high price (or none at all).
+  test("array-shaped sibling offers compete: the lowest still wins", async () => {
+    const html = `<!DOCTYPE html><html><head><script type="application/ld+json">${JSON.stringify([
+      { "@type": "ProductGroup", "@id": NEXT, name: "D", image: "https://i/d.jpg" },
+      { "@type": "Product", name: "S3", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: [{ price: "15", priceCurrency: "GBP" }] },
+      { "@type": "Product", name: "S4", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: { price: "20", priceCurrency: "GBP" } },
+    ])}</script></head><body></body></html>`;
+    const p = await extractProduct(html, NEXT);
+    expect(p.priceCents).toBe(1500);
+    expect(p.currency).toBe("GBP");
+  });
+
+  test("every sibling array-shaped: the lowest still wins", async () => {
+    const html = `<!DOCTYPE html><html><head><script type="application/ld+json">${JSON.stringify([
+      { "@type": "ProductGroup", "@id": NEXT, name: "D" },
+      { "@type": "Product", name: "S3", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: [{ price: "15", priceCurrency: "GBP" }] },
+      { "@type": "Product", name: "S4", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: [{ price: "20", priceCurrency: "GBP" }] },
+    ])}</script></head><body></body></html>`;
+    const p = await extractProduct(html, NEXT);
+    expect(p.priceCents).toBe(1500);
+    expect(p.currency).toBe("GBP");
+  });
+
+  // A group whose hasVariant[0] has no usable offers must not terminate the
+  // walk: the sibling Products naming it are still the price source.
+  test("hasVariant[0] with unusable offers falls through to the siblings", async () => {
+    const html = `<!DOCTYPE html><html><head><script type="application/ld+json">${JSON.stringify([
+      { "@type": "ProductGroup", "@id": NEXT, name: "D", image: "https://i/d.jpg", hasVariant: [{ name: "v1" }] },
+      { "@type": "Product", name: "S3", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: { price: "15", priceCurrency: "GBP" } },
+    ])}</script></head><body></body></html>`;
+    const p = await extractProduct(html, NEXT);
+    expect(p.priceCents).toBe(1500);
+    expect(p.currency).toBe("GBP");
+  });
+
+  // Pin the pre-#170 behaviour the PR had regressed: an unusable sibling offer
+  // must fall through to the group's own valid offers, not return null.
+  test("unusable sibling offers fall through to the group's own offers", async () => {
+    const html = `<!DOCTYPE html><html><head><script type="application/ld+json">${JSON.stringify([
+      { "@type": "ProductGroup", "@id": NEXT, name: "D", offers: { price: "12", priceCurrency: "GBP" } },
+      { "@type": "Product", name: "S3", isVariantOf: { "@id": NEXT, "@type": "ProductGroup" }, offers: { price: "not-a-price" } },
+    ])}</script></head><body></body></html>`;
+    const p = await extractProduct(html, NEXT);
+    expect(p.priceCents).toBe(1200);
+    expect(p.currency).toBe("GBP");
+  });
 });
