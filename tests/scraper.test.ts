@@ -873,6 +873,56 @@ describe("scrapeProduct strategy pipeline (wave 13)", () => {
       srv.stop(true);
     }
   });
+
+  test("never-responding server: plain step carries heuristic 'timeout' and escalates (#173)", async () => {
+    const html = await Bun.file(join(FIXTURES, "shopify.html")).text();
+    // No fetchImpl injection — this is the REAL fetchPage path, so the
+    // classification is exercised end-to-end.
+    const srv = serve({
+      port: 0,
+      fetch: async () => {
+        await new Promise(() => {});
+        return new Response("never");
+      },
+    });
+    let calls = 0;
+    const runner: StealthRunner = async () => {
+      calls++;
+      return {
+        stdout: JSON.stringify({ ok: true, html, finalUrl: `${srv.url}product`, status: 200 }),
+        exitCode: 0,
+        signal: undefined,
+      };
+    };
+    try {
+      const result = await scrapeProduct(`${srv.url}hang`, {
+        userAgent: "UA/1.0",
+        timeoutMs: 300,
+        allowPrivate: true,
+        stealth: {
+          pythonBin: "/bin/true",
+          scriptPath: "/s",
+          profilesDir: "/tmp/p",
+          timeoutMs: 1000,
+          runner,
+          allowPrivate: true,
+        },
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.strategy).toBe("stealth-browser");
+      expect(result.steps[0]).toEqual({
+        strategy: "plain",
+        ok: false,
+        reason: "network",
+        heuristic: "timeout",
+      });
+      expect(calls).toBe(1);
+    } finally {
+      srv.stop(true);
+    }
+  });
 });
 
 describe("scrapeProduct Steam pipeline (wave 14)", () => {

@@ -4,9 +4,10 @@
  * a chain per hostname; an unregistered host gets `["plain","stealth-browser"]`
  * (auto-escalation, #103) which drops stealth when the capability is unwired
  * (byte-identical to pre-wave-13 behaviour in that case). A non-escalatable
- * plain failure (network/private-ip) ends the default chain instead of
- * launching a browser. Partial results are success — title-only extraction is
- * a usable item.
+ * plain failure (a `private-ip` rejection, or a `network` failure whose
+ * heuristic says the host is unreachable rather than fingerprinted — #173)
+ * ends the default chain instead of launching a browser. Partial results are
+ * success — title-only extraction is a usable item.
  */
 
 import type { Database } from "bun:sqlite";
@@ -16,7 +17,7 @@ import type { SearxngFetch as FetchLike } from "../searxng";
 import { resolveOverride, type ScrapeStrategyName } from "./overrides";
 export type { ScrapeStrategyName } from "./overrides";
 import { stealthFetch, type StealthDeps } from "./stealth";
-import { ESCALATABLE_FAILURES, readLearned, type ScrapeStep } from "./learned";
+import { isEscalatableStep, readLearned, type ScrapeStep } from "./learned";
 export type { ScrapeStep } from "./learned";
 
 /** One strategy's verdict. `finishFromHtml`/`runStrategy` return this; the
@@ -50,9 +51,12 @@ export interface ScrapeDeps {
  *  auto-escalation default (see `gateOnEscalatable`). */
 interface ResolvedChain {
   strategies: ScrapeStrategyName[];
-  /** Default chains only: a plain failure that is NOT escalatable (
-   *  network/private-ip) ends the chain rather than launching a browser. A
-   *  registry chain keeps wave-13 semantics — every entry tried in order. */
+  /** Default chains only: a plain failure that is NOT escalatable ends the
+   *  chain rather than launching a browser. Content/HTTP failures are always
+   *  escalatable; a `network` failure only when its heuristic says the
+   *  transport was killed (fingerprint block, #173) rather than the host being
+   *  unreachable (`isEscalatableStep`). A registry chain keeps wave-13
+   *  semantics — every entry tried in order. */
   gateOnEscalatable: boolean;
 }
 
@@ -158,9 +162,20 @@ export async function scrapeProduct(url: string, deps: ScrapeDeps): Promise<Scra
     if (outcome.ok) return { ...outcome, steps };
     lastFailure = outcome;
     // Auto-escalation is only worth a browser launch when the plain verdict is
-    // content-related or an HTTP wall (D1): a host the network cannot reach is
-    // not a host a browser can reach.
-    if (chain.gateOnEscalatable && !ESCALATABLE_FAILURES.has(outcome.reason)) break;
+    // content-related, an HTTP wall, or a transport kill a browser can dodge
+    // (a WAF fingerprinting the client, #173). A host the network genuinely
+    // cannot reach (dns/refused) is not a host a browser can reach.
+    if (
+      chain.gateOnEscalatable &&
+      !isEscalatableStep({
+        strategy,
+        ok: false,
+        reason: outcome.reason,
+        heuristic: outcome.heuristic,
+      })
+    ) {
+      break;
+    }
   }
   // Unreachable when the chain is non-empty (every chain includes "plain");
   // the type system needs an explicit return.

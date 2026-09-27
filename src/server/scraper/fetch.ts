@@ -3,6 +3,13 @@
  * detection. The bot-wall heuristic consults BOTH the status and the body:
  * eBay 403s arrive with an error page, Amazon 200s arrive with a captcha —
  * either signal alone misclassifies.
+ *
+ * A fetch that never produces a response, or whose body dies mid-read, comes
+ * back as `reason: "network"` with a `heuristic` naming the transport failure
+ * (`classifyFetchError`): `timeout` | `conn-reset` | `dns` | `refused` |
+ * `unknown`. The scrape chain's escalation gate (`isEscalatableStep`) and the
+ * enrichment log (`strategy:reason/heuristic`) are the consumers — a name is
+ * all that is ever recorded, never the error body.
  */
 
 import { isPrivateLiteralUrl, finalUrlIsPrivate } from "../net/private-ip";
@@ -64,6 +71,51 @@ export function detectBotWall(html: string): string | null {
   return null;
 }
 
+/** Transport-failure prose that arrives WITHOUT a usable `code` — a wrapped or
+ *  cross-realm error, or the HTTP/2 session/stream family (prose only: from
+ *  this host Bun's fetch surfaces an HTTP/2 refusal as a stall, measured
+ *  2026-09-27). All case-insensitive. Order matters: reset is tested before
+ *  dns/refused so a socket kill is never mistaken for a host that is not
+ *  there. */
+const RESET_TEXT = /reset|not closed cleanly|INTERNAL_ERROR|session|stream|socket/i;
+const DNS_TEXT = /getaddrinfo|ENOTFOUND|EAI_AGAIN|dns/i;
+const REFUSED_TEXT = /ECONNREFUSED|refused/i;
+
+/** A wrapped error's cause, as text. `cause` may be a getter that throws, so
+ *  reading it is inside the try — the classifier must never throw. */
+function describedCause(err: unknown): string {
+  try {
+    const cause = (err as { cause?: unknown })?.cause;
+    if (cause === null || cause === undefined) return "";
+    return String((cause as { message?: unknown })?.message ?? cause);
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Name the transport failure behind a thrown fetch/body error. First match
+ * wins, so the specific `code`s are checked before the text fallbacks.
+ *
+ * `code` must be read with `typeof === "string"`, never truthiness: a
+ * DOMException (what `AbortSignal.timeout` throws) carries a NUMERIC legacy
+ * `code` of 23, which is not one of the transport codes. Never throws.
+ */
+export function classifyFetchError(err: unknown): string {
+  const e = err as { name?: unknown; code?: unknown; message?: unknown };
+  const name = typeof e?.name === "string" ? e.name : "";
+  const code = typeof e?.code === "string" ? e.code : "";
+  const text = `${typeof e?.message === "string" ? e.message : ""} ${describedCause(e)}`;
+  if (name === "TimeoutError" || name === "AbortError") return "timeout";
+  if (code === "ECONNRESET") return "conn-reset";
+  if (code === "ConnectionRefused") return "refused";
+  if (code === "ENOTFOUND") return "dns";
+  if (RESET_TEXT.test(text)) return "conn-reset";
+  if (DNS_TEXT.test(text)) return "dns";
+  if (REFUSED_TEXT.test(text)) return "refused";
+  return "unknown";
+}
+
 export async function fetchPage(url: string, opts: FetchPageOptions): Promise<FetchPageResult> {
   // SSRF guard, pre-fetch: literal private/loopback host → reject before any
   // network I/O. Skipped only by the explicit allowPrivate opt-in.
@@ -84,9 +136,12 @@ export async function fetchPage(url: string, opts: FetchPageOptions): Promise<Fe
       redirect: "follow",
       signal: AbortSignal.timeout(opts.timeoutMs ?? 10_000),
     });
-  } catch {
-    // Abort (timeout), connection refused, DNS failure — all "network".
-    return { ok: false, reason: "network" };
+  } catch (err) {
+    // Abort (timeout), connection refused, DNS failure, a reset socket — all
+    // "network"; the heuristic names WHICH, so the chain can tell a
+    // fingerprint block (the host answered, the transport was killed) from a
+    // host that is genuinely not reachable.
+    return { ok: false, reason: "network", heuristic: classifyFetchError(err) };
   }
 
   // SSRF guard, post-fetch: redirects were followed, so check the FINAL url.
@@ -101,11 +156,13 @@ export async function fetchPage(url: string, opts: FetchPageOptions): Promise<Fe
   let html: string;
   try {
     html = await res.text();
-  } catch {
+  } catch (err) {
     // Headers arrived but the body stalled or reset mid-read (a server that
     // sends headers then never closes the stream). Same class of failure as
-    // the fetch itself — "network", never a throw out of the pipeline.
-    return { ok: false, reason: "network" };
+    // the fetch itself — "network", never a throw out of the pipeline. Same
+    // classifier: the signal that fires on a stall is the timeout, a socket
+    // killed mid-body is ECONNRESET (measured 2026-09-27).
+    return { ok: false, reason: "network", heuristic: classifyFetchError(err) };
   }
 
   const heuristic = detectBotWall(html);

@@ -25,11 +25,25 @@ import type { FetchFailure } from "./fetch";
 
 /** Plain verdicts worth a browser retry: content failures (a browser sees a
  *  different page) and any >=400 (eBay's hard 403 with a non-challenge body).
- *  `network` does not escalate — a browser cannot reach a host the network
- *  cannot — and `private-ip` is the SSRF guard rejecting before any I/O. */
+ *  `private-ip` is the SSRF guard rejecting before any I/O, and a bare
+ *  `network` reason says nothing about WHY the transport failed — that half of
+ *  the policy is `FINGERPRINT_NETWORK_HEURISTICS` + `isEscalatableStep`. */
 export const ESCALATABLE_FAILURES: ReadonlySet<FetchFailure["reason"]> = new Set<
   FetchFailure["reason"]
 >(["botwall", "empty", "http"]);
+
+/** `network` heuristics that mean "the host answered, the transport was killed"
+ *  — a WAF fingerprinting the client (#173) — and NOT "the host is not
+ *  reachable". `dns`/`refused` are genuinely unreachable hosts; escalating
+ *  them would burn a browser launch per fetch forever on a host that can never
+ *  succeed. `timeout` and `conn-reset` are the measured ASOS shapes, and
+ *  `unknown` lets a new, unnamed transport failure escalate without a code
+ *  change. */
+export const FINGERPRINT_NETWORK_HEURISTICS: ReadonlySet<string> = new Set([
+  "timeout",
+  "conn-reset",
+  "unknown",
+]);
 
 /** Qualifying escalations before a host is promoted to stealth-first. */
 export const LEARNED_PROMOTION_THRESHOLD = 3;
@@ -51,6 +65,23 @@ export interface ScrapeStep {
   /** Set on a failed step — the matched (or synthetic) heuristic name, e.g.
    *  "captcha" or "stealth-timeout". Never page content. */
   heuristic?: string;
+}
+
+/** One chain step worth retrying with a browser. Content/HTTP failures always;
+ *  `network` only when the heuristic says the transport was blocked rather
+ *  than the host being unreachable. A `network` step with NO heuristic is not
+ *  escalatable — the stealth transport's own synthetic verdicts
+ *  ("stealth-timeout", "stealth-unavailable", …) carry their own names and are
+ *  the last thing a chain tries anyway. Used by BOTH the chain gate
+ *  (`index.ts`) and the promotion evidence below, so they can never disagree
+ *  about which failures count. */
+export function isEscalatableStep(step: ScrapeStep): boolean {
+  if (step.ok) return false;
+  const reason = step.reason;
+  if (reason === undefined) return false;
+  if (reason !== "network") return ESCALATABLE_FAILURES.has(reason);
+  if (step.heuristic === undefined) return false;
+  return FINGERPRINT_NETWORK_HEURISTICS.has(step.heuristic);
 }
 
 export interface LearnedOverride {
@@ -152,11 +183,7 @@ function applyOutcome(db: Database, url: string, steps: ScrapeStep[]): void {
   const row = selectRow(db, hostname);
   const plain = steps.find((s) => s.strategy === "plain");
   const stealth = steps.find((s) => s.strategy === "stealth-browser");
-  const plainFailedEscalatable =
-    plain !== undefined &&
-    !plain.ok &&
-    plain.reason !== undefined &&
-    ESCALATABLE_FAILURES.has(plain.reason);
+  const plainFailedEscalatable = plain !== undefined && isEscalatableStep(plain);
   const stealthOk = stealth?.ok === true;
   const plainFirst = steps[0].strategy !== "stealth-browser";
 
