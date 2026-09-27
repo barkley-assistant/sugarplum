@@ -379,6 +379,10 @@ describe("async enrichment", () => {
         .get(item.id) as { fetch_state: string; last_fetch_error: string | null };
       expect(row.fetch_state).toBe("failed");
       expect(row.last_fetch_error).toContain("network");
+      // #173: the mid-body stall is aborted by the same signal as a fetch
+      // timeout, so the recorded name is the transport class, not a bare
+      // "network" (measured 2026-09-27).
+      expect(row.last_fetch_error).toContain("timeout");
 
       // Item still listed → Retry affordance available, no dead end.
       const list = await admin.request("GET", `/api/users/${userId}/wishlist`);

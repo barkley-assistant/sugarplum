@@ -4,12 +4,15 @@
 // the network, and re-assert that the committed registry hosts are unchanged.
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import { serve } from "bun";
 import type { Database } from "bun:sqlite";
 import { openDatabase } from "../src/server/db/db";
 import { scrapeProduct } from "../src/server/scraper";
 import {
   ESCALATABLE_FAILURES,
+  FINGERPRINT_NETWORK_HEURISTICS,
   LEARNED_PROMOTION_THRESHOLD,
+  isEscalatableStep,
   readLearned,
   recordScrapeOutcome,
   type ScrapeStep,
@@ -237,17 +240,26 @@ describe("default chain auto-escalation (#103 tier 1)", () => {
   test("network failure does NOT escalate (a browser cannot reach what the network cannot)", async () => {
     const html = await shopifyHtml();
     const seen = { calls: 0 };
+    // The real Bun shape for a refused connection (measured 2026-09-27):
+    // a TypeError carrying `code: "ConnectionRefused"`, not a bare Error.
+    const refused = new TypeError(
+      "Unable to connect. Is the computer able to access the url?",
+    ) as TypeError & { code: string };
+    refused.code = "ConnectionRefused";
     const result = await scrapeProduct(PAGE_URL, {
       userAgent: "UA/1.0",
       fetchImpl: async () => {
-        throw new Error("ECONNREFUSED");
+        throw refused;
       },
       allowPrivate: true,
       stealth: stealthStub(html, "ok", seen),
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toBe("network");
+    if (!result.ok) {
+      expect(result.reason).toBe("network");
+      expect(result.heuristic).toBe("refused");
+    }
     expect(steps(result)).toBe("plain:network");
     expect(seen.calls).toBe(0);
   });
@@ -291,6 +303,183 @@ describe("default chain auto-escalation (#103 tier 1)", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe("http");
     expect(steps(result)).toBe("stealth-browser:network,plain:http");
+  });
+});
+
+describe("default chain gate on network heuristics (#173)", () => {
+  /** The two measured fingerprint-class shapes, as thrown objects. */
+  function timeoutError(): DOMException {
+    return new DOMException("The operation timed out.", "TimeoutError");
+  }
+  function resetError(): TypeError {
+    const err = new TypeError(
+      "The socket connection was closed unexpectedly. For more information, pass `verbose: true` in the second argument to fetch()",
+    ) as TypeError & { code: string };
+    err.code = "ECONNRESET";
+    return err;
+  }
+  function dnsError(): TypeError {
+    const err = new TypeError("getaddrinfo ENOTFOUND shop.example.test") as TypeError & {
+      code: string;
+    };
+    err.code = "ENOTFOUND";
+    return err;
+  }
+  function refusedError(): TypeError {
+    const err = new TypeError(
+      "Unable to connect. Is the computer able to access the url?",
+    ) as TypeError & { code: string };
+    err.code = "ConnectionRefused";
+    return err;
+  }
+
+  test("network+timeout escalates to stealth", async () => {
+    const html = await shopifyHtml();
+    const seen = { calls: 0 };
+    const result = await scrapeProduct(PAGE_URL, {
+      userAgent: "UA/1.0",
+      fetchImpl: async () => {
+        throw timeoutError();
+      },
+      allowPrivate: true,
+      stealth: stealthStub(html, "ok", seen),
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.strategy).toBe("stealth-browser");
+    expect(steps(result)).toBe("plain:network,stealth-browser:ok");
+    expect(seen.calls).toBe(1);
+  });
+
+  test("network+conn-reset escalates to stealth", async () => {
+    const html = await shopifyHtml();
+    const seen = { calls: 0 };
+    const result = await scrapeProduct(PAGE_URL, {
+      userAgent: "UA/1.0",
+      fetchImpl: async () => {
+        throw resetError();
+      },
+      allowPrivate: true,
+      stealth: stealthStub(html, "ok", seen),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(steps(result)).toBe("plain:network,stealth-browser:ok");
+    expect(seen.calls).toBe(1);
+  });
+
+  test("network+dns does NOT escalate (the host is genuinely unreachable)", async () => {
+    const html = await shopifyHtml();
+    const seen = { calls: 0 };
+    const result = await scrapeProduct(PAGE_URL, {
+      userAgent: "UA/1.0",
+      fetchImpl: async () => {
+        throw dnsError();
+      },
+      allowPrivate: true,
+      stealth: stealthStub(html, "ok", seen),
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe("network");
+      expect(result.heuristic).toBe("dns");
+    }
+    expect(steps(result)).toBe("plain:network");
+    expect(seen.calls).toBe(0);
+  });
+
+  test("network+refused does NOT escalate", async () => {
+    const html = await shopifyHtml();
+    const seen = { calls: 0 };
+    const result = await scrapeProduct(PAGE_URL, {
+      userAgent: "UA/1.0",
+      fetchImpl: async () => {
+        throw refusedError();
+      },
+      allowPrivate: true,
+      stealth: stealthStub(html, "ok", seen),
+    });
+
+    expect(steps(result)).toBe("plain:network");
+    expect(seen.calls).toBe(0);
+  });
+
+  test("a real never-responding server escalates (the measured ASOS shape)", async () => {
+    // No fetchImpl injection: the REAL fetchPage path, with the real
+    // AbortSignal.timeout, classifies the failure itself.
+    const srv = serve({
+      port: 0,
+      fetch: async () => {
+        await new Promise(() => {});
+        return new Response("never");
+      },
+    });
+    const html = await shopifyHtml();
+    const seen = { calls: 0 };
+    try {
+      const result = await scrapeProduct(`${srv.url}hang`, {
+        userAgent: "UA/1.0",
+        timeoutMs: 300,
+        allowPrivate: true,
+        stealth: stealthStub(html, "ok", seen),
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.strategy).toBe("stealth-browser");
+      expect(steps(result)).toBe("plain:network,stealth-browser:ok");
+      expect(seen.calls).toBe(1);
+    } finally {
+      srv.stop(true);
+    }
+  });
+});
+
+describe("isEscalatableStep (#173)", () => {
+  test("fingerprint-class network failures escalate; an un-named one does not", () => {
+    expect(isEscalatableStep({ strategy: "plain", ok: false, reason: "network" })).toBe(false);
+    expect(
+      isEscalatableStep({ strategy: "plain", ok: false, reason: "network", heuristic: "timeout" }),
+    ).toBe(true);
+    expect(
+      isEscalatableStep({ strategy: "plain", ok: false, reason: "network", heuristic: "conn-reset" }),
+    ).toBe(true);
+    expect(
+      isEscalatableStep({ strategy: "plain", ok: false, reason: "network", heuristic: "unknown" }),
+    ).toBe(true);
+    // The stealth transport's own verdicts are never escalatable by name.
+    expect(
+      isEscalatableStep({
+        strategy: "plain",
+        ok: false,
+        reason: "network",
+        heuristic: "stealth-unavailable",
+      }),
+    ).toBe(false);
+    expect(
+      isEscalatableStep({
+        strategy: "plain",
+        ok: false,
+        reason: "network",
+        heuristic: "stealth-timeout",
+      }),
+    ).toBe(false);
+  });
+
+  test("non-network reasons keep the pre-#173 policy, and a success never escalates", () => {
+    expect(isEscalatableStep({ strategy: "plain", ok: false, reason: "botwall" })).toBe(true);
+    expect(isEscalatableStep({ strategy: "plain", ok: false, reason: "http" })).toBe(true);
+    expect(isEscalatableStep({ strategy: "plain", ok: false, reason: "empty" })).toBe(true);
+    expect(isEscalatableStep({ strategy: "plain", ok: false, reason: "private-ip" })).toBe(false);
+    expect(
+      isEscalatableStep({ strategy: "plain", ok: true, reason: "network", heuristic: "timeout" }),
+    ).toBe(false);
+  });
+
+  test("the fingerprint set is exactly the transport-kill names", () => {
+    expect([...FINGERPRINT_NETWORK_HEURISTICS].sort()).toEqual(["conn-reset", "timeout", "unknown"]);
+    expect(FINGERPRINT_NETWORK_HEURISTICS.has("dns")).toBe(false);
+    expect(FINGERPRINT_NETWORK_HEURISTICS.has("refused")).toBe(false);
   });
 });
 
@@ -406,6 +595,36 @@ describe("recordScrapeOutcome: promotion", () => {
     expect(steps(fourth)).toBe("stealth-browser:ok");
     expect(plain4.n).toBe(0);
     expect(learnedRow(db)?.successful_stealth_fetches).toBe(1);
+    db.close();
+  });
+
+  test("three fingerprint-class network escalations promote the host too (#173)", async () => {
+    const db = freshDb();
+    const html = await shopifyHtml();
+
+    for (let cycle = 1; cycle <= LEARNED_PROMOTION_THRESHOLD; cycle++) {
+      const seen = { calls: 0 };
+      const result = await scrapeProduct(PAGE_URL, {
+        userAgent: "UA/1.0",
+        fetchImpl: async () => {
+          throw new DOMException("The operation timed out.", "TimeoutError");
+        },
+        allowPrivate: true,
+        stealth: stealthStub(html, "ok", seen),
+        learnedDb: db,
+      });
+      expect(result.ok).toBe(true);
+      expect(steps(result)).toBe("plain:network,stealth-browser:ok");
+      recordScrapeOutcome(db, PAGE_URL, result.steps);
+
+      const row = learnedRow(db);
+      expect(row?.escalation_count).toBe(cycle);
+      if (cycle < LEARNED_PROMOTION_THRESHOLD) {
+        expect(row?.strategies).toBeNull();
+      } else {
+        expect(row?.strategies).toBe(JSON.stringify(["stealth-browser", "plain"]));
+      }
+    }
     db.close();
   });
 
