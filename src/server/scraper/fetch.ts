@@ -13,7 +13,10 @@
  *
  * Akamai Bot Manager (`akamai-bm`, #172): Inditex shops answer a plain fetch
  * with a 2KB challenge body that carries the bm-verify token in a meta refresh,
- * so a 200 alone does not mean the page arrived.
+ * so a 200 alone does not mean the page arrived. When that body is detected,
+ * `fetchPage` follows the meta refresh ONCE — the product URL plus the one-shot
+ * token — through the same guards, and returns that request's verdict. It never
+ * loops: a second interstitial is the answer, not a reason to try again.
  */
 
 import { isPrivateLiteralUrl, finalUrlIsPrivate } from "../net/private-ip";
@@ -78,6 +81,36 @@ export function detectBotWall(html: string): string | null {
   const sample = html.slice(0, 4096).toLowerCase();
   for (const [re, name] of BOT_WALL_PATTERNS) {
     if (re.test(sample)) return name;
+  }
+  return null;
+}
+
+/** Akamai's bm-verify interstitial hands out its one-shot token in a
+ *  `<meta http-equiv="refresh" content="5; URL='<product path>&bm-verify=…'">`.
+ *  Returns that target EXACTLY as written: a relative target stays relative,
+ *  because resolving it needs the fetched page's final URL and this stays a
+ *  pure function. Reads only the first 4KB, like `detectBotWall` — the meta
+ *  refresh sits near the top of the challenge body and a page-sized document is
+ *  never scanned. Never throws. */
+const META_SCAN_BYTES = 4096;
+const META_TAG_RE = /<meta\b[^>]*>/gi;
+const REFRESH_EQUIV_RE = /http-equiv\s*=\s*(?:"refresh"|'refresh'|refresh)/i;
+const CONTENT_ATTR_RE = /content\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i;
+const CONTENT_URL_RE = /url\s*=\s*(?:"([^"]*)"|'([^']*)'|([^"'\s>]+))/i;
+
+export function extractMetaRefreshTarget(html: string): string | null {
+  for (const tag of html.slice(0, META_SCAN_BYTES).match(META_TAG_RE) ?? []) {
+    if (!REFRESH_EQUIV_RE.test(tag)) continue;
+    const content = CONTENT_ATTR_RE.exec(tag);
+    const value = content?.[1] ?? content?.[2] ?? content?.[3];
+    if (value === undefined) continue;
+    const target = CONTENT_URL_RE.exec(value);
+    const raw = (target?.[1] ?? target?.[2] ?? target?.[3] ?? "").trim();
+    // A target containing whitespace is not a URL, and `new URL("not a url",
+    // base)` would percent-encode it into a plausible-looking path — so the
+    // rejection lives here rather than at the call site.
+    if (!raw || /\s/.test(raw)) continue;
+    return raw;
   }
   return null;
 }
@@ -206,8 +239,44 @@ function verdictFromPage(page: {
   return { ok: true, html: page.html, finalUrl: page.finalUrl };
 }
 
+/** The Akamai Bot Manager heuristic name (the `BOT_WALL_PATTERNS` entry) —
+ *  the one heuristic that also has a self-service hand-off. */
+const AKAMAI_BM_HEURISTIC = "akamai-bm";
+
+/** The URL the interstitial's meta refresh points at, resolved against the
+ *  fetched page's final URL. The live target is RELATIVE, and an unresolved
+ *  `fetch("/gb/…")` throws `ERR_INVALID_URL` (measured), so resolution is not
+ *  optional. Non-http(s) schemes and unusable targets return null: no token URL
+ *  means no refetch, and the interstitial's own verdict stands. */
+function resolveChallengeUrl(html: string, finalUrl: string): string | null {
+  const target = extractMetaRefreshTarget(html);
+  if (target === null) return null;
+  try {
+    const resolved = new URL(target, finalUrl);
+    return resolved.protocol === "http:" || resolved.protocol === "https:" ? resolved.href : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchPage(url: string, opts: FetchPageOptions): Promise<FetchPageResult> {
   const page = await requestOnce(url, opts);
   if (!page.ok) return page;
+
+  // Akamai Bot Manager self-service: the interstitial hands out a one-shot
+  // `bm-verify` token in its meta refresh, and the product URL with that token
+  // appended IS the page. Follow it through the same request discipline and
+  // return whatever it produced — ONCE, never in a loop. The token is
+  // single-use, so a second interstitial is the final verdict (a stricter tier
+  // such as Zara's never passes) and a third request is never made.
+  if (detectBotWall(page.html) === AKAMAI_BM_HEURISTIC) {
+    const tokenUrl = resolveChallengeUrl(page.html, page.finalUrl);
+    if (tokenUrl !== null) {
+      const retried = await requestOnce(tokenUrl, opts);
+      if (!retried.ok) return retried;
+      return verdictFromPage(retried);
+    }
+  }
+
   return verdictFromPage(page);
 }

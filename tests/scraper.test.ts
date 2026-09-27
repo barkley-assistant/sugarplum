@@ -11,7 +11,7 @@ import {
   type DomPrice,
 } from "../src/server/scraper/parse";
 import { scrapeProduct } from "../src/server/scraper";
-import { fetchPage, detectBotWall } from "../src/server/scraper/fetch";
+import { fetchPage, detectBotWall, extractMetaRefreshTarget } from "../src/server/scraper/fetch";
 import type { StealthRunner } from "../src/server/scraper/stealth";
 import type { SearxngFetch } from "../src/server/searxng";
 
@@ -1057,6 +1057,340 @@ describe("Akamai bm-verify interstitial (#172)", () => {
       <script type="application/ld+json">{"@type":"Product","name":"triggerInterstitialChallenge widget"}</script>
     </head><body></body></html>`;
     expect(detectBotWall(html)).toBe("akamai-bm");
+  });
+
+  test("the PDP fixture extracts through the existing tiers (no parse.ts change)", async () => {
+    // The measured baseline: the challenge body yields a whitespace title and
+    // nothing else; the token-fetched page yields the product. Both come out of
+    // the tiers that already existed — the bug is transport-only.
+    const p = await parseFixture(
+      BM_PDP,
+      "https://www.bershka.com/gb/example-product-c0p000000000.html",
+    );
+    expect(p.title).toBe("Fitted short sleeve print T-shirt - Women");
+    expect(p.priceCents).toBe(1299);
+    expect(p.currency).toBe("GBP");
+    // Entity-encoded in the source and handed back verbatim — the known
+    // wrong-image-size defect (out of scope for #172, do not tidy the fixture).
+    expect(p.image).toBe(
+      "https://static.bershka.net/assets/public/abc1/example-product-p.jpg?ts=1789720111100&amp;w=850",
+    );
+    expect(p.siteName).toBe("bershka.com");
+
+    const wall = await parseFixture(
+      BM_INTERSTITIAL,
+      "https://www.bershka.com/gb/example-product-c0p000000000.html",
+    );
+    expect(wall.title).toBe(" ");
+    expect(wall.priceCents).toBeNull();
+    expect(wall.image).toBeNull();
+  });
+
+  test("extractMetaRefreshTarget: relative target returned as written", async () => {
+    // RELATIVE, not resolved: the live body ships the target relative to the
+    // product page, and `fetch("'/gb/…'")` throws ERR_INVALID_URL without
+    // resolution against the page URL the caller holds.
+    expect(extractMetaRefreshTarget(await readFixture(BM_INTERSTITIAL))).toBe(BM_TARGET_PATH);
+  });
+
+  test("extractMetaRefreshTarget: double-quoted and mixed-case variants", () => {
+    const doubleQuoted = `<meta http-equiv="refresh" content='5; URL="https://shop.example.com/p?bm-verify=AAQ1"'>`;
+    expect(extractMetaRefreshTarget(doubleQuoted)).toBe(
+      "https://shop.example.com/p?bm-verify=AAQ1",
+    );
+    const mixedCase = `<META HTTP-EQUIV="REFRESH" CONTENT="0; URL='/cart?bm-verify=AAQ1'">`;
+    expect(extractMetaRefreshTarget(mixedCase)).toBe("/cart?bm-verify=AAQ1");
+  });
+
+  test("extractMetaRefreshTarget: no refresh / no URL → null", () => {
+    expect(extractMetaRefreshTarget(`<meta http-equiv="refresh" content="5">`)).toBeNull();
+    expect(extractMetaRefreshTarget(`<html><head><title>x</title></head></html>`)).toBeNull();
+    // A pure extractor: an ordinary countdown refresh on a shopping page is
+    // returned as any other target. Gating on the interstitial is the caller's.
+    expect(extractMetaRefreshTarget(`<meta http-equiv="refresh" content="0; url=/cart">`)).toBe(
+      "/cart",
+    );
+  });
+
+  test("extractMetaRefreshTarget: never throws on garbage", () => {
+    for (const html of ["", "<meta", `<meta http-equiv=refresh content=`]) {
+      expect(extractMetaRefreshTarget(html)).toBeNull();
+    }
+  });
+
+  test("extractMetaRefreshTarget does not scan a page-sized document", async () => {
+    // The window is the first 4KB, like `detectBotWall`: a meta refresh far
+    // below the fold of a real page is not a challenge hand-off.
+    const buried = `${"<!-- pad -->".repeat(400)}\n<meta http-equiv="refresh" content="5; URL='/x'">`;
+    expect(buried.length).toBeGreaterThan(4096);
+    expect(extractMetaRefreshTarget(buried)).toBeNull();
+  });
+
+  // ---- Group C: the pass-through, over the real fetchPage ----
+
+  /** Both captures. */
+  async function captures() {
+    return {
+      interstitial: await readFixture(BM_INTERSTITIAL),
+      pdp: await readFixture(BM_PDP),
+    };
+  }
+
+  /** A local server that counts every request it sees — the counter is the
+   *  no-loop assertion's mechanism, so it must see requests whose response
+   *  never arrives too. */
+  function akamaiServer(handler: (url: URL) => Response | Promise<Response>) {
+    const seen: string[] = [];
+    const srv = serve({
+      port: 0,
+      fetch: (req) => {
+        seen.push(req.url);
+        return handler(new URL(req.url));
+      },
+    });
+    return { srv, seen };
+  }
+
+  const isTokenRequest = (url: URL) => url.searchParams.has("bm-verify");
+
+  test("interstitial → exactly one token refetch returns the PDP", async () => {
+    const { interstitial, pdp } = await captures();
+    const { srv, seen } = akamaiServer((url) =>
+      isTokenRequest(url) ? new Response(pdp) : new Response(interstitial),
+    );
+    try {
+      const page = await fetchPage(`${srv.url}product`, { userAgent: "UA/1.0", allowPrivate: true });
+      expect(page.ok).toBe(true);
+      if (!page.ok) return;
+      expect(page.html).toContain("Fitted short sleeve print T-shirt - Women");
+      expect(page.html).not.toContain("interstitial/ic.html");
+      // The token request's own final URL, never the URL we started on.
+      expect(page.finalUrl).toBe(new URL(BM_TARGET_PATH, srv.url).href);
+      expect(seen).toHaveLength(2);
+      expect(seen[0]).toBe(`${srv.url}product`);
+    } finally {
+      srv.stop(true);
+    }
+  });
+
+  test("absolute meta-refresh target is honoured unchanged", async () => {
+    const { interstitial, pdp } = await captures();
+    let body = interstitial;
+    const { srv, seen } = akamaiServer((url) =>
+      isTokenRequest(url) ? new Response(pdp) : new Response(body),
+    );
+    try {
+      const absolute = new URL(BM_TARGET_PATH, srv.url).href;
+      body = interstitial.replace(/URL='[^']*'/, `URL='${absolute}'`);
+      expect(body).toContain(`URL='${absolute}'`);
+      const page = await fetchPage(`${srv.url}product`, { userAgent: "UA/1.0", allowPrivate: true });
+      expect(page.ok).toBe(true);
+      if (!page.ok) return;
+      expect(page.finalUrl).toBe(absolute);
+      expect(seen).toHaveLength(2);
+    } finally {
+      srv.stop(true);
+    }
+  });
+
+  test("a second interstitial on the token refetch → botwall, NOT a third request", async () => {
+    const { interstitial } = await captures();
+    const { srv, seen } = akamaiServer(() => new Response(interstitial));
+    try {
+      const page = await fetchPage(`${srv.url}product`, { userAgent: "UA/1.0", allowPrivate: true });
+      expect(page.ok).toBe(false);
+      if (page.ok) return;
+      expect(page.reason).toBe("botwall");
+      expect(page.heuristic).toBe("akamai-bm");
+      // THE no-loop assertion: the token is single-use, so the second
+      // interstitial is the verdict and there is never a third request.
+      expect(seen).toHaveLength(2);
+    } finally {
+      srv.stop(true);
+    }
+  });
+
+  test("interstitial with no meta refresh → botwall, no second request", async () => {
+    const { interstitial } = await captures();
+    const stripped = interstitial.replace(/<meta http-equiv="refresh"[^\n]*\n/, "");
+    expect(stripped).not.toContain("http-equiv");
+    const { srv, seen } = akamaiServer(() => new Response(stripped));
+    try {
+      const page = await fetchPage(`${srv.url}product`, { userAgent: "UA/1.0", allowPrivate: true });
+      expect(page.ok).toBe(false);
+      if (page.ok) return;
+      expect(page.reason).toBe("botwall");
+      expect(page.heuristic).toBe("akamai-bm");
+      expect(seen).toHaveLength(1);
+    } finally {
+      srv.stop(true);
+    }
+  });
+
+  test("a meta-refresh target that is not a URL → botwall, no second request", async () => {
+    const { interstitial } = await captures();
+    const broken = interstitial.replace(/URL='[^']*'/, "URL='not a url'");
+    const { srv, seen } = akamaiServer(() => new Response(broken));
+    try {
+      const page = await fetchPage(`${srv.url}product`, { userAgent: "UA/1.0", allowPrivate: true });
+      expect(page.ok).toBe(false);
+      if (page.ok) return;
+      expect(page.reason).toBe("botwall");
+      expect(page.heuristic).toBe("akamai-bm");
+      expect(seen).toHaveLength(1);
+    } finally {
+      srv.stop(true);
+    }
+  });
+
+  test("token refetch 404 → the refetch's own http verdict, not botwall", async () => {
+    const { interstitial } = await captures();
+    const { srv, seen } = akamaiServer((url) =>
+      isTokenRequest(url) ? new Response("gone", { status: 404 }) : new Response(interstitial),
+    );
+    try {
+      const page = await fetchPage(`${srv.url}product`, { userAgent: "UA/1.0", allowPrivate: true });
+      expect(page.ok).toBe(false);
+      if (page.ok) return;
+      expect(page.reason).toBe("http");
+      expect(page.status).toBe(404);
+      expect(seen).toHaveLength(2);
+    } finally {
+      srv.stop(true);
+    }
+  });
+
+  test("token refetch that never responds → network with a named heuristic", async () => {
+    const { interstitial } = await captures();
+    const { srv, seen } = akamaiServer((url) =>
+      isTokenRequest(url) ? new Promise<Response>(() => {}) : new Response(interstitial),
+    );
+    try {
+      const page = await fetchPage(`${srv.url}product`, {
+        userAgent: "UA/1.0",
+        timeoutMs: 300,
+        allowPrivate: true,
+      });
+      expect(page.ok).toBe(false);
+      if (page.ok) return;
+      expect(page.reason).toBe("network");
+      expect(page.heuristic).toBe("timeout");
+      // The counter sees the request whose response never arrived.
+      expect(seen).toHaveLength(2);
+    } finally {
+      srv.stop(true);
+    }
+  });
+
+  test("SSRF: a meta-refresh target on a literal private host is refused before any I/O", async () => {
+    const { interstitial } = await captures();
+    const hostile = interstitial.replace(/URL='[^']*'/, "URL='http://127.0.0.1:9/steal'");
+    const seen: string[] = [];
+    const fetchImpl: SearxngFetch = async (input) => {
+      seen.push(String(input));
+      return new Response(hostile, { status: 200 });
+    };
+    // The primary URL is a public literal host, so the DEFAULT guard is the one
+    // under test: the token URL must be held to the same check, rejected before
+    // any request reaches it. (`allowPrivate` opts both requests out — that is
+    // how the local-server tests above work.)
+    const page = await fetchPage("http://93.184.216.34:80/product", {
+      userAgent: "UA/1.0",
+      fetchImpl,
+    });
+    expect(page.ok).toBe(false);
+    if (page.ok) return;
+    expect(page.reason).toBe("private-ip");
+    expect(seen).toEqual(["http://93.184.216.34:80/product"]);
+  });
+
+  test("SSRF: the primary private-IP rejection still precedes any interstitial work", async () => {
+    const page = await fetchPage("http://127.0.0.1:9/x", { userAgent: "UA/1.0" });
+    expect(page.ok).toBe(false);
+    if (page.ok) return;
+    expect(page.reason).toBe("private-ip");
+  });
+
+  // ---- Group D: end to end through scrapeProduct ----
+
+  test("default chain: the interstitial-then-PDP fetch is ONE plain step", async () => {
+    const { interstitial, pdp } = await captures();
+    const { srv, seen } = akamaiServer((url) =>
+      isTokenRequest(url) ? new Response(pdp) : new Response(interstitial),
+    );
+    try {
+      const result = await scrapeProduct(`${srv.url}product`, {
+        userAgent: "UA/1.0",
+        allowPrivate: true,
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.strategy).toBe("plain");
+      // The token refetch is invisible to the chain: one strategy, one step.
+      expect(result.steps).toEqual([{ strategy: "plain", ok: true }]);
+      expect(result.product.title).toBe("Fitted short sleeve print T-shirt - Women");
+      expect(result.product.priceCents).toBe(1299);
+      expect(result.product.currency).toBe("GBP");
+      expect(seen).toHaveLength(2);
+    } finally {
+      srv.stop(true);
+    }
+  });
+
+  test("a persistent Akamai wall is still a botwall verdict end to end", async () => {
+    const { interstitial } = await captures();
+    const { srv, seen } = akamaiServer(() => new Response(interstitial));
+    try {
+      const result = await scrapeProduct(`${srv.url}product`, {
+        userAgent: "UA/1.0",
+        allowPrivate: true,
+      });
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.reason).toBe("botwall");
+      expect(result.heuristic).toBe("akamai-bm");
+      // No stealth capability → the chain is plain-only: one step, two requests
+      // (the interstitial and its single refetch).
+      expect(result.steps).toHaveLength(1);
+      expect(seen).toHaveLength(2);
+    } finally {
+      srv.stop(true);
+    }
+  });
+
+  test("a persistent Akamai wall escalates to stealth when the capability is wired", async () => {
+    const { interstitial, pdp } = await captures();
+    const { srv } = akamaiServer(() => new Response(interstitial));
+    const runner: StealthRunner = async () => ({
+      stdout: JSON.stringify({ ok: true, html: pdp, finalUrl: `${srv.url}product`, status: 200 }),
+      exitCode: 0,
+      signal: undefined,
+    });
+    try {
+      const result = await scrapeProduct(`${srv.url}product`, {
+        userAgent: "UA/1.0",
+        allowPrivate: true,
+        stealth: {
+          pythonBin: "/bin/true",
+          scriptPath: "/s",
+          profilesDir: "/tmp/p",
+          timeoutMs: 1000,
+          runner,
+          allowPrivate: true,
+        },
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      // `botwall` is already escalatable, so no learned.ts change is needed.
+      expect(result.steps).toEqual([
+        { strategy: "plain", ok: false, reason: "botwall", heuristic: "akamai-bm" },
+        { strategy: "stealth-browser", ok: true },
+      ]);
+      expect(result.product.priceCents).toBe(1299);
+      expect(result.product.currency).toBe("GBP");
+    } finally {
+      srv.stop(true);
+    }
   });
 });
 
