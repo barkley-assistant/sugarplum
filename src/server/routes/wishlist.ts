@@ -509,10 +509,15 @@ export function wishlistRoutes(
       }),
     },
     "/api/wishlist/items/:id/refresh": {
-      POST: requireSession(db, (req, viewer) => {
+      /** #181: any authenticated viewer may re-drive enrichment. The row is
+       *  already readable by them (GET /api/users/:id/wishlist) and claimable
+       *  by them (/claim), and the write is non-destructive: it re-fetches the
+       *  public product page behind the row. Ownership checks stay on every
+       *  DESTRUCTIVE and owner-DATA route — edit, delete, purchased marks, the
+       *  blind reset and hints (the blocks above and below this one). */
+      POST: requireSession(db, (req, _viewer) => {
         const item = getItem(db, req.params.id);
         if (!item) return jsonError(404, "Item not found");
-        if (item.user_id !== viewer.id) return jsonError(403, "Only the owner can refresh this item");
         if (!item.url) return jsonError(400, "This item has no link to fetch");
         // Hints are kept until new evidence replaces them.
         db.run(

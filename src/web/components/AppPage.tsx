@@ -355,27 +355,38 @@ export function AppPage() {
     }
   }
 
-  async function viewList(userId: string) {
-    setReordering(false);
-    setGuestItemId(null);
+  /** #181: READ-ONLY re-read of another user's list — the guarded commit and
+   *  nothing else. `viewList` below is the navigation helper (it also leaves
+   *  reorder mode and closes an open guest sheet), side effects a 1.5s poll
+   *  must not run; this is the sibling the poll and the viewer re-check share.
+   *  Returns the rows it committed, or null when it committed nothing (the
+   *  read failed, or the route had already moved on). */
+  async function readList(userId: string): Promise<PublicItem[] | null> {
     setRefreshing(true);
     try {
       const res = await fetch(`/api/users/${userId}/wishlist`);
-      if (res.ok) {
-        const rows = (await res.json()) as PublicItem[];
-        // #158: commit the pair only while the route still names this list.
-        // This re-read is triggered by a claim/unclaim, so it can outlive a
-        // switch to another list: committing then pairs rows+tag for THIS
-        // list while the route names another, and the render guard — which
-        // exists to stop exactly that — would block the feed with no fetch
-        // behind it, hanging on the skeleton until the next navigation.
-        if (viewingRef.current !== userId) return;
-        setOtherItems(rows);
-        setShownOtherUserId(userId);
-      }
+      if (!res.ok) return null;
+      const rows = (await res.json()) as PublicItem[];
+      // #158: commit the pair only while the route still names this list.
+      // This re-read can be triggered by a claim/unclaim or by the #181 poll,
+      // so it can outlive a switch to another list: committing then pairs
+      // rows+tag for THIS list while the route names another, and the render
+      // guard — which exists to stop exactly that — would block the feed with
+      // no fetch behind it, hanging on the skeleton until the next navigation.
+      // The caller reads the null as "the route moved on: stop".
+      if (viewingRef.current !== userId) return null;
+      setOtherItems(rows);
+      setShownOtherUserId(userId);
+      return rows;
     } finally {
       setRefreshing(false);
     }
+  }
+
+  async function viewList(userId: string) {
+    setReordering(false);
+    setGuestItemId(null);
+    await readList(userId);
   }
 
   // #158: the own list is a DESTINATION, not a state reset. `navigate("/")`
@@ -581,6 +592,39 @@ export function AppPage() {
     await refreshSummary();
   }
 
+  /** #181: a VIEWER's re-check of a row on another user's list. Same shape as
+   *  refreshItem — POST, classify, toast, then poll — but the row lives in the
+   *  other list, so it is re-read through readList. That read carries the
+   *  `viewingRef.current !== userId` guard, so a switch mid-flight drops the
+   *  stale pair rather than committing this list's rows under another heading.
+   *  A non-2xx answer never polls: the server did not queue that row. */
+  async function refreshOtherItem(id: string) {
+    if (!viewing) return;
+    const res = await fetch(`/api/wishlist/items/${id}/refresh`, { method: "POST" });
+    if (!res.ok) {
+      const kind = await classifyResponse(res);
+      toast(kind === "offline" ? S.offline.write : S.errors.retryItem, "danger");
+      return;
+    }
+    await readList(viewing);
+    void pollOtherEnrichment(viewing, id);
+  }
+
+  /** Poll while a row of the other list on screen is still enriching: the same
+   *  budget as pollEnrichment (30s window, 1.5s interval). The stop condition
+   *  reads the rows readList returned, never render state — and once the route
+   *  moves on that read returns null, so the loop stops instead of polling a
+   *  list that is no longer on screen. */
+  async function pollOtherEnrichment(userId: string, itemId: string) {
+    const deadline = Date.now() + 30_000;
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const rows = await readList(userId);
+      const item = rows?.find((candidate) => candidate.id === itemId);
+      if (!item || item.fetchState !== "pending") return;
+    }
+  }
+
   if (error && !me) {
     return (
       <main className="auth-page">
@@ -639,6 +683,7 @@ export function AppPage() {
           viewerIsOwner={false}
           onClaim={claim}
           onUnclaim={unclaim}
+          onRefresh={refreshOtherItem}
           onOpenDetails={setGuestItemId}
         />
       );

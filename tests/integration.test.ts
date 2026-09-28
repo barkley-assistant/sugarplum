@@ -388,7 +388,7 @@ describe("wishlist API", () => {
     expect(tooLong.status).toBe(400);
   });
 
-  test("wave2: refresh: owner POST /api/wishlist/items/:id/refresh → 202 + re-enriches; non-owner → 403; no-url item → 400; unauthenticated → 401", async () => {
+  test("wave2: refresh: owner POST /api/wishlist/items/:id/refresh → 202 + re-enriches; non-owner viewer also → 202; no-url item → 400; unauthenticated → 401", async () => {
     const alice = app.newJar();
     const bob = app.newJar();
     const stranger = app.newJar();
@@ -400,8 +400,14 @@ describe("wishlist API", () => {
     const unauth = await stranger.request("POST", `/api/wishlist/items/${item.id}/refresh`);
     expect(unauth.status).toBe(401);
 
-    const forbidden = await bob.request("POST", `/api/wishlist/items/${item.id}/refresh`);
-    expect(forbidden.status).toBe(403);
+    // #181: the row is already readable by every authenticated viewer (GET
+    // /api/users/:id/wishlist) and claimable by them (/claim), and a re-check
+    // re-fetches the public product page — a non-destructive write the viewer
+    // owns as much as the claimant does. It must NOT be the owner's gate.
+    const viewerRefresh = await bob.request("POST", `/api/wishlist/items/${item.id}/refresh`);
+    expect(viewerRefresh.status).toBe(202);
+    const viewerBody = (await viewerRefresh.json()) as OwnedItem;
+    expect(viewerBody.fetchState).toBe("pending");
 
     const manual = await createItem(alice, "Manual item");
     const noUrl = await alice.request("POST", `/api/wishlist/items/${manual.id}/refresh`);
@@ -411,6 +417,41 @@ describe("wishlist API", () => {
     expect(ok.status).toBe(202);
     const body = (await ok.json()) as OwnedItem;
     expect(body.fetchState).toBe("pending");
+  });
+
+  test("wave2: viewer refresh does NOT widen the owner-only routes", async () => {
+    const alice = app.newJar();
+    const bob = app.newJar();
+    await login(alice, "alice", "alice-pass");
+    await login(bob, "bob", "bob-pass");
+    const item = await createItem(alice, "Owner only", {
+      url: closedLocalUrl(),
+      priceCents: "12.34",
+      currency: "GBP",
+    });
+
+    // The refresh test above proves a viewer CAN re-drive enrichment; these
+    // prove the widened route did not widen its neighbours one line away.
+    const patched = await bob.request("PATCH", `/api/wishlist/items/${item.id}`, {
+      priceCents: "1.00",
+    });
+    expect(patched.status).toBe(403);
+    const deleted = await bob.request("DELETE", `/api/wishlist/items/${item.id}`);
+    expect(deleted.status).toBe(403);
+    const marked = await bob.request(
+      "PUT",
+      `/api/wishlist/items/${item.id}/owner-purchased`,
+    );
+    expect(marked.status).toBe(403);
+    const hints = await bob.request("POST", `/api/wishlist/items/${item.id}/hints`);
+    expect(hints.status).toBe(403);
+
+    // …and the owner's data is untouched by all of the above.
+    const mine = await alice.request("GET", `/api/users/${await aliceIdOf()}/wishlist`);
+    const rows = (await mine.json()) as OwnedItem[];
+    const row = rows.find((r) => r.id === item.id) as OwnedItem;
+    expect(row.priceCents).toBe("12.34");
+    expect(row.ownerPurchased).toBe(false);
   });
 
   test("wave2: refresh on a missing item → 404", async () => {
