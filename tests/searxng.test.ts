@@ -3,9 +3,12 @@ import { describe, expect, test } from "bun:test";
 import {
   buildSearchQuery,
   buildTitleQuery,
+  isLandingShapedUrl,
+  queryTerms,
   searchImageHint,
   searchPriceCandidates,
   searchPriceHint,
+  titleOverlapsQuery,
   type SearxngFetch,
 } from "../src/server/searxng";
 
@@ -51,6 +54,55 @@ describe("searchPriceHint", () => {
     });
     expect(hint?.sourceUrl).toBe("https://elsewhere.example.com/p/1");
     expect(hint?.priceCents).toBe(3000);
+  });
+
+  test("#174: lyst designer landing page with stray £8 is NOT returned as a hint", async () => {
+    const fake: SearxngFetch = async () =>
+      new Response(
+        JSON.stringify({
+          results: [
+            {
+              // Measured offender: a brand LANDING page whose snippet carries a
+              // stray "from £8" — not a price for the hoodie we searched for.
+              title: "Next Designer — Lyst",
+              url: "https://www.lyst.co.uk/designer/next/",
+              content: "Prices from £8 and up",
+            },
+            {
+              title: "Next Hoodie — Shop Example",
+              url: "https://shop.example.com/products/next-hoodie",
+              content: "£18.00",
+            },
+          ],
+        }),
+      );
+    const hint = await searchPriceHint("next.co.uk hoodie buy", {
+      baseUrl: "http://searx.example",
+      fetchImpl: fake,
+    });
+    expect(hint?.sourceUrl).toBe("https://shop.example.com/products/next-hoodie");
+    expect(hint?.priceCents).toBe(1800);
+    expect(hint?.currency).toBe("GBP");
+  });
+
+  test("#174: a result whose title shares no query term is skipped", async () => {
+    const fake: SearxngFetch = async () =>
+      new Response(
+        JSON.stringify({
+          results: [
+            // Both URLs are product-shaped, so only the title-overlap gate
+            // separates them.
+            { title: "Unrelated Gadget Sale", url: "https://a.example.com/p/x", content: "£5.00" },
+            { title: "Teapot 123 — B Shop", url: "https://b.example.com/p/y", content: "£27.00" },
+          ],
+        }),
+      );
+    const hint = await searchPriceHint("teapot 123 buy", {
+      baseUrl: "http://searx.example",
+      fetchImpl: fake,
+    });
+    expect(hint?.sourceUrl).toBe("https://b.example.com/p/y");
+    expect(hint?.priceCents).toBe(2700);
   });
 
   test("no results / bad JSON / fetch throw → null (never throws)", async () => {
@@ -127,6 +179,54 @@ describe("buildTitleQuery", () => {
       "one two three four five six buy",
     );
     expect(buildTitleQuery("   ")).toBe("");
+  });
+});
+
+describe("queryTerms", () => {
+  test("host slug, noise terms and the 'buy' tail are dropped", () => {
+    expect(queryTerms("coolshop.co.uk teapot 123 buy")).toEqual(["teapot", "123"]);
+    expect(queryTerms("host.com products fresh kiss trio buy")).toEqual(["fresh", "kiss", "trio"]);
+    expect(queryTerms("next.co.uk buy")).toEqual([]);
+    expect(queryTerms("   ")).toEqual([]);
+  });
+
+  test("a query without a host slug keeps all of its terms", () => {
+    expect(queryTerms("teapot 123")).toEqual(["teapot", "123"]);
+    expect(queryTerms("Teapot 123 buy")).toEqual(["teapot", "123"]);
+  });
+});
+
+describe("isLandingShapedUrl", () => {
+  test("landing/category shapes are rejected", () => {
+    expect(isLandingShapedUrl("https://www.lyst.co.uk/designer/next/")).toBe(true); // #174
+    expect(isLandingShapedUrl("https://example.com/")).toBe(true);
+    expect(isLandingShapedUrl("https://example.com/brands/foo")).toBe(true);
+    expect(isLandingShapedUrl("https://example.com/category/shoes")).toBe(true);
+  });
+
+  test("product-shaped URLs pass", () => {
+    expect(isLandingShapedUrl("https://coolshop.co.uk/products/fresh-kiss-trio")).toBe(false);
+    expect(isLandingShapedUrl("https://www.next.co.uk/style/su956648/w13137")).toBe(false);
+    expect(isLandingShapedUrl("https://shop.example/lego-21042")).toBe(false);
+    expect(isLandingShapedUrl("https://cool.example.com/p/1")).toBe(false);
+  });
+
+  test("an unparseable URL is not rejected (it falls through to the other filters)", () => {
+    expect(isLandingShapedUrl("not a url")).toBe(false);
+    expect(isLandingShapedUrl("")).toBe(false);
+  });
+});
+
+describe("titleOverlapsQuery", () => {
+  test("a shared whole word overlaps; an unrelated title does not", () => {
+    expect(titleOverlapsQuery("Teapot 123 — Cool Shop", ["teapot", "123"])).toBe(true);
+    expect(titleOverlapsQuery("Next Designer — Lyst", ["hoodie"])).toBe(false);
+    expect(titleOverlapsQuery("Unrelated Gadget Sale", ["teapot", "123"])).toBe(false);
+  });
+
+  test("substrings are not matches, and an empty term set passes", () => {
+    expect(titleOverlapsQuery("Teapotastic deal", ["teapot"])).toBe(false);
+    expect(titleOverlapsQuery("Anything", [])).toBe(true);
   });
 });
 
