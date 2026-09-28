@@ -9,7 +9,6 @@ import { useBootMe } from "../use-boot-me";
 import { usePageFocus } from "../use-page-focus";
 import { AppShell, PageHeader } from "./AppShell";
 import { ChevronRightIcon } from "./IconButton";
-import { ListContextBar } from "./ListContextBar";
 import { SettingsSkeleton } from "./Skeletons";
 import { ToggleSwitch } from "./ToggleSwitch";
 
@@ -144,11 +143,6 @@ export function SettingsPage() {
   return (
     <AppShell me={me} brandHref="/">
       <PageHeader title={S.settings.titleAccount} headingRef={headingRef} variant="form" />
-      {/* #125: the settings screens carry the same header as every other
-          authenticated page. The context bar sits under the page heading so
-          the heading ladder (brand h1 → screen h2 → sections h3) holds. */}
-      <ListContextBar me={me} />
-
       <div className="settings-stack">
         <section className="settings-section" aria-label={S.settings.account}>
           <h3>{S.settings.account}</h3>

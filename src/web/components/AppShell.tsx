@@ -18,13 +18,10 @@ interface AppShellProps {
   /** Suppress the cluster's Add AND Share chips (the feed's empty /
    *  other-user-list states). */
   hideHeaderActions?: boolean;
-  /** Render the cluster's Back-to-list button (the item view). */
-  showBackToList?: boolean;
   /** When set, the brand renders as a home link with this accessible name
-   *  (the /settings page); otherwise it is a plain lockup. It is also the
-   *  bit the mobile back chevron keys off: every non-feed authenticated page
-   *  sets it, the feed never does, so the chevron's presence falls out of
-   *  the data rather than out of per-page discipline (AC2). */
+   *  (including /settings); otherwise it is a plain lockup. It is also the
+   *  bit the mobile back chevron keys off. The feed and settled item detail
+   *  leave it unset; other non-feed pages set it. */
   brandHref?: string;
   brandLinkLabel?: string;
   /** The page's OWN overflow menu, rendered at the head of .topbar-right so
@@ -66,14 +63,13 @@ function Brand({ href, linkLabel }: { href?: string; linkLabel?: string }) {
   return <div className="brand">{lockup}</div>;
 }
 
-/** One app shell for App, Settings and Share: sticky topbar (back chevron +
- *  brand + actions + user menu) and a fluid main column. Login keeps its own
- *  auth layout. */
+/** One app shell for App, Settings and Share: sticky topbar (optional back
+ *  chevron + brand + actions + user menu) and a fluid main column. Login keeps
+ *  its own auth layout. */
 export function AppShell({
   me,
   hideHeaderAdd = false,
   hideHeaderActions = false,
-  showBackToList = false,
   brandHref,
   brandLinkLabel,
   headerMenu,
@@ -88,11 +84,10 @@ export function AppShell({
     <main className="app-shell">
       {refreshing && <div className="progress-hairline" aria-hidden="true" />}
       <header className="topbar">
-        {/* #128: the mobile back affordance. Every non-feed authenticated
-            page hands the shell brandHref="/", so one condition covers the
-            detail, edit, add and settings screens alike (including their
-            error and not-found branches, which render no cluster); the feed
-            and the anonymous share surface never set it, so no chevron. The
+        {/* #128: the mobile back affordance. Pages with a home destination
+            hand the shell brandHref="/"; the feed, anonymous share surface
+            and settled item detail do not, so no chevron. The item skeleton
+            intentionally retains it to avoid a boot-time header morph. The
             destination is the same as the brand link it sits beside: a
             predictable "back to the list", never history.back() (which
             exits the app on a cold deep link). #72's close icon stays gone. */}
@@ -115,7 +110,6 @@ export function AppShell({
                 me={me}
                 hideAdd={hideHeaderAdd}
                 hideActions={hideHeaderActions}
-                showBackToList={showBackToList}
               />
             )}
           </div>

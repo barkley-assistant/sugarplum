@@ -14,7 +14,6 @@ import { DetailMeta } from "./DetailMeta";
 import { EmptyState } from "./EmptyState";
 import { HintsPanel } from "./HintsPanel";
 import { DotsIcon } from "./IconButton";
-import { ListContextBar } from "./ListContextBar";
 import { OverflowMenu, type OverflowItem } from "./OverflowMenu";
 import { ProductImage } from "./ProductImage";
 import { PriceHistoryCard } from "./PriceHistoryCard";
@@ -221,14 +220,14 @@ export function ItemPage({ id }: { id: string }) {
   if (boot.status === "loading") return <ItemSkeleton />;
   if (boot.status === "error") {
     return (
-      <AppShell me={me} brandHref="/" brandLinkLabel={S.settings.backToList}>
+      <AppShell me={me}>
         <p className="error" role="alert">{boot.message}</p>
       </AppShell>
     );
   }
   if (notFound) {
     return (
-      <AppShell me={me} showBackToList brandHref="/" brandLinkLabel={S.settings.backToList}>
+      <AppShell me={me}>
         <EmptyState title={S.item.notFound} />
       </AppShell>
     );
@@ -247,9 +246,6 @@ export function ItemPage({ id }: { id: string }) {
   return (
     <AppShell
       me={me}
-      showBackToList
-      brandHref="/"
-      brandLinkLabel={S.settings.backToList}
       // #128: the item page's overflow menu lives in the app bar, not in the
       // page body — the "floating ⋮" the issue filed. It is passed as a node
       // so ItemPage keeps owning the trigger and the state-dependent items.
@@ -264,12 +260,20 @@ export function ItemPage({ id }: { id: string }) {
       }
     >
       <div className="item-page" data-item-id={item.id}>
-        {/* #125: the context row every non-feed page carries — which list this
-            item belongs to, and the way to another one. #161: its separation
-            from .detail-scroll is owned by .item-page's `gap: var(--context-gap)`
-            (styles.css), NOT by a margin here — the two blocks live in
-            different flex containers, so a local margin would stack. */}
-        <ListContextBar me={me} />
+        {/* #185: the item view's single back affordance, with native modified-click behavior. */}
+        <a
+          href="/"
+          className="item-back"
+          onClick={(e) => {
+            if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+              return;
+            }
+            e.preventDefault();
+            navigate("/");
+          }}
+        >
+          {S.settings.backToList}
+        </a>
 
         <div className="detail-scroll">
           <div className="detail-hero">

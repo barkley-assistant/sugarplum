@@ -20,19 +20,14 @@ interface HeaderClusterProps {
    *  screen or the own list is empty): "Share my list" over someone else's
    *  list is the same lie as Add. */
   hideActions?: boolean;
-  /** Render the Back-to-list button — the item view's way back to the feed
-   *  (the issue's "destination-based, predictable" back affordance). */
-  showBackToList?: boolean;
 }
 
-/** #125: the topbar's identity cluster — Back to list (item view), Add,
- *  Share, avatar menu — rendered by AppShell on EVERY authenticated page so
- *  the header never changes shape between routes. Desktop only: under 640px
+/** #125: the topbar's identity cluster — Add, Share and avatar menu —
+ *  rendered by AppShell on EVERY authenticated page so the header never
+ *  changes shape between routes. Desktop only: under 640px
  *  the same actions live on the bottom action bar (#73 D4, one cluster per
  *  width), and the avatar keeps its own mobile menu.
  *
- *  Built as a standalone component (no feed state, no page props beyond the
- *  identity) so #128 can mount the mobile chevron back inside the same seam.
  *  The settings entry is suppressed while a settings screen is on screen —
  *  the menu must not offer the destination the page already is (the mobile
  *  bar has the same rule, AppBottomBar.tsx). */
@@ -40,7 +35,6 @@ export function HeaderCluster({
   me,
   hideAdd = false,
   hideActions = false,
-  showBackToList = false,
 }: HeaderClusterProps) {
   const route = useRoute();
   const isDesktop = useMedia("(min-width: 640px)");
@@ -61,15 +55,6 @@ export function HeaderCluster({
     <>
       {isDesktop && !hideActions && (
         <div className="topbar-actions">
-          {showBackToList && (
-            <button
-              type="button"
-              className="secondary compact-action topbar-back"
-              onClick={() => navigate("/")}
-            >
-              {S.settings.backToList}
-            </button>
-          )}
           {!hideAdd && (
             <IconButton variant="ghost" label={S.list.addItem} onClick={() => navigate("/add")}>
               <PlusIcon />

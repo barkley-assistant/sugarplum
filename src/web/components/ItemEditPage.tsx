@@ -9,7 +9,6 @@ import { AppShell } from "./AppShell";
 import { EmptyState } from "./EmptyState";
 import { FormSkeleton } from "./Skeletons";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
-import { ListContextBar } from "./ListContextBar";
 
 /** The edit form as a page (#62): the full form (no progressive disclosure —
  *  an existing item already has every field), saved back to the item view.
@@ -99,9 +98,6 @@ export function ItemEditPage({ id }: { id: string }) {
         {/* #121: heading mirrors the "Edit item" button that navigates
             here; the commit stays "Save". */}
         <h1 ref={headingRef} tabIndex={-1} className="page-title page-title--form">{S.detail.editItem}</h1>
-        {/* #125: the header is uniform now, so the page also says which list
-            the item belongs to. */}
-        <ListContextBar me={me} />
         <ItemForm
           initial={item}
           submitLabel={S.form.save}

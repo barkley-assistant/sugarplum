@@ -6,7 +6,6 @@ import { useAdminBoot } from "../use-admin-boot";
 import { usePageFocus } from "../use-page-focus";
 import { AdminPanel } from "./AdminPanel";
 import { AppShell, PageHeader } from "./AppShell";
-import { ListContextBar } from "./ListContextBar";
 import { SettingsSkeleton } from "./Skeletons";
 
 /** /settings/users (#96): the admin user-management table. Admins only, and
@@ -61,9 +60,6 @@ export function SettingsUsersPage() {
   return (
     <AppShell me={boot.me} brandHref="/">
       <PageHeader title={S.settings.titleUsers} headingRef={headingRef} variant="form" />
-      {/* #125: same header, same context row as every other authed page. */}
-      <ListContextBar me={boot.me} />
-
       <div className="settings-screen-head">
         <button type="button" className="back-link" onClick={() => navigate("/settings")}>
           <span aria-hidden="true">←</span>

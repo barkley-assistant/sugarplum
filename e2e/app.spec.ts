@@ -614,18 +614,17 @@ test("3f: #112 add-page disclosure hover stays neutral and readable, both scheme
   }
 
   // Keyboard: the disclosure stays a Tab stop. The page heading is focused on
-  // mount (usePageFocus), so tabbing walks the content in DOM order — #125 put
-  // the list-context row (its switcher trigger) between the heading and the
-  // form, which is what makes the disclosure the FOURTH stop instead of the
-  // third. Focus alone never paints the bar, and the global focus ring is
-  // drawn.
+  // mount (usePageFocus), so tabbing walks the content in DOM order. #185
+  // removes the list-context row and its switcher trigger, making the
+  // disclosure the third stop. Focus alone never paints a bar, and the global
+  // focus ring is drawn.
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto(`${BASE}/add`);
   await page.mouse.move(0, 0);
   const disclose = page.getByRole("button", { name: "Add details manually" });
   await expect(disclose).toBeVisible();
-  for (let i = 0; i < 4; i++) await page.keyboard.press("Tab");
-  await expect(disclose, "the disclosure is the fourth Tab stop").toBeFocused();
+  for (let i = 0; i < 3; i++) await page.keyboard.press("Tab");
+  await expect(disclose, "the disclosure is the third Tab stop").toBeFocused();
   expect(await value(disclose, "background-color"), "keyboard focus paints no bar").toBe(NONE);
   expect(await value(disclose, "outline-style"), "keyboard focus keeps the ring").toBe("solid");
   expect(await value(disclose, "outline-width"), "keyboard focus ring width").toBe("2px");
@@ -876,19 +875,15 @@ test("4e: item page keeps one layout and no overflow at any width", async ({ pag
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
-  // #128: the mobile back chevron is a real 44px target sitting beside (never
-  // over) the lockup it duplicates — the two hit areas must not overlap.
+  // #185 replaces the redundant mobile chevron with the item's content link.
   const chevron = page.locator(".topbar-back-chevron");
-  await expect(chevron).toBeVisible();
-  const chevronBox = (await chevron.boundingBox())!;
-  const brandBox = (await page.locator(".brand").boundingBox())!;
-  expect(Math.round(chevronBox.width), "chevron width @390").toBeGreaterThanOrEqual(44);
-  expect(Math.round(chevronBox.height), "chevron height @390").toBeGreaterThanOrEqual(44);
-  expect(
-    Math.round(brandBox.x - (chevronBox.x + chevronBox.width)),
-    "the lockup clears the chevron",
-  ).toBeGreaterThanOrEqual(8);
-  await page.getByRole("link", { name: "Back to list" }).click();
+  await expect(chevron, "no redundant chevron on the item view").toHaveCount(0);
+  const backLink = page.getByRole("link", { name: "Back to list", exact: true });
+  await expect(backLink).toBeVisible();
+  await expect(backLink).toHaveClass(/item-back/);
+  await expect(backLink).toHaveAttribute("href", "/");
+  expect(Math.round((await backLink.boundingBox())!.height), "Back to list target").toBeGreaterThanOrEqual(44);
+  await backLink.click();
   await expect(page).toHaveURL(`${BASE}/`);
 });
 
@@ -5406,10 +5401,7 @@ test("36: #127 — purchased cluster, guarded discard, canonical add pair", asyn
   await page.goto(`${BASE}/`);
 });
 
-test("37: #125 — one header on every authenticated page, Back-to-list button, subpage switcher", async ({
-  page,
-  browser,
-}) => {
+test("37: #125 — one header on every authenticated page, item-view back link", async ({ page }) => {
   // Two probe rows: the feed only offers Reorder from two items up, and leg 2
   // pins the feed as unchanged — including that action.
   const probeIds: string[] = [];
@@ -5420,26 +5412,9 @@ test("37: #125 — one header on every authenticated page, Back-to-list button, 
   }
   const itemId = probeIds[0]!;
 
-  // A second member with a non-empty list: the switcher on a subpage must be
-  // able to leave the own list (D4).
-  const OTHER = { username: "header-other", password: "header-other-pass", displayName: "Header Other" };
-  const created = await page.request.post(`${BASE}/api/users`, {
-    data: { username: OTHER.username, password: OTHER.password, displayName: OTHER.displayName },
-  });
-  expect([201, 409], "the second member exists (created here or by an earlier run)").toContain(
-    created.status(),
-  );
-
-  const otherContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   try {
-    const other = await otherContext.newPage();
-    await login(other, OTHER.username, OTHER.password);
-    const otherRow = await other.request.post(`${BASE}/api/wishlist/items`, {
-      data: { title: "Other list probe" },
-    });
-    expect(otherRow.status()).toBe(201);
-
-    // --- 1. Item view: the full cluster, with a real Back-to-list BUTTON. --
+    // --- 1. Item view: the cluster stays; one quiet text link replaces the
+    //        pill, compact bar and mobile chevron. --------------------------
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(`${BASE}/items/${itemId}`);
     await expect(page.locator(".item-page")).toBeVisible();
@@ -5448,21 +5423,14 @@ test("37: #125 — one header on every authenticated page, Back-to-list button, 
     await expect(cluster, "#125: the item view carries the header cluster").toBeVisible();
     await expect(cluster.getByRole("button", { name: "Add item", exact: true })).toBeVisible();
     await expect(cluster.getByRole("button", { name: "Share my list", exact: true })).toBeVisible();
-    const back = cluster.getByRole("button", { name: "Back to list", exact: true });
-    await expect(back, "#125: a visible Back-to-list button, not just the text link").toBeVisible();
-    // Same control family as the feed's Reorder, and a real 44px target.
-    await expect(back).toHaveClass(/secondary/);
-    await expect(back).toHaveClass(/topbar-back/);
-    expect(Math.round((await back.boundingBox())!.height), "Back to list target").toBeGreaterThanOrEqual(44);
-    // The brand LINK keeps its own role (3c/4d/9/12 click it).
-    await expect(page.getByRole("link", { name: "Back to list" })).toBeVisible();
-    // …and the page says which list it belongs to (the compact context bar).
-    await expect(page.locator(".list-switcher--compact .list-switcher-name")).toHaveText(
-      "Admin's wishlist",
-    );
+    const backLink = page.getByRole("link", { name: "Back to list", exact: true });
+    await expect(backLink, "#185: one visible Back-to-list text link on the item view").toBeVisible();
+    await expect(backLink).toHaveClass(/item-back/);
+    await expect(backLink).toHaveAttribute("href", "/");
+    await expect(page.locator(".list-switcher--compact")).toHaveCount(0);
 
     const loadsBefore = await loads(page);
-    await back.click();
+    await backLink.click();
     await expect(page).toHaveURL(`${BASE}/`);
     expect(await loads(page), "Back to list is a client-side navigation").toBe(loadsBefore);
 
@@ -5481,16 +5449,17 @@ test("37: #125 — one header on every authenticated page, Back-to-list button, 
     await expect(addCluster.getByRole("button", { name: "Add item", exact: true })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Add item", exact: true })).toHaveCount(1);
     await expect(addCluster.getByRole("button", { name: "Back to list", exact: true })).toHaveCount(0);
-    await expect(page.locator(".list-switcher--compact")).toBeVisible();
+    await expect(page.locator(".list-switcher--compact")).toHaveCount(0);
 
-    // --- 4. Settings: same cluster + bar; the avatar menu drops its own
-    //        Settings row there, and keeps it on a page that is not Settings.
+    // --- 4. Settings: same cluster, no list switcher; the avatar menu drops
+    //        its own Settings row there, and keeps it elsewhere. -----------
     await page.goto(`${BASE}/settings`);
     await expect(page.getByRole("heading", { name: "Account & Preferences", level: 2 })).toBeVisible();
     const settingsCluster = page.locator(".topbar-actions");
     await expect(settingsCluster.getByRole("button", { name: "Add item", exact: true })).toBeVisible();
     await expect(settingsCluster.getByRole("button", { name: "Share my list", exact: true })).toBeVisible();
-    await expect(page.locator(".list-switcher--compact")).toBeVisible();
+    await expect(page.locator(".list-switcher--compact")).toHaveCount(0);
+    await expect(page.locator(".list-switcher")).toHaveCount(0);
     await page.locator('.user-menu-button[aria-label="Admin"]').click();
     const menu = page.getByRole("menu", { name: "Admin" });
     await expect(menu).toBeVisible();
@@ -5506,7 +5475,7 @@ test("37: #125 — one header on every authenticated page, Back-to-list button, 
     await page.keyboard.press("Escape");
     await expect(itemMenu).toHaveCount(0);
 
-    // --- 5. The two admin screens too (opt-in on), then hand it back off. ---
+    // --- 5. The admin screens and item editor have no compact switcher. ----
     const uiOn = await page.request.put(`${BASE}/api/auth/me/settings`, {
       data: { showUserManagement: true },
     });
@@ -5514,79 +5483,21 @@ test("37: #125 — one header on every authenticated page, Back-to-list button, 
     for (const path of ["/settings/users", "/settings/users/new"]) {
       await page.goto(`${BASE}${path}`);
       await expect(page.locator(".topbar-actions"), `cluster on ${path}`).toBeVisible();
-      await expect(page.locator(".list-switcher--compact"), `bar on ${path}`).toBeVisible();
+      await expect(page.locator(".list-switcher--compact"), `no bar on ${path}`).toHaveCount(0);
     }
+    await page.goto(`${BASE}/items/${itemId}/edit`);
+    await expect(page.locator(".list-switcher--compact"), "no bar on item edit").toHaveCount(0);
     const uiOff = await page.request.put(`${BASE}/api/auth/me/settings`, {
       data: { showUserManagement: false },
     });
     expect(uiOff.status()).toBe(200);
 
-    // --- 6. D4: the subpage switcher navigates to that list's feed. -------
-    await page.goto(`${BASE}/items/${itemId}`);
-    await page.locator(".list-switcher--compact .list-switcher-trigger").click();
-    const popover = page.getByRole("menu", { name: "Switch wishlist" });
-    await expect(popover).toBeVisible();
-    await popover.getByRole("menuitemradio", { name: /Header Other/ }).click();
-    // #158: the subpage switcher now navigates to the list's own URL.
-    await expect(page).toHaveURL(new RegExp(`${BASE}/\\?list=[0-9a-f-]{36}$`));
-    await expect(page.getByRole("heading", { name: "Header Other's wishlist" })).toBeVisible();
-    // …and the feed's own switcher is still how you come back.
-    await page.getByRole("button", { name: /wishlist/ }).click();
-    await page.getByRole("menuitemradio", { name: /Admin/ }).click();
-    await expect(page.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
-
-    // --- 6b. The own row is the OTHER half of scope 4 ("own name -> own
-    //        feed"), and the compact bar marks it as the list on screen. ---
-    await page.goto(`${BASE}/items/${itemId}`);
-    await page.locator(".list-switcher--compact .list-switcher-trigger").click();
-    const ownPopover = page.getByRole("menu", { name: "Switch wishlist" });
-    await expect(ownPopover).toBeVisible();
-    const ownRow = ownPopover.getByRole("menuitemradio", { name: /Admin/ });
-    await expect(ownRow, "#125: the compact switcher checks the own row").toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
-    await expect(
-      ownPopover.getByRole("menuitemradio", { name: /Header Other/ }),
-      "#125: only the list on screen is current",
-    ).toHaveAttribute("aria-checked", "false");
-    await ownRow.click();
-    await expect(page).toHaveURL(`${BASE}/`);
-    await expect(page.getByRole("heading", { name: "Admin's wishlist" })).toBeVisible();
-    // OWNER mode, not the guest projection: the owner-only actions are back.
-    await expect(page.getByRole("button", { name: "Reorder", exact: true })).toBeVisible();
-    await expect(
-      page.locator(".topbar-actions").getByRole("button", { name: "Add item", exact: true }),
-    ).toBeVisible();
-
-    // --- 6c. …and that own-list handoff overrides a feed snapshot left on
-    //        someone else's list: `null` means "own list", `undefined` means
-    //        "no handoff" (feed-handoff). Leave the feed while it shows
-    //        Header Other, then pick the own row from the subpage. --------
-    await page.getByRole("button", { name: /wishlist/ }).click();
-    await page.getByRole("menuitemradio", { name: /Header Other/ }).click();
-    await expect(page.getByRole("heading", { name: "Header Other's wishlist" })).toBeVisible();
-    await page.locator('.user-menu-button[aria-label="Admin"]').click();
-    await page.getByRole("menu", { name: "Admin" }).getByRole("menuitem", { name: "Settings" }).click();
-    await expect(page).toHaveURL(`${BASE}/settings`);
-    await page.locator(".list-switcher--compact .list-switcher-trigger").click();
-    await page
-      .getByRole("menu", { name: "Switch wishlist" })
-      .getByRole("menuitemradio", { name: /Admin/ })
-      .click();
-    await expect(page).toHaveURL(`${BASE}/`);
-    await expect(
-      page.getByRole("heading", { name: "Admin's wishlist" }),
-      "#125: the own-list handoff overrides the snapshot's other-user view",
-    ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Reorder", exact: true })).toBeVisible();
-
-    // --- 7. D6: mobile keeps the bottom bar and no desktop cluster. -------
+    // --- 6. D6: mobile keeps the bottom bar and no desktop cluster. -------
     await page.setViewportSize({ width: 390, height: 844 });
     for (const path of [`/items/${itemId}`, "/add", "/settings"]) {
       await page.goto(`${BASE}${path}`);
       await expect(page.locator(".topbar-actions"), `cluster on ${path} @390`).toHaveCount(0);
-      await expect(page.locator(".topbar-back"), `back button on ${path} @390`).toHaveCount(0);
+      await expect(page.locator(".topbar-back"), `desktop back chrome on ${path} @390`).toHaveCount(0);
       await expect(page.getByRole("link", { name: "Back to list" })).toBeVisible();
       await expect(page.getByRole("navigation", { name: "Primary actions" })).toBeVisible();
     }
@@ -5618,7 +5529,6 @@ test("37: #125 — one header on every authenticated page, Back-to-list button, 
       ).toBe(1);
     }
   } finally {
-    await otherContext.close();
     for (const id of probeIds) {
       const removed = await page.request.delete(`${BASE}/api/wishlist/items/${id}`);
       expect([200, 204]).toContain(removed.status());
@@ -5758,14 +5668,11 @@ test("38: #129 — one visible Add item, grouped add actions, no stranding", asy
   await expect(page.getByRole("button", { name: "Add details manually" })).toBeFocused();
 });
 
-test("39: #128 — mobile back chevron on every non-feed page, ⋮ in the header", async ({ page }) => {
-  // The filed complaint was two-fold and both halves are asserted here: at
-  // mobile the only way back off the detail and settings screens was an
-  // unlabeled logo tile, and the item page's ⋮ floated in the page body.
-  // The chevron's presence SET falls out of the shell's brandHref bit, so the
-  // spec pins the set itself (present on every non-feed route, absent on the
-  // feed and above the seam) rather than any per-page wiring. (Numbered 39,
-  // not the plan's "22": that slot is the #76 owner-purchased spec.)
+test("39: #128 — mobile back affordances and the item menu in the header", async ({ page }) => {
+  // The item's redundant chevron and desktop pill now collapse to its content
+  // link. Other non-feed pages keep the chevron through the shell's brandHref
+  // bit, and the item page's ⋮ stays in the app bar. (Numbered 39, not the
+  // plan's "22": that slot is the #76 owner-purchased spec.)
   const me = (await (await page.request.get(`${BASE}/api/auth/me`)).json()) as { id: string };
   const list = (await (await page.request.get(`${BASE}/api/users/${me.id}/wishlist`)).json()) as Array<{ id: string; title: string }>;
   let probe = list.find((item) => item.title === "History probe");
@@ -5779,40 +5686,30 @@ test("39: #128 — mobile back chevron on every non-feed page, ⋮ in the header
   const itemId = probe.id;
   const chevron = page.locator(".topbar-back-chevron");
 
-  // --- 1. Item detail: exactly one leading topbar button, named "Back to
-  //        list" like the brand link it makes visible, 44px on both axes. ---
+  // --- 1. Item detail: one content link; no chevron or compact context row. -
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${BASE}/items/${itemId}`);
   await expect(page.locator(".item-page .detail-title")).toBeVisible();
-  // AC5: the retired body row is really gone — the page's first content row is
-  // the #125 context bar, not a header holding the ⋮.
+  // AC5: the page's first content row is now the Back-to-list link, not a
+  // compact context bar or a header holding the ⋮.
   await expect(page.locator(".detail-header"), "the ⋮'s body row is retired").toHaveCount(0);
   await expect(
     page.locator(".item-page").locator("> :first-child"),
-    "the context bar is the item page's first row",
-  ).toHaveClass(/list-switcher--compact/);
-  await expect(chevron, "@390: one chevron on the item view").toHaveCount(1);
-  await expect(chevron).toBeVisible();
-  // The name resolves to exactly one button at this width: the desktop
-  // Back-to-list BUTTON is not mounted under the seam, and the lockup is a
-  // role=link, so there is no second match to be ambiguous about.
-  await expect(page.getByRole("button", { name: "Back to list" })).toHaveCount(1);
-  const chevronBox = (await chevron.boundingBox())!;
-  expect(Math.round(chevronBox.width), "chevron width @390").toBeGreaterThanOrEqual(44);
-  expect(Math.round(chevronBox.height), "chevron height @390").toBeGreaterThanOrEqual(44);
-  // …and it sits BESIDE the lockup, never over it: both are back affordances
-  // to the same place, so their hit areas must not fight (#116 geometry).
-  const brandBox = (await page.locator(".brand").boundingBox())!;
-  expect(Math.round(chevronBox.x + chevronBox.width), "chevron clears the lockup").toBeLessThanOrEqual(
-    Math.round(brandBox.x),
-  );
+    "the text link is the item page's first row",
+  ).toHaveClass(/item-back/);
+  await expect(chevron, "@390: no redundant chevron on the item view").toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Back to list" })).toHaveCount(0);
+  const backLink = page.getByRole("link", { name: "Back to list", exact: true });
+  await expect(backLink, "the brand is not another Back-to-list link").toHaveCount(1);
+  await expect(backLink).toBeVisible();
+  expect(Math.round((await backLink.boundingBox())!.height), "Back to list target").toBeGreaterThanOrEqual(44);
 
   // --- 2. Its destination is the list, client-side (no document load). ----
   const before = await loads(page);
-  await chevron.click();
+  await backLink.click();
   await expect(page).toHaveURL(`${BASE}/`);
   await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
-  expect(await loads(page), "the chevron is a client-side navigation").toBe(before);
+  expect(await loads(page), "the back link is a client-side navigation").toBe(before);
 
   // --- 3. Every other non-feed authenticated route carries it too. --------
   const uiOn = await page.request.put(`${BASE}/api/auth/me/settings`, {
@@ -5849,7 +5746,8 @@ test("39: #128 — mobile back chevron on every non-feed page, ⋮ in the header
   await page.goto(`${BASE}/items/${itemId}`);
   await expect(page.locator(".item-page .detail-title")).toBeVisible();
   await expect(chevron, "@1280: the desktop header needs no chevron").toHaveCount(0);
-  await expect(page.locator(".topbar-back"), "@1280: #125's Back-to-list button stays").toBeVisible();
+  await expect(page.locator(".topbar-back"), "@1280: the desktop pill is gone").toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Back to list", exact: true })).toBeVisible();
 
   // --- 5. The ⋮: in the app bar at BOTH widths, never in the page body. --
   for (const width of [390, 1280] as const) {
@@ -6021,9 +5919,9 @@ test("41: #117 — offline writes are framed as offline, never as a plain failur
   }
 });
 
-test("42: #161 — page spacing rhythm: the context-to-content boundary and the page layer", async ({ page }) => {
-  // #161: on the item page the compact context bar and the content below it are
-  // children of DIFFERENT flex containers — `.item-page` holds the bar,
+test("42: #161 — page spacing rhythm: the back-link-to-content boundary and the page layer", async ({ page }) => {
+  // #161: on the item page the Back-to-list link and the content below it are
+  // children of DIFFERENT flex containers — `.item-page` holds the link,
   // `.detail-scroll` holds the hero — so neither owner's `gap` governed the
   // boundary between them and it measured 0px at EVERY width (not desktop-only,
   // as the issue framed it): the selector and the hero read as one block.
@@ -6059,23 +5957,23 @@ test("42: #161 — page spacing rhythm: the context-to-content boundary and the 
   });
   expect(uiOn.status()).toBe(200);
 
-  // The two rects in ONE frame: the bar's bottom and the first content block's
-  // top, plus the page owner's computed gap.
+  // The two rects in ONE frame: the link's bottom and the first content
+  // block's top, plus the page owner's computed gap.
   const boundary = () =>
     page.evaluate(() => {
-      const bar = document.querySelector(".list-switcher--compact");
+      const backLink = document.querySelector(".item-back");
       const hero = document.querySelector(".detail-scroll > .detail-hero");
       const owner = document.querySelector(".item-page");
-      if (!bar || !hero || !owner) return null;
+      if (!backLink || !hero || !owner) return null;
       return {
-        gap: hero.getBoundingClientRect().top - bar.getBoundingClientRect().bottom,
+        gap: hero.getBoundingClientRect().top - backLink.getBoundingClientRect().bottom,
         ownerGap: getComputedStyle(owner).gap,
       };
     });
 
   // Every in-scope authenticated surface and the element whose `gap` IS its
-  // page stack (the settings family has no page wrapper: PageHeader,
-  // ListContextBar and the stack are direct children of `.app-main`).
+  // page stack (the settings family has no page wrapper: PageHeader and the
+  // stack are direct children of `.app-main`).
   const routes = [
     { path: itemPath, owner: ".item-page", formTitle: false },
     { path: `${itemPath}/edit`, owner: ".add-page", formTitle: true },
@@ -6099,7 +5997,7 @@ test("42: #161 — page spacing rhythm: the context-to-content boundary and the 
         // 0.5px of sub-pixel rounding is allowed; 0 is not.
         expect(
           measured!.gap,
-          `${scheme} @${width}: the context bar is separated from the content below it`,
+          `${scheme} @${width}: the back link is separated from the content below it`,
         ).toBeGreaterThanOrEqual(15);
         // The boundary follows the token, so a width-dependent regression (a
         // desktop-only rule, or a token that stopped stepping) is caught too.
@@ -6178,7 +6076,7 @@ test("42: #161 — page spacing rhythm: the context-to-content boundary and the 
       expect(measured, `@${width}: the boundary probe found its elements`).not.toBeNull();
       expect(
         measured!.gap,
-        `@${width}: the context bar is separated from the content below it`,
+        `@${width}: the back link is separated from the content below it`,
       ).toBeGreaterThanOrEqual(15);
     }
 
@@ -6270,13 +6168,13 @@ test("43: #157 — the mobile topbar centers the brand lockup on every route", a
       "@639: the topbar is the #157 three-track grid",
     ).toBe("grid");
 
-    // --- B. The chevron keeps the leading edge, its 44px target, and the
-    //        app's 8px clearance from the centred lockup (#116's band). -----
+    // --- B. The remaining chevron on /settings keeps the leading edge, its
+    //        44px target, and 8px clearance from the centred lockup. --------
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(`${BASE}/items/${item.id}`);
+    await page.goto(`${BASE}/settings`);
     await expect(page.locator(".topbar .brand-name")).toBeVisible();
     const chevron = page.locator(".topbar-back-chevron");
-    await expect(chevron, "@390: one chevron on the item view").toHaveCount(1);
+    await expect(chevron, "@390: settings keeps its chevron").toHaveCount(1);
     const chevronBox = (await chevron.boundingBox())!;
     expect(Math.round(chevronBox.width), "chevron width @390").toBeGreaterThanOrEqual(44);
     expect(Math.round(chevronBox.height), "chevron height @390").toBeGreaterThanOrEqual(44);
@@ -6308,21 +6206,21 @@ test("43: #157 — the mobile topbar centers the brand lockup on every route", a
     expect(Math.round(seam.brandX), "@640: the brand is back at the leading edge").toBe(16);
     await expect(chevron, "@640: #125's header owns the affordance").toHaveCount(0);
 
-    // --- D. Both affordances still navigate, client-side (no document load). -
+    // --- D. The item text link and the settings chevron navigate client-side. -
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${BASE}/items/${item.id}`);
     await expect(page.locator(".topbar .brand-name")).toBeVisible();
     let before = await loads(page);
-    await page.locator(".topbar .brand").click();
+    await page.getByRole("link", { name: "Back to list", exact: true }).click();
     await expect(page).toHaveURL(`${BASE}/`);
-    expect(await loads(page), "the lockup link is a client-side navigation").toBe(before);
+    expect(await loads(page), "the item back link is a client-side navigation").toBe(before);
 
-    await page.goto(`${BASE}/items/${item.id}`);
+    await page.goto(`${BASE}/settings`);
     await expect(page.locator(".topbar .brand-name")).toBeVisible();
     before = await loads(page);
     await chevron.click();
     await expect(page).toHaveURL(`${BASE}/`);
-    expect(await loads(page), "the chevron is a client-side navigation").toBe(before);
+    expect(await loads(page), "the settings chevron is a client-side navigation").toBe(before);
 
     // --- E. #116 preserved: centering grows no box. The lockup stays a 28px
     //        box with a 44px hit band — the grid places it, it does not size
