@@ -512,10 +512,12 @@ export function wishlistRoutes(
       /** #181: any authenticated viewer may re-drive enrichment. The row is
        *  already readable by them (GET /api/users/:id/wishlist) and claimable
        *  by them (/claim), and the write is non-destructive: it re-fetches the
-       *  public product page behind the row. Ownership checks stay on every
-       *  DESTRUCTIVE and owner-DATA route — edit, delete, purchased marks, the
-       *  blind reset and hints (the blocks above and below this one). */
-      POST: requireSession(db, (req, _viewer) => {
+       *  public product page behind the row. The RESPONSE is per-viewer like
+       *  every list read — the owner's body is the owner view, anyone else's is
+       *  the public DTO. Ownership checks stay on every DESTRUCTIVE and
+       *  owner-DATA route — edit, delete, purchased marks, the blind reset and
+       *  hints (the blocks above and below this one). */
+      POST: requireSession(db, (req, viewer) => {
         const item = getItem(db, req.params.id);
         if (!item) return jsonError(404, "Item not found");
         if (!item.url) return jsonError(400, "This item has no link to fetch");
@@ -526,7 +528,16 @@ export function wishlistRoutes(
           [new Date().toISOString(), item.id],
         );
         queue.enqueue(item.id);
-        return jsonOk(toOwnedItem(db, getItem(db, item.id) as ItemRow, seriesCap), 202);
+        const fresh = getItem(db, item.id) as ItemRow;
+        // #181 review: the row is viewer-refreshable, but the RESPONSE is
+        // per-viewer — a non-owner gets the public DTO (booleans only), never
+        // owner data (ownerPurchased / the hint results / cheaperUrl).
+        return jsonOk(
+          item.user_id === viewer.id
+            ? toOwnedItem(db, fresh, seriesCap)
+            : toPublicItem(db, fresh, viewer.id),
+          202,
+        );
       }),
     },
     "/api/wishlist/items/:id/hints": {

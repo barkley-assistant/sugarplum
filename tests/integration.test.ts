@@ -419,6 +419,46 @@ describe("wishlist API", () => {
     expect(body.fetchState).toBe("pending");
   });
 
+  test("wave2: refresh 202 body is per-viewer (#181): non-owner gets the public DTO, owner keeps the owner view", async () => {
+    const alice = app.newJar();
+    const bob = app.newJar();
+    await login(alice, "alice", "alice-pass");
+    await login(bob, "bob", "bob-pass");
+    const item = await createItem(alice, "Per-viewer body", { url: closedLocalUrl() });
+
+    // F1 (#181 review): widening the ROUTE must not widen the DTO. The 202
+    // body is serialized per viewer, exactly like every list read — a
+    // non-owner must not read the owner's purchased mark or the hint results
+    // off the refresh response. Values are null/false on a fresh row, so KEY
+    // PRESENCE is the honest observable.
+    const ownerOnlyKeys = [
+      "ownerPurchased",
+      "hintPriceCents",
+      "hintCurrency",
+      "hintSourceUrl",
+      "priceSource",
+      "cheaperUrl",
+      "updatedAt",
+    ];
+    const ownerKeysIn = (body: Record<string, unknown>) =>
+      ownerOnlyKeys.filter((key) => Object.hasOwn(body, key));
+
+    const ownerRes = await alice.request("POST", `/api/wishlist/items/${item.id}/refresh`);
+    expect(ownerRes.status).toBe(202);
+    const ownerBody = (await ownerRes.json()) as Record<string, unknown>;
+    expect(ownerBody.fetchState).toBe("pending");
+    expect(ownerKeysIn(ownerBody)).toEqual(ownerOnlyKeys);
+
+    const viewerRes = await bob.request("POST", `/api/wishlist/items/${item.id}/refresh`);
+    expect(viewerRes.status).toBe(202);
+    const viewerBody = (await viewerRes.json()) as Record<string, unknown>;
+    expect(viewerBody.fetchState).toBe("pending");
+    expect(ownerKeysIn(viewerBody)).toEqual([]);
+    // …and the public DTO's own shape (claim booleans) is what a viewer gets.
+    expect(viewerBody.claimed).toBe(false);
+    expect(viewerBody.claimedByYou).toBe(false);
+  });
+
   test("wave2: viewer refresh does NOT widen the owner-only routes", async () => {
     const alice = app.newJar();
     const bob = app.newJar();
