@@ -4157,6 +4157,10 @@ test("28: recurring mobile controls keep the app-wide 44px touch floor (#116)", 
     // switcher's padded band opens the popover…
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${BASE}/`);
+    // Post-navigation boot race (same class as #148/#149): goto resolves on
+    // document load, but the SPA commits the feed only after /api/auth/me and
+    // the wishlist fetch — pin the switcher before the raw read in hitExtent.
+    await expect(page.locator(".list-switcher-trigger")).toBeVisible();
     const switcher = await hitExtent(page, ".list-switcher-trigger");
     await page.mouse.click(switcher.x, switcher.hitTop + 3);
     await expect(page.locator(".list-switcher-trigger")).toHaveAttribute("aria-expanded", "true");
@@ -4165,6 +4169,9 @@ test("28: recurring mobile controls keep the app-wide 44px touch floor (#116)", 
     // …and on a non-feed route the same tap on the lockup takes the documented
     // Back-to-list route (the lockup is the ONLY back affordance there).
     await page.goto(`${BASE}/settings`);
+    // Same boot race on a non-feed route: AppPage.boot() gates the topbar
+    // render, so pin the lockup before hitExtent's raw querySelector.
+    await expect(page.locator(".brand")).toBeVisible();
     const lockup = await hitExtent(page, ".brand");
     expect(lockup.hitHeight, "brand hit area on /settings").toBeGreaterThanOrEqual(44);
     await page.mouse.click(lockup.x, lockup.hitTop + 3);
