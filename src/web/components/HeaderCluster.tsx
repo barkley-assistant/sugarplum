@@ -28,8 +28,6 @@ interface HeaderClusterProps {
  *  the same actions live on the bottom action bar (#73 D4, one cluster per
  *  width), and the avatar keeps its own mobile menu.
  *
- *  Built as a standalone component (no feed state, no page props beyond the
- *  identity) so #128 can mount the mobile chevron back inside the same seam.
  *  The settings entry is suppressed while a settings screen is on screen —
  *  the menu must not offer the destination the page already is (the mobile
  *  bar has the same rule, AppBottomBar.tsx). */
