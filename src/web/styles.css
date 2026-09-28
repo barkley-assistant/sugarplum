@@ -875,6 +875,13 @@ a.brand:hover {
   position: relative;
 }
 
+/* #183: anchor the desktop popover to the title line, not the whole heading. */
+.list-switcher-anchor {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
 .list-switcher .page-title {
   min-width: 0;
 }
