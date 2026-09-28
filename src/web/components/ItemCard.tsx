@@ -115,7 +115,14 @@ export function ItemCard({
   const delta = priceDelta(item.priceCents, item.currency, stats);
   const lowest = lowestState(item.priceCents, item.currency, stats);
   const publicItem = item as PublicItem;
-  function ownerMenuItems(): OverflowItem[] {
+  /** Per-PROPERTY gated row menu, shared by owner and guest rows. Each entry
+   *  exists only when the callback that authorises it was supplied, so the
+   *  surface that supplies the callbacks decides what a row may do: AppPage
+   *  gives the own list edit/delete/purchased callbacks (#181 keeps them
+   *  owner-only) and gives another user's list only `onRefresh`. A guest row
+   *  therefore gets re-check/retry + copy link and can never receive an owner
+   *  entry — the gate is structural, not incidental. */
+  function rowMenuItems(): OverflowItem[] {
     const menu: OverflowItem[] = [];
     if (viewerIsOwner) {
       // #62: editing is the /items/:id/edit route, not a stacked sheet.
@@ -186,18 +193,26 @@ export function ItemCard({
   // atLowest), and with no history there is no line at all.
   const metaParts: string[] = lowest?.kind === "below" ? [S.item.lowestSeen(lowest.lowest)] : [];
 
-  const ownerActions =
-    viewerIsOwner && ownerMenuItems().length > 0 ? (
+  // #181: ONE menu builder for owner and guest rows — its entries are gated
+  // per property/callback inside, so this call site cannot leak an owner entry
+  // (see rowMenuItems). Built once per render (the gate used to run it twice).
+  const rowMenu = rowMenuItems();
+  const rowActions =
+    rowMenu.length > 0 ? (
       <OverflowMenu
         triggerLabel={S.item.moreActions}
         triggerIcon={<DotsIcon />}
         menuLabel={S.item.moreActions}
-        items={ownerMenuItems()}
+        items={rowMenu}
       />
     ) : undefined;
 
-  const ownerRowActions = dragHandle ? undefined : ownerActions;
+  const ownerRowActions = dragHandle ? undefined : rowActions;
 
+  // #181: a guest row keeps its claim control and gains the row menu beside
+  // it — both live in the row's ONE actions track (flex, gap: var(--sp-1)), so
+  // no CSS change. `null`, not `undefined`, so the menu still renders on a row
+  // whose claim control does not (already claimed by someone else: badge only).
   const publicActions = !viewerIsOwner ? (
     <>
       {!publicItem.claimed && onClaim && (
@@ -219,7 +234,15 @@ export function ItemCard({
         </span>
       )}
     </>
-  ) : undefined;
+  ) : null;
+
+  const guestActions =
+    publicActions || rowActions ? (
+      <>
+        {publicActions}
+        {rowActions}
+      </>
+    ) : undefined;
 
   return (
     <ProductRow
@@ -242,7 +265,7 @@ export function ItemCard({
           <span className="product-img-fallback" aria-hidden="true" />
         )
       }
-      actions={viewerIsOwner ? ownerRowActions : publicActions}
+      actions={viewerIsOwner ? ownerRowActions : guestActions}
       body={
         <>
           {item.siteName && <span className="item-site">{item.siteName}</span>}

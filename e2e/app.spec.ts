@@ -1626,6 +1626,10 @@ test("7: claim/unclaim between users; owner never sees claim state", async ({ pa
     // carries no owner-only tooling or price intelligence.
     await card.getByRole("button", { name: "Claim", exact: true }).click();
     await expect(card.getByText("Claimed by you")).toBeVisible();
+    // #181: a guest row's overflow menu renders now, but this probe carries no
+    // url and a manual row is never enqueued (its fetchState stays "complete"),
+    // so this row's menu is legitimately empty. The line stays the pin that a
+    // url-less guest row offers no actions menu.
     await expect(card.getByRole("button", { name: "More actions" })).toHaveCount(0);
     await expect(card.locator(".price-meta")).toHaveCount(0);
     await expect(card.locator(".price-delta")).toHaveCount(0);
@@ -7066,5 +7070,241 @@ test("48: #184 — the mobile bar is a navigator, Share lives in the avatar menu
     // suite to end with the owner's link state known).
     const revoked = await page.request.delete(`${BASE}/api/share`);
     expect([200, 204, 404], "share link revoked").toContain(revoked.status());
+  }
+});
+
+test("49: #181 — a viewer can re-check and copy a link on another user's list", async ({
+  page,
+  browser,
+}) => {
+  const OTHER = {
+    username: "viewer-refresh-probe",
+    password: "viewer-refresh-pass",
+    displayName: "Viewer Refresh",
+  };
+  // A second other-user list: the route-change leg at the end moves the route
+  // to a list that is neither the own list nor the one whose read is in flight.
+  const OTHER2 = {
+    username: "viewer-refresh-two",
+    password: "viewer-refresh-two-pass",
+    displayName: "Viewer Second",
+  };
+  await ensureMember(page, OTHER);
+  await ensureMember(page, OTHER2);
+  const otherId = await memberId(page, OTHER.displayName);
+  const other2Id = await memberId(page, OTHER2.displayName);
+  const aList = `/api/users/${otherId}/wishlist`;
+
+  // Each probe row is seeded into its OWNER's list (an item POST lands in the
+  // caller's list). OTHER's row carries a MANUAL £25.00 and NO url, then gets
+  // PATCHed onto the fixture — and that PATCH enqueues nothing, so the row sits
+  // at fetchState "complete" with no site and no image. The viewer's re-check
+  // below is therefore the only thing that can fill them in, and the manual
+  // price must survive it (enrich.ts never overwrites a price the user typed).
+  const fixture = await startFixtureServer();
+  const productUrl = `${fixture.url}/product`;
+  const seedContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const seeder = await seedContext.newPage();
+  // The viewer gets its own context: the clipboard rows need real permission,
+  // and the route-change leg needs the #158 body-delay harness installed.
+  const viewerContext = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    permissions: ["clipboard-read", "clipboard-write"],
+  });
+  await installBodyDelay(viewerContext);
+  const viewer = await viewerContext.newPage();
+  const seeded: Record<string, string> = {};
+
+  try {
+    // --- Seeding, one member session at a time. ---
+    await login(seeder, OTHER.username, OTHER.password);
+    const created = await seeder.request.post(`${BASE}/api/wishlist/items`, {
+      data: { title: "Viewer refresh probe", priceCents: "25.00", currency: "GBP" },
+    });
+    expect(created.status()).toBe(201);
+    seeded[OTHER.username] = ((await created.json()) as { id: string }).id;
+    const pointed = await seeder.request.patch(
+      `${BASE}/api/wishlist/items/${seeded[OTHER.username]}`,
+      { data: { url: productUrl } },
+    );
+    expect(pointed.status()).toBe(200);
+
+    await login(seeder, OTHER2.username, OTHER2.password);
+    const createdTwo = await seeder.request.post(`${BASE}/api/wishlist/items`, {
+      data: { title: "Second list probe" },
+    });
+    expect(createdTwo.status()).toBe(201);
+    seeded[OTHER2.username] = ((await createdTwo.json()) as { id: string }).id;
+
+    const rowId = seeded[OTHER.username];
+    // The viewer's own handles: `card` is the seeded row on the other list,
+    // `trigger` its row menu. The trigger must EXIST (pre-#181 the guest row
+    // had no menu at all) — every leg below opens it.
+    const card = viewer.locator(`.item-card[data-item-id="${rowId}"]`);
+    // --- The viewer switches to the other list (the switcher is a Sheet below
+    //     the 640px seam, so the route is driven at 390). ---
+    await login(viewer, "admin", "admin-password");
+    await switchTo(viewer, /Viewer Refresh/);
+    await expect(viewer).toHaveURL(new RegExp(`${BASE}/\\?list=${otherId}$`));
+    await expect(viewer.getByRole("heading", { name: "Viewer Refresh's wishlist" })).toBeVisible();
+    await expect(card).toBeVisible();
+    const trigger = card.getByRole("button", { name: "More actions" });
+
+    // Precondition: nothing has fetched this row yet, which is what makes the
+    // re-check observable below.
+    await expect(card.locator(".item-site")).toHaveCount(0);
+    await expect(card.locator(".product-img")).toHaveCount(0);
+    await expect(card.locator(".product-img-fallback"), "the thumb frame is reserved").toHaveCount(1);
+
+    // --- AC3: the guest row's menu is the read-only pair, and nothing
+    //     owner-shaped can reach it (entries are per-callback gated). ---
+    await expect(trigger, "a url-bearing guest row offers the row menu").toBeVisible();
+    await trigger.click();
+    const sheetMenu = viewer.getByRole("menu", { name: "More actions" });
+    await expect(sheetMenu).toBeVisible();
+    const labels = (await sheetMenu.getByRole("menuitem").allInnerTexts()).map((t) => t.trim());
+    expect(labels, "the mobile sheet keeps its own dismiss row").toContain("Cancel");
+    expect(
+      labels.filter((label) => label !== "Cancel").sort(),
+      "a guest row's menu is the read-only pair",
+    ).toEqual(["Copy product link", "Re-check price"]);
+    for (const ownerAction of [
+      "Edit",
+      "Edit item",
+      "Delete",
+      "Mark as purchased",
+      "Unmark purchased",
+      "Reset purchased mark",
+    ]) {
+      await expect(
+        sheetMenu.getByRole("menuitem", { name: ownerAction, exact: true }),
+        `no ${ownerAction} on a guest row`,
+      ).toHaveCount(0);
+    }
+
+    // --- The copy row WORKS: the product URL reaches the real clipboard. ---
+    await sheetMenu.getByRole("menuitem", { name: "Copy product link" }).click();
+    await expect(viewer.locator(".toast")).toContainText("Copied");
+    expect(
+      await viewer.evaluate(() => navigator.clipboard.readText()),
+      "the copied text is the product url",
+    ).toBe(productUrl);
+
+    // --- AC5: a viewer re-check hits the refresh route and re-enriches the row
+    //     through the viewer's OWN poll — nothing else re-reads another user's
+    //     list, so a filled site line and thumb can only come from that poll,
+    //     with no manual reload. ---
+    const refresh = viewer.waitForResponse(
+      (r) =>
+        r.url().endsWith(`/api/wishlist/items/${rowId}/refresh`) &&
+        r.request().method() === "POST",
+    );
+    await trigger.click();
+    await viewer
+      .getByRole("menu", { name: "More actions" })
+      .getByRole("menuitem", { name: "Re-check price" })
+      .click();
+    expect((await refresh).status(), "a viewer's re-check is accepted").toBe(202);
+
+    await expect(card.locator(".item-site")).toHaveText("ColourPop", { timeout: 20_000 });
+    await expect(card.locator(".product-img"), "the scrape's image fills the frame").toHaveCount(1);
+    await expect(card.locator(".price"), "the operator's price survived the re-check").toHaveText(
+      "£25.00",
+    );
+    // …and the row SETTLED: it is out of the pending state, so its menu offers
+    // the re-check again (that entry is gated off while a row is pending).
+    await expect(card.locator(".status--fetching")).toHaveCount(0);
+    await trigger.click();
+    await expect(
+      viewer
+        .getByRole("menu", { name: "More actions" })
+        .getByRole("menuitem", { name: "Re-check price" }),
+      "the settled row offers the re-check again",
+    ).toBeVisible();
+    await viewer.keyboard.press("Escape");
+    await expect(viewer.getByRole("menu", { name: "More actions" })).toHaveCount(0);
+
+    // --- AC7: compact at 390 with the kebab added — no overflow, one thumb
+    //     frame, a 44px kebab anchored to the thumb's center, and the claim
+    //     control the row already had still beside it. ---
+    const probe = await horizontalEscapes(viewer);
+    expect(probe.docOverflow, "viewer feed overflow @390").toBe(false);
+    expect(probe.offenders, "viewer escapes @390").toEqual([]);
+    const frames = (await listFrames(viewer)).filter((frame) => frame.id === rowId);
+    expect(frames, "the seeded row is on screen").toHaveLength(1);
+    expect(frames[0].wellCount + frames[0].imgCount, "one thumb frame per row").toBe(1);
+    const box = (await trigger.boundingBox())!;
+    expect(Math.round(box.height), "viewer row kebab height @390").toBeGreaterThanOrEqual(44);
+    expect(Math.round(box.width), "viewer row kebab width @390").toBeGreaterThanOrEqual(44);
+    const anchors = (await rowAnchors(viewer)).filter((row) => row.id === rowId);
+    expect(anchors, "the seeded row is measurable").toHaveLength(1);
+    expect(
+      Math.abs(anchors[0].kebabCenterY - anchors[0].thumbCenterY),
+      "the viewer row's kebab sits at the thumb's center",
+    ).toBeLessThanOrEqual(1);
+    await expect(card.getByRole("button", { name: "Claim", exact: true })).toBeVisible();
+
+    // --- Desktop: the same row's menu is the anchored popover — the pair, and
+    //     no Sheet-only Cancel row — and the row still clears the overflow bar.
+    await viewer.setViewportSize({ width: 1280, height: 900 });
+    await trigger.click();
+    const popover = viewer.getByRole("menu", { name: "More actions" });
+    await expect(popover).toBeVisible();
+    expect(
+      (await popover.getByRole("menuitem").allInnerTexts()).map((t) => t.trim()).sort(),
+      "the desktop popover carries the same pair",
+    ).toEqual(["Copy product link", "Re-check price"]);
+    await viewer.keyboard.press("Escape");
+    await expect(popover).toHaveCount(0);
+    const desktopProbe = await horizontalEscapes(viewer);
+    expect(desktopProbe.docOverflow, "viewer feed overflow @1280").toBe(false);
+    expect(desktopProbe.offenders, "viewer escapes @1280").toEqual([]);
+    await viewer.setViewportSize({ width: 390, height: 844 });
+
+    // --- AC5b: a route change while the viewer's re-check read is in flight
+    //     leaves that list's rows uncommitted (the #158 class, on the viewer's
+    //     own path). The read is held in the headers/body gap, the route moves
+    //     to the SECOND member's list, and the held body lands afterwards: the
+    //     guard drops the pair, so the feed keeps the second list's rows and
+    //     never parks on the placeholder — which here would be permanent. ---
+    await armBodyDelay(viewer, aList, 1500);
+    await trigger.click();
+    await viewer
+      .getByRole("menu", { name: "More actions" })
+      .getByRole("menuitem", { name: "Re-check price" })
+      .click();
+    await waitForBodyEdge(viewer, BODY_HELD, aList); // re-check read: headers in, body held
+    await switchTo(viewer, /Viewer Second/);
+    await expect(viewer).toHaveURL(new RegExp(`${BASE}/\\?list=${other2Id}$`));
+    await expect(viewer.getByRole("heading", { name: "Viewer Second's wishlist" })).toBeVisible();
+    await expect(viewer.locator(".item-card", { hasText: "Second list probe" })).toHaveCount(1);
+
+    await waitForBodyEdge(viewer, BODY_RELEASED, aList);
+    await viewer.waitForTimeout(250);
+    await expect(viewer.getByRole("heading", { name: "Viewer Second's wishlist" })).toBeVisible();
+    await expect(
+      viewer.locator(".skeleton-list"),
+      "the stale read did not strand the feed on the placeholder",
+    ).toHaveCount(0);
+    await expect(viewer.locator(".item-card", { hasText: "Viewer refresh probe" })).toHaveCount(0);
+    await expect(viewer.locator(".item-card", { hasText: "Second list probe" })).toHaveCount(1);
+
+    // …and it stays that way, rather than recovering on a later frame.
+    await viewer.waitForTimeout(500);
+    await expect(viewer.locator(".skeleton-list")).toHaveCount(0);
+    await expect(viewer.locator(".item-card", { hasText: "Second list probe" })).toHaveCount(1);
+  } finally {
+    fixture.close();
+    // Each probe row goes with the session that owns it (DELETE is owner-only),
+    // while the seeding context is still open.
+    for (const member of [OTHER, OTHER2]) {
+      const id = seeded[member.username];
+      if (!id) continue;
+      await login(seeder, member.username, member.password);
+      const removed = await seeder.request.delete(`${BASE}/api/wishlist/items/${id}`);
+      expect([200, 204], `${member.username}'s probe row removed`).toContain(removed.status());
+    }
+    await viewerContext.close();
+    await seedContext.close();
   }
 });
