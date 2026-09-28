@@ -6787,3 +6787,78 @@ test("46: #158 — a stale claim re-read cannot strand the feed on a skeleton", 
     await seeds.close();
   }
 });
+
+test("47: #183 — the desktop switcher popover seats against the trigger", async ({ page }) => {
+  const OTHER = {
+    username: "switcher-anchor-probe",
+    password: "anchor-pass",
+    displayName: "Anchor Probe",
+  };
+  await ensureMember(page, OTHER);
+  await login(page, "admin", "admin-password");
+
+  const seatGap = () =>
+    page.evaluate(() => {
+      const trigger = document.querySelector<HTMLElement>(".list-switcher-trigger");
+      const popover = document.querySelector<HTMLElement>(".list-switcher-popover");
+      if (!trigger || !popover) throw new Error("trigger or popover missing");
+      return Math.round((popover.getBoundingClientRect().top - trigger.getBoundingClientRect().bottom) * 10) / 10;
+    });
+
+  const sweepRows = () =>
+    page.evaluate(() => {
+      const popover = document.querySelector<HTMLElement>(".list-switcher-popover");
+      if (!popover) throw new Error("popover missing");
+      const rows = Array.from(popover.querySelectorAll<HTMLElement>(".switcher-row"));
+      const bad: string[] = [];
+      for (const row of rows) {
+        const r = row.getBoundingClientRect();
+        for (const frac of [0.05, 0.25, 0.5, 0.75, 0.95]) {
+          const hit = document.elementFromPoint(r.left + r.width * frac, r.top + r.height / 2);
+          if (!hit || (hit !== row && !row.contains(hit))) bad.push(`\"${row.textContent?.trim()}\" @${frac}`);
+        }
+      }
+      const doc = document.documentElement;
+      return { rowCount: rows.length, bad, docOverflow: doc.scrollWidth > doc.clientWidth };
+    });
+
+  try {
+    for (const width of [640, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`${BASE}/`);
+      const trigger = page.locator(".list-switcher-trigger");
+      await expect(trigger).toBeVisible();
+      await trigger.click();
+      await expect(trigger).toHaveAttribute("aria-expanded", "true");
+      const popover = page.locator(".list-switcher-popover");
+      await expect(popover).toBeVisible();
+
+      const gap = await seatGap();
+      expect(gap, `popover seat gap at ${width}px`).toBeLessThanOrEqual(24);
+      expect(gap, `popover is BELOW the trigger at ${width}px`).toBeGreaterThanOrEqual(0);
+
+      const sweep = await sweepRows();
+      expect(sweep.rowCount, `switcher rows at ${width}px`).toBeGreaterThanOrEqual(2);
+      expect(sweep.bad, `row hit-test failures at ${width}px`).toEqual([]);
+      expect(sweep.docOverflow, `doc overflow with popover open @${width}px`).toBe(false);
+
+      await page.keyboard.press("Escape");
+      await expect(trigger).toHaveAttribute("aria-expanded", "false");
+      await expect(trigger).toBeFocused();
+      await expect(popover).toHaveCount(0);
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${BASE}/`);
+    const trigger = page.locator(".list-switcher-trigger");
+    await expect(trigger).toBeVisible();
+    await trigger.click();
+    const sheet = page.getByRole("dialog", { name: "Switch wishlist" });
+    await expect(sheet).toBeVisible();
+    await expect(page.locator(".list-switcher-popover")).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await expect(sheet).toHaveCount(0);
+  } finally {
+    await page.setViewportSize({ width: 1280, height: 900 });
+  }
+});

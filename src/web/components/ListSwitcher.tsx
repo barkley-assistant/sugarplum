@@ -178,7 +178,23 @@ export function ListSwitcher({
   return (
     <div className={compact ? "list-switcher list-switcher--compact" : "list-switcher"}>
       <div className="list-heading">
-        <h2 className={compact ? "page-title page-title--form" : "page-title"}>{trigger}</h2>
+        <h2 className={compact ? "page-title page-title--form" : "page-title"}>
+          <span className="list-switcher-anchor">
+            {trigger}
+            {open && desktop ? (
+              <div
+                ref={surfaceRef}
+                id={surfaceId}
+                className="menu-sheet list-switcher-popover"
+                role="menu"
+                aria-label={S.list.switcherLabel}
+                onKeyDown={onSurfaceKeyDown}
+              >
+                {renderRows()}
+              </div>
+            ) : null}
+          </span>
+        </h2>
         {(count !== undefined || action) && (
           <div className="list-heading-meta">
             {count !== undefined && <span className="count">{S.list.itemCount(count)}</span>}
@@ -187,24 +203,11 @@ export function ListSwitcher({
         )}
       </div>
 
-      {open && desktop ? (
-        <div
-          ref={surfaceRef}
-          id={surfaceId}
-          className="menu-sheet list-switcher-popover"
-          role="menu"
-          aria-label={S.list.switcherLabel}
-          onKeyDown={onSurfaceKeyDown}
-        >
+      <Sheet open={open && !desktop} onClose={closeAndFocusTrigger} ariaLabel={S.list.switcherLabel}>
+        <div ref={surfaceRef} className="overflow-sheet-list" onKeyDown={onSurfaceKeyDown}>
           {renderRows()}
         </div>
-      ) : (
-        <Sheet open={open && !desktop} onClose={closeAndFocusTrigger} ariaLabel={S.list.switcherLabel}>
-          <div ref={surfaceRef} className="overflow-sheet-list" onKeyDown={onSurfaceKeyDown}>
-            {renderRows()}
-          </div>
-        </Sheet>
-      )}
+      </Sheet>
     </div>
   );
 }

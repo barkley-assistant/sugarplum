@@ -154,6 +154,17 @@ describe("async enrichment", () => {
 
       expect(await waitForFetchState(admin, userId, item.id, "complete")).toBe(true);
 
+      // The feed state becomes complete before the optional image download is
+      // stored, so wait for that independent side effect before asserting it.
+      expect(
+        await waitFor(async () => {
+          const list = await admin.request("GET", `/api/users/${userId}/wishlist`);
+          if (list.status !== 200) return false;
+          const items = (await list.json()) as OwnedItem[];
+          return items.some((i) => i.id === item.id && i.imagePath === `${item.id}.jpg`);
+        }),
+      ).toBe(true);
+
       const list = await admin.request("GET", `/api/users/${userId}/wishlist`);
       const items = (await list.json()) as OwnedItem[];
       const enriched = items.find((i) => i.id === item.id) as OwnedItem;
