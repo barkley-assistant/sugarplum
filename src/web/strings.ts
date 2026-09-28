@@ -187,6 +187,12 @@ export const S = {
   },
   share: {
     shareList: "Share my list",
+    /** #184: the avatar menu's Share row. Distinct from S.share.shareList
+     *  above ("Share my list"), which stays the accessible name of the
+     *  desktop Share TRIGGER: one action, two surfaces, two names — the row
+     *  is a choice in the user's own menu and the trigger is a labelled
+     *  control. */
+    shareMenu: "Share wishlist",
     shareTitle: "Share your wishlist",
     shareIntro:
       "Anyone with this link can view your list and mark items as purchased. Purchased marks are never shown to you.",
@@ -265,12 +271,19 @@ export const S = {
     install: "Install app",
   },
   bar: {
-    /** Visible labels on the mobile bottom action bar (#73). Both shortcuts
-     *  are short while their accessible names stay the app's full phrases via
-     *  aria-label on the trigger: Share → "Share my list", Add → "Add item"
+    /** Visible labels on the mobile bottom action bar (#73; #184 turned it
+     *  into a pure navigator). All three are destinations — List (the lists
+     *  screen), Add (/add) and Settings — and the one matching the current
+     *  route carries the accent. The shortcuts stay short while their
+     *  accessible names remain the app's full phrases via aria-label on the
+     *  trigger where the two would otherwise collide: Add → "Add item"
      *  (#129 — the tab sits on the same screen as the add form's own "Add
      *  item" submit, so the visible label must not read as a second CTA). */
     add: "Add",
+    /** #184: the bar's List destination. Its accessible name is the same
+     *  short word — unlike Add, nothing else on the lists screen reads
+     *  "List", so there is no duplicate-CTA collision to defuse. */
+    list: "List",
     share: "Share",
     settings: "Settings",
     /** Landmark label for the bottom bar (screen readers announce

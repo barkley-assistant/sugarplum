@@ -102,6 +102,25 @@ export function GearIcon() {
   );
 }
 
+/** #184: the mobile bottom bar's List item — the bar navigates to the lists
+ *  screen from any authenticated route, so its glyph is the app's own list
+ *  language rather than a generic hamburger. Same language as the other
+ *  icons: 20px box, 1.8px stroke, currentColor. Three rows on the 20px grid
+ *  (y = 5.2 / 10 / 14.8) inside a 2.8px inset, so at 360-430px the three
+ *  strokes read cleanly beside Plus and Gear at the same ink weight. */
+export function ListIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="M2.8 5.2h14.4M2.8 10h14.4M2.8 14.8h14.4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 /** Disclosure chevron for subordinate navigation rows (#96 settings area).
  *  Same language as the other icons: 20px box, 1.8px stroke, currentColor. */
 export function ChevronRightIcon() {

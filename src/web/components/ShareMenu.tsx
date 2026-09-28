@@ -86,7 +86,6 @@ export function ShareMenu({ open, onClose, triggerRef }: ShareMenuProps) {
   if (!desktop) {
     return createPortal(
       <Sheet open onClose={onClose} ariaLabel={S.share.shareList} boxClassName="sheet--share">
-        <div className="detail-handle" aria-hidden="true" />
         <SharePanel />
       </Sheet>,
       document.body,

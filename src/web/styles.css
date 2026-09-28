@@ -2054,9 +2054,12 @@ button.filter-chip {
   gap: var(--sp-2);
 }
 
-/* Mobile: the portal-mounted sheet owns the surface chrome. */
+/* Mobile: the portal-mounted sheet owns the surface chrome. The top padding
+   is --sp-5 for the same reason .sheet sets it: #184 removed the decorative
+   drag handle, whose 8px margin + 4px bar plus the flex gap were what held
+   the heading 24px off the sheet's top edge. */
 .sheet--share {
-  padding: 0 var(--sp-4) calc(var(--sp-4) + var(--safe-bottom));
+  padding: var(--sp-5) var(--sp-4) calc(var(--sp-4) + var(--safe-bottom));
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);

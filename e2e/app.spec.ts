@@ -2207,13 +2207,15 @@ test("15: share link — owner creates, anonymous marks purchased, owner sees no
     await expect(page.getByRole("button", { name: "Mark as purchased" })).toHaveCount(0);
 
     // Revocation: back to the app, reopen the sheet at 375px (mobile-first:
-    // the link row must not overflow).
+    // the link row must not overflow). #184: the mobile Share entry point is
+    // the avatar menu's Share wishlist row — the bar's Share item is gone.
     await page.setViewportSize({ width: 375, height: 800 });
     await page.goto(`${BASE}/`);
-    await page.getByRole("button", { name: "Share my list" }).click();
+    await page.locator('.user-menu-button[aria-label="Admin"]').click();
+    await page.getByRole("menuitem", { name: "Share wishlist" }).click();
     const mobileShare = page.getByRole("dialog", { name: "Share my list" });
     await expect(mobileShare).toHaveClass(/sheet--share/);
-    await expect(mobileShare.locator(".detail-handle")).toBeVisible();
+    await expect(mobileShare.locator(".detail-handle")).toHaveCount(0);
     await expect(mobileShare.locator(".share-link-row input")).toBeVisible();
     expect(
       await page.evaluate(
@@ -2286,21 +2288,25 @@ test("15c: desktop share confirm stays stacked and regenerates the token", async
   await expect(popover.locator(".share-link-row")).toHaveCount(0);
 });
 
-test("15d: mobile share sheet traps focus and returns it to the trigger", async ({ page }) => {
+test("15d: mobile share sheet traps focus and returns it to the opener", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ width: 390, height: 844 });
   const created = await page.request.post(`${BASE}/api/share`);
   expect(created.status()).toBe(201);
   await page.reload();
 
-  const trigger = page.getByRole("button", { name: "Share my list" });
+  // #184: the mobile opener is the avatar menu's Share wishlist row. The menu
+  // closes (OverflowMenu.choose) before the sheet mounts, so the trigger is
+  // focused again by the time Sheet captures document.activeElement as its
+  // opener — no aria-expanded state is carried by anything, by design.
+  const trigger = page.locator('.user-menu-button[aria-label="Admin"]');
   await trigger.click();
+  await page.getByRole("menuitem", { name: "Share wishlist" }).click();
   const sheet = page.getByRole("dialog", { name: "Share my list" });
   await expect(sheet).toBeVisible();
   await expect(sheet).toHaveClass(/sheet--share/);
-  await expect(sheet.locator(".detail-handle")).toBeVisible();
+  await expect(sheet.locator(".detail-handle")).toHaveCount(0);
   await expect.poll(() => sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
-  await expect(trigger).toHaveAttribute("aria-expanded", "true");
 
   const focusableSelector = 'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
   const focusableCount = await sheet.locator(focusableSelector).count();
@@ -2316,6 +2322,7 @@ test("15d: mobile share sheet traps focus and returns it to the trigger", async 
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
 
   await trigger.click();
+  await page.getByRole("menuitem", { name: "Share wishlist" }).click();
   await page.getByRole("dialog", { name: "Share my list" }).getByRole("button", { name: "Revoke link" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Revoke link" }).click();
 });
@@ -2597,9 +2604,13 @@ test("17: mobile user-menu sheet shows every row and does not jump the page", as
   // #73: Settings moved out of the mobile avatar menu (it now lives on the
   // bottom action bar), so the rows are Log out and Cancel — plus the install
   // row when the browser offers install, which is not focusable here.
+  // #184: the Share wishlist row is the FIRST mobile row — the bar's Share
+  // item became List, so the avatar menu is the mobile Share entry point.
+  const share = sheet.getByRole("menuitem", { name: "Share wishlist" });
   const logout = sheet.getByRole("menuitem", { name: "Log out" });
   const cancel = sheet.getByRole("menuitem", { name: "Cancel" });
   await expect(sheet.getByRole("menuitem", { name: "Settings" })).toHaveCount(0);
+  await expect(share).toBeInViewport();
   await expect(logout).toBeInViewport();
   await expect(cancel).toBeInViewport();
 
@@ -2616,11 +2627,13 @@ test("17: mobile user-menu sheet shows every row and does not jump the page", as
   // Sheet defers keydown inside a [role="menu"] subtree to OverflowMenu's
   // own handler, so that handler owns the mobile wrap (the desktop popover
   // still closes on Tab by design).
+  await expect(share).toBeFocused();
+  await page.keyboard.press("Tab");
   await expect(logout).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(cancel).toBeFocused();
   await page.keyboard.press("Tab");
-  await expect(logout).toBeFocused();
+  await expect(share).toBeFocused();
   await expect.poll(() => sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
   await page.keyboard.press("Shift+Tab");
   await expect(cancel).toBeFocused();
@@ -2723,11 +2736,13 @@ test("18: currency select matches input metrics and keeps a chevron (#74)", asyn
 });
 
 test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ page }) => {
-  // Seed one item so the feed shows the full 3-item bar (share included).
+  // Seed one item so the feed shows the full 3-item bar (#184: List, not
+  // Share — the bar is a navigator now; the item also feeds the B leg below).
   const seeded = await page.request.post(`${BASE}/api/wishlist/items`, {
     data: { title: "Bottom bar probe" },
   });
   expect(seeded.status()).toBe(201);
+  const seededItem = (await seeded.json()) as { id: string };
 
   for (const width of [360, 390, 430]) {
     await page.setViewportSize({ width, height: 844 });
@@ -2739,10 +2754,10 @@ test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ pa
     const bar = page.getByRole("navigation", { name: "Primary actions" });
     await expect(bar).toBeVisible();
     await expect(bar.locator(".action-bar-item")).toHaveCount(3);
-    for (const name of ["Add item", "Share my list", "Settings"]) {
+    for (const name of ["Add item", "List", "Settings"]) {
       await expect(bar.getByRole("button", { name })).toBeVisible();
     }
-    await expect(bar.getByText("Share", { exact: true })).toBeVisible(); // visible label
+    await expect(bar.getByText("List", { exact: true })).toBeVisible(); // visible label
     // #129: the Add tab's VISIBLE label is the short "Add" too (its accessible
     // name stays the full "Add item" above), so /add never shows two elements
     // reading "Add item" — the form CTA and a nav destination would otherwise
@@ -2806,21 +2821,21 @@ test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ pa
     }
 
     // #132: one icon spec — every stroked element of every bar glyph at 1.8
-    // (Plus 1 path, Share 3 circles + 1 path, Gear 1 circle + 1 path = 7).
+    // (Plus 1 path, List 1 path carrying its three rows as subpaths, Gear
+    // 1 circle + 1 path = 4).
     const strokes = await bar.evaluate((el) =>
       Array.from(el.querySelectorAll("svg [stroke-width]")).map((n) =>
         n.getAttribute("stroke-width"),
       ),
     );
-    expect(strokes, `stroked elements @${width}px`).toHaveLength(7);
+    expect(strokes, `stroked elements @${width}px`).toHaveLength(4);
     expect(strokes.every((s) => s === "1.8"), `stroke spec @${width}px`).toBe(true);
-    // #132: Share's node holes are open — r 2.5 (hole 3.2px, Lucide ratio).
-    const radii = await bar
-      .getByRole("button", { name: "Share my list" })
-      .evaluate((el) =>
-        Array.from(el.querySelectorAll("circle")).map((c) => c.getAttribute("r")),
-      );
-    expect(radii, `Share node radii @${width}px`).toEqual(["2.5", "2.5", "2.5"]);
+    // The List glyph draws the rows the app's list language expects: three
+    // subpaths at the 20px box's 5.2 / 10 / 14.8 insets.
+    const rows = await bar
+      .getByRole("button", { name: "List" })
+      .evaluate((el) => el.querySelector("path")?.getAttribute("d") ?? "");
+    expect(rows, `List glyph @${width}px`).toBe("M2.8 5.2h14.4M2.8 10h14.4M2.8 14.8h14.4");
 
     const barBox = await bar.boundingBox();
     expect(Math.round(barBox?.width ?? 0), `bar width at ${width}px`).toBe(width);
@@ -2872,7 +2887,7 @@ test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ pa
       await page.keyboard.press("Tab");
       await expect(bar.getByRole("button", { name: "Add item" })).toBeFocused();
       await page.keyboard.press("Tab");
-      await expect(bar.getByRole("button", { name: "Share my list" })).toBeFocused();
+      await expect(bar.getByRole("button", { name: "List" })).toBeFocused();
       await page.keyboard.press("Tab");
       await expect(bar.getByRole("button", { name: "Settings" })).toBeFocused();
       expect(
@@ -2882,7 +2897,7 @@ test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ pa
         "keyboard focus ring on a bar item",
       ).toBe("2px");
       await page.keyboard.press("Shift+Tab");
-      await expect(bar.getByRole("button", { name: "Share my list" })).toBeFocused();
+      await expect(bar.getByRole("button", { name: "List" })).toBeFocused();
 
       // Settings navigates to /settings, where the bar PERSISTS (#95: it is
       // shell chrome now, not a feed-only control) and Settings carries the
@@ -2901,20 +2916,38 @@ test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ pa
       await page.goBack();
       await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
 
-      // Share opens the SAME #45 surface (the mobile sheet), and closing it
-      // returns focus to the bar trigger.
-      await bar.getByRole("button", { name: "Share my list" }).click();
-      const shareSheet = page.getByRole("dialog", { name: "Share my list" });
-      await expect(shareSheet).toHaveClass(/sheet--share/);
-      await expect(shareSheet.getByRole("heading", { name: "Share your wishlist" })).toBeVisible();
-      await expect(shareSheet.getByRole("button", { name: /Create link|New link/ })).toBeVisible();
-      await page.keyboard.press("Escape");
-      await expect(shareSheet).toHaveCount(0);
-      await expect(bar.getByRole("button", { name: "Share my list" })).toBeFocused();
-      await expect(bar.getByRole("button", { name: "Share my list" })).toHaveAttribute(
-        "aria-expanded",
-        "false",
+      // #184: List is the bar's list-screen destination — current on the feed
+      // (exact match, #96), and tapping it here is a no-op: a same-URL
+      // navigate() would push a duplicate history entry and scroll the feed
+      // to its top.
+      const listBtn = bar.getByRole("button", { name: "List" });
+      await expect(listBtn).toHaveAttribute("aria-current", "page");
+      await expect(listBtn).toHaveClass(/is-current/);
+      await expect(bar.getByRole("button", { name: "Settings" })).not.toHaveAttribute(
+        "aria-current",
       );
+      const historyBefore = await page.evaluate(() => history.length);
+      await page.evaluate(() => window.scrollTo(0, 200));
+      const scrollBefore = await page.evaluate(() => window.scrollY);
+      await listBtn.click();
+      await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 1_500 }).toBe(
+        scrollBefore,
+      );
+      expect(await page.evaluate(() => history.length), "duplicate history entry").toBe(
+        historyBefore,
+      );
+      await expect(page).toHaveURL(`${BASE}/`);
+
+      // …and from an item page — a content route, not a bar destination — the
+      // List item is the live way back to the lists screen, without the accent.
+      await page.goto(`${BASE}/items/${seededItem.id}`);
+      const loadsBeforeList = await loads(page);
+      const itemBar = page.getByRole("navigation", { name: "Primary actions" });
+      const itemListBtn = itemBar.getByRole("button", { name: "List" });
+      await expect(itemListBtn).not.toHaveAttribute("aria-current");
+      await itemListBtn.click();
+      await expect(page).toHaveURL(`${BASE}/`);
+      expect(await loads(page), "List navigates client-side").toBe(loadsBeforeList);
 
       // Add navigates to /add client-side (no document load) and the bar
       // persists there with Add as the current destination (#95).
@@ -2937,8 +2970,10 @@ test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ pa
   }
 
   // The breakpoint seam is the app's existing 640px one: below it the bar
-  // owns the actions, at it the header cluster does — and exactly ONE Share
-  // and one Add button exist either side of the seam (#73 D1/D4).
+  // owns the actions, at it the header cluster does — and exactly ONE Add
+  // button exists either side of the seam (#73 D1/D4). #184: the bar's List
+  // item exists only below the seam; the one-Share-affordance-per-width pin
+  // (avatar row below, header icon above) lives in spec 48 H.
   for (const [width, barCount] of [
     [639, 1],
     [640, 0],
@@ -2947,7 +2982,10 @@ test("19: mobile bottom action bar — actions, layout, a11y (#73)", async ({ pa
     await page.goto(`${BASE}/`);
     await expect(page.getByRole("heading", { name: /wishlist/ })).toBeVisible();
     await expect(page.locator(".action-bar"), `.action-bar at ${width}px`).toHaveCount(barCount);
-    await expect(page.getByRole("button", { name: "Share my list" })).toHaveCount(1);
+    await expect(
+      page.locator(".action-bar").getByRole("button", { name: "List" }),
+      `bar List item at ${width}px`,
+    ).toHaveCount(barCount);
     await expect(page.getByRole("button", { name: "Add item" })).toHaveCount(1);
   }
 
@@ -3392,7 +3430,7 @@ test("23: bottom action bar persists on every authenticated route (#95)", async 
       const bar = page.getByRole("navigation", { name: "Primary actions" });
       await expect(bar, `no bar on /settings @${width}/${scheme}`).toBeVisible();
       // The issue's e2e row: from /settings the bar still offers all three.
-      for (const name of ["Add item", "Share my list", "Settings"]) {
+      for (const name of ["Add item", "List", "Settings"]) {
         await expect(bar.getByRole("button", { name })).toBeVisible();
       }
 
@@ -3467,19 +3505,13 @@ test("23: bottom action bar persists on every authenticated route (#95)", async 
   }
   await page.emulateMedia({ colorScheme: "light" }); // restore ambient scheme
 
-  // --- B. The bar's Share works from /settings. ------------------------
-  // ShareMenu fetches /api/share itself and portals its mobile sheet, so the
-  // trigger is route-independent — SharePanel is usable from any page.
+  // --- B. Mobile Share moved into the avatar menu (#184). ---------------
+  // The bar no longer owns a Share item (it is a navigator now), so the
+  // "share works from every route" coverage moved to spec 48 G. The bar legs
+  // below continue from /settings.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${BASE}/settings`);
   const bar = page.getByRole("navigation", { name: "Primary actions" });
-  await bar.getByRole("button", { name: "Share my list" }).click();
-  const shareSheet = page.getByRole("dialog", { name: "Share my list" });
-  await expect(shareSheet).toHaveClass(/sheet--share/);
-  await expect(shareSheet.getByRole("button", { name: /Create link|New link/ })).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(shareSheet).toHaveCount(0);
-  await expect(bar.getByRole("button", { name: "Share my list" })).toBeFocused();
 
   // --- C. /add keeps the bar, Add is current, current-tab tap is a no-op.
   await bar.getByRole("button", { name: "Add item" }).click();
@@ -3512,7 +3544,7 @@ test("23: bottom action bar persists on every authenticated route (#95)", async 
     await page.goto(`${BASE}${path}`);
     const routeBar = page.getByRole("navigation", { name: "Primary actions" });
     await expect(routeBar, `no bar on ${path}`).toBeVisible();
-    for (const name of ["Add item", "Share my list", "Settings"]) {
+    for (const name of ["Add item", "List", "Settings"]) {
       await expect(routeBar.getByRole("button", { name })).not.toHaveAttribute("aria-current");
     }
   }
@@ -5570,7 +5602,7 @@ test("38: #129 — one visible Add item, grouped add actions, no stranding", asy
       await expect(bar.locator(".action-bar-item")).toHaveCount(3);
       await expect(bar.getByText("Add", { exact: true })).toBeVisible();
       await expect(bar.getByText("Add item", { exact: true })).toHaveCount(0);
-      for (const name of ["Add item", "Share my list", "Settings"]) {
+      for (const name of ["Add item", "List", "Settings"]) {
         await expect(bar.getByRole("button", { name })).toBeVisible();
       }
       const addTab = bar.getByRole("button", { name: "Add item" });
@@ -6860,5 +6892,179 @@ test("47: #183 — the desktop switcher popover seats against the trigger", asyn
     await expect(sheet).toHaveCount(0);
   } finally {
     await page.setViewportSize({ width: 1280, height: 900 });
+  }
+});
+
+test("48: #184 — the mobile bar is a navigator, Share lives in the avatar menu", async ({
+  page,
+}) => {
+  // The sheet slides up from translateY(100%); kill the entrance animation so
+  // the E-leg geometry is the sheet's settled layout, not a mid-flight frame.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  // One seeded row, so the feed is non-empty (the desktop header cluster and
+  // the feed row both need it) and the item-page leg has a target.
+  const created = await page.request.post(`${BASE}/api/wishlist/items`, {
+    data: { title: "#184 bar probe" },
+  });
+  expect(created.status()).toBe(201);
+  const item = (await created.json()) as { id: string };
+
+  try {
+    // --- A. The bar is a navigator: Add, List, Settings — and List is the
+    //        current destination on the feed (exact match, #96: the feed
+    //        route IS `home`, ?list= included). ---------------------------
+    for (const width of [360, 390, 430] as const) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(`${BASE}/`);
+      const bar = page.getByRole("navigation", { name: "Primary actions" });
+      await expect(bar).toBeVisible();
+      await expect(bar.locator(".action-bar-item")).toHaveCount(3);
+      for (const name of ["Add item", "List", "Settings"]) {
+        await expect(bar.getByRole("button", { name })).toBeVisible();
+      }
+      await expect(bar.getByRole("button", { name: "Share my list" })).toHaveCount(0);
+      await expect(bar.getByText("List", { exact: true })).toBeVisible();
+
+      const listBtn = bar.getByRole("button", { name: "List" });
+      await expect(listBtn).toHaveAttribute("aria-current", "page");
+      await expect(listBtn).toHaveClass(/is-current/);
+      await expect(bar.getByRole("button", { name: "Settings" })).not.toHaveAttribute(
+        "aria-current",
+      );
+      await expect(bar.getByRole("button", { name: "Add item" })).not.toHaveAttribute(
+        "aria-current",
+      );
+    }
+
+    // --- B. List is the live way back from an item page, and is NOT
+    //        "current" there — an item page is not a bar destination. -----
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${BASE}/items/${item.id}`);
+    const bar = page.getByRole("navigation", { name: "Primary actions" });
+    await expect(bar.getByRole("button", { name: "List" })).not.toHaveAttribute("aria-current");
+    const loadsBefore = await loads(page);
+    await bar.getByRole("button", { name: "List" }).click();
+    await expect(page).toHaveURL(`${BASE}/`);
+    expect(await loads(page), "List navigates client-side").toBe(loadsBefore);
+
+    // --- C. Tapping the CURRENT destination is a no-op: a same-URL
+    //        navigate() would push a duplicate history entry and scroll the
+    //        page to its top (AppBottomBar.go()). -------------------------
+    const historyBefore = await page.evaluate(() => history.length);
+    await page.evaluate(() => window.scrollTo(0, 200));
+    const scrollBefore = await page.evaluate(() => window.scrollY);
+    await bar.getByRole("button", { name: "List" }).click();
+    await expect.poll(() => page.evaluate(() => window.scrollY), { timeout: 1_500 }).toBe(
+      scrollBefore,
+    );
+    expect(await page.evaluate(() => history.length), "duplicate history entry").toBe(
+      historyBefore,
+    );
+    await expect(page).toHaveURL(`${BASE}/`);
+
+    // --- D. The mobile avatar menu carries the Share row, and the row opens
+    //        the SAME #45 surface. ----------------------------------------
+    const trigger = page.locator('.user-menu-button[aria-label="Admin"]');
+    await trigger.click();
+    const menu = page.getByRole("menu", { name: "Admin" });
+    await expect(menu).toBeVisible();
+    // Rows in DOM order. There is no Settings row on mobile by design — the
+    // bar owns that destination under 640px (pinned by spec 17).
+    const labels = (await menu.getByRole("menuitem").allInnerTexts()).map((t) => t.trim());
+    expect(labels).toEqual(["Share wishlist", "Log out", "Cancel"]);
+
+    await menu.getByRole("menuitem", { name: "Share wishlist" }).click();
+    const sheet = page.getByRole("dialog", { name: "Share my list" });
+    await expect(sheet).toHaveClass(/sheet--share/);
+    await expect(sheet.getByRole("heading", { name: "Share your wishlist" })).toBeVisible();
+    await expect(sheet.getByRole("button", { name: /Create link|New link/ })).toBeVisible();
+
+    // --- E. The sheet renders NO decorative drag bar (Sheet has no drag or
+    //        swipe handling), and deleting it left the heading its top
+    //        rhythm: the handle's 8px margin + 4px bar + the flex gap used
+    //        to hold it 24px off the sheet's top edge. --------------------
+    await expect(sheet.locator(".detail-handle")).toHaveCount(0);
+    const headingTop = await sheet
+      .locator(".share-heading")
+      .evaluate((el) => el.getBoundingClientRect().top);
+    const sheetTop = await sheet.evaluate((el) => el.getBoundingClientRect().top);
+    const gap = headingTop - sheetTop;
+    // 24px of sheet top padding (--sp-5) + the sheet's 1px border.
+    expect(gap, "sheet heading keeps the handle's top rhythm").toBe(25);
+
+    // --- F. Escape closes it and focus returns to the avatar trigger (the
+    //        element Sheet captured as its opener). -----------------------
+    await page.keyboard.press("Escape");
+    await expect(sheet).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+
+    // --- G. …and the row reaches the sheet from EVERY authenticated route.
+    for (const path of ["/", "/add", "/settings", `/items/${item.id}`]) {
+      await page.goto(`${BASE}${path}`);
+      await page.locator('.user-menu-button[aria-label="Admin"]').click();
+      await page.getByRole("menuitem", { name: "Share wishlist" }).click();
+      const routeSheet = page.getByRole("dialog", { name: "Share my list" });
+      await expect(routeSheet, `share sheet on ${path}`).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(routeSheet, `share sheet closed on ${path}`).toHaveCount(0);
+    }
+
+    // --- H. Exactly one Share affordance per width: the avatar row below the
+    //        seam, the header icon at it. At 639 nothing inside
+    //        .topbar-actions exists at all — the locator finds no element,
+    //        not a hidden one. -------------------------------------------
+    for (const [width, iconCount] of [
+      [639, 0],
+      [640, 1],
+    ] as const) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto(`${BASE}/`);
+      const shareIcon = page
+        .locator(".topbar-actions")
+        .getByRole("button", { name: "Share my list", exact: true });
+      await expect(shareIcon, `header Share icon at ${width}px`).toHaveCount(iconCount);
+      await expect(
+        page.locator(".action-bar").getByRole("button", { name: "List" }),
+        `bar List item at ${width}px`,
+      ).toHaveCount(width < 640 ? 1 : 0);
+      await expect(page.locator(".topbar-actions"), `.topbar-actions at ${width}px`).toHaveCount(
+        width < 640 ? 0 : 1,
+      );
+    }
+
+    // --- I. Desktop, another member's list on screen: #125's frozen feed
+    //        state — hideActions suppresses the WHOLE desktop cluster, the
+    //        Add chip included, exactly the DOM main ships. The popover
+    //        seating (#183) is unaffected: the popover can only open while
+    //        the icon — and hence the wrapper — is mounted. ---------------
+    const OTHER = {
+      username: "bar-share-probe",
+      password: "bar-probe-pass",
+      displayName: "Bar Probe",
+    };
+    await ensureMember(page, OTHER);
+    const otherId = await memberId(page, OTHER.displayName);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`${BASE}/?list=${otherId}`);
+    await expect(
+      page.locator(".topbar-actions"),
+      "hideActions suppresses the whole cluster while viewing another list",
+    ).toHaveCount(0);
+    await expect(
+      page.locator(".topbar").getByRole("button", { name: "Add item", exact: true }),
+      "no Add chip in the header while viewing another list",
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Share my list", exact: true }),
+      "hideActions still suppresses Share while viewing another list",
+    ).toHaveCount(0);
+  } finally {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    const removed = await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);
+    expect([200, 204], "seeded item removed").toContain(removed.status());
+    // Leave no live link behind for a re-run (test 15's contract expects the
+    // suite to end with the owner's link state known).
+    const revoked = await page.request.delete(`${BASE}/api/share`);
+    expect([200, 204, 404], "share link revoked").toContain(revoked.status());
   }
 });
