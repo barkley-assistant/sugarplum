@@ -403,7 +403,10 @@ describe("async enrichment", () => {
           JSON.stringify({
             results: [
               {
-                title: "Teapot 123 — Reseller",
+                // #174: a hint must share a term with the query derived from
+                // the item URL (`…/product` → "127.0.0.1 product buy"), or the
+                // plausibility gate rejects it as not being for this item.
+                title: "Product — Reseller",
                 url: "https://reseller.example.com/p/1",
                 content: "Only £25.00 today",
               },
@@ -623,7 +626,9 @@ describe("async enrichment", () => {
           JSON.stringify({
             results: [
               {
-                title: "Fresh Kiss Trio — Reseller",
+                // #174: title terms must overlap the query derived from the item
+                // URL (`…/product`) — see the note in the bot-wall test above.
+                title: "Product — Reseller",
                 url: "https://reseller.example.com/p/1",
                 content: "Only £25.00 today",
               },
@@ -1025,7 +1030,10 @@ describe("async enrichment", () => {
           JSON.stringify({
             results: [
               {
-                title: "LEGO City Explorer Diving Boat — Reseller",
+                // #174: the query for this item is derived from its URL
+                // (`…/dp/B0BPCCKL3N`), so the hint title must carry that token
+                // to count as a hit for THIS item.
+                title: "B0BPCCKL3N — LEGO City Explorer Diving Boat (Reseller)",
                 url: "https://reseller.example.com/p/1",
                 content: "Only £24.99 today",
               },

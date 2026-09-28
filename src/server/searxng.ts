@@ -1,8 +1,10 @@
 /**
  * Best-effort SearXNG price-hint fallback (research §83-95). Deliberately
  * weak: one snippet regex over title+content, first result with a parseable
- * price wins, no result-page fetching, NEVER throws. Hints are owner-only
- * display data — they never overwrite a direct scrape.
+ * price wins, no result-page fetching, NEVER throws. A result only counts when
+ * it plausibly IS the item: a product-shaped URL (#174) whose title shares a
+ * term with the query. Hints are owner-only display data — they never
+ * overwrite a direct scrape.
  */
 
 import { SYMBOL_CURRENCY } from "./scraper/parse";
@@ -42,6 +44,21 @@ export type SearxngFetch = (
 
 const PRICE_RE = /([$£€])\s?(\d{1,4}(?:[.,]\d{1,2})?)/;
 const NOISE_TERMS = new Set(["products", "dp", "itm", "ip", "p", "ref", "gp"]);
+/** Query noise: the URL noise terms plus the "buy" tail buildSearchQuery
+ *  appends. Used by the #174 title-overlap gate. */
+const QUERY_NOISE = new Set([...NOISE_TERMS, "buy"]);
+/** Path prefixes that mark a landing/category page, not a product page.
+ *  Literal deny-list on purpose (no regexes, no heuristics): the live offender
+ *  (#174) was lyst.co.uk/designer/next/. */
+const LANDING_PREFIXES = new Set([
+  "designer",
+  "brands",
+  "brand",
+  "category",
+  "categories",
+  "c",
+  "shop",
+]);
 
 /** "https://www.coolshop.co.uk/products/fresh-kiss-trio?ref=x" →
  *  "coolshop.co.uk fresh kiss trio buy" (≤ 6 terms, ≤ 120 chars). */
@@ -81,9 +98,67 @@ export function buildTitleQuery(title: string): string {
   return joined.length > 120 ? joined.slice(0, 120) : joined;
 }
 
+/** The meaningful tail of a hint query: the host slug `buildSearchQuery` puts
+ *  first is dropped (the same slug `ownHost` skips on), as are URL noise terms
+ *  and the appended "buy". Empty when the query carried nothing else. */
+export function queryTerms(query: string): string[] {
+  const tokens = query.split(/\s+/).filter(Boolean);
+  // Only the leading token can be the host slug (buildSearchQuery emits it
+  // first and never puts a dot in a path token); a hand-written query without
+  // a host keeps all of its terms.
+  if (tokens.length > 0 && tokens[0].includes(".")) tokens.shift();
+  return tokens.map((t) => t.toLowerCase()).filter((t) => !QUERY_NOISE.has(t));
+}
+
+/** Path segments of a result URL with the empty and noise ones dropped.
+ *  `null` when the URL does not parse — callers treat that as "no opinion". */
+function pathSegments(url: string): string[] | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  return parsed.pathname
+    .split("/")
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .filter((segment) => !NOISE_TERMS.has(segment.toLowerCase()));
+}
+
+/** True when a result URL is landing/category-shaped rather than a product
+ *  page: a bare host (or an all-noise path), or a path whose first segment is
+ *  a known landing prefix such as `lyst.co.uk/designer/next/` (#174). Only the
+ *  empty-path case is counted as landing-shaped — single-segment product URLs
+ *  (`/p/1`, `/lego-21042`) are common enough that rejecting a whole segment
+ *  count would cost real hints. Malformed URLs are NOT landing-shaped: they
+ *  fall through to the other filters and the price parse rather than being
+ *  rejected outright. */
+export function isLandingShapedUrl(url: string): boolean {
+  const segments = pathSegments(url);
+  if (!segments) return false;
+  if (segments.length === 0) return true;
+  return LANDING_PREFIXES.has(segments[0].toLowerCase());
+}
+
+/** True when any query term appears in the result title as a whole word. An
+ *  empty term set passes, so a query that carried nothing but its host slug
+ *  degrades to the old behaviour instead of rejecting every result. */
+export function titleOverlapsQuery(title: string, terms: string[]): boolean {
+  if (terms.length === 0) return true;
+  const titleWords = new Set(
+    title
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter(Boolean),
+  );
+  return terms.some((term) => titleWords.has(term));
+}
+
 export async function searchPriceHint(query: string, deps: SearxngDeps): Promise<PriceHint | null> {
   const fetchImpl = deps.fetchImpl ?? fetch;
   const own = ownHost(query);
+  const terms = queryTerms(query);
 
   let res: Response;
   try {
@@ -111,6 +186,12 @@ export async function searchPriceHint(query: string, deps: SearxngDeps): Promise
     // A result on the item's own domain adds nothing — not a "hint".
     const resultHost = hostOf(result.url);
     if (resultHost && own && resultHost === own) continue;
+
+    // #174: a landing/category page, or a result sharing no term with the
+    // query, is not a hint for THIS item. Skip it — never dead-end the lookup
+    // on one bad result.
+    if (isLandingShapedUrl(result.url)) continue;
+    if (!titleOverlapsQuery(result.title, terms)) continue;
 
     const parsed = priceFromResult(result);
     if (!parsed) continue;
