@@ -50,12 +50,16 @@ describe("wave13 config (stealth)", () => {
 });
 
 describe("wave25 config (daily tracking)", () => {
-  test("defaults: 24h interval, 60s initial delay, 15min stagger, 90-row cap", () => {
+  test("defaults: 24h interval, 60s initial delay, 15min stagger, 180-row cap", () => {
     const cfg = readConfig({ ...BASE });
     expect(cfg.trackIntervalMs).toBe(86400000);
     expect(cfg.trackInitialDelayMs).toBe(60000);
     expect(cfg.trackStaggerMs).toBe(900000);
-    expect(cfg.trackSeriesCap).toBe(90);
+    expect(cfg.trackSeriesCap).toBe(180);
+    expect(cfg.trackActiveMs).toBe(43200000);
+    expect(cfg.trackStableMs).toBe(86400000);
+    expect(cfg.trackFailedMs).toBe(172800000);
+    expect(cfg.trackMovedWindowMs).toBe(604800000);
   });
   test("env overrides flow through", () => {
     const cfg = readConfig({
@@ -64,19 +68,49 @@ describe("wave25 config (daily tracking)", () => {
       SUGARPLUM_TRACK_INITIAL_DELAY_MS: "5000",
       SUGARPLUM_TRACK_STAGGER_MS: "60000",
       SUGARPLUM_TRACK_SERIES_CAP: "30",
+      SUGARPLUM_TRACK_ACTIVE_MS: "600000",
+      SUGARPLUM_TRACK_STABLE_MS: "1800000",
+      SUGARPLUM_TRACK_FAILED_MS: "7200000",
+      SUGARPLUM_TRACK_MOVED_WINDOW_MS: "86400000",
     });
     expect(cfg.trackIntervalMs).toBe(3600000);
     expect(cfg.trackInitialDelayMs).toBe(5000);
     expect(cfg.trackStaggerMs).toBe(60000);
     expect(cfg.trackSeriesCap).toBe(30);
+    expect(cfg.trackActiveMs).toBe(600000);
+    expect(cfg.trackStableMs).toBe(1800000);
+    expect(cfg.trackFailedMs).toBe(7200000);
+    expect(cfg.trackMovedWindowMs).toBe(86400000);
   });
   test("bad numbers fall back to defaults; series cap clamps to [1,365]", () => {
     expect(readConfig({ ...BASE, SUGARPLUM_TRACK_INTERVAL_MS: "abc" }).trackIntervalMs).toBe(
       86400000,
     );
     expect(readConfig({ ...BASE, SUGARPLUM_TRACK_STAGGER_MS: "0" }).trackStaggerMs).toBe(900000);
-    expect(readConfig({ ...BASE, SUGARPLUM_TRACK_SERIES_CAP: "abc" }).trackSeriesCap).toBe(90);
+    expect(readConfig({ ...BASE, SUGARPLUM_TRACK_SERIES_CAP: "abc" }).trackSeriesCap).toBe(180);
     expect(readConfig({ ...BASE, SUGARPLUM_TRACK_SERIES_CAP: "0" }).trackSeriesCap).toBe(1);
     expect(readConfig({ ...BASE, SUGARPLUM_TRACK_SERIES_CAP: "9999" }).trackSeriesCap).toBe(365);
+  });
+  test("stable cadence follows the interval unless set explicitly", () => {
+    // The interval/cutoff footgun: lowering ONLY the interval lowers the
+    // stable per-item cutoff with it instead of silently doing nothing.
+    expect(readConfig({ ...BASE, SUGARPLUM_TRACK_INTERVAL_MS: "3600000" }).trackStableMs).toBe(
+      3600000,
+    );
+    expect(readConfig({ ...BASE }).trackStableMs).toBe(86400000);
+    // An explicit cadence wins over the interval.
+    expect(
+      readConfig({ ...BASE, SUGARPLUM_TRACK_INTERVAL_MS: "3600000", SUGARPLUM_TRACK_STABLE_MS: "21600000" })
+        .trackStableMs,
+    ).toBe(21600000);
+  });
+  test("sub-1000ms per-item cadences fall back to their defaults", () => {
+    expect(readConfig({ ...BASE, SUGARPLUM_TRACK_ACTIVE_MS: "500" }).trackActiveMs).toBe(43200000);
+    expect(readConfig({ ...BASE, SUGARPLUM_TRACK_FAILED_MS: "abc" }).trackFailedMs).toBe(172800000);
+    expect(readConfig({ ...BASE, SUGARPLUM_TRACK_MOVED_WINDOW_MS: "0" }).trackMovedWindowMs).toBe(
+      604800000,
+    );
+    // Unset AND unusable both fall back to the interval.
+    expect(readConfig({ ...BASE, SUGARPLUM_TRACK_STABLE_MS: "500" }).trackStableMs).toBe(86400000);
   });
 });

@@ -30,6 +30,14 @@ export interface TrackDeps {
   intervalMs: number;
   initialDelayMs: number;
   staggerMs: number;
+  /** Re-check cadence for an item that failed its last fetch (48h). */
+  failedMs: number;
+  /** Re-check cadence for an item whose price moved inside movedWindowMs (12h). */
+  activeMs: number;
+  /** Re-check cadence for everything else (usually == intervalMs). */
+  stableMs: number;
+  /** How recent a price observation marks an item "recently moved" (7d). */
+  movedWindowMs: number;
   /** Test seam: inject a clock. Default: wall time. */
   now?: () => Date;
   /** Test seam: inject timers. Default: the globals. */
@@ -40,7 +48,42 @@ export interface Tracker {
   stop(): void;
 }
 
-const DAY_MS = 86_400_000;
+/** The per-row inputs the tier rule needs. */
+interface CandidateRow {
+  id: string;
+  fetch_state: string;
+  last_tracked_at: string | null;
+  /** Latest price observation, or null when the item has no history. */
+  last_price_at: string | null;
+}
+
+/** The four ISO cutoffs, recomputed per pass because `now` moves. */
+interface Cutoffs {
+  stable: string;
+  active: string;
+  failed: string;
+  moved: string;
+}
+
+/**
+ * Per-item due rule, most-urgent tier first:
+ *  - never tracked → due (unchanged: a missed item catches up first).
+ *  - last fetch FAILED → due after failedMs. A failure wins over the
+ *    recently-moved tier below, so a dead host is retried at the slowest
+ *    cadence rather than every activeMs.
+ *  - price observed inside the moved window → due after activeMs.
+ *  - otherwise → due after stableMs.
+ */
+function isDue(row: CandidateRow, cutoffs: Cutoffs): boolean {
+  if (row.last_tracked_at === null) return true;
+  // A failure wins over the recently-moved tier: a dead host is retried at
+  // the slowest cadence, not every activeMs.
+  if (row.fetch_state === "failed") return row.last_tracked_at < cutoffs.failed;
+  if (row.last_price_at !== null && row.last_price_at >= cutoffs.moved) {
+    return row.last_tracked_at < cutoffs.active;
+  }
+  return row.last_tracked_at < cutoffs.stable;
+}
 
 export function createTracker(deps: TrackDeps): Tracker {
   const nowFn = deps.now ?? (() => new Date());
@@ -62,12 +105,28 @@ export function createTracker(deps: TrackDeps): Tracker {
   function pass(): void {
     if (stopped) return;
     const now = nowFn();
-    const cutoff = new Date(now.getTime() - DAY_MS).toISOString();
+    const isoAgo = (ms: number) => new Date(now.getTime() - ms).toISOString();
+    const cutoffs: Cutoffs = {
+      stable: isoAgo(deps.stableMs),
+      active: isoAgo(deps.activeMs),
+      failed: isoAgo(deps.failedMs),
+      moved: isoAgo(deps.movedWindowMs),
+    };
+    // Prefilter on the LOOSEST tier (the smallest ms value ⇒ the earliest
+    // date): a row is due when it is OLDER than its own tier's cutoff, so a
+    // tighter prefilter would drop rows the tier filter below wants. The
+    // per-item rule is applied in TypeScript, where it is readable and
+    // testable; the SQL predicate only trims obviously-stale rows.
+    const prefilterCutoff = isoAgo(Math.min(deps.stableMs, deps.activeMs, deps.failedMs));
     // Never-tracked rows sort first: SQLite orders NULLs before values in
     // ASC, so a missed day catches up before recently tracked items.
-    const candidates = deps.db
+    const rows = deps.db
       .query(
-        `SELECT i.id AS id
+        `SELECT i.id AS id,
+                i.fetch_state AS fetch_state,
+                i.last_tracked_at AS last_tracked_at,
+                (SELECT MAX(ph.observed_at) FROM price_history ph
+                  WHERE ph.item_id = i.id) AS last_price_at
          FROM wishlist_items i JOIN users u ON u.id = i.user_id
          WHERE i.url IS NOT NULL
            AND i.fetch_state != 'pending'
@@ -76,7 +135,9 @@ export function createTracker(deps: TrackDeps): Tracker {
            AND (i.last_tracked_at IS NULL OR i.last_tracked_at < ?)
          ORDER BY i.last_tracked_at ASC, i.created_at ASC`,
       )
-      .all(cutoff) as { id: string }[];
+      .all(prefilterCutoff) as CandidateRow[];
+
+    const candidates = rows.filter((row) => isDue(row, cutoffs));
 
     candidates.forEach((candidate, i) => {
       later(() => enqueueOne(candidate.id, now), i * deps.staggerMs);

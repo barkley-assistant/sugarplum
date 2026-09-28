@@ -59,7 +59,11 @@ export function makeTestConfig(overrides: Partial<Config> = {}): { config: Confi
     trackIntervalMs: 86400000,
     trackInitialDelayMs: 60000,
     trackStaggerMs: 900000,
-    trackSeriesCap: 90,
+    trackActiveMs: 43200000,
+    trackStableMs: 86400000,
+    trackFailedMs: 172800000,
+    trackMovedWindowMs: 604800000,
+    trackSeriesCap: 180,
     ...overrides,
   };
   return { config, dir };

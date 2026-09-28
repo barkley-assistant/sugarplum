@@ -113,7 +113,7 @@ function toOwnedItem(db: Database, row: ItemRow, seriesCap: number): OwnedItem {
 
 /** Default cap for the 90-day series when the route is constructed without
  *  one (matches the production config default). */
-export const DEFAULT_SERIES_CAP = 90;
+export const DEFAULT_SERIES_CAP = 180;
 
 /** Lowest + earliest price observation for one item, plus the capped 90-day
  *  series and the server-derived trend. Three tiny indexed reads per item:
