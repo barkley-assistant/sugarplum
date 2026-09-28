@@ -2421,8 +2421,8 @@ button.row-open:hover {
 /* #125: `.topbar-actions` is desktop-only chrome — under 640px the same
    actions live on the bottom bar. React gates it on a matchMedia state, which
    flips a frame AFTER the viewport does, so a resize to a phone width would
-   paint the full desktop cluster (the item view's Back to list + Add + Share
-   is ~276px) inside a 360px bar for one frame and overflow the document.
+   paint the full desktop actions (the item view's Add + Share, like the feed)
+   inside a 360px bar for one frame and overflow the document.
    A media query lands in the same layout pass as the resize, so the transient
    frame cannot escape. */
 @media (max-width: 639px) {
@@ -2597,12 +2597,9 @@ button.row-open:hover {
 .item-page {
   display: flex;
   flex-direction: column;
-  /* #161: the page owner's rhythm. The context bar and .detail-scroll live in
-     DIFFERENT flex containers, so neither owner's gap ever applied to the
-     boundary between them and it measured 0px at every width — the selector
-     and the hero read as one block. This is that boundary's rule: it takes
-     the layer token, so it is one grid step at 360px and the desktop step at
-     >=1024px without any rule here knowing about widths. */
+  /* #161: the page owner's rhythm between the Back-to-list link and
+     .detail-scroll. This boundary takes the layer token: one grid step at
+     360px and the desktop step at >=1024px without a width-specific rule. */
   gap: var(--context-gap);
   min-width: 0;
 }
@@ -3193,46 +3190,31 @@ button.row-open:hover {
 }
 
 /* ============================================================
-   #125 — one header on every authenticated page
-   AppShell renders the same identity cluster (Back to list where it applies,
-   Add, Share, avatar) on every authed route, and every non-feed page carries
-   the compact context bar as the first row of its content column.
+   #185 — one back affordance on the item view
+   The feed alone owns a list switcher. The item detail's single back link
+   stays with its content, quiet at rest and legible on hover.
    ============================================================ */
-
-/* The item view's way back to the feed: the feed's Reorder grammar
-   (button.secondary + the compact-action family), as the LEAD chip of the
-   actions cluster. min-height restates the app-wide 44px floor for the
-   topbar context — the Reorder sizing lives under .list-heading-action and
-   does not reach here. */
-.topbar-back {
+.item-back {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
   min-height: 44px;
-  padding: 0 12px;
+  color: var(--text-2);
   font-size: var(--text-sm);
-  white-space: nowrap;
-  margin-inline-end: var(--sp-1);
+  text-decoration: none;
+  transition: color var(--ease-ui);
 }
 
-/* The compact list-switcher bar. One row — whose list, and how many items —
-   at the page scale (--page-title--form) rather than the feed's display
-   scale, so it reads as a context row under the page's own title. Declared
-   after the feed's `.list-switcher .list-heading` rules on purpose: same
-   specificity, source order decides. */
-.list-switcher--compact .list-heading {
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: flex-start;
-  gap: var(--sp-1) var(--sp-3);
-}
-
-.list-switcher--compact .page-title {
-  margin: 0;
+.item-back:hover {
+  color: var(--text);
+  text-decoration: underline;
 }
 
 /* ============================================================
    #128 — mobile back navigation
-   A real chevron back affordance in the topbar on every non-feed page, and
-   the item view's ⋮ moved out of the page body into the app bar.
+   A real chevron back affordance in the topbar on non-feed pages with a
+   brand destination; the item view uses its content link. Its ⋮ lives in
+   the app bar, out of the page body.
    The chevron itself needs no rules: .icon-btn already carries the 44px
    touch floor and the ghost variant the quiet look, and it is keyed off
    brandHref in AppShell, so it exists only on pages that have somewhere to

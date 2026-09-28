@@ -9,7 +9,6 @@ import { classifyResponse, classifyWriteFailure } from "../net";
 import { AppShell } from "./AppShell";
 import { FormSkeleton } from "./Skeletons";
 import { ItemForm, type ItemFormValues } from "./ItemForm";
-import { ListContextBar } from "./ListContextBar";
 import { S } from "../strings";
 
 interface AddPageProps {
@@ -94,9 +93,6 @@ export function AddPage({ search }: AddPageProps) {
         {/* #121: the heading mirrors the "Add item" CTA that navigated
             here; the submit button (same words) names the commit. */}
         <h1 ref={headingRef} tabIndex={-1} className="page-title page-title--form">{S.list.addItem}</h1>
-        {/* #125: the header is uniform now, so the page also says which list
-            the new item will land in. */}
-        <ListContextBar me={boot.me} />
         <ItemForm
           mode="add"
           submitLabel={S.list.addItem}
