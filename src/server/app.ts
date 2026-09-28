@@ -132,6 +132,10 @@ export function createApp(config: Config): App {
     intervalMs: config.trackIntervalMs,
     initialDelayMs: config.trackInitialDelayMs,
     staggerMs: config.trackStaggerMs,
+    failedMs: config.trackFailedMs,
+    activeMs: config.trackActiveMs,
+    stableMs: config.trackStableMs,
+    movedWindowMs: config.trackMovedWindowMs,
   });
 
   return {

@@ -38,7 +38,17 @@ export interface Config {
   trackInitialDelayMs: number;
   /** Stagger between items in a daily pass (default 15min). */
   trackStaggerMs: number;
-  /** Max observations returned in the 90-day series (default 90). */
+  /** Re-check cadence for an item whose price moved inside
+   *  trackMovedWindowMs (default 12h). */
+  trackActiveMs: number;
+  /** Re-check cadence for everything else (default: trackIntervalMs). */
+  trackStableMs: number;
+  /** Re-check cadence for an item that failed its last fetch (default 48h). */
+  trackFailedMs: number;
+  /** How recent a price observation marks an item "recently moved"
+   *  (default 7d). */
+  trackMovedWindowMs: number;
+  /** Max observations returned in the 90-day series (default 180). */
   trackSeriesCap: number;
 }
 
@@ -88,10 +98,30 @@ export function readConfig(env: Record<string, string | undefined> = process.env
   const rawTrackStagger = Number(env.SUGARPLUM_TRACK_STAGGER_MS ?? "900000");
   const trackStaggerMs =
     Number.isFinite(rawTrackStagger) && rawTrackStagger >= 1000 ? rawTrackStagger : 900000;
-  const rawSeriesCap = Number(env.SUGARPLUM_TRACK_SERIES_CAP ?? "90");
+  const rawTrackActive = Number(env.SUGARPLUM_TRACK_ACTIVE_MS ?? "43200000");
+  const trackActiveMs =
+    Number.isFinite(rawTrackActive) && rawTrackActive >= 1000 ? rawTrackActive : 43200000;
+  const rawTrackFailed = Number(env.SUGARPLUM_TRACK_FAILED_MS ?? "172800000");
+  const trackFailedMs =
+    Number.isFinite(rawTrackFailed) && rawTrackFailed >= 1000 ? rawTrackFailed : 172800000;
+  const rawTrackMovedWindow = Number(env.SUGARPLUM_TRACK_MOVED_WINDOW_MS ?? "604800000");
+  const trackMovedWindowMs =
+    Number.isFinite(rawTrackMovedWindow) && rawTrackMovedWindow >= 1000
+      ? rawTrackMovedWindow
+      : 604800000;
+  // The stable cadence derives from the pass interval: lowering the interval
+  // alone must lower the per-item cutoff too, or the knob is a silent no-op.
+  // An explicit SUGARPLUM_TRACK_STABLE_MS always wins.
+  const rawTrackStable = env.SUGARPLUM_TRACK_STABLE_MS;
+  const parsedTrackStable = rawTrackStable === undefined ? NaN : Number(rawTrackStable);
+  const trackStableMs =
+    Number.isFinite(parsedTrackStable) && parsedTrackStable >= 1000
+      ? parsedTrackStable
+      : trackIntervalMs;
+  const rawSeriesCap = Number(env.SUGARPLUM_TRACK_SERIES_CAP ?? "180");
   const trackSeriesCap = Number.isFinite(rawSeriesCap)
     ? Math.min(365, Math.max(1, Math.floor(rawSeriesCap)))
-    : 90;
+    : 180;
 
   return {
     port: Number(env.SUGARPLUM_PORT ?? "3499"),
@@ -121,6 +151,10 @@ export function readConfig(env: Record<string, string | undefined> = process.env
     trackIntervalMs,
     trackInitialDelayMs,
     trackStaggerMs,
+    trackActiveMs,
+    trackStableMs,
+    trackFailedMs,
+    trackMovedWindowMs,
     trackSeriesCap,
   };
 }
