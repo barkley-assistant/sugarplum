@@ -7032,10 +7032,11 @@ test("48: #184 — the mobile bar is a navigator, Share lives in the avatar menu
       );
     }
 
-    // --- I. Desktop, another member's list on screen: hideActions suppresses
-    //        the Share ICON only, so the cluster (the popover's anchor plus
-    //        the Add chip) survives — the one DOM shape that keeps #183's
-    //        popover seating intact. --------------------------------------
+    // --- I. Desktop, another member's list on screen: #125's frozen feed
+    //        state — hideActions suppresses the WHOLE desktop cluster, the
+    //        Add chip included, exactly the DOM main ships. The popover
+    //        seating (#183) is unaffected: the popover can only open while
+    //        the icon — and hence the wrapper — is mounted. ---------------
     const OTHER = {
       username: "bar-share-probe",
       password: "bar-probe-pass",
@@ -7045,13 +7046,18 @@ test("48: #184 — the mobile bar is a navigator, Share lives in the avatar menu
     const otherId = await memberId(page, OTHER.displayName);
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(`${BASE}/?list=${otherId}`);
-    const cluster = page.locator(".topbar-actions");
-    await expect(cluster, "cluster stays mounted while viewing another list").toHaveCount(1);
     await expect(
-      cluster.getByRole("button", { name: "Share my list", exact: true }),
-      "hideActions still suppresses the Share icon",
+      page.locator(".topbar-actions"),
+      "hideActions suppresses the whole cluster while viewing another list",
     ).toHaveCount(0);
-    await expect(cluster.getByRole("button", { name: "Add item", exact: true })).toHaveCount(1);
+    await expect(
+      page.locator(".topbar").getByRole("button", { name: "Add item", exact: true }),
+      "no Add chip in the header while viewing another list",
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Share my list", exact: true }),
+      "hideActions still suppresses Share while viewing another list",
+    ).toHaveCount(0);
   } finally {
     await page.setViewportSize({ width: 1280, height: 900 });
     const removed = await page.request.delete(`${BASE}/api/wishlist/items/${item.id}`);

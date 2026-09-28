@@ -76,30 +76,29 @@ export function HeaderCluster({
 
   return (
     <>
-      {isDesktop && (
+      {/* #125/#184: hideActions suppresses the WHOLE desktop cluster — Add
+          AND Share (the feed, while another user's list is on screen or the
+          own list is empty). The popover seating (#183) is unaffected: the
+          popover can only open while the Share icon — and hence this
+          wrapper — is mounted. */}
+      {isDesktop && !hideActions && (
         <div className="topbar-actions">
           {!hideAdd && (
             <IconButton variant="ghost" label={S.list.addItem} onClick={() => navigate("/add")}>
               <PlusIcon />
             </IconButton>
           )}
-          {/* #184: hideActions now gates only the Share ICON (it never gated
-              Add — hideAdd does). The wrapper stays mounted on desktop so
-              .share-anchor keeps seating the popover (#183), and ShareMenu
-              stays inside it for the same reason. */}
           <div className="share-anchor">
-            {!hideActions && (
-              <IconButton
-                ref={shareTriggerRef}
-                variant="ghost"
-                label={S.share.shareList}
-                onClick={() => setShareOpen((open) => !open)}
-                aria-expanded={shareOpen}
-                aria-haspopup="dialog"
-              >
-                <ShareIcon />
-              </IconButton>
-            )}
+            <IconButton
+              ref={shareTriggerRef}
+              variant="ghost"
+              label={S.share.shareList}
+              onClick={() => setShareOpen((open) => !open)}
+              aria-expanded={shareOpen}
+              aria-haspopup="dialog"
+            >
+              <ShareIcon />
+            </IconButton>
             <ShareMenu open={shareOpen} onClose={closeShare} triggerRef={shareTriggerRef} />
           </div>
         </div>
