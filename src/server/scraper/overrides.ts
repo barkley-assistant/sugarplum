@@ -70,6 +70,27 @@ const ASOS_OVERRIDE: SiteOverride = {
     "Evidence: docs/research/product-scraping.md §2026-09-27 ASOS",
 };
 
+/** Etsy listing pages. Two measured facts drive this entry (2026-11-13,
+ *  UK listing 4596562701):
+ *  (1) Transport: a plain fetch is DataDome-blocked (403, no usable product
+ *      markup in the body) on every attempt; the stealth browser passes and
+ *      serves the full page (200, ~430KB, og:* + JSON-LD present). Stealth
+ *      first so no request is wasted on a guaranteed block.
+ *  (2) Extraction needs the page's JSON-LD: the served meta tags hardcode a
+ *      US-USD price on every storefront and og:title carries a " - Etsy UK"
+ *      suffix with no og:site_name to strip it by. The parse.ts Etsy tier
+ *      (hostname-gated to etsy.com) resolves both from the JSON-LD Product
+ *      node.
+ *      Evidence: docs/research/product-scraping.md §2026-11-13 Etsy */
+const ETSY_OVERRIDE: SiteOverride = {
+  strategies: ["stealth-browser", "plain"],
+  notes:
+    "DataDome 403 on the plain fetch; stealth gets 200 with the full page " +
+    "(2026-11-13). Price/title come from the JSON-LD Product node — see the " +
+    "Etsy tier in parse.ts. Evidence: docs/research/product-scraping.md " +
+    "§2026-11-13 Etsy",
+};
+
 /** key = exact hostname, lowercase, no leading "www.". */
 export const SITE_OVERRIDES: Record<string, SiteOverride> = {
   "smythstoys.com": {
@@ -83,6 +104,7 @@ export const SITE_OVERRIDES: Record<string, SiteOverride> = {
   "amazon.de": AMAZON_OVERRIDE,
   "store.steampowered.com": STEAM_OVERRIDE,
   "asos.com": ASOS_OVERRIDE,
+  "etsy.com": ETSY_OVERRIDE,
 };
 
 /** hostname("https://WWW.SmythsToys.com/x") → "smythstoys.com" or null. */

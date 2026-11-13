@@ -535,3 +535,57 @@ deliberately left unstripped: Next declares no `og:site_name`/`og:site`, so
 `stripStoreTitleNoise` has no store token to strip and the "from the Next UK
 online shop" prose stays. The undetected Akamai behavioural challenge (T5) is
 flagged for a separate issue and is NOT addressed here.
+
+## 2026-11-13 Etsy ground truth (DataDome wall + localization)
+
+Measured against the user-pasted listing
+`https://www.etsy.com/uk/listing/4596562701/retro-playstation-2-poster-y2k-gaming`
+(UK storefront, residential IP).
+
+**Transport.** A plain `fetchPage` attempt is DataDome-blocked: HTTP 403 with a
+~537-byte body that carries no product markup and no body marker
+(`detectBotWall` sees nothing — the DataDome signature is in the `Server:`
+response header, unseen by body checks; the failure classifies as `http 403`).
+The stealth browser (invisible_playwright 0.40, the `scripts/stealth-fetch.py`
+path) passes: HTTP 200, ~430KB, full page with `og:title`, `og:image`, and
+three JSON-LD blocks. Registry entry `etsy.com` is therefore stealth-first.
+
+**Extraction.** The served page ships contradictory price data:
+
+- `product:price:amount` = `9.95`, `product:price:currency` = `USD` — the US
+  storefront pair, stamped into the meta tags on EVERY locale (the /uk/ page
+  included). A trap: the tier order (meta → JSON-LD) would store 9.95 USD for
+  a UK shopper's £7.55 listing.
+- JSON-LD `Product.offers` = `7.55/GBP` (+ `9.44/GBP` original) — the
+  localized truth, matching the visible buy box.
+- `og:price:*` — absent. `og:site_name` — absent, so `stripStoreTitleNoise`
+  has no token and og:title keeps its ` - Etsy UK` suffix.
+
+**Variation params are price data.** The same listing fetched bare serves
+JSON-LD offers `[7.55, 9.44] GBP`; fetched with `variation0=7281367886` (the
+size the shopper picked) it serves `[12.73] GBP` — the selected variation's
+price, server-rendered. Stored URLs must therefore keep `variation0` (and any
+unknown param — `cleanProductUrl` is denylist-only) while stripping the
+tracking junk (`ref`, `ga_*`, `ls`, `pro`, `content_source`,
+`organic_search_click`, `logging_key`, `utm_*`, …).
+
+Shipped: the `etsy.com` registry entry (stealth-first) and the parse.ts Etsy
+tier — hostname-gated to `etsy.com` (pageHostname === "etsy.com") because the
+generic shapes overreach: Bershka's og:title is its JSON-LD name plus a
+MEANINGFUL " - Women" category suffix, and the #159 suite pins og:price
+beating the JSON-LD tier. On etsy.com the `product:price:*` pair (amount AND
+currency together) is skipped so the JSON-LD offer wins untainted, and the
+title takes the JSON-LD Product name when og:title is exactly that name plus a
+suffix (case-insensitive; fails safe to og:title otherwise). Fixture
+`tests/fixtures/etsy-listing-uk.html` (trimmed live capture); tests in
+`tests/scraper.test.ts` under "extractProduct Etsy localization tier".
+
+**Deployment incident (why live didn't escalate).** The 2026-11-13 user report
+was the stealth capability silently dead in production since ~Oct 9: the live
+checkout lost its `~/.local/share/.stealth-venv` (deploy.sh provisions it only
+when `python3` AND `Xvfb` both exist; Xvfb was missing, so provisioning was
+skipped on every deploy), so every escalation logged
+`stealth-browser:network/stealth-unavailable` and bot-walled shops degraded to
+plain-only. Fixes: Xvfb + Firefox deps installed on the host, venv provisioned
+by deploy, and `/api/health` now reports `"stealth": "ok" | "unavailable"` so
+the capability's absence is observable instead of silent.

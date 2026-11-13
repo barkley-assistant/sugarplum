@@ -118,7 +118,7 @@ export function createApp(config: Config): App {
         seriesCap: config.trackSeriesCap,
       }),
       ...imageRoutes(db, config.imagesDir),
-      ...healthRoutes(),
+      ...healthRoutes({ stealthPythonBin: stealth?.pythonBin }),
     } as AnyRouteTable),
     fetch: (req) => handleNonApiRequest(req),
   });

@@ -1817,3 +1817,69 @@ describe("extractProduct ProductGroup sibling variants (#170)", () => {
     expect(p.currency).toBe("GBP");
   });
 });
+
+describe("extractProduct Etsy localization tier (measured 2026-11-13)", () => {
+  // Real /uk/ listing capture (sanitised trim; og meta + the page's own
+  // ld+json blocks kept). The page carries product:price:amount=9.95,
+  // product:price:currency=USD — the US storefront pair Etsy stamps on every
+  // locale — while its JSON-LD Product offer is 7.55/GBP and the shopper sees
+  // £7.55. og:title is the JSON-LD name plus " - Etsy UK" (case differs in
+  // "Playstation"), and there is no og:site_name for the token strip.
+  const ETSY = "https://www.etsy.com/uk/listing/4596562701/retro-playstation-2-poster-y2k-gaming";
+
+  test("etsy page: hardcoded US meta pair skipped — localized JSON-LD GBP offer wins, title loses the storefront suffix", async () => {
+    const p = await parseFixture("etsy-listing-uk.html", ETSY);
+    expect(p.priceCents).toBe(755);
+    expect(p.currency).toBe("GBP"); // never the meta's USD
+    expect(p.title).toBe(
+      "Retro PlayStation 2 Poster, Y2K Gaming Wall Art, Vintage PS2 Advertisement, Vaporwave Poster, Nostalgic Gaming Room Decor, Retro Gamer Gift",
+    );
+    expect(p.title).not.toContain("Etsy UK");
+    expect(p.image).toBe("https://i.etsystatic.com/67417417/r/il/e800b2/8686987352/il_1080xN.8686987352_t9c1.jpg");
+  });
+
+  test("tier is hostname-scoped: the same markup on another host keeps the meta price and suffix", async () => {
+    // The generic shapes overreach (Bershka's " - Women" og:title suffix is
+    // meaningful content; VGP pins og:price over JSON-LD) — so the Etsy rules
+    // stay gated on etsy.com and other hosts keep the legacy tier order.
+    const p = await parseFixture(
+      "etsy-listing-uk.html",
+      "https://www.some-shop.example/listing/4596562701/poster",
+    );
+    expect(p.priceCents).toBe(995);
+    expect(p.currency).toBe("USD");
+    expect(p.title).toContain("- Etsy UK");
+  });
+
+  test("etsy page without JSON-LD: no price (the skipped meta is never un-skipped), og:title kept", async () => {
+    const html = `<!DOCTYPE html><html><head>
+      <meta property="og:title" content="Retro Playstation 2 Poster - Etsy UK">
+      <meta property="product:price:amount" content="9.95">
+      <meta property="product:price:currency" content="USD">
+    </head><body></body></html>`;
+    const p = await extractProduct(html, ETSY);
+    expect(p.priceCents).toBeNull();
+    expect(p.currency).toBeNull();
+    expect(p.title).toBe("Retro Playstation 2 Poster - Etsy UK");
+  });
+
+  test("suffix strip needs the exact prefix: a different og:title keeps its suffix", async () => {
+    const html = `<!DOCTYPE html><html><head>
+      <meta property="og:title" content="Poster Collection Bundle - Etsy UK">
+      <script type="application/ld+json">{"@type":"Product","name":"Retro PlayStation 2 Poster","offers":{"price":"7.55","priceCurrency":"GBP"}}</script>
+    </head><body></body></html>`;
+    const p = await extractProduct(html, ETSY);
+    expect(p.title).toBe("Poster Collection Bundle - Etsy UK");
+    expect(p.priceCents).toBe(755);
+  });
+
+  test("equal og:title and JSON-LD name are not treated as a suffix", async () => {
+    const html = `<!DOCTYPE html><html><head>
+      <meta property="og:title" content="Widget">
+      <script type="application/ld+json">{"@type":"Product","name":"Widget","offers":{"price":"7.55","priceCurrency":"GBP"}}</script>
+    </head><body></body></html>`;
+    const p = await extractProduct(html, "https://shop.example.com/widget");
+    expect(p.title).toBe("Widget");
+    expect(p.priceCents).toBe(755);
+  });
+});

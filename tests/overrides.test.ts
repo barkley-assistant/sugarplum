@@ -61,6 +61,21 @@ describe("override registry", () => {
     expect(normalizeHostname("https://WWW.ASOS.com/prd/206025763")).toBe("asos.com");
   });
 
+  test("etsy.com is registered with a stealth-first chain (DataDome)", () => {
+    const o = resolveOverride(
+      "https://www.etsy.com/uk/listing/4596562701/retro-playstation-2-poster-y2k-gaming",
+    );
+    expect(o?.strategies).toEqual(["stealth-browser", "plain"]);
+    expect(o?.notes).toContain("DataDome");
+    expect(o?.notes).toContain("2026-11-13");
+  });
+
+  test("etsy matching is exact: look-alike hosts stay unregistered", () => {
+    expect(resolveOverride("https://www.notetsy.com/listing/1")).toBeUndefined();
+    expect(resolveOverride("https://etsy.com.evil.example.com/listing/1")).toBeUndefined();
+    expect(resolveOverride("https://www.etsy.co.uk/listing/1")).toBeUndefined();
+  });
+
   test("registry invariants: lowercase keys, no www., non-empty known strategies", () => {
     for (const [host, o] of Object.entries(SITE_OVERRIDES)) {
       expect(host).toBe(host.toLowerCase());

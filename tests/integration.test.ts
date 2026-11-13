@@ -298,7 +298,35 @@ describe("wishlist API", () => {
   test("health endpoint is public", async () => {
     const res = await fetch(`${app.baseUrl}/api/health`);
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ status: "ok" });
+    // The test config disables stealth, so the capability reports unavailable.
+    expect(await res.json()).toEqual({ status: "ok", stealth: "unavailable" });
+  });
+
+  test("health reports stealth availability from the configured venv python", async () => {
+    const wired = createTestApp({
+      stealthDisabled: false,
+      stealthVenvPython: new URL(import.meta.url).pathname, // any existing file
+    });
+    try {
+      const res = await fetch(`${wired.baseUrl}/api/health`);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ status: "ok", stealth: "ok" });
+    } finally {
+      await wired.cleanup();
+    }
+  });
+
+  test("added items store tracking-stripped URLs, keeping selection params", async () => {
+    const jar = app.newJar();
+    await login(jar, "admin", "admin-password");
+    const item = await createItem(jar, "PS2 poster", {
+      url:
+        "https://www.etsy.com/uk/listing/4596562701/retro-playstation-2-poster-y2k-gaming" +
+        "?ref=sr_gallery-1-7&utm_source=share&ga_order=most_relevant&variation0=7281367886",
+    });
+    expect(item.url).toBe(
+      "https://www.etsy.com/uk/listing/4596562701/retro-playstation-2-poster-y2k-gaming?variation0=7281367886",
+    );
   });
 
   test("sort_order persists and drives list order", async () => {
