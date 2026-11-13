@@ -881,6 +881,29 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
     .text();
 
   const ldNode = jsonld.length > 0 ? findProductNode(jsonld) : null;
+  // Etsy localization tier (measured 2026-11-13, UK listing 4596562701;
+  // HOSTNAME-SCOPED — the generic shapes are NOT universal, see below).
+  // Etsy stamps the US storefront price into its `product:price:*` meta tags
+  // on EVERY storefront — the /uk/ page serves 9.95/USD in the meta while the
+  // shopper sees £7.55 and the page's own JSON-LD Product carries 7.55/GBP —
+  // so on etsy.com pages the meta pair is skipped and the JSON-LD offer wins.
+  // Amount AND currency are skipped together: mixing a JSON-LD price with a
+  // meta currency would store a pair no offer made. og:price:* is untouched
+  // (absent on Etsy, unmeasured elsewhere).
+  //
+  // The rules stay hostname-gated on purpose. Two shipped fixtures prove the
+  // generic shapes overreach: Bershka's og:title is its JSON-LD name plus a
+  // MEANINGFUL " - Women" category suffix, and VGP pins og:price beating the
+  // JSON-LD tier. Only Etsy has the measured meta-is-wrong + suffix-is-noise
+  // combination. (Etsy always ships the JSON-LD Product node on listing
+  // pages, so a JSON-LD-less Etsy page just keeps its meta tier.)
+  const etsyPage = pageHostname(pageUrl) === "etsy.com";
+  const ogPriceCents = parsePriceToCents(og["og:price:amount"]);
+  const ogPriceCurrency = cleanCurrency(og["og:price:currency"]);
+  const productPriceCents = parsePriceToCents(product["product:price:amount"]);
+  const productPriceCurrency = cleanCurrency(product["product:price:currency"]);
+  const ldPriceCents = parsePriceToCents(ldNode?.offersPrice);
+  const ldPriceCurrency = cleanCurrency(ldNode?.offersCurrency);
   // Condition-aware DOM price (#160). Both captures are id-anchored — never a
   // bare .a-price; the ingress is only an offer floor, so the condition of the
   // block it came from decides whether it may be used at all.
@@ -903,8 +926,22 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
   // every tier): the site token comes from declared metadata only, so a page
   // without og:site_name/og:site keeps its title untouched.
   const siteToken = cleanTitle(og["og:site_name"]) ?? cleanTitle(og["og:site"]);
+  // Etsy suffix strip (same measurement, same etsy.com gate): og:title is the
+  // JSON-LD Product name plus " - Etsy UK" (Etsy ships no og:site_name, so
+  // stripStoreTitleNoise has nothing to match). When og:title is EXACTLY the
+  // JSON-LD name plus a trailing suffix (case-insensitive), take the clean
+  // name. The exact-prefix guard makes it fail safe: a DIFFERENT og:title
+  // keeps its suffix (Bershka's " - Women" category suffix must survive).
+  const ogTitle = cleanTitle(og["og:title"]);
+  const ldName = cleanTitle(ldNode?.name);
+  const ogTitleSuffixesLdName =
+    etsyPage &&
+    ldName !== null &&
+    ogTitle !== null &&
+    ogTitle.length > ldName.length &&
+    ogTitle.toLowerCase().startsWith(ldName.toLowerCase());
   const rawTitle =
-    cleanTitle(og["og:title"]) ??
+    (ogTitleSuffixesLdName ? ldName : ogTitle) ??
     cleanTitle(twitter["twitter:title"]) ??
     cleanTitle(ldNode?.name) ??
     cleanTitle(titleTag);
@@ -917,9 +954,9 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
     // decoding last can never re-introduce promo noise it just removed.
     title: rawTitle === null ? null : decodeHtmlEntities(stripStoreTitleNoise(rawTitle, siteToken)),
     priceCents:
-      parsePriceToCents(og["og:price:amount"]) ??
-      parsePriceToCents(product["product:price:amount"]) ??
-      parsePriceToCents(ldNode?.offersPrice) ??
+      ogPriceCents ??
+      (etsyPage ? null : productPriceCents) ??
+      ldPriceCents ??
       domPrice?.cents ??
       steamPrice?.cents ??
       // The ASOS tier is last on purpose: it is the least-verified source on
@@ -927,9 +964,9 @@ export async function extractProduct(html: string, pageUrl: string): Promise<Par
       asosPrice?.cents ??
       null,
     currency:
-      cleanCurrency(og["og:price:currency"]) ??
-      cleanCurrency(product["product:price:currency"]) ??
-      cleanCurrency(ldNode?.offersCurrency) ??
+      ogPriceCurrency ??
+      (etsyPage ? null : productPriceCurrency) ??
+      ldPriceCurrency ??
       domPrice?.currency ??
       steamPrice?.currency ??
       asosPrice?.currency ??

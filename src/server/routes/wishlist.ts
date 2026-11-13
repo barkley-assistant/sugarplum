@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { jsonError, jsonOk, requireSession, type RouteRequest } from "../auth/middleware";
+import { cleanProductUrl } from "../net/clean-url";
 import { deleteItemFile } from "../images";
 import type { EnrichmentQueue } from "../jobs/enrich";
 import { deriveTrend } from "../price/trend";
@@ -676,7 +677,10 @@ function parseUrlInput(
   if (!parsed.hostname.includes(".")) {
     return { ok: false, error: jsonError(400, `${field} must have a valid hostname`) };
   }
-  return { ok: true, url };
+  // Track-only params (utm_*, Etsy's ga_*/logging_key/…) are stripped before
+  // storage; selection params (Etsy variation0, Shopify variant, …) are
+  // preserved — they change what the shopper pays (see cleanProductUrl).
+  return { ok: true, url: cleanProductUrl(url) };
 }
 
 function provisionalTitle(url: string): string {
